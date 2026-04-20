@@ -1,0 +1,58 @@
+{
+  "name": "MedAdvocate — Medical Mom's Companion",
+  "short_name": "MedAdvocate",
+  "description": "The medical advocacy toolkit for moms of complex kids. Visit scripts, lab tracking, credibility documents, and IEP prep — all in one place.",
+  "start_url": "/advocate-home.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fdfcf8",
+  "theme_color": "#6b9e7e",
+  "categories": ["health", "medical", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%236b9e7e'/><text y='130' x='96' text-anchor='middle' font-size='110' font-family='serif'>🌿</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%236b9e7e'/><text y='360' x='256' text-anchor='middle' font-size='300' font-family='serif'>🌿</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Visit Script",
+      "short_name": "Visit Prep",
+      "description": "Prepare for your next specialist appointment",
+      "url": "/advocate-app.html",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='80' font-size='80'>📋</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Lab Tracker",
+      "short_name": "Labs",
+      "description": "Upload and track lab results over time",
+      "url": "/advocate-labs.html",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='80' font-size='80'>🧪</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Credibility Document",
+      "short_name": "Credibility",
+      "description": "Generate your clinical summary document",
+      "url": "/advocate-credibility.html",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='80' font-size='80'>📄</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "IEP & 504 Prep",
+      "short_name": "IEP/504",
+      "description": "Prepare for school accommodation meetings",
+      "url": "/advocate-iep.html",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='80' font-size='80'>⚖️</text></svg>", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [],
+  "lang": "en-US",
+  "dir": "ltr"
+}

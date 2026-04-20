@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Subscription</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+    --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;
+    --border:#b7d9c4;--white:#ffffff;
+    --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+    --shadow-sm:0 2px 12px rgba(28,43,34,.07);
+    --shadow:0 4px 24px rgba(28,43,34,.10);
+    --shadow-lg:0 16px 56px rgba(28,43,34,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 10% 20%,rgba(107,158,126,.08) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 90% 80%,rgba(201,146,58,.06) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+  /* ── SHARED NAV ── */
+  nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+  .nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto;text-decoration:none}
+  .nav-gem{width:30px;height:30px;background:#1b4332;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+  .nav-wordmark span{color:var(--sage)}
+
+  .shell{max-width:560px;margin:0 auto;padding:0 22px 80px;position:relative;z-index:1}
+
+  /* ── PAGES ── */
+  .page{display:none}
+  .page.active{display:block;animation:fadeUp .4s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── TRIAL ACTIVE BANNER ── */
+  .trial-banner{
+    background:linear-gradient(135deg,var(--sage),var(--sage-deep));
+    color:white;border-radius:18px;padding:24px 26px;
+    margin:32px 0 20px;
+    display:flex;align-items:center;gap:16px;
+    box-shadow:0 4px 20px rgba(107,158,126,.3);
+  }
+  .tb-icon{font-size:32px;flex-shrink:0}
+  .tb-title{font-family:'Fraunces',serif;font-size:20px;font-weight:400;margin-bottom:4px}
+  .tb-sub{font-size:13px;color:rgba(255,255,255,.75);font-weight:300;line-height:1.5}
+  .tb-days{
+    margin-left:auto;text-align:center;flex-shrink:0;
+    background:rgba(255,255,255,.2);border-radius:12px;padding:12px 16px;
+  }
+  .tb-days-num{font-family:'Fraunces',serif;font-size:32px;font-weight:400;line-height:1;color:white}
+  .tb-days-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:3px}
+
+  /* ── PROGRESS BAR ── */
+  .trial-progress{margin:0 0 28px}
+  .tp-header{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-muted);font-weight:300;margin-bottom:8px}
+  .tp-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+  .tp-fill{height:100%;border-radius:3px;background:linear-gradient(to right,var(--sage),var(--sage-deep));transition:width .6s ease}
+
+  /* ── FEATURE LIST ── */
+  .features-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:14px}
+  .feature-list{display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+  .feat-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm)}
+  .feat-icon{font-size:20px;flex-shrink:0}
+  .feat-text{font-size:14px;color:var(--ink-soft);font-weight:300;flex:1}
+  .feat-text strong{font-weight:500;color:var(--ink)}
+  .feat-check{color:var(--sage);font-size:16px;font-weight:700;flex-shrink:0}
+
+  /* ── PRICING CARDS ── */
+  .pricing-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px}
+
+  .plan-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+
+  .plan-card{
+    background:var(--white);border:2px solid var(--border);
+    border-radius:18px;padding:20px 22px;
+    cursor:pointer;transition:all .2s;position:relative;
+  }
+  .plan-card:hover{border-color:var(--sage-light);box-shadow:var(--shadow)}
+  .plan-card.selected{border-color:var(--sage);background:var(--sage-pale);box-shadow:0 0 0 4px rgba(107,158,126,.1)}
+  .plan-card.popular{border-color:var(--amber)}
+  .plan-card.popular.selected{border-color:var(--amber);background:var(--amber-pale);box-shadow:0 0 0 4px rgba(201,146,58,.1)}
+
+  .popular-badge{
+    position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+    background:var(--amber);color:white;
+    font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:4px 14px;border-radius:100px;white-space:nowrap;
+  }
+
+  .plan-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .plan-name{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+  .plan-price{text-align:right}
+  .plan-amount{font-family:'Fraunces',serif;font-size:26px;font-weight:400;color:var(--ink);line-height:1}
+  .plan-period{font-size:12px;color:var(--ink-muted);font-weight:300}
+  .plan-save{display:inline-block;background:var(--amber-pale);color:var(--amber);font-size:11px;font-weight:600;padding:2px 9px;border-radius:100px;margin-top:4px}
+  .plan-desc{font-size:13px;color:var(--ink-muted);margin-top:8px;font-weight:300;line-height:1.5}
+
+  .plan-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .plan-card.selected .plan-radio{border-color:var(--sage);background:var(--sage)}
+  .plan-card.popular.selected .plan-radio{border-color:var(--amber);background:var(--amber)}
+  .plan-radio-dot{width:8px;height:8px;border-radius:50%;background:white;display:none}
+  .plan-card.selected .plan-radio-dot{display:block}
+
+  /* ── CTA BUTTON ── */
+  .cta-btn{
+    width:100%;padding:18px;
+    background:var(--sage);color:white;
+    border:none;border-radius:14px;
+    font-family:'DM Sans',sans-serif;
+    font-size:16px;font-weight:500;
+    cursor:pointer;transition:all .22s;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    box-shadow:0 4px 18px rgba(107,158,126,.3);
+    margin-bottom:14px;
+  }
+  .cta-btn:hover{background:var(--sage-deep);transform:translateY(-2px);box-shadow:0 8px 28px rgba(107,158,126,.35)}
+  .cta-btn.amber-btn{background:var(--amber);box-shadow:0 4px 18px rgba(201,146,58,.3)}
+  .cta-btn.amber-btn:hover{background:#b07d2e;box-shadow:0 8px 28px rgba(201,146,58,.35)}
+
+  .cta-note{text-align:center;font-size:12px;color:var(--ink-muted);font-weight:300;line-height:1.6;margin-bottom:20px}
+
+  /* ── TRIAL ENDED ── */
+  .ended-hero{text-align:center;padding:40px 0 28px}
+  .ended-icon{font-size:52px;margin-bottom:16px}
+  .ended-title{font-family:'Fraunces',serif;font-size:28px;font-weight:300;color:var(--ink);margin-bottom:10px;line-height:1.2}
+  .ended-title em{font-style:italic;color:var(--sage)}
+  .ended-sub{font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;max-width:420px;margin:0 auto}
+
+  /* ── TESTIMONIAL ── */
+  .testimonial{
+    background:var(--white);border:1px solid var(--border);
+    border-radius:16px;padding:20px 22px;
+    margin-bottom:24px;box-shadow:var(--shadow-sm);
+  }
+  .test-quote{font-family:'Fraunces',serif;font-size:16px;font-weight:300;font-style:italic;color:var(--ink);line-height:1.7;margin-bottom:10px}
+  .test-quote::before{content:'"';color:var(--sage-light);font-size:32px;line-height:0;vertical-align:-10px;margin-right:3px}
+  .test-author{font-size:12px;color:var(--ink-muted);font-weight:400}
+
+  /* ── DIVIDER ── */
+  .divider{height:1px;background:var(--border);margin:24px 0}
+
+  /* ── MANAGE SECTION ── */
+  .manage-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+  .manage-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+  .manage-sub{font-size:13px;color:var(--ink-muted);font-weight:300;margin-bottom:16px}
+  .manage-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+  .manage-row:last-child{border-bottom:none;padding-bottom:0}
+  .manage-row-label{font-size:14px;color:var(--ink-soft);font-weight:300}
+  .manage-row-val{font-size:14px;font-weight:500;color:var(--ink)}
+
+  .btn-cancel{width:100%;padding:13px;background:transparent;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--ink-muted);cursor:pointer;transition:all .2s;margin-top:10px}
+  .btn-cancel:hover{border-color:#c0392b;color:#c0392b}
+
+  /* ── DEMO CONTROLS (remove in production) ── */
+  .demo-bar{background:var(--ink);color:white;padding:10px 20px;text-align:center;font-size:12px;font-weight:400;position:sticky;bottom:0;z-index:50;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+  .demo-btn{padding:5px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.3);background:transparent;color:white;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s}
+  .demo-btn:hover{background:rgba(255,255,255,.15)}
+  .demo-btn.active-demo{background:var(--sage);border-color:var(--sage)}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:56px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:500px){.shell{padding:0 14px 80px}nav{padding:0 16px}.tb-days{display:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="advocate-home.html" class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+  </a>
+</nav>
+
+<div class="shell">
+
+  <!-- ══════════════════════════════ -->
+  <!-- PAGE 1: TRIAL ACTIVE          -->
+  <!-- ══════════════════════════════ -->
+  <div class="page active" id="page-trial">
+
+    <div class="trial-banner">
+      <div class="tb-icon">🌿</div>
+      <div>
+        <div class="tb-title">Your free trial is active</div>
+        <div class="tb-sub">Full access to every tool — no card required yet. We'll remind you before it ends.</div>
+      </div>
+      <div class="tb-days">
+        <div class="tb-days-num" id="daysNumActive">7</div>
+        <div class="tb-days-label">days left</div>
+      </div>
+    </div>
+
+    <div class="trial-progress">
+      <div class="tp-header">
+        <span>Trial started today</span>
+        <span id="trialEndDate">Ends —</span>
+      </div>
+      <div class="tp-track"><div class="tp-fill" id="trialProgressBar" style="width:100%"></div></div>
+    </div>
+
+    <div class="features-title">Everything included in your trial:</div>
+    <div class="feature-list">
+      <div class="feat-item"><div class="feat-icon">📋</div><div class="feat-text"><strong>Visit Script Generator</strong> — prep for any specialist</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">📊</div><div class="feat-text"><strong>Symptom Tracker</strong> — daily logs and trend charts</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">🧪</div><div class="feat-text"><strong>Lab Tracker & Trends</strong> — upload and analyze results</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">📄</div><div class="feat-text"><strong>Credibility Document</strong> — make doctors take you seriously</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">🚨</div><div class="feat-text"><strong>ER Prep Card</strong> — for emergencies</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">💜</div><div class="feat-text"><strong>Explain My Diagnosis</strong> — for family, teachers & coaches</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">⚖️</div><div class="feat-text"><strong>IEP & 504 Prep</strong> — know your rights</div><div class="feat-check">✓</div></div>
+      <div class="feat-item"><div class="feat-icon">📨</div><div class="feat-text"><strong>Insurance Appeal Letter</strong> — fight denials and win</div><div class="feat-check">✓</div></div>
+    </div>
+
+    <div class="pricing-label">Subscribe now — no charge until trial ends</div>
+
+    <div class="plan-cards">
+      <div class="plan-card popular" id="plan-annual" onclick="selectPlan('annual')">
+        <div class="popular-badge">⭐ Best Value</div>
+        <div class="plan-top">
+          <div class="plan-radio"><div class="plan-radio-dot"></div></div>
+          <div style="flex:1">
+            <div class="plan-name">Annual</div>
+            <div class="plan-desc">One payment, full year of access</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-amount">$79</div>
+            <div class="plan-period">per year</div>
+            <div class="plan-save">Save $41</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-card selected" id="plan-monthly" onclick="selectPlan('monthly')">
+        <div class="plan-top">
+          <div class="plan-radio"><div class="plan-radio-dot"></div></div>
+          <div style="flex:1">
+            <div class="plan-name">Monthly</div>
+            <div class="plan-desc">Flexible — cancel any time, no questions asked</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-amount">$9.99</div>
+            <div class="plan-period">per month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="cta-btn" id="ctaBtn" onclick="handleSubscribe()">
+      Start My Subscription →
+    </button>
+
+    <div class="cta-note">
+      No charge until your 7-day trial ends · Cancel any time · No questions asked
+    </div>
+
+    <a href="advocate-home.html" style="display:block;text-align:center;font-size:13px;color:var(--ink-muted);text-decoration:none;padding-bottom:8px">
+      ← Back to tools
+    </a>
+
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- PAGE 2: TRIAL ENDING SOON     -->
+  <!-- (shown on day 6 and 7)        -->
+  <!-- ══════════════════════════════ -->
+  <div class="page" id="page-expiring">
+
+    <div class="ended-hero">
+      <div class="ended-icon">⏳</div>
+      <h1 class="ended-title">Your trial ends <em>tomorrow</em></h1>
+      <p class="ended-sub">You've had full access to every tool this week. Keep going — subscribe today so nothing stops when your trial ends.</p>
+    </div>
+
+    <div class="testimonial">
+      <div class="test-quote">I used the Credibility Document at Emma's rheumatology appointment. The doctor actually read it. For the first time I felt like we were taken seriously.</div>
+      <div class="test-author">— Sarah M., mom of a child with POTS & EDS</div>
+    </div>
+
+    <div class="plan-cards">
+      <div class="plan-card popular" id="plan-annual-exp" onclick="selectPlanExp('annual')">
+        <div class="popular-badge">⭐ Best Value</div>
+        <div class="plan-top">
+          <div class="plan-radio"><div class="plan-radio-dot"></div></div>
+          <div style="flex:1">
+            <div class="plan-name">Annual</div>
+            <div class="plan-desc">One payment, full year of access</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-amount">$79</div>
+            <div class="plan-period">per year</div>
+            <div class="plan-save">Save $41</div>
+          </div>
+        </div>
+      </div>
+      <div class="plan-card selected" id="plan-monthly-exp" onclick="selectPlanExp('monthly')">
+        <div class="plan-top">
+          <div class="plan-radio"><div class="plan-radio-dot"></div></div>
+          <div style="flex:1">
+            <div class="plan-name">Monthly</div>
+            <div class="plan-desc">Flexible — cancel any time</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-amount">$9.99</div>
+            <div class="plan-period">per month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="cta-btn amber-btn" onclick="handleSubscribe()">
+      Keep My Access →
+    </button>
+    <div class="cta-note">Cancel any time · No questions asked</div>
+    <a href="advocate-home.html" style="display:block;text-align:center;font-size:13px;color:var(--ink-muted);text-decoration:none;padding-bottom:8px">Continue using free trial ←</a>
+
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- PAGE 3: TRIAL ENDED / PAYWALL -->
+  <!-- ══════════════════════════════ -->
+  <div class="page" id="page-ended">
+
+    <div class="ended-hero">
+      <div class="ended-icon">🌿</div>
+      <h1 class="ended-title">Your trial has ended.<br><em>Keep going.</em></h1>
+      <p class="ended-sub">If Advocate helped you this week — it will keep helping you. $9.99/month, cancel any time.</p>
+    </div>
+
+    <div class="testimonial">
+      <div class="test-quote">I walked into the IEP meeting with the prep kit and the school's attitude completely changed. They could tell I knew my rights. We got every accommodation we asked for.</div>
+      <div class="test-author">— Jennifer R., mom of a child with autism and chronic illness</div>
+    </div>
+
+    <div class="plan-cards">
+      <div class="plan-card popular" id="plan-annual-end" onclick="selectPlanEnd('annual')">
+        <div class="popular-badge">⭐ Best Value</div>
+        <div class="plan-top">
+          <div class="plan-radio"><div class="plan-radio-dot"></div></div>
+          <div style="flex:1">
+            <div class="plan-name">Annual</div>
+            <div class="plan-desc">One payment, full year of access</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-amount">$79</div>
+            <div class="plan-period">per year</div>
+            <div class="plan-save">Save $41</div>
+          </div>
+        </div>
+      </div>
+      <div class="plan-card selected" id="plan-monthly-end" onclick="selectPlanEnd('monthly')">
+        <div class="plan-top">
+          <div class="plan-radio"><div class="plan-radio-dot"></div></div>
+          <div style="flex:1">
+            <div class="plan-name">Monthly</div>
+            <div class="plan-desc">Flexible — cancel any time, no questions asked</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-amount">$9.99</div>
+            <div class="plan-period">per month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="cta-btn" onclick="handleSubscribe()">
+      Subscribe & Restore Access →
+    </button>
+    <div class="cta-note">
+      Instant access restored after subscribing · Cancel any time · No questions asked
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="text-align:center;padding:4px 0 20px">
+      <div style="font-size:14px;color:var(--ink-muted);font-weight:300;margin-bottom:4px">Already subscribed?</div>
+      <a href="#" style="font-size:14px;color:var(--sage-deep);font-weight:500;text-decoration:none" onclick="showPage('page-active')">Restore my access →</a>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- PAGE 4: ACTIVE SUBSCRIBER     -->
+  <!-- ══════════════════════════════ -->
+  <div class="page" id="page-active">
+
+    <div style="text-align:center;padding:40px 0 28px">
+      <div style="font-size:52px;margin-bottom:16px">✨</div>
+      <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:300;color:var(--ink);margin-bottom:10px">You're all set, <em style="font-style:italic;color:var(--sage)">advocate.</em></div>
+      <div style="font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;max-width:380px;margin:0 auto">Full access to every tool. We're grateful you're here.</div>
+    </div>
+
+    <div class="manage-card">
+      <div class="manage-title">Your Subscription</div>
+      <div class="manage-sub">Manage your plan below.</div>
+      <div class="manage-row">
+        <div class="manage-row-label">Plan</div>
+        <div class="manage-row-val" id="activePlanLabel">Monthly — $9.99/mo</div>
+      </div>
+      <div class="manage-row">
+        <div class="manage-row-label">Status</div>
+        <div class="manage-row-val" style="color:var(--sage)">✓ Active</div>
+      </div>
+      <div class="manage-row">
+        <div class="manage-row-label">Next billing date</div>
+        <div class="manage-row-val" id="nextBillingDate">—</div>
+      </div>
+      <button class="btn-cancel" onclick="handleCancel()">Cancel subscription</button>
+    </div>
+
+    <a href="advocate-home.html" style="display:block;text-align:center;padding:8px;font-size:14px;color:var(--sage-deep);font-weight:500;text-decoration:none">← Back to all tools</a>
+
+  </div>
+
+</div><!-- shell -->
+
+<!-- DEMO CONTROLS — remove in production -->
+<div class="demo-bar">
+  <span style="color:rgba(255,255,255,.5)">Preview:</span>
+  <button class="demo-btn active-demo" onclick="showPage('page-trial')">Trial Active</button>
+  <button class="demo-btn" onclick="showPage('page-expiring')">Expiring Soon</button>
+  <button class="demo-btn" onclick="showPage('page-ended')">Trial Ended</button>
+  <button class="demo-btn" onclick="showPage('page-active')">Subscribed</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── TRIAL STATE ──
+// In production, this would come from your auth/subscription backend (e.g. Stripe)
+const TRIAL_KEY = 'advocate_trial_start';
+const SUB_KEY   = 'advocate_subscription';
+
+function getTrialStart() {
+  let start = localStorage.getItem(TRIAL_KEY);
+  if (!start) {
+    start = new Date().toISOString();
+    localStorage.setItem(TRIAL_KEY, start);
+  }
+  return new Date(start);
+}
+
+function getDaysLeft() {
+  const start = getTrialStart();
+  const now = new Date();
+  const elapsed = (now - start) / (1000 * 60 * 60 * 24);
+  return Math.max(0, Math.ceil(7 - elapsed));
+}
+
+function isSubscribed() {
+  return !!localStorage.getItem(SUB_KEY);
+}
+
+// ── INIT ──
+function init() {
+  const subscribed = isSubscribed();
+  const daysLeft = getDaysLeft();
+
+  if (subscribed) {
+    showPage('page-active');
+    populateActiveSubscriber();
+    return;
+  }
+
+  if (daysLeft === 0) {
+    showPage('page-ended');
+  } else if (daysLeft <= 1) {
+    showPage('page-expiring');
+  } else {
+    showPage('page-trial');
+    populateTrialPage(daysLeft);
+  }
+}
+
+function populateTrialPage(daysLeft) {
+  document.getElementById('daysNumActive').textContent = daysLeft;
+
+  const start = getTrialStart();
+  const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+  document.getElementById('trialEndDate').textContent =
+    'Ends ' + end.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+
+  const pct = (daysLeft / 7) * 100;
+  document.getElementById('trialProgressBar').style.width = pct + '%';
+}
+
+function populateActiveSubscriber() {
+  const sub = JSON.parse(localStorage.getItem(SUB_KEY) || '{}');
+  document.getElementById('activePlanLabel').textContent =
+    sub.plan === 'annual' ? 'Annual — $79/year' : 'Monthly — $9.99/month';
+
+  const next = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  document.getElementById('nextBillingDate').textContent =
+    next.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+}
+
+// ── PAGE NAVIGATION ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active-demo'));
+  const map = { 'page-trial':0,'page-expiring':1,'page-ended':2,'page-active':3 };
+  const idx = map[id];
+  if (idx !== undefined) document.querySelectorAll('.demo-btn')[idx]?.classList.add('active-demo');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ── PLAN SELECTION ──
+let selectedPlanTrialPage  = 'monthly';
+let selectedPlanExpiringPage = 'monthly';
+let selectedPlanEndedPage  = 'monthly';
+
+function selectPlan(plan) {
+  selectedPlanTrialPage = plan;
+  document.getElementById('plan-annual').classList.toggle('selected', plan === 'annual');
+  document.getElementById('plan-monthly').classList.toggle('selected', plan === 'monthly');
+  updateCTAButton();
+}
+
+function selectPlanExp(plan) {
+  selectedPlanExpiringPage = plan;
+  document.getElementById('plan-annual-exp').classList.toggle('selected', plan === 'annual');
+  document.getElementById('plan-monthly-exp').classList.toggle('selected', plan === 'monthly');
+}
+
+function selectPlanEnd(plan) {
+  selectedPlanEndedPage = plan;
+  document.getElementById('plan-annual-end').classList.toggle('selected', plan === 'annual');
+  document.getElementById('plan-monthly-end').classList.toggle('selected', plan === 'monthly');
+}
+
+function updateCTAButton() {
+  const btn = document.getElementById('ctaBtn');
+  if (selectedPlanTrialPage === 'annual') {
+    btn.className = 'cta-btn amber-btn';
+    btn.textContent = 'Start Annual Subscription ($79/year) →';
+  } else {
+    btn.className = 'cta-btn';
+    btn.textContent = 'Start Monthly Subscription ($9.99/mo) →';
+  }
+}
+
+// ── SUBSCRIBE ──
+function handleSubscribe() {
+  // In production: redirect to Stripe Checkout
+  // window.location.href = 'https://buy.stripe.com/your_link_here';
+
+  // Demo: simulate subscription
+  const activePage = document.querySelector('.page.active').id;
+  let plan = 'monthly';
+  if (activePage === 'page-trial') plan = selectedPlanTrialPage;
+  if (activePage === 'page-expiring') plan = selectedPlanExpiringPage;
+  if (activePage === 'page-ended') plan = selectedPlanEndedPage;
+
+  localStorage.setItem(SUB_KEY, JSON.stringify({ plan, startDate: new Date().toISOString() }));
+  showToast('Subscription activated ✓');
+  setTimeout(() => {
+    showPage('page-active');
+    populateActiveSubscriber();
+  }, 1000);
+}
+
+// ── CANCEL ──
+function handleCancel() {
+  if (!confirm('Are you sure you want to cancel? You\'ll lose access to all tools at the end of your billing period.')) return;
+  localStorage.removeItem(SUB_KEY);
+  showToast('Subscription cancelled. Access continues until end of billing period.');
+  setTimeout(() => showPage('page-ended'), 1800);
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── START ──
+init();
+</script>
+
+</body>
+</html>

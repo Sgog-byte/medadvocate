@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Privacy Policy & Terms</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #6b9e7e; --sage-deep: #4a7a5e; --sage-light: #a8ceb8; --sage-pale: #eef6f1;
+    --warm: #fdfcf8; --ink: #1c2b22; --ink-soft: #3d5245; --ink-muted: #7a9080;
+    --border: #dde8e1; --white: #ffffff;
+    --amber: #c9923a; --amber-pale: #fdf3e7;
+    --red: #c0392b; --red-pale: #fff5f5; --red-border: #fccaca;
+    --shadow-sm: 0 2px 12px rgba(28,43,34,0.06);
+    --shadow: 0 4px 24px rgba(28,43,34,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--warm); color: var(--ink); min-height: 100vh; }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 5% 10%, rgba(107,158,126,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(253,252,248,0.94); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px; display: flex; align-items: center; height: 60px; gap: 12px;
+  }
+  .nav-back { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: var(--ink-muted); padding: 7px 14px; border: 1px solid var(--border); border-radius: 100px; transition: all 0.2s; cursor: pointer; background: none; font-family: 'DM Sans', sans-serif; }
+  .nav-back:hover { border-color: var(--sage); color: var(--sage-deep); }
+  .nav-logo { display: flex; align-items: center; gap: 9px; margin-right: auto; }
+  .nav-gem { width: 30px; height: 30px; background: var(--sage); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .nav-wordmark { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 400; color: var(--ink); }
+  .nav-wordmark span { color: var(--sage); }
+
+  .shell { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  .doc-header { padding: 52px 0 44px; text-align: center; }
+  .doc-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sage); margin-bottom: 14px; }
+  .doc-title { font-family: 'Fraunces', serif; font-size: clamp(28px,4vw,40px); font-weight: 300; color: var(--ink); margin-bottom: 12px; line-height: 1.2; }
+  .doc-title em { font-style: italic; color: var(--sage); }
+  .doc-updated { font-size: 13px; color: var(--ink-muted); font-weight: 300; }
+
+  /* PLAIN ENGLISH SUMMARY */
+  .summary-card {
+    background: var(--sage-pale); border: 1px solid var(--sage-light);
+    border-radius: 20px; padding: 28px 32px; margin-bottom: 36px;
+  }
+  .summary-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 400; color: var(--ink); margin-bottom: 16px; }
+  .summary-rows { display: flex; flex-direction: column; gap: 12px; }
+  .summary-row { display: flex; align-items: flex-start; gap: 14px; }
+  .summary-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .summary-text { font-size: 14px; color: var(--ink-soft); line-height: 1.65; font-weight: 300; }
+  .summary-text strong { font-weight: 500; color: var(--ink); }
+
+  /* SECTIONS */
+  .section { margin-bottom: 40px; }
+  .section-num { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 6px; }
+  .section-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 400; color: var(--ink); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+  .prose { font-size: 15px; line-height: 1.8; color: var(--ink-soft); font-weight: 300; margin-bottom: 14px; }
+  .prose strong { font-weight: 500; color: var(--ink); }
+  .prose em { font-style: italic; }
+  .prose:last-child { margin-bottom: 0; }
+
+  /* CALL OUT BOXES */
+  .callout {
+    border-radius: 14px; padding: 18px 22px; margin: 18px 0;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .callout-green { background: var(--sage-pale); border: 1px solid var(--sage-light); }
+  .callout-amber { background: var(--amber-pale); border: 1px solid var(--amber-light); }
+  .callout-red   { background: var(--red-pale);   border: 1px solid var(--red-border); }
+  .callout-icon  { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body  { font-size: 14px; line-height: 1.65; font-weight: 300; }
+  .callout-body strong { font-weight: 500; }
+  .callout-green .callout-body { color: var(--sage-deep); }
+  .callout-amber .callout-body { color: #7a5020; }
+  .callout-red   .callout-body { color: var(--red); }
+
+  /* DATA TABLE */
+  .data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  .data-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); border-bottom: 2px solid var(--border); background: var(--sage-pale); }
+  .data-table td { padding: 12px 14px; color: var(--ink-soft); border-bottom: 1px solid var(--border); font-weight: 300; line-height: 1.55; vertical-align: top; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(107,158,126,0.04); }
+
+  /* CONTACT */
+  .contact-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; box-shadow: var(--shadow-sm); }
+  .contact-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 400; margin-bottom: 12px; }
+  .contact-row { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-soft); font-weight: 300; margin-bottom: 8px; }
+  .contact-row:last-child { margin-bottom: 0; }
+
+  /* DISCLAIMER WIDGET (embeddable) */
+  .disclaimer-widget {
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: 16px; padding: 20px 24px;
+    display: flex; align-items: flex-start; gap: 14px;
+    margin: 32px 0;
+  }
+  .disclaimer-widget-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .disclaimer-widget-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+  .disclaimer-widget-text { font-size: 12px; color: var(--ink-muted); line-height: 1.65; font-weight: 300; }
+  .disclaimer-widget-text a { color: var(--sage-deep); }
+
+  /* TOC */
+  .toc { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px 26px; margin-bottom: 36px; box-shadow: var(--shadow-sm); }
+  .toc-title { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 14px; }
+  .toc-list { display: flex; flex-direction: column; gap: 8px; }
+  .toc-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--sage-deep); text-decoration: none; transition: color 0.2s; }
+  .toc-item:hover { color: var(--sage); }
+  .toc-num { font-size: 11px; color: var(--ink-muted); font-weight: 500; width: 20px; flex-shrink: 0; }
+
+  /* PRINT */
+  @media print {
+    body { background: white; } body::before { display: none; }
+    nav { display: none; }
+    .shell { max-width: 100%; padding: 0; }
+    @page { margin: 18mm; }
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 32px 0; }
+
+  @media (max-width: 600px) {
+    .shell { padding: 0 16px 60px; }
+    nav { padding: 0 16px; }
+    .summary-card { padding: 22px 20px; }
+    .data-table { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="nav-back" onclick="window.location.href='advocate-home.html'">← Home</button>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+  </div>
+  <button class="nav-back" onclick="window.print()" style="margin-left:auto;">🖨️ Print</button>
+</nav>
+
+<div class="shell">
+
+  <div class="doc-header">
+    <div class="doc-eyebrow">Legal & Privacy</div>
+    <h1 class="doc-title">Privacy Policy<br><em>& Terms of Use</em></h1>
+    <div class="doc-updated">Last updated: April 2026 · Plain English, always.</div>
+  </div>
+
+  <!-- PLAIN ENGLISH SUMMARY -->
+  <div class="summary-card">
+    <div class="summary-title">🌿 The short version — plain English</div>
+    <div class="summary-rows">
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text"><strong>We do not store your health data on our servers.</strong> Lab results, symptoms, and medical information you enter are processed in your browser session and saved only on your own device.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text"><strong>We do not sell your data. Ever.</strong> Advocate does not have advertisers, data brokers, or third-party marketers. Your information is yours.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text"><strong>AI features use Anthropic's Claude API.</strong> When you use an AI-powered tool, your input is sent to Anthropic to generate a response. Anthropic's privacy policy governs that processing. We do not log or retain those inputs on our end.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">✅</div>
+        <div class="summary-text"><strong>Advocate is a preparation and communication tool — not a medical provider.</strong> Nothing in this app constitutes medical, legal, or financial advice.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-icon">⚠️</div>
+        <div class="summary-text"><strong>Advocate is not HIPAA-covered.</strong> We are not a healthcare provider or health plan. However, we take the privacy of sensitive health information seriously and have designed the app to minimize data exposure.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <div class="toc-list">
+      <a href="#what-we-collect" class="toc-item"><span class="toc-num">01</span> What Information We Collect</a>
+      <a href="#how-stored" class="toc-item"><span class="toc-num">02</span> How Your Data Is Stored</a>
+      <a href="#ai-processing" class="toc-item"><span class="toc-num">03</span> AI Processing & Anthropic</a>
+      <a href="#not-medical-advice" class="toc-item"><span class="toc-num">04</span> Not Medical, Legal, or Financial Advice</a>
+      <a href="#not-hipaa" class="toc-item"><span class="toc-num">05</span> HIPAA & Health Data</a>
+      <a href="#your-rights" class="toc-item"><span class="toc-num">06</span> Your Rights & Data Control</a>
+      <a href="#children" class="toc-item"><span class="toc-num">07</span> Children's Privacy</a>
+      <a href="#security" class="toc-item"><span class="toc-num">08</span> Security</a>
+      <a href="#changes" class="toc-item"><span class="toc-num">09</span> Changes to This Policy</a>
+      <a href="#contact" class="toc-item"><span class="toc-num">10</span> Contact Us</a>
+    </div>
+  </div>
+
+  <!-- 01 WHAT WE COLLECT -->
+  <div class="section" id="what-we-collect">
+    <div class="section-num">01</div>
+    <div class="section-title">What Information We Collect</div>
+
+    <p class="prose">Advocate is designed to collect as little information as possible. Here is exactly what happens when you use each feature:</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>What you enter</th>
+          <th>Where it goes</th>
+          <th>Stored on our servers?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Visit Script Generator</strong></td>
+          <td>Symptoms, specialist type, patient name, goals</td>
+          <td>Sent to Anthropic API to generate script; displayed in browser</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>Lab Tracker</strong></td>
+          <td>Uploaded lab PDF or image, lab values</td>
+          <td>Sent to Anthropic API for extraction; displayed in browser; optionally saved to your device via localStorage</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>Credibility Document</strong></td>
+          <td>Diagnoses, symptoms, treatment history, patient name</td>
+          <td>Sent to Anthropic API; displayed in browser</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>IEP & 504 Prep</strong></td>
+          <td>Student name, diagnoses, school name, accommodations</td>
+          <td>Sent to Anthropic API; displayed in browser</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>ER Prep Card</strong></td>
+          <td>Patient info, diagnoses, medications, allergies, contacts</td>
+          <td>Sent to Anthropic API; displayed and saved locally on your device</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>Saved Scripts & Contacts</strong></td>
+          <td>Generated documents, doctor contact info</td>
+          <td>Saved to your device's localStorage only</td>
+          <td>❌ No</td>
+        </tr>
+        <tr>
+          <td><strong>Find Specialists</strong></td>
+          <td>Your address or ZIP code, specialty search</td>
+          <td>Sent to Anthropic API to generate results</td>
+          <td>❌ No</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-green">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-body"><strong>Bottom line:</strong> We do not have a database of your health information. We do not log your inputs. Your medical data does not live on our servers.</div>
+    </div>
+  </div>
+
+  <!-- 02 HOW STORED -->
+  <div class="section" id="how-stored">
+    <div class="section-num">02</div>
+    <div class="section-title">How Your Data Is Stored</div>
+
+    <p class="prose"><strong>On your device (localStorage):</strong> When you save scripts, contacts, lab results, or ER cards, that data is stored in your browser's localStorage — a secure storage area on your own phone or computer. This data never leaves your device unless you explicitly share it (by copying, printing, or emailing). Clearing your browser data or uninstalling the app will delete it.</p>
+
+    <p class="prose"><strong>In your browser session:</strong> Information you enter into forms exists temporarily in your browser while you use the app. When you close the tab or browser, it is gone unless you saved it.</p>
+
+    <p class="prose"><strong>We do not use cookies for tracking.</strong> We may use minimal session cookies for basic app functionality, but we do not use advertising cookies, tracking pixels, or analytics that identify you personally.</p>
+
+    <div class="callout callout-amber">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Important:</strong> Because data is stored on your device, it is not backed up by Advocate. If you lose your phone, clear your browser data, or switch devices, locally saved data will not automatically transfer. We recommend periodically printing or exporting important documents like your ER Prep Card.</div>
+    </div>
+  </div>
+
+  <!-- 03 AI PROCESSING -->
+  <div class="section" id="ai-processing">
+    <div class="section-num">03</div>
+    <div class="section-title">AI Processing & Anthropic</div>
+
+    <p class="prose">Advocate's AI features are powered by <strong>Claude</strong>, an AI model developed by Anthropic. When you use any AI-powered feature in Advocate, the text you enter is transmitted to Anthropic's API to generate a response.</p>
+
+    <p class="prose"><strong>What this means for your privacy:</strong></p>
+
+    <div class="callout callout-amber">
+      <div class="callout-icon">📡</div>
+      <div class="callout-body"><strong>When you use an AI feature, your input travels to Anthropic's servers to be processed.</strong> This is necessary for the AI to work. Anthropic's privacy policy and terms of service govern how they handle that data. We encourage you to review Anthropic's privacy policy at <strong>anthropic.com/privacy</strong>.</div>
+    </div>
+
+    <p class="prose">Advocate does not retain, log, or store the content of your AI interactions on our servers. We do not see what you type into our tools.</p>
+
+    <p class="prose"><strong>Our recommendation:</strong> Do not include full Social Security numbers, insurance ID numbers, or complete birthdates in combination with full names when using AI features. Use first names or initials when possible. The AI works just as well with "Emma, age 9" as with a full legal name and birthdate.</p>
+  </div>
+
+  <!-- 04 NOT MEDICAL ADVICE -->
+  <div class="section" id="not-medical-advice">
+    <div class="section-num">04</div>
+    <div class="section-title">Not Medical, Legal, or Financial Advice</div>
+
+    <div class="callout callout-red">
+      <div class="callout-icon">🩺</div>
+      <div class="callout-body"><strong>Advocate does not provide medical advice, diagnosis, or treatment.</strong> All content generated by Advocate — including visit scripts, lab summaries, credibility documents, and IEP prep materials — is for organizational and communication purposes only. It is not a substitute for the advice of a qualified physician, specialist, attorney, or other professional.</div>
+    </div>
+
+    <p class="prose">Advocate is a <strong>preparation and communication tool</strong>. It helps you organize information, prepare questions, and communicate more effectively with healthcare providers and school staff. It does not diagnose conditions, recommend treatments, or interpret lab results as medical conclusions.</p>
+
+    <p class="prose"><strong>Lab results:</strong> AI-generated explanations of lab values are educational in nature and are intended to help you understand and discuss results with your doctor — not to replace that conversation.</p>
+
+    <p class="prose"><strong>IEP & 504 content:</strong> Legal frameworks, accommodation suggestions, and pushback scripts generated by Advocate are based on general federal law and are intended to help you prepare for meetings. They do not constitute legal advice. For complex disputes, consult a special education attorney or advocate.</p>
+
+    <p class="prose"><strong>Always seek professional guidance</strong> for medical, legal, and financial decisions. In a medical emergency, call 911 immediately.</p>
+  </div>
+
+  <!-- 05 HIPAA -->
+  <div class="section" id="not-hipaa">
+    <div class="section-num">05</div>
+    <div class="section-title">HIPAA & Health Data</div>
+
+    <p class="prose">The Health Insurance Portability and Accountability Act (HIPAA) applies to covered entities — healthcare providers, health plans, and their business associates. <strong>Advocate is not a covered entity under HIPAA.</strong> We are a consumer productivity application, similar to a notes app or word processor.</p>
+
+    <p class="prose">However, we recognize that the information you use in Advocate is sensitive. Our entire design philosophy is built around minimizing data exposure:</p>
+
+    <div class="callout callout-green">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <strong>Our privacy-first design choices:</strong><br><br>
+        • AI processing happens per-session — we don't build a health profile of you on our servers<br>
+        • Saved data stays on your device, not ours<br>
+        • We don't require account creation or collect your email to use core features<br>
+        • We don't sell or share health-related information with third parties<br>
+        • We have entered into a Business Associate Agreement with Anthropic covering our API use
+      </div>
+    </div>
+
+    <p class="prose">If you have specific compliance requirements — for example, if you are a healthcare professional using Advocate for patient-facing workflows — please contact us to discuss your needs before using the app in that context.</p>
+  </div>
+
+  <!-- 06 YOUR RIGHTS -->
+  <div class="section" id="your-rights">
+    <div class="section-num">06</div>
+    <div class="section-title">Your Rights & Data Control</div>
+
+    <p class="prose">Because we do not store your data on our servers, most traditional "data deletion requests" don't apply — there is nothing for us to delete. Your control over your data is direct:</p>
+
+    <table class="data-table">
+      <thead>
+        <tr><th>Right</th><th>How to exercise it</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Delete your locally saved data</strong></td>
+          <td>Clear your browser's localStorage or site data in your browser settings. On iPhone: Settings → Safari → Advanced → Website Data. On Android: Chrome Settings → Site Settings → Storage.</td>
+        </tr>
+        <tr>
+          <td><strong>Stop AI processing</strong></td>
+          <td>Simply don't use AI-powered features. The app's forms and print features work without sending data to any server.</td>
+        </tr>
+        <tr>
+          <td><strong>Export your data</strong></td>
+          <td>Use the Print or Copy buttons on any generated document to save your information outside the app.</td>
+        </tr>
+        <tr>
+          <td><strong>California residents (CCPA)</strong></td>
+          <td>You have the right to know what personal information we collect, to delete it, and to opt out of its sale. We do not sell personal information. Contact us at the address below for any CCPA requests.</td>
+        </tr>
+        <tr>
+          <td><strong>EU/UK residents (GDPR)</strong></td>
+          <td>You have rights of access, rectification, erasure, and portability. Contact us to exercise these rights. Note that because we do not store health data on our servers, most requests will be fulfilled by clearing your local browser data.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 07 CHILDREN -->
+  <div class="section" id="children">
+    <div class="section-num">07</div>
+    <div class="section-title">Children's Privacy</div>
+
+    <p class="prose">Advocate is designed for use <strong>by parents and caregivers</strong> — adults advocating on behalf of their children. The app is not directed at children and is not intended to be used directly by anyone under 18.</p>
+
+    <p class="prose">When you enter health information about your child into Advocate, you are doing so as their parent or legal guardian. You control that information, and it is stored on your device.</p>
+
+    <p class="prose">We do not knowingly collect personal information directly from children. If you believe a child has provided personal information to us directly, please contact us immediately.</p>
+  </div>
+
+  <!-- 08 SECURITY -->
+  <div class="section" id="security">
+    <div class="section-num">08</div>
+    <div class="section-title">Security</div>
+
+    <p class="prose">Advocate uses HTTPS encryption for all data transmitted between your browser and our servers, and between our servers and Anthropic's API. This means data in transit is encrypted.</p>
+
+    <p class="prose">Data stored in your browser's localStorage is subject to the security of your device. We recommend:</p>
+
+    <div class="callout callout-amber">
+      <div class="callout-icon">🔐</div>
+      <div class="callout-body">
+        • Use a screen lock on your phone or computer<br>
+        • Don't use Advocate on shared or public devices<br>
+        • Print and securely store your ER Prep Card rather than relying solely on a digital version<br>
+        • Be cautious when emailing generated documents — email is not encrypted by default
+      </div>
+    </div>
+
+    <p class="prose">If you discover a security vulnerability in Advocate, please report it to us immediately at the contact below. We take security reports seriously and will respond promptly.</p>
+  </div>
+
+  <!-- 09 CHANGES -->
+  <div class="section" id="changes">
+    <div class="section-num">09</div>
+    <div class="section-title">Changes to This Policy</div>
+
+    <p class="prose">We may update this Privacy Policy as the app evolves. When we make material changes — particularly anything that increases the amount of data we collect or how we use it — we will:</p>
+
+    <p class="prose">• Update the "Last updated" date at the top of this page<br>
+    • Post a notice on the Advocate home screen for 30 days<br>
+    • If you have provided an email address, notify you directly</p>
+
+    <p class="prose">Your continued use of Advocate after changes become effective constitutes acceptance of the updated policy. If you don't agree with changes, you can stop using the app and clear your local data at any time.</p>
+  </div>
+
+  <!-- 10 CONTACT -->
+  <div class="section" id="contact">
+    <div class="section-num">10</div>
+    <div class="section-title">Contact Us</div>
+
+    <p class="prose" style="margin-bottom:20px;">If you have questions about this privacy policy, want to exercise your data rights, or have a security concern, please reach out. We are a small team built by medical moms, and we read every message.</p>
+
+    <div class="contact-card">
+      <div class="contact-title">Get in Touch</div>
+      <div class="contact-row">📧 <span>privacy@medadvocate.com <span style="color:var(--ink-muted); font-size:12px;">(update with your actual email)</span></span></div>
+      <div class="contact-row">🌐 <span>medadvocate.com/privacy</span></div>
+      <div class="contact-row">⏱ <span style="color:var(--ink-muted);">We aim to respond within 5 business days.</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- EMBEDDABLE DISCLAIMER -->
+  <div style="margin-bottom:12px;">
+    <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:12px;">📎 This disclaimer appears at the bottom of every Advocate tool:</div>
+    <div class="disclaimer-widget">
+      <div class="disclaimer-widget-icon">🌿</div>
+      <div>
+        <div class="disclaimer-widget-title">About MedAdvocate</div>
+        <div class="disclaimer-widget-text">
+          MedAdvocate is an organizational and communication tool for caregivers. It does not provide medical, legal, or financial advice. Content generated is for preparation purposes only and does not replace professional judgment. Health information you enter is processed via AI and stored only on your device — not on Advocate's servers. Advocate is not a HIPAA-covered entity.
+          <a href="advocate-privacy.html">Privacy Policy</a> ·
+          <a href="advocate-privacy.html#not-medical-advice">Full Disclaimer</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding: 20px 0 8px;">
+    <div style="font-family:'Fraunces',serif; font-size:18px; color:var(--ink-muted);">Med<span style="color:var(--sage);">cate</span></div>
+    <div style="font-size:12px; color:var(--ink-muted); font-weight:300; margin-top:6px;">Built by a medical mom, for medical moms. 🌿</div>
+  </div>
+
+</div><!-- end shell -->
+
+</body>
+</html>

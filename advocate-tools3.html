@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — ER Card, Insurance Appeal & Diagnosis Explainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+    --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;
+    --border:#b7d9c4;--white:#ffffff;
+    --red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;
+    --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+    --blue:#2980b9;--blue-pale:#eef4f9;--blue-border:#c0d8f0;
+    --violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;
+    --shadow-sm:0 2px 12px rgba(28,43,34,.06);
+    --shadow:0 4px 24px rgba(28,43,34,.10);
+    --shadow-lg:0 12px 48px rgba(28,43,34,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 5% 10%,rgba(192,57,43,.04) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 95% 90%,rgba(107,158,126,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+  .nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+  .nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+  .nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+  .nav-gem{width:30px;height:30px;background:#1b4332;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+  .nav-wordmark span{color:var(--sage)}
+
+  /* SHELL */
+  .shell{max-width:860px;margin:0 auto;padding:0 22px 100px;position:relative;z-index:1}
+
+  /* TOOL PICKER */
+  .tool-picker{padding:36px 0 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .pick-card{background:var(--white);border:2px solid var(--border);border-radius:18px;padding:22px 20px;cursor:pointer;transition:all .22s;text-align:left}
+  .pick-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+  .pick-card.sel-er{border-color:var(--red);background:var(--red-pale)}
+  .pick-card.sel-ins{border-color:var(--sage);background:var(--sage-pale)}
+  .pick-card.sel-diag{border-color:var(--violet);background:var(--violet-pale)}
+  .pick-icon{font-size:30px;margin-bottom:11px;display:block}
+  .pick-title{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:var(--ink);margin-bottom:4px}
+  .pick-sub{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+  .sub-er{color:var(--red)}.sub-ins{color:var(--sage-deep)}.sub-diag{color:var(--violet)}
+  .pick-desc{font-size:12px;color:var(--ink-soft);line-height:1.6;font-weight:300}
+
+  /* PANELS */
+  .tool-panel{display:none}
+  .tool-panel.active{display:block;animation:fadeUp .35s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+  /* FORM CARDS */
+  .fcard{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px 26px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+  .fcard-head{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
+  .fcard-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .ic-red{background:var(--red-pale);border:1px solid var(--red-border)}
+  .ic-sage{background:var(--sage-pale);border:1px solid var(--sage-light)}
+  .ic-amber{background:var(--amber-pale);border:1px solid var(--amber-light)}
+  .ic-blue{background:var(--blue-pale);border:1px solid var(--blue-border)}
+  .ic-violet{background:var(--violet-pale);border:1px solid var(--violet-border)}
+  .fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:3px}
+  .fcard-desc{font-size:13px;color:var(--ink-muted);line-height:1.6;font-weight:300}
+
+  /* INPUTS */
+  .field{margin-bottom:13px}.field:last-child{margin-bottom:0}
+  .flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+  .fhint{font-size:12px;color:var(--ink-muted);margin-bottom:6px;font-weight:300}
+  .finput,.ftextarea,.fselect{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
+  .finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+  .finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+  .ftextarea{min-height:84px;line-height:1.65}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+  /* TAG INPUT */
+  .tag-wrap{background:var(--warm);border:1.5px solid var(--border);border-radius:11px;padding:8px 11px;min-height:46px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text;transition:border-color .2s}
+  .tag-wrap:focus-within{border-color:var(--sage);background:var(--white)}
+  .vtag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:500}
+  .vtag-red{background:var(--red-pale);border:1px solid var(--red-border);color:var(--red)}
+  .vtag-sage{background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)}
+  .vtag-amber{background:var(--amber-pale);border:1px solid var(--amber-light);color:var(--amber)}
+  .vtag-violet{background:var(--violet-pale);border:1px solid var(--violet-border);color:var(--violet)}
+  .vtag-x{background:none;border:none;cursor:pointer;color:inherit;font-size:14px;padding:0;opacity:.6;transition:opacity .2s}
+  .vtag-x:hover{opacity:1}
+  .tinput{border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);flex:1;min-width:110px}
+  .tinput::placeholder{color:var(--ink-muted)}
+
+  /* CHIPS */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:400;color:var(--ink-soft);cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif}
+  .chip:hover{border-color:var(--sage-light);background:var(--sage-pale);color:var(--ink)}
+  .chip.on{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep);font-weight:500}
+
+  /* DYNAMIC ROWS */
+  .dyn-row{display:flex;gap:9px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .dyn-row .finput{flex:1;min-width:90px}
+  .dyn-rm{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:18px;padding:3px;transition:color .2s;flex-shrink:0}
+  .dyn-rm:hover{color:var(--red)}
+
+  /* AUDIENCE GRID */
+  .aud-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+  .aud-card{border:1.5px solid var(--border);border-radius:11px;padding:11px 13px;cursor:pointer;transition:all .2s;text-align:center}
+  .aud-card:hover{border-color:var(--violet-border);background:var(--violet-pale)}
+  .aud-card.sel{border-color:var(--violet);background:var(--violet-pale)}
+  .aud-icon{font-size:20px;margin-bottom:5px}
+  .aud-label{font-size:12px;font-weight:500;color:var(--ink-soft)}
+  .aud-card.sel .aud-label{color:var(--violet)}
+
+  /* GENERATE BUTTONS */
+  .gen-btn{width:100%;padding:18px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
+  .gen-er{background:var(--red);color:white;box-shadow:0 4px 20px rgba(192,57,43,.25)}
+  .gen-er:hover{background:#a93226;transform:translateY(-2px)}
+  .gen-ins{background:var(--ink);color:white;box-shadow:0 4px 20px rgba(28,43,34,.2)}
+  .gen-ins:hover{background:var(--ink-soft);transform:translateY(-2px)}
+  .gen-diag{background:var(--violet);color:white;box-shadow:0 4px 20px rgba(123,104,238,.25)}
+  .gen-diag:hover{background:#6858d0;transform:translateY(-2px)}
+  .gen-btn:active{transform:translateY(0)}
+  .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important}
+
+  /* LOADING */
+  .load-wrap{text-align:center;padding:70px 32px}
+  .load-ring{width:52px;height:52px;margin:0 auto 22px;border-radius:50%;border:2.5px solid var(--border);animation:spin 1s linear infinite}
+  .ring-er{border-top-color:var(--red)}.ring-ins{border-top-color:var(--sage)}.ring-diag{border-top-color:var(--violet)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .load-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:7px}
+  .load-sub{font-size:14px;color:var(--ink-muted);font-weight:300}
+  .load-steps{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .load-step{font-size:13px;color:var(--ink-muted);font-weight:300;opacity:0;animation:fadeUp .5s ease forwards}
+  .load-step:nth-child(1){animation-delay:.5s}
+  .load-step:nth-child(2){animation-delay:1.6s}
+  .load-step:nth-child(3){animation-delay:2.8s}
+
+  /* OUTPUT ACTIONS */
+  .out-actions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
+  .abtn{display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
+  .abtn-red{background:var(--red);color:white}.abtn-red:hover{background:#a93226}
+  .abtn-dark{background:var(--ink);color:white}.abtn-dark:hover{background:var(--ink-soft)}
+  .abtn-violet{background:var(--violet);color:white}.abtn-violet:hover{background:#6858d0}
+  .abtn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}
+  .abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+
+  /* ══ ER CARD OUTPUT ══ */
+  .er-card{background:white;border:3px solid var(--red);border-radius:18px;overflow:hidden;box-shadow:0 0 0 5px rgba(192,57,43,.07),var(--shadow-lg);animation:fadeUp .5s ease}
+  .er-top{background:var(--red);padding:22px 28px 18px;color:white}
+  .er-badge-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:7px}
+  .er-badge{background:rgba(255,255,255,.22);padding:4px 13px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  .er-updated{font-size:11px;color:rgba(255,255,255,.55);font-weight:300}
+  .er-name{font-family:'Fraunces',serif;font-size:28px;font-weight:400;line-height:1.1;margin-bottom:3px}
+  .er-dob{font-size:13px;color:rgba(255,255,255,.7);font-weight:300}
+  .er-alert{margin-top:13px;background:rgba(255,255,255,.2);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;letter-spacing:.02em}
+  .er-body{padding:22px 28px}
+  .er-sec{margin-bottom:20px}
+  .er-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:10px;padding-bottom:7px;border-bottom:1.5px solid var(--red-border)}
+  .er-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+  .er-tile{background:var(--warm);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .er-tile-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:4px}
+  .er-tile-val{font-family:'Fraunces',serif;font-size:14px;font-weight:400;color:var(--ink);line-height:1.3}
+  .er-list{display:flex;flex-direction:column;gap:6px}
+  .er-item{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:9px;font-size:13px;color:var(--ink-soft);font-weight:300;line-height:1.5}
+  .er-item-red{background:var(--red-pale);border:1px solid var(--red-border)}
+  .er-item-amber{background:var(--amber-pale);border:1px solid var(--amber-light)}
+  .er-item-sage{background:var(--sage-pale);border:1px solid var(--sage-light)}
+  .er-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .dot-red{background:var(--red)}.dot-amber{background:var(--amber)}.dot-sage{background:var(--sage)}
+  .med-tbl{width:100%;border-collapse:collapse}
+  .med-tbl th{text-align:left;padding:7px 11px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);border-bottom:1px solid var(--border);background:var(--warm)}
+  .med-tbl td{padding:9px 11px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--border);font-weight:300}
+  .med-tbl tr:last-child td{border-bottom:none}
+  .er-contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+  .er-contact{background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:10px;padding:12px 14px}
+  .er-contact-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px}
+  .er-contact-rel{font-size:11px;color:var(--ink-muted);margin-bottom:5px;font-weight:300}
+  .er-contact-phone{font-size:14px;font-weight:500;color:var(--sage-deep)}
+  .er-footer{background:var(--warm);border-top:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  .er-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
+  .er-footer-brand{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)}
+  .er-footer-brand span{color:var(--sage)}
+
+  /* ══ INSURANCE OUTPUT ══ */
+  .ins-out{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg);animation:fadeUp .5s ease}
+  .ins-top{background:var(--ink);color:white;padding:28px 36px}
+  .ins-badge{display:inline-block;background:var(--sage);color:white;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:4px 13px;border-radius:100px;margin-bottom:14px}
+  .ins-title{font-family:'Fraunces',serif;font-size:25px;font-weight:300;margin-bottom:5px}
+  .ins-sub{font-size:13px;color:rgba(255,255,255,.5);font-weight:300}
+  .ins-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px}
+  .ins-meta-lbl{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:3px}
+  .ins-meta-val{font-size:13px;color:rgba(255,255,255,.8)}
+  .ins-body{padding:30px 36px}
+  .ins-sec{margin-bottom:26px}
+  .ins-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .ins-letter{font-size:15px;line-height:1.85;color:var(--ink-soft);font-weight:300;white-space:pre-wrap}
+  .ins-letter strong{color:var(--ink);font-weight:500}
+  .key-phrases{display:flex;flex-direction:column;gap:7px}
+  .key-phrase{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-radius:10px;background:var(--sage-pale);border:1px solid var(--sage-light);font-size:14px;color:var(--ink-soft);font-weight:300}
+  .kp-dot{color:var(--sage);font-weight:700;flex-shrink:0}
+  .esc-steps{display:flex;flex-direction:column;gap:8px}
+  .esc-step{display:flex;align-items:flex-start;gap:12px;padding:12px 15px;border-radius:11px;background:var(--warm);border:1px solid var(--border)}
+  .esc-num{width:25px;height:25px;border-radius:50%;background:var(--ink);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .esc-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px}
+  .esc-desc{font-size:13px;color:var(--ink-soft);font-weight:300;line-height:1.55}
+  .ins-footer{background:var(--warm);border-top:1px solid var(--border);padding:13px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  .ins-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
+  .ins-footer-brand{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)}
+  .ins-footer-brand span{color:var(--sage)}
+
+  /* ══ DIAGNOSIS OUTPUT ══ */
+  .diag-out{background:var(--white);border:1px solid var(--violet-border);border-radius:20px;overflow:hidden;box-shadow:0 0 0 4px rgba(123,104,238,.07),var(--shadow-lg);animation:fadeUp .5s ease}
+  .diag-top{background:linear-gradient(135deg,#3d2a8a,#6858d0);color:white;padding:26px 34px}
+  .diag-badge{display:inline-block;background:rgba(255,255,255,.2);color:white;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:4px 13px;border-radius:100px;margin-bottom:12px}
+  .diag-name{font-family:'Fraunces',serif;font-size:30px;font-weight:400;margin-bottom:5px;line-height:1.15}
+  .diag-audience{font-size:13px;color:rgba(255,255,255,.6);font-weight:300}
+  .diag-body{padding:28px 34px}
+  .diag-sec{margin-bottom:24px;animation:fadeUp .4s ease both}
+  .diag-sec:nth-child(1){animation-delay:.1s}.diag-sec:nth-child(2){animation-delay:.2s}.diag-sec:nth-child(3){animation-delay:.3s}.diag-sec:nth-child(4){animation-delay:.4s}.diag-sec:nth-child(5){animation-delay:.5s}.diag-sec:nth-child(6){animation-delay:.6s}
+  .diag-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--violet-border)}
+  .diag-prose{font-size:15px;line-height:1.8;color:var(--ink-soft);font-weight:300}
+  .diag-prose strong{font-weight:500;color:var(--ink)}
+  .sym-tags{display:flex;flex-wrap:wrap;gap:7px}
+  .sym-tag{padding:6px 13px;background:var(--violet-pale);border:1px solid var(--violet-border);border-radius:100px;font-size:13px;color:var(--violet);font-weight:400}
+  .help-list{display:flex;flex-direction:column;gap:7px}
+  .help-item{display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-radius:10px;background:var(--sage-pale);border:1px solid var(--sage-light);font-size:14px;color:var(--ink-soft);font-weight:300}
+  .myth-list{display:flex;flex-direction:column;gap:8px}
+  .myth-item{border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+  .myth-wrong{background:var(--red-pale);padding:9px 14px;font-size:13px;color:var(--red);font-weight:400;border-bottom:1px solid var(--red-border)}
+  .myth-right{background:var(--sage-pale);padding:9px 14px;font-size:13px;color:var(--sage-deep);font-weight:300}
+  .share-box{background:linear-gradient(135deg,var(--violet-pale),#fff);border:1px solid var(--violet-border);border-radius:13px;padding:18px 20px}
+  .share-box-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);margin-bottom:10px}
+  .share-text{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink);line-height:1.75}
+  .diag-footer{background:var(--warm);border-top:1px solid var(--border);padding:12px 34px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  .diag-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
+  .diag-footer-brand{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)}
+  .diag-footer-brand span{color:var(--sage)}
+
+  /* PRINT */
+  @media print{
+    body{background:white}body::before{display:none}
+    nav,.tool-picker,.fcard,.out-actions,.no-print{display:none !important}
+    .shell{max-width:100%;padding:0}
+    .tool-panel{display:block !important}
+    .er-top,.ins-top,.diag-top{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .er-sec,.ins-sec,.diag-sec{break-inside:avoid}
+    @page{margin:12mm}
+  }
+
+  .err-note{background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:11px 15px;font-size:14px;color:var(--red);margin-top:9px;display:none}
+  .hidden{display:none !important}
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:640px){
+    .tool-picker{grid-template-columns:1fr}
+    .two-col{grid-template-columns:1fr}
+    .aud-grid{grid-template-columns:repeat(2,1fr)}
+    .er-body,.ins-body,.diag-body{padding:18px 16px}
+    .er-top,.ins-top,.diag-top{padding:18px 16px}
+    .er-footer,.ins-footer,.diag-footer{padding:11px 16px}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="nav-back" onclick="window.location.href='advocate-home.html'">← Home</button>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <!-- ══ TOOL PICKER ══ -->
+  <div class="tool-picker" id="toolPicker">
+    <div class="pick-card" id="pickER" onclick="selectTool('er')">
+      <span class="pick-icon">🚨</span>
+      <div class="pick-title">ER Prep Card</div>
+      <div class="pick-sub sub-er">For emergencies — day or night</div>
+      <div class="pick-desc">A printable card with everything ER doctors need in the first 60 seconds. Diagnoses, meds, allergies, triggers, emergency contacts.</div>
+    </div>
+    <div class="pick-card" id="pickIns" onclick="selectTool('ins')">
+      <span class="pick-icon">📨</span>
+      <div class="pick-title">Insurance Appeal</div>
+      <div class="pick-sub sub-ins">Fight a denial — and win</div>
+      <div class="pick-desc">Turn a denial into a professional appeal using the exact medical necessity language insurers are required to respond to.</div>
+    </div>
+    <div class="pick-card" id="pickDiag" onclick="selectTool('diag')">
+      <span class="pick-icon">💜</span>
+      <div class="pick-title">Explain My Diagnosis</div>
+      <div class="pick-sub sub-diag">Help others truly understand</div>
+      <div class="pick-desc">Generate a plain-English explanation tailored for family, teachers, coaches, or anyone who needs to understand what your child lives with.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ -->
+  <!-- ER PREP CARD                  -->
+  <!-- ══════════════════════════════ -->
+  <div class="tool-panel" id="panel-er">
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-red">👤</div><div><div class="fcard-title">Patient Information</div><div class="fcard-desc">Basic details that appear at the top of the card.</div></div></div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Patient Full Name</label><input type="text" class="finput" id="er_name" placeholder="e.g. Emma Grace Johnson"></div>
+        <div class="field"><label class="flabel">Date of Birth</label><input type="text" class="finput" id="er_dob" placeholder="e.g. March 15, 2016"></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Weight (optional)</label><input type="text" class="finput" id="er_weight" placeholder="e.g. 68 lbs"></div>
+        <div class="field"><label class="flabel">Blood Type (if known)</label><input type="text" class="finput" id="er_blood" placeholder="e.g. A positive"></div>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-red">🩺</div><div><div class="fcard-title">Diagnoses</div><div class="fcard-desc">All confirmed conditions — ER staff need these immediately.</div></div></div>
+      <div class="tag-wrap" id="er_diag_wrap" onclick="document.getElementById('er_diag_in').focus()">
+        <input type="text" class="tinput" id="er_diag_in" placeholder="Type diagnosis, press Enter…">
+      </div>
+      <div class="chips">
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">POTS</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">EDS</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">MCAS</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Dysautonomia</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Epilepsy</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Type 1 Diabetes</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Crohn's Disease</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Autism</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Cerebral Palsy</button>
+        <button class="chip" onclick="addTag('er_diag_in','er_diag_wrap','vtag-red',this)">Juvenile Arthritis</button>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-red">⚠️</div><div><div class="fcard-title">Allergies & Things to Avoid</div><div class="fcard-desc">Anything that could cause a serious reaction — goes prominently on the card.</div></div></div>
+      <div class="field">
+        <label class="flabel">Drug / Food Allergies</label>
+        <div class="tag-wrap" id="er_allergy_wrap" onclick="document.getElementById('er_allergy_in').focus()">
+          <input type="text" class="tinput" id="er_allergy_in" placeholder="e.g. Penicillin — anaphylaxis, press Enter…">
+        </div>
+        <div class="chips">
+          <button class="chip" onclick="addTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Penicillin</button>
+          <button class="chip" onclick="addTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Sulfa drugs</button>
+          <button class="chip" onclick="addTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Latex</button>
+          <button class="chip" onclick="addTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Contrast dye</button>
+          <button class="chip" onclick="addTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">NSAIDs</button>
+          <button class="chip" onclick="addTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Tree nuts</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label class="flabel">Treatments / Procedures to Avoid</label>
+        <div class="tag-wrap" id="er_avoid_wrap" onclick="document.getElementById('er_avoid_in').focus()">
+          <input type="text" class="tinput" id="er_avoid_in" placeholder="e.g. IV fluids too fast — worsens POTS, press Enter…">
+        </div>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-amber">💊</div><div><div class="fcard-title">Current Medications</div><div class="fcard-desc">Include dose and frequency. Critical for ER drug interaction checks.</div></div></div>
+      <div id="med_rows"></div>
+      <button class="chip" style="margin-top:9px;padding:7px 15px" onclick="addMedRow()">+ Add medication</button>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-amber">⚡</div><div><div class="fcard-title">Triggers & Special Instructions</div><div class="fcard-desc">What ER staff must know that isn't obvious from the diagnoses alone.</div></div></div>
+      <div class="field">
+        <label class="flabel">Known Triggers</label>
+        <div class="tag-wrap" id="er_trigger_wrap" onclick="document.getElementById('er_trigger_in').focus()">
+          <input type="text" class="tinput" id="er_trigger_in" placeholder="e.g. Bright lights worsen migraines, press Enter…">
+        </div>
+        <div class="chips">
+          <button class="chip" onclick="addTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Bright lights</button>
+          <button class="chip" onclick="addTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Loud noises</button>
+          <button class="chip" onclick="addTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Heat / overheating</button>
+          <button class="chip" onclick="addTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Standing too long</button>
+          <button class="chip" onclick="addTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Fasting</button>
+          <button class="chip" onclick="addTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Certain smells</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label class="flabel">Special Care Instructions</label>
+        <div class="fhint">e.g. "Use pediatric BP cuff", "Do not use right arm for IV", "Patient has joint hypermobility — use caution"</div>
+        <textarea class="ftextarea" id="er_special" placeholder="Anything the ER team needs to know to care for this patient safely…"></textarea>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-sage">📞</div><div><div class="fcard-title">Emergency Contacts</div><div class="fcard-desc">Who to call and in what order.</div></div></div>
+      <div id="ec_rows"></div>
+      <button class="chip" style="margin-top:9px;padding:7px 15px" onclick="addECRow()">+ Add contact</button>
+      <div class="field" style="margin-top:16px">
+        <label class="flabel">Primary Care / Main Doctor</label>
+        <div class="two-col">
+          <input type="text" class="finput" id="er_pcp_name" placeholder="Dr. Name">
+          <input type="tel" class="finput" id="er_pcp_phone" placeholder="Phone number">
+        </div>
+      </div>
+    </div>
+
+    <div class="err-note" id="er_err">Please enter the patient's name and at least one diagnosis.</div>
+    <button class="gen-btn gen-er" onclick="generateER()">🚨 Generate ER Prep Card</button>
+    <p style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;font-style:italic;">Print this and keep one in your wallet, your car, and on the fridge. 🌿</p>
+
+    <div id="er_out" class="hidden" style="margin-top:26px">
+      <div class="out-actions no-print">
+        <button class="abtn abtn-red" onclick="window.print()">🖨️ Print Card</button>
+        <button class="abtn abtn-outline" onclick="copyText('er_copy_text')">📋 Copy</button>
+        <button class="abtn abtn-outline" onclick="document.getElementById('er_out').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'})">✏️ Edit</button>
+      </div>
+      <div id="er_card_html"></div>
+      <textarea id="er_copy_text" style="position:absolute;opacity:0;pointer-events:none"></textarea>
+    </div>
+  </div><!-- end panel-er -->
+
+  <!-- ══════════════════════════════ -->
+  <!-- INSURANCE APPEAL              -->
+  <!-- ══════════════════════════════ -->
+  <div class="tool-panel" id="panel-ins">
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-sage">📄</div><div><div class="fcard-title">The Denial</div><div class="fcard-desc">What was denied and why. The more detail, the stronger the appeal.</div></div></div>
+      <div class="field">
+        <label class="flabel">What was denied?</label>
+        <input type="text" class="finput" id="ins_denied" placeholder="e.g. Tilt table test, IVIG infusion, Florinef prescription, PT for hypermobility">
+      </div>
+      <div class="field">
+        <label class="flabel">Denial reason given (from the letter)</label>
+        <textarea class="ftextarea" id="ins_reason" placeholder="Copy the exact reason from the denial letter, or summarize it. e.g. 'Not medically necessary', 'Experimental/investigational', 'Prior authorization not obtained'"></textarea>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label class="flabel">Insurance Company</label>
+          <input type="text" class="finput" id="ins_company" placeholder="e.g. BlueCross BlueShield">
+        </div>
+        <div class="field">
+          <label class="flabel">Claim / Reference Number</label>
+          <input type="text" class="finput" id="ins_claim" placeholder="From your denial letter">
+        </div>
+      </div>
+      <div class="field">
+        <label class="flabel">Date of Denial</label>
+        <input type="text" class="finput" id="ins_date" placeholder="e.g. March 28, 2026">
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-sage">👤</div><div><div class="fcard-title">Patient & Medical Context</div><div class="fcard-desc">Who this is for and why this treatment is medically necessary.</div></div></div>
+      <div class="two-col">
+        <div class="field">
+          <label class="flabel">Patient Name</label>
+          <input type="text" class="finput" id="ins_patient" placeholder="e.g. Emma Johnson">
+        </div>
+        <div class="field">
+          <label class="flabel">Patient DOB</label>
+          <input type="text" class="finput" id="ins_dob" placeholder="e.g. March 15, 2016">
+        </div>
+      </div>
+      <div class="field">
+        <label class="flabel">Diagnoses</label>
+        <div class="tag-wrap" id="ins_diag_wrap" onclick="document.getElementById('ins_diag_in').focus()">
+          <input type="text" class="tinput" id="ins_diag_in" placeholder="Type diagnosis, press Enter…">
+        </div>
+      </div>
+      <div class="field">
+        <label class="flabel">Why this treatment is medically necessary</label>
+        <div class="fhint">Be specific. Include what symptoms it treats, what has failed before, and what the doctor says.</div>
+        <textarea class="ftextarea" id="ins_necessity" placeholder="e.g. Emma has been diagnosed with POTS and MCAS. She has tried beta blockers and salt loading without sufficient improvement. Her cardiologist Dr. Webb has recommended IVIG based on published clinical evidence for her condition. Without treatment, she misses 3+ school days per week and cannot stand for more than 5 minutes."></textarea>
+      </div>
+      <div class="field">
+        <label class="flabel">Ordering Doctor & Specialty</label>
+        <input type="text" class="finput" id="ins_doctor" placeholder="e.g. Dr. Marcus Webb, Pediatric Cardiologist, Johns Hopkins">
+      </div>
+      <div class="field">
+        <label class="flabel">What happens if this is NOT approved?</label>
+        <textarea class="ftextarea" id="ins_consequences" placeholder="e.g. Without this test, we cannot diagnose or treat Emma's recurring syncope episodes, which have resulted in 2 ER visits in the past 3 months. Her condition will continue to deteriorate without proper diagnosis."></textarea>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-amber">📋</div><div><div class="fcard-title">Appeal Details</div><div class="fcard-desc">Additional context that strengthens your case.</div></div></div>
+      <div class="field">
+        <label class="flabel">Is this a first appeal or second/final appeal?</label>
+        <select class="fselect" id="ins_appeal_level">
+          <option value="first internal">First internal appeal (most common first step)</option>
+          <option value="second internal">Second internal appeal</option>
+          <option value="external independent review">External / independent medical review</option>
+          <option value="state insurance commissioner complaint">State insurance commissioner complaint</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="flabel">Do you have supporting documentation?</label>
+        <div class="tag-wrap" id="ins_docs_wrap" onclick="document.getElementById('ins_docs_in').focus()">
+          <input type="text" class="tinput" id="ins_docs_in" placeholder="e.g. Doctor's letter of medical necessity, press Enter…">
+        </div>
+        <div class="chips">
+          <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Letter of medical necessity</button>
+          <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Peer-reviewed research</button>
+          <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Prior authorization records</button>
+          <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Lab results</button>
+          <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Hospital records</button>
+          <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Treatment failure history</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="flabel">Subscriber / Policy Holder Name</label>
+        <input type="text" class="finput" id="ins_subscriber" placeholder="The person whose name is on the insurance policy">
+      </div>
+    </div>
+
+    <div class="err-note" id="ins_err">Please fill in what was denied and the patient name.</div>
+    <button class="gen-btn gen-ins" onclick="generateIns()">📨 Generate Appeal Letter</button>
+    <p style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;font-style:italic;">Insurance companies deny first and hope you don't appeal. Most people who appeal, win. 🌿</p>
+
+    <div id="ins_out" class="hidden" style="margin-top:26px">
+      <div class="out-actions no-print">
+        <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print Letter</button>
+        <button class="abtn abtn-outline" onclick="copyText('ins_copy_text')">📋 Copy</button>
+        <button class="abtn abtn-outline" onclick="document.getElementById('ins_out').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'})">✏️ Edit</button>
+      </div>
+      <div id="ins_card_html"></div>
+      <textarea id="ins_copy_text" style="position:absolute;opacity:0;pointer-events:none"></textarea>
+    </div>
+  </div><!-- end panel-ins -->
+
+  <!-- ══════════════════════════════ -->
+  <!-- EXPLAIN MY DIAGNOSIS          -->
+  <!-- ══════════════════════════════ -->
+  <div class="tool-panel" id="panel-diag">
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-violet">💜</div><div><div class="fcard-title">The Diagnosis</div><div class="fcard-desc">What condition do you want to explain?</div></div></div>
+      <div class="field">
+        <label class="flabel">Diagnosis or Condition Name</label>
+        <input type="text" class="finput" id="diag_name" placeholder="e.g. POTS, EDS, MCAS, Crohn's Disease, Juvenile Arthritis…">
+      </div>
+      <div class="field">
+        <label class="flabel">Patient's name (optional)</label>
+        <input type="text" class="finput" id="diag_patient" placeholder="e.g. Emma — personalizes the explanation">
+      </div>
+      <div class="field">
+        <label class="flabel">Their specific symptoms (optional but powerful)</label>
+        <div class="fhint">Adding real symptoms makes the explanation feel personal, not generic.</div>
+        <div class="tag-wrap" id="diag_sym_wrap" onclick="document.getElementById('diag_sym_in').focus()">
+          <input type="text" class="tinput" id="diag_sym_in" placeholder="e.g. faints when standing, chronic fatigue, joint pain, press Enter…">
+        </div>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="fcard-head"><div class="fcard-icon ic-violet">🎯</div><div><div class="fcard-title">Who Is This For?</div><div class="fcard-desc">The explanation changes completely depending on the audience. Choose who needs to understand.</div></div></div>
+      <div class="aud-grid" id="audGrid">
+        <div class="aud-card sel" onclick="selectAud(this,'family')" data-aud="family"><div class="aud-icon">👨‍👩‍👧</div><div class="aud-label">Family</div></div>
+        <div class="aud-card" onclick="selectAud(this,'teacher')" data-aud="teacher"><div class="aud-icon">🏫</div><div class="aud-label">Teacher / School</div></div>
+        <div class="aud-card" onclick="selectAud(this,'coach')" data-aud="coach"><div class="aud-icon">⚽</div><div class="aud-label">Coach / Trainer</div></div>
+        <div class="aud-card" onclick="selectAud(this,'friend')" data-aud="friend"><div class="aud-icon">👫</div><div class="aud-label">Friends / Peers</div></div>
+        <div class="aud-card" onclick="selectAud(this,'employer')" data-aud="employer"><div class="aud-icon">💼</div><div class="aud-label">Employer / HR</div></div>
+        <div class="aud-card" onclick="selectAud(this,'newdoctor')" data-aud="newdoctor"><div class="aud-icon">🩺</div><div class="aud-label">New Doctor</div></div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label class="flabel">Any specific context for this conversation? (optional)</label>
+        <textarea class="ftextarea" id="diag_context" placeholder="e.g. Emma's teacher keeps asking her to run the mile even on bad days. I want to explain why she physically cannot do this without it looking like she's being difficult."></textarea>
+      </div>
+    </div>
+
+    <div class="err-note" id="diag_err">Please enter the diagnosis name.</div>
+    <button class="gen-btn gen-diag" onclick="generateDiag()">💜 Generate Explanation</button>
+    <p style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;font-style:italic;">Because "she just doesn't feel well" is not an explanation — and you deserve better words. 🌿</p>
+
+    <div id="diag_out" class="hidden" style="margin-top:26px">
+      <div class="out-actions no-print">
+        <button class="abtn abtn-violet" onclick="window.print()">🖨️ Print</button>
+        <button class="abtn abtn-outline" onclick="copyText('diag_copy_text')">📋 Copy</button>
+        <button class="abtn abtn-outline" onclick="emailDiag()">✉️ Email</button>
+        <button class="abtn abtn-outline" onclick="document.getElementById('diag_out').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'})">✏️ Edit</button>
+      </div>
+      <div id="diag_card_html"></div>
+      <textarea id="diag_copy_text" style="position:absolute;opacity:0;pointer-events:none"></textarea>
+    </div>
+  </div><!-- end panel-diag -->
+
+</div><!-- end shell -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── TOOL SELECTION ──
+let activeTool = null;
+function selectTool(t) {
+  activeTool = t;
+  // Show/hide panels
+  ['er','ins','diag'].forEach(id => {
+    document.getElementById('panel-' + id).classList.toggle('active', id === t);
+  });
+  // Update picker card styles
+  document.getElementById('pickER').className   = 'pick-card' + (t==='er'   ? ' sel-er'   : '');
+  document.getElementById('pickIns').className  = 'pick-card' + (t==='ins'  ? ' sel-ins'  : '');
+  document.getElementById('pickDiag').className = 'pick-card' + (t==='diag' ? ' sel-diag' : '');
+  setTimeout(() => document.getElementById('panel-'+t).scrollIntoView({behavior:'smooth',block:'start'}), 50);
+}
+
+// ── TAG INPUT ──
+function setupTag(inputId, wrapId) {
+  const inp = document.getElementById(inputId);
+  const wrap = document.getElementById(wrapId);
+  inp.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) {
+      e.preventDefault();
+      createTag(inp.value.trim(), wrap, inp, inp.dataset.tagclass || 'vtag-sage');
+    }
+    if (e.key === 'Backspace' && !inp.value) {
+      const tags = wrap.querySelectorAll('.vtag');
+      if (tags.length) tags[tags.length-1].remove();
+    }
+  });
+}
+
+function createTag(text, wrap, inp, cls) {
+  const t = document.createElement('span');
+  t.className = 'vtag ' + (cls || 'vtag-sage');
+  t.innerHTML = escH(text) + '<button class="vtag-x" onclick="this.parentElement.remove()">×</button>';
+  wrap.insertBefore(t, inp);
+}
+
+function addTag(inputId, wrapId, cls, btn) {
+  const wrap = document.getElementById(wrapId);
+  const inp = document.getElementById(inputId);
+  inp.dataset.tagclass = cls;
+  createTag(btn.textContent.trim(), wrap, inp, cls);
+  btn.classList.add('on'); btn.disabled = true;
+}
+
+function getTags(wrapId) {
+  return [...document.getElementById(wrapId).querySelectorAll('.vtag')]
+    .map(t => t.textContent.replace('×','').trim()).filter(Boolean);
+}
+
+// Setup all tag inputs
+[['er_diag_in','er_diag_wrap'],['er_allergy_in','er_allergy_wrap'],['er_avoid_in','er_avoid_wrap'],
+ ['er_trigger_in','er_trigger_wrap'],['ins_diag_in','ins_diag_wrap'],
+ ['ins_docs_in','ins_docs_wrap'],['diag_sym_in','diag_sym_wrap']]
+  .forEach(([i,w]) => setupTag(i,w));
+
+// ── DYNAMIC ROWS — MEDICATIONS ──
+let medCount = 0;
+function addMedRow(name='',dose='',freq='') {
+  const id = medCount++;
+  const div = document.createElement('div');
+  div.className = 'dyn-row'; div.id = 'med-' + id;
+  div.innerHTML = `
+    <input type="text" class="finput" placeholder="Medication name" value="${escH(name)}" style="flex:2">
+    <input type="text" class="finput" placeholder="Dose" value="${escH(dose)}" style="flex:1">
+    <input type="text" class="finput" placeholder="Frequency" value="${escH(freq)}" style="flex:1">
+    <button class="dyn-rm" onclick="document.getElementById('med-${id}').remove()">×</button>`;
+  document.getElementById('med_rows').appendChild(div);
+}
+addMedRow();
+
+function getMeds() {
+  return [...document.querySelectorAll('#med_rows .dyn-row')].map(r => {
+    const ins = r.querySelectorAll('input');
+    return { name: ins[0].value.trim(), dose: ins[1].value.trim(), freq: ins[2].value.trim() };
+  }).filter(m => m.name);
+}
+
+// ── DYNAMIC ROWS — EMERGENCY CONTACTS ──
+let ecCount = 0;
+function addECRow(name='',rel='',phone='') {
+  const id = ecCount++;
+  const div = document.createElement('div');
+  div.className = 'dyn-row'; div.id = 'ec-' + id;
+  div.innerHTML = `
+    <input type="text" class="finput" placeholder="Name" value="${escH(name)}" style="flex:2">
+    <input type="text" class="finput" placeholder="Relationship" value="${escH(rel)}" style="flex:1">
+    <input type="tel" class="finput" placeholder="Phone" value="${escH(phone)}" style="flex:1.5">
+    <button class="dyn-rm" onclick="document.getElementById('ec-${id}').remove()">×</button>`;
+  document.getElementById('ec_rows').appendChild(div);
+}
+addECRow(); addECRow();
+
+function getECs() {
+  return [...document.querySelectorAll('#ec_rows .dyn-row')].map(r => {
+    const ins = r.querySelectorAll('input');
+    return { name: ins[0].value.trim(), rel: ins[1].value.trim(), phone: ins[2].value.trim() };
+  }).filter(ec => ec.name);
+}
+
+// ── AUDIENCE SELECTION ──
+let selectedAud = 'family';
+function selectAud(el, aud) {
+  selectedAud = aud;
+  document.querySelectorAll('.aud-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ── CLAUDE API ──
+async function callClaude(system, user) {
+  const r = await fetch('/.netlify/functions/claude-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json',
+          'x-api-key': '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',
+          'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system,
+      messages: [{ role: 'user', content: user }]
+    })
+  });
+  const d = await r.json();
+  const text = d.content?.[0]?.text || '';
+  return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+// ══ GENERATE ER CARD ══
+async function generateER() {
+  const name = document.getElementById('er_name').value.trim();
+  const diags = getTags('er_diag_wrap');
+  if (!name || !diags.length) { showErr('er_err','Please enter the patient name and at least one diagnosis.'); return; }
+  document.getElementById('er_err').style.display = 'none';
+
+  showLoad('er_out', 'er', 'Building your ER prep card…', ['🚨 Organizing critical information…','💊 Formatting medications safely…','📋 Compiling care instructions…']);
+
+  const data = {
+    name, dob: document.getElementById('er_dob').value.trim(),
+    weight: document.getElementById('er_weight').value.trim(),
+    blood: document.getElementById('er_blood').value.trim(),
+    diagnoses: diags, allergies: getTags('er_allergy_wrap'),
+    avoid: getTags('er_avoid_wrap'), meds: getMeds(),
+    triggers: getTags('er_trigger_wrap'),
+    special: document.getElementById('er_special').value.trim(),
+    contacts: getECs(),
+    pcpName: document.getElementById('er_pcp_name').value.trim(),
+    pcpPhone: document.getElementById('er_pcp_phone').value.trim()
+  };
+
+  try {
+    const result = await callClaude(
+      `You generate ER prep card content for a medically complex patient. Return ONLY valid JSON:
+{
+  "complexityLevel": "HIGH COMPLEXITY PATIENT | MODERATE COMPLEXITY | MANAGED CONDITIONS",
+  "alertMessage": "One critical sentence ER staff must read first — include the most important safety consideration",
+  "criticalNotes": ["2-4 bullet points of the most critical things ER staff must know immediately"],
+  "medicationNotes": "One sentence about medication interactions or special considerations if relevant, else null",
+  "conditionSummary": "2-3 sentences describing the overall medical picture in clinical language"
+}`,
+      JSON.stringify(data)
+    );
+
+    const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const medsRows = data.meds.map(m => `<tr><td><strong>${escH(m.name)}</strong></td><td>${escH(m.dose)}</td><td>${escH(m.freq)}</td></tr>`).join('');
+    const contactsHTML = [...data.contacts.map(c => `<div class="er-contact"><div class="er-contact-name">${escH(c.name)}</div><div class="er-contact-rel">${escH(c.rel)}</div><div class="er-contact-phone">${escH(c.phone)}</div></div>`),
+      data.pcpName ? `<div class="er-contact"><div class="er-contact-name">${escH(data.pcpName)}</div><div class="er-contact-rel">Primary Care Doctor</div><div class="er-contact-phone">${escH(data.pcpPhone)}</div></div>` : ''
+    ].join('');
+
+    const html = `
+    <div class="er-card">
+      <div class="er-top">
+        <div class="er-badge-row">
+          <div class="er-badge">🚨 Emergency Medical Card — MedAdvocate</div>
+          <div class="er-updated">Updated ${today}</div>
+        </div>
+        <div class="er-name">${escH(data.name)}</div>
+        <div class="er-dob">${data.dob ? 'DOB: '+escH(data.dob) : ''}${data.blood ? ' · Blood Type: '+escH(data.blood) : ''}${data.weight ? ' · Weight: '+escH(data.weight) : ''}</div>
+        <div class="er-alert">⚠️ ${result.complexityLevel} — ${escH(result.alertMessage)}</div>
+      </div>
+      <div class="er-body">
+
+        <div class="er-sec">
+          <div class="er-sec-title">Diagnoses</div>
+          <div class="er-list">${data.diagnoses.map(d=>`<div class="er-item er-item-red"><div class="er-dot dot-red"></div>${escH(d)}</div>`).join('')}</div>
+        </div>
+
+        ${data.allergies.length || data.avoid.length ? `
+        <div class="er-sec">
+          <div class="er-sec-title">⚠️ Allergies & Do NOT Use</div>
+          <div class="er-list">
+            ${data.allergies.map(a=>`<div class="er-item er-item-red"><div class="er-dot dot-red"></div><strong>ALLERGY:</strong>&nbsp;${escH(a)}</div>`).join('')}
+            ${data.avoid.map(a=>`<div class="er-item er-item-amber"><div class="er-dot dot-amber"></div><strong>AVOID:</strong>&nbsp;${escH(a)}</div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${data.meds.length ? `
+        <div class="er-sec">
+          <div class="er-sec-title">Current Medications</div>
+          <table class="med-tbl"><thead><tr><th>Medication</th><th>Dose</th><th>Frequency</th></tr></thead><tbody>${medsRows}</tbody></table>
+          ${result.medicationNotes ? `<div style="margin-top:9px;font-size:13px;color:var(--ink-muted);font-style:italic">💊 ${escH(result.medicationNotes)}</div>` : ''}
+        </div>` : ''}
+
+        ${data.triggers.length ? `
+        <div class="er-sec">
+          <div class="er-sec-title">Known Triggers</div>
+          <div class="er-list">${data.triggers.map(t=>`<div class="er-item er-item-amber"><div class="er-dot dot-amber"></div>${escH(t)}</div>`).join('')}</div>
+        </div>` : ''}
+
+        ${result.criticalNotes?.length ? `
+        <div class="er-sec">
+          <div class="er-sec-title">Critical Care Notes</div>
+          <div class="er-list">${result.criticalNotes.map(n=>`<div class="er-item er-item-sage"><div class="er-dot dot-sage"></div>${escH(n)}</div>`).join('')}</div>
+        </div>` : ''}
+
+        ${data.special ? `
+        <div class="er-sec">
+          <div class="er-sec-title">Special Instructions</div>
+          <div class="er-item er-item-sage" style="font-size:14px"><div class="er-dot dot-sage"></div>${escH(data.special)}</div>
+        </div>` : ''}
+
+        ${contactsHTML ? `
+        <div class="er-sec">
+          <div class="er-sec-title">Emergency Contacts</div>
+          <div class="er-contacts-grid">${contactsHTML}</div>
+        </div>` : ''}
+
+      </div>
+      <div class="er-footer">
+        <div class="er-footer-note">Print and keep in wallet, car, and at home. Update whenever medications or conditions change.</div>
+        <div class="er-footer-brand">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+      </div>
+    </div>`;
+
+    document.getElementById('er_card_html').innerHTML = html;
+    document.getElementById('er_copy_text').value = buildERText(data, result);
+    document.getElementById('er_out').classList.remove('hidden');
+    document.getElementById('er_out').scrollIntoView({behavior:'smooth',block:'start'});
+
+  } catch(e) { showErr('er_err','Something went wrong. Please try again.'); console.error(e); }
+  finally { hideLoad(); }
+}
+
+function buildERText(data, result) {
+  const lines = [
+    '🚨 EMERGENCY MEDICAL CARD — ADVOCATE',
+    '='.repeat(40),
+    `PATIENT: ${data.name}`,
+    data.dob ? `DOB: ${data.dob}` : '',
+    data.blood ? `Blood Type: ${data.blood}` : '',
+    data.weight ? `Weight: ${data.weight}` : '',
+    '',`⚠️ ${result.complexityLevel}`,
+    result.alertMessage,'',
+    'DIAGNOSES:', ...data.diagnoses.map(d=>'  • '+d),'',
+    data.allergies.length ? 'ALLERGIES:\n' + data.allergies.map(a=>'  🚫 '+a).join('\n') : '',
+    data.avoid.length ? 'DO NOT USE:\n' + data.avoid.map(a=>'  🚫 '+a).join('\n') : '',
+    data.meds.length ? '\nMEDICATIONS:\n' + data.meds.map(m=>`  • ${m.name} ${m.dose} ${m.freq}`).join('\n') : '',
+    data.triggers.length ? '\nTRIGGERS:\n' + data.triggers.map(t=>'  ⚡ '+t).join('\n') : '',
+    data.special ? '\nSPECIAL INSTRUCTIONS:\n  '+data.special : '',
+    '\nEMERGENCY CONTACTS:', ...data.contacts.map(c=>`  ${c.name} (${c.rel}): ${c.phone}`),
+    data.pcpName ? `  Dr. ${data.pcpName}: ${data.pcpPhone}` : ''
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
+// ══ GENERATE INSURANCE APPEAL ══
+async function generateIns() {
+  const denied = document.getElementById('ins_denied').value.trim();
+  const patient = document.getElementById('ins_patient').value.trim();
+  if (!denied || !patient) { showErr('ins_err','Please fill in what was denied and the patient name.'); return; }
+  document.getElementById('ins_err').style.display = 'none';
+
+  showLoad('ins_out','ins','Writing your appeal letter…',['⚖️ Identifying legal and medical grounds…','📝 Drafting medical necessity argument…','🛡️ Building escalation strategy…']);
+
+  const data = {
+    denied, patient, dob: document.getElementById('ins_dob').value.trim(),
+    diagnoses: getTags('ins_diag_wrap'),
+    reason: document.getElementById('ins_reason').value.trim(),
+    company: document.getElementById('ins_company').value.trim(),
+    claim: document.getElementById('ins_claim').value.trim(),
+    date: document.getElementById('ins_date').value.trim(),
+    necessity: document.getElementById('ins_necessity').value.trim(),
+    doctor: document.getElementById('ins_doctor').value.trim(),
+    consequences: document.getElementById('ins_consequences').value.trim(),
+    appealLevel: document.getElementById('ins_appeal_level').value,
+    docs: getTags('ins_docs_wrap'),
+    subscriber: document.getElementById('ins_subscriber').value.trim()
+  };
+
+  try {
+    const result = await callClaude(
+      `You are an expert patient advocate helping write insurance appeal letters. Return ONLY valid JSON:
+{
+  "subject": "Appeal letter subject line",
+  "letter": "The complete formal appeal letter. Use \\n for line breaks. Include: date placeholder [DATE], formal salutation, clear statement of denial being appealed, medical necessity argument citing clinical evidence, legal basis (ACA, state laws, plan documents), request for specific action, and professional closing. Make it firm, factual, and impossible to ignore.",
+  "keyPhrases": ["5-6 legally/medically powerful phrases used in the letter that strengthen the appeal"],
+  "escalationSteps": [
+    {"step": "Step title", "description": "What to do and when — be specific"}
+  ],
+  "tip": "One insider tip about this specific type of denial or insurance company"
+}
+Write the letter as if you are a patient advocate with 20 years of experience. Cite ACA Section 2719, internal appeal rights, and external review rights where applicable.`,
+      JSON.stringify(data)
+    );
+
+    const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const letterFormatted = result.letter.replace('[DATE]', today);
+    const phrasesHTML = (result.keyPhrases||[]).map(p=>`<div class="key-phrase"><span class="kp-dot">✦</span>${escH(p)}</div>`).join('');
+    const escHTML = (result.escalationSteps||[]).map((s,i)=>`<div class="esc-step"><div class="esc-num">${i+1}</div><div><div class="esc-title">${escH(s.step)}</div><div class="esc-desc">${escH(s.description)}</div></div></div>`).join('');
+
+    const html = `
+    <div class="ins-out">
+      <div class="ins-top">
+        <div class="ins-badge">✦ Insurance Appeal — MedAdvocate</div>
+        <div class="ins-title">Appeal for: ${escH(data.denied)}</div>
+        <div class="ins-sub">Denied by ${data.company || 'Insurance Company'} · ${data.date || today}</div>
+        <div class="ins-meta">
+          ${data.patient ? `<div><div class="ins-meta-lbl">Patient</div><div class="ins-meta-val">${escH(data.patient)}</div></div>` : ''}
+          ${data.claim ? `<div><div class="ins-meta-lbl">Claim #</div><div class="ins-meta-val">${escH(data.claim)}</div></div>` : ''}
+          <div><div class="ins-meta-lbl">Appeal Level</div><div class="ins-meta-val">${escH(data.appealLevel)}</div></div>
+          <div><div class="ins-meta-lbl">Prepared</div><div class="ins-meta-val">${today}</div></div>
+        </div>
+      </div>
+      <div class="ins-body">
+        <div class="ins-sec">
+          <div class="ins-sec-title">Appeal Letter</div>
+          <div class="ins-letter">${escH(letterFormatted)}</div>
+        </div>
+        <div class="ins-sec">
+          <div class="ins-sec-title">Key Legal & Medical Phrases Used</div>
+          <div class="key-phrases">${phrasesHTML}</div>
+        </div>
+        ${result.tip ? `<div class="ins-sec"><div class="ins-sec-title">Insider Tip</div><div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:12px;padding:14px 18px;font-size:14px;color:var(--ink-soft);font-weight:300;line-height:1.65">💡 ${escH(result.tip)}</div></div>` : ''}
+        <div class="ins-sec">
+          <div class="ins-sec-title">If They Deny Again — Escalation Steps</div>
+          <div class="esc-steps">${escHTML}</div>
+        </div>
+      </div>
+      <div class="ins-footer">
+        <div class="ins-footer-note">Send via certified mail with return receipt. Keep copies of everything. You have rights.</div>
+        <div class="ins-footer-brand">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+      </div>
+    </div>`;
+
+    document.getElementById('ins_card_html').innerHTML = html;
+    document.getElementById('ins_copy_text').value = letterFormatted;
+    document.getElementById('ins_out').classList.remove('hidden');
+    document.getElementById('ins_out').scrollIntoView({behavior:'smooth',block:'start'});
+
+  } catch(e) { showErr('ins_err','Something went wrong. Please try again.'); console.error(e); }
+  finally { hideLoad(); }
+}
+
+// ══ GENERATE DIAGNOSIS EXPLANATION ══
+async function generateDiag() {
+  const diagName = document.getElementById('diag_name').value.trim();
+  if (!diagName) { showErr('diag_err','Please enter the diagnosis name.'); return; }
+  document.getElementById('diag_err').style.display = 'none';
+
+  const audLabels = { family:'Family Members', teacher:'Teachers & School Staff', coach:'Coaches & Trainers', friend:'Friends & Peers', employer:'Employer / HR', newdoctor:'New Doctor / Provider' };
+
+  showLoad('diag_out','diag',`Explaining ${diagName}…`,['💜 Translating medical language…','🎯 Tailoring for your audience…','✨ Crafting the right words…']);
+
+  const data = {
+    diagnosis: diagName,
+    patient: document.getElementById('diag_patient').value.trim(),
+    symptoms: getTags('diag_sym_wrap'),
+    audience: selectedAud,
+    audienceLabel: audLabels[selectedAud] || selectedAud,
+    context: document.getElementById('diag_context').value.trim()
+  };
+
+  try {
+    const result = await callClaude(
+      `You help parents explain a child's medical diagnosis to others. The explanation must be warm, clear, and completely free of medical jargon. Return ONLY valid JSON:
+{
+  "tagline": "One powerful sentence that captures what this condition really means day-to-day (not clinical — human)",
+  "whatItIs": "2-3 sentences explaining what the condition is in plain language, appropriate for the specified audience. No jargon.",
+  "whatItFeelsLike": "2-3 sentences describing what the patient actually experiences — use relatable analogies where possible",
+  "symptoms": ["list of symptoms as plain, human descriptions — not medical terms"],
+  "whatHelps": ["3-5 specific things the audience can do or understand that genuinely helps"],
+  "myths": [
+    {"wrong": "A common misconception about this condition", "right": "The truth"}
+  ],
+  "whatNotToSay": ["2-3 things this audience commonly says that are unhelpful or hurtful — phrased constructively"],
+  "shareableExplanation": "A short, shareable 3-4 sentence explanation this parent could say out loud or send as a text/email to this specific audience. Warm, clear, personal."
+}
+Tailor everything completely to the audience. A teacher needs different language than a family member. A coach needs different information than HR.`,
+      JSON.stringify(data)
+    );
+
+    const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const symsHTML = (result.symptoms||[]).map(s=>`<div class="sym-tag">${escH(s)}</div>`).join('');
+    const helpsHTML = (result.whatHelps||[]).map(h=>`<div class="help-item"><span style="color:var(--sage);font-weight:700;flex-shrink:0">✓</span>${escH(h)}</div>`).join('');
+    const mythsHTML = (result.myths||[]).map(m=>`<div class="myth-item"><div class="myth-wrong">✗ "${escH(m.wrong)}"</div><div class="myth-right">✓ ${escH(m.right)}</div></div>`).join('');
+    const dontSayHTML = (result.whatNotToSay||[]).map(s=>`<div class="help-item" style="background:var(--red-pale);border-color:var(--red-border)"><span style="color:var(--red);font-weight:700;flex-shrink:0">✗</span>${escH(s)}</div>`).join('');
+    const name = data.patient || 'Your child';
+
+    const html = `
+    <div class="diag-out">
+      <div class="diag-top">
+        <div class="diag-badge">💜 Explained for ${escH(data.audienceLabel)} — MedAdvocate</div>
+        <div class="diag-name">${escH(data.diagnosis)}</div>
+        <div class="diag-audience">${data.patient ? escH(data.patient) + ' · ' : ''}${escH(data.audienceLabel)} · ${today}</div>
+      </div>
+      <div class="diag-body">
+        <div class="diag-sec">
+          <div class="diag-sec-title">The Simple Truth</div>
+          <div class="diag-prose" style="font-family:'Fraunces',serif;font-size:18px;font-weight:400;font-style:italic">${escH(result.tagline)}</div>
+        </div>
+        <div class="diag-sec">
+          <div class="diag-sec-title">What It Is</div>
+          <div class="diag-prose">${escH(result.whatItIs)}</div>
+        </div>
+        <div class="diag-sec">
+          <div class="diag-sec-title">What ${escH(name)} Actually Experiences</div>
+          <div class="diag-prose">${escH(result.whatItFeelsLike)}</div>
+        </div>
+        ${symsHTML ? `<div class="diag-sec"><div class="diag-sec-title">Common Symptoms</div><div class="sym-tags">${symsHTML}</div></div>` : ''}
+        <div class="diag-sec">
+          <div class="diag-sec-title">How You Can Help — Specifically</div>
+          <div class="help-list">${helpsHTML}</div>
+        </div>
+        ${mythsHTML ? `<div class="diag-sec"><div class="diag-sec-title">Common Misconceptions — Corrected</div><div class="myth-list">${mythsHTML}</div></div>` : ''}
+        ${dontSayHTML ? `<div class="diag-sec"><div class="diag-sec-title">Please Don't Say These Things</div><div class="help-list">${dontSayHTML}</div></div>` : ''}
+        <div class="diag-sec">
+          <div class="share-box">
+            <div class="share-box-label">📱 Ready to Share — Copy, text, or email this</div>
+            <div class="share-text" id="shareableText">${escH(result.shareableExplanation)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="diag-footer">
+        <div class="diag-footer-note">This explanation was generated with Advocate to help families communicate more effectively about medical complexity.</div>
+        <div class="diag-footer-brand">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+      </div>
+    </div>`;
+
+    document.getElementById('diag_card_html').innerHTML = html;
+    document.getElementById('diag_copy_text').value = result.shareableExplanation;
+    document.getElementById('diag_out').classList.remove('hidden');
+    document.getElementById('diag_out').scrollIntoView({behavior:'smooth',block:'start'});
+
+  } catch(e) { showErr('diag_err','Something went wrong. Please try again.'); console.error(e); }
+  finally { hideLoad(); }
+}
+
+function emailDiag() {
+  const text = document.getElementById('diag_copy_text').value;
+  const diagName = document.getElementById('diag_name').value.trim();
+  window.location.href = `mailto:?subject=${encodeURIComponent('Understanding ' + diagName)}&body=${encodeURIComponent(text)}`;
+}
+
+// ── LOADING STATE ──
+function showLoad(outId, type, title, steps) {
+  const out = document.getElementById(outId);
+  out.classList.remove('hidden');
+  out.innerHTML = `<div class="load-wrap"><div class="load-ring ring-${type}"></div><div class="load-title">${title}</div><div class="load-sub">Just a moment…</div><div class="load-steps">${steps.map(s=>`<div class="load-step">${s}</div>`).join('')}</div></div>`;
+  out.scrollIntoView({behavior:'smooth',block:'start'});
+  // Disable all gen buttons
+  document.querySelectorAll('.gen-btn').forEach(b => b.disabled = true);
+}
+
+function hideLoad() {
+  // Re-enable all gen buttons
+  document.querySelectorAll('.gen-btn').forEach(b => b.disabled = false);
+}
+
+// ── UTILS ──
+function copyText(id) {
+  const t = document.getElementById(id);
+  t.style.opacity = '1'; t.select();
+  navigator.clipboard.writeText(t.value)
+    .then(() => showToast('Copied to clipboard ✓'))
+    .catch(() => { document.execCommand('copy'); showToast('Copied ✓'); });
+  t.style.opacity = '0';
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function escH(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Default to ER card on load
+selectTool('er');
+</script>
+</body>
+</html>
