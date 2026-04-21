@@ -192,7 +192,7 @@ async function generateScript(){
   const msg=`Patient: ${name}\nSpecialist: ${spec}\nSymptoms: ${syms}${goals?'\nGoals: '+goals:''}\nCreate visit script.`;
 
   try{
-    const r=await fetch('/.netlify/functions/claude-proxy',{
+    const r=await fetch('https://claude-proxy-sarahgo.replit.app/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:msg}]})
