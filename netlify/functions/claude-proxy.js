@@ -21,8 +21,7 @@ exports.handler = async function(event) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        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
-      },
+        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
       body: JSON.stringify(body)
     });
     const text = await response.text();
