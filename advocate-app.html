@@ -192,7 +192,7 @@ async function generateScript(){
   const msg=`Patient: ${name}\nSpecialist: ${spec}\nSymptoms: ${syms}${goals?'\nGoals: '+goals:''}\nCreate visit script.`;
 
   try{
-    const r=await fetch('https://https://9578311d-aaed-488c-900a-5dd1866e9672-00-4gtb5nakpsy.janeway.https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy.dev/api/claude',{
+  const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:msg}]})
