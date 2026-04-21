@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — Your Medical Visit Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--sage-deep:#1b4332;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#4a7a5e;--border:#b7d9c4;--shadow:0 4px 24px rgba(13,31,21,0.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+.container{max-width:720px;margin:0 auto;padding:0 24px 80px}
+header{padding:40px 0 32px;text-align:center}
+.nav-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;cursor:pointer;background:none;font-family:'DM Sans',sans-serif;margin-bottom:16px;transition:all .2s}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.logo-mark{display:inline-flex;align-items:center;gap:10px;margin-bottom:20px}
+.logo-icon{width:34px;height:34px;background:var(--sage-deep);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.logo-text{font-family:'Fraunces',serif;font-size:20px;font-weight:400;color:var(--ink)}
+.logo-text .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.logo-text .adv{color:var(--sage);font-weight:300}
+h1{font-family:'Fraunces',serif;font-size:clamp(26px,5vw,38px);font-weight:300;line-height:1.25;color:var(--ink);margin-bottom:12px}
+h1 em{font-style:italic;color:var(--sage)}
+.subtitle{font-size:15px;color:var(--ink-soft);line-height:1.6;max-width:480px;margin:0 auto;font-weight:300}
+.card{background:#fff;border:2px solid var(--sage-deep);border-radius:18px;padding:26px;margin-bottom:16px}
+.card-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:14px}
+.specialist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px;margin-bottom:8px}
+.specialist-btn{padding:11px 13px;border:1.5px solid var(--border);border-radius:11px;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);text-align:left;transition:all .2s;display:flex;align-items:center;gap:8px}
+.specialist-btn:hover{border-color:var(--sage);background:var(--sage-pale)}
+.specialist-btn.selected{border-color:var(--sage-deep);background:var(--sage-pale);color:var(--ink);font-weight:500}
+.spec-icon{font-size:16px}
+.input-field{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);background:transparent;outline:none;transition:border-color .2s;resize:none}
+.input-field:focus{border-color:var(--sage)}
+.input-field::placeholder{color:var(--ink-muted)}
+.symptom-area{min-height:130px}
+.char-count{text-align:right;font-size:12px;color:var(--ink-muted);margin-top:6px}
+.concern-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{padding:6px 14px;border:1.5px solid var(--border);border-radius:100px;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s;background:transparent;font-family:'DM Sans',sans-serif}
+.chip:hover{border-color:var(--sage);background:var(--sage-pale)}
+.chip.selected{background:var(--sage-pale);border-color:var(--sage-deep);color:var(--ink);font-weight:500}
+.btn-primary{width:100%;padding:16px;background:var(--sage-deep);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--ink);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn-secondary{padding:11px 20px;background:transparent;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--sage);color:var(--sage-deep)}
+.error-box{background:#fff5f5;border:1.5px solid #fccaca;border-radius:11px;padding:13px 16px;color:#c0392b;font-size:14px;margin-bottom:14px;display:none}
+.hidden{display:none!important}
+.loading-section{text-align:center;padding:60px 24px}
+.loading-spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--sage);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:8px}
+.loading-sub{font-size:14px;color:var(--ink-muted);font-weight:300}
+.result-card{background:white;border:2px solid var(--sage-deep);border-radius:18px;overflow:hidden;margin-bottom:18px}
+.result-header{background:var(--sage-deep);padding:22px 26px;display:flex;align-items:center;justify-content:space-between}
+.result-title{font-family:'Fraunces',serif;font-size:20px;font-weight:400;color:white;margin-bottom:3px}
+.result-meta{font-size:13px;color:rgba(255,255,255,.65);font-weight:300}
+.time-badge{background:rgba(255,255,255,.15);color:white;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:500}
+.result-body{padding:26px}
+.script-section{margin-bottom:24px}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px}
+.opener-box{background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:13px;padding:18px 20px;font-size:15px;color:var(--ink);line-height:1.65;font-style:italic}
+.priority-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.priority-item:last-child{border-bottom:none}
+.priority-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:white;flex-shrink:0;margin-top:2px}
+.p1{background:#1b4332}.p2{background:#2d6a4f}.p3{background:#52b788}.p4{background:#95d5b2;color:#1b4332}.p5{background:#b7d9c4;color:#1b4332}.p6{background:#e8f5ee;color:#1b4332}
+.priority-content h4{font-size:15px;font-weight:500;color:var(--ink);margin-bottom:5px}
+.priority-content p{font-size:14px;color:var(--ink-soft);line-height:1.6;font-weight:300}
+.question-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.question-list li{padding:11px 16px;background:var(--sage-pale);border-radius:10px;font-size:14px;color:var(--ink-soft);line-height:1.5}
+.question-list li::before{content:'→ ';color:var(--sage);font-weight:600}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.action-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.calm-banner{background:var(--sage-deep);color:white;border-radius:13px;padding:16px 20px;text-align:center;font-family:'Fraunces',serif;font-size:16px;font-weight:300;font-style:italic}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--sage-deep);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+<div class="logo-mark">
+<div class="logo-icon">🌿</div>
+<div class="logo-text">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+</div>
+<h1>Your <em>Visit Script</em><br>is ready to build.</h1>
+<p class="subtitle">Answer a few questions and get a calm prioritized script for your appointment.</p>
+</header>
+
+<div id="formSection">
+<div class="card">
+<div class="card-label">Who are you seeing?</div>
+<div class="specialist-grid">
+<button class="specialist-btn" data-value="Cardiologist"><span class="spec-icon">❤️</span> Cardiologist</button>
+<button class="specialist-btn" data-value="Neurologist"><span class="spec-icon">🧠</span> Neurologist</button>
+<button class="specialist-btn" data-value="Immunologist"><span class="spec-icon">🛡️</span> Immunologist</button>
+<button class="specialist-btn" data-value="Gastroenterologist"><span class="spec-icon">🫁</span> GI Specialist</button>
+<button class="specialist-btn" data-value="Rheumatologist"><span class="spec-icon">🦴</span> Rheumatologist</button>
+<button class="specialist-btn" data-value="Pulmonologist"><span class="spec-icon">💨</span> Pulmonologist</button>
+<button class="specialist-btn" data-value="Endocrinologist"><span class="spec-icon">⚗️</span> Endocrinologist</button>
+<button class="specialist-btn" data-value="Geneticist"><span class="spec-icon">🧬</span> Geneticist</button>
+<button class="specialist-btn" data-value="Hematologist"><span class="spec-icon">🩸</span> Hematologist</button>
+<button class="specialist-btn" data-value="Other"><span class="spec-icon">🔍</span> Other</button>
+</div>
+<div id="otherSpecialistWrap" style="display:none;margin-top:12px">
+<input type="text" class="input-field" id="otherSpecialist" placeholder="Which specialist?">
+</div>
+</div>
+
+<div class="card">
+<div class="card-label">Who is the patient?</div>
+<input type="text" class="input-field" id="patientName" placeholder="e.g. Emma, my daughter, myself…">
+</div>
+
+<div class="card">
+<div class="card-label">What's going on?</div>
+<textarea class="input-field symptom-area" id="symptoms" placeholder="Describe symptoms, how long they've been happening, what makes them better or worse…"></textarea>
+<div class="char-count"><span id="charCount">0</span> characters</div>
+<div class="concern-chips">
+<button class="chip" data-text="Fatigue that doesn't improve with rest">Fatigue</button>
+<button class="chip" data-text="Dizziness or lightheadedness">Dizziness</button>
+<button class="chip" data-text="Chest pain or palpitations">Heart symptoms</button>
+<button class="chip" data-text="Chronic pain">Chronic pain</button>
+<button class="chip" data-text="Brain fog or difficulty concentrating">Brain fog</button>
+<button class="chip" data-text="Nausea or vomiting">Nausea</button>
+<button class="chip" data-text="Joint pain or swelling">Joint pain</button>
+<button class="chip" data-text="Sleep problems">Sleep issues</button>
+<button class="chip" data-text="Headaches or migraines">Headaches</button>
+<button class="chip" data-text="Shortness of breath">Breathing</button>
+<button class="chip" data-text="Anxiety or mood changes">Mood/anxiety</button>
+<button class="chip" data-text="GI issues including bloating pain or irregular bowel movements">GI issues</button>
+</div>
+</div>
+
+<div class="card">
+<div class="card-label">Goals for this visit (optional)</div>
+<input type="text" class="input-field" id="goals" placeholder="e.g. Get a referral, discuss medication change…">
+</div>
+
+<div class="error-box" id="errorBox">Please select a specialist and describe at least a few symptoms.</div>
+<button class="btn-primary" id="generateBtn" onclick="generateScript()">Generate My Visit Script →</button>
+</div>
+
+<div id="loadingSection" class="hidden loading-section">
+<div class="loading-spinner"></div>
+<div class="loading-title">Building your script…</div>
+<div class="loading-sub">Tailoring it to your specialist and symptoms</div>
+</div>
+
+<div id="resultSection" class="hidden"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+let selectedSpecialist='';
+document.querySelectorAll('.specialist-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.specialist-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedSpecialist=btn.dataset.value;
+    document.getElementById('otherSpecialistWrap').style.display=selectedSpecialist==='Other'?'block':'none';
+  });
+});
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    chip.classList.toggle('selected');
+    const textarea=document.getElementById('symptoms');
+    const chipText=chip.dataset.text;
+    if(chip.classList.contains('selected')){
+      textarea.value=textarea.value?textarea.value.trimEnd()+'\n• '+chipText:'• '+chipText;
+    }else{
+      textarea.value=textarea.value.replace('\n• '+chipText,'').replace('• '+chipText+'\n','').replace('• '+chipText,'');
+    }
+    updateCharCount();
+  });
+});
+document.getElementById('symptoms').addEventListener('input',updateCharCount);
+function updateCharCount(){document.getElementById('charCount').textContent=document.getElementById('symptoms').value.length;}
+
+async function generateScript(){
+  const patientName=document.getElementById('patientName').value.trim()||'my child';
+  const symptoms=document.getElementById('symptoms').value.trim();
+  const goals=document.getElementById('goals').value.trim();
+  const specialist=selectedSpecialist==='Other'?document.getElementById('otherSpecialist').value.trim()||'specialist':selectedSpecialist;
+  document.getElementById('errorBox').style.display='none';
+  if(!specialist||!symptoms){document.getElementById('errorBox').style.display='block';return;}
+  document.getElementById('formSection').classList.add('hidden');
+  document.getElementById('loadingSection').classList.remove('hidden');
+  document.getElementById('resultSection').classList.add('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  const systemPrompt=`You are a compassionate medical visit coach helping parents of medically complex children make the most of a 15-minute specialist appointment. Return ONLY valid JSON with no markdown or backticks in this exact format:
+{"openerLine":"calm confident opening 1-2 sentences","priorities":[{"title":"topic","script":"exact words to say","why":"why this matters to this specialist"}],"questionsToAsk":["Q1?","Q2?","Q3?"],"timingTip":"one timing tip","emotionalNote":"one warm sentence"}
+Use 4-6 priorities max. Order by relevance to the specialist. Use warm plain language.`;
+
+  const userMessage=`Patient: ${patientName}\nSpecialist: ${specialist}\nSymptoms: ${symptoms}${goals?'\nGoals: '+goals:''}\nCreate a focused visit script.`;
+
+  try{
+    const response=await fetch(' /.netlify/functions/claude-proxy',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':'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',
+        'anthropic-version':'2023-06-01',
+         
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:systemPrompt,messages:[{role:'user',content:userMessage}]})
+    });
+    const data=await response.json();
+    const rawText=data.content?.[0]?.text||'';
+    let result;
+    try{result=JSON.parse(rawText.replace(/```json|```/g,'').trim());}
+    catch{throw new Error('Parse error');}
+    renderResult(result,specialist,patientName);
+  }catch(err){
+    document.getElementById('loadingSection').classList.add('hidden');
+    document.getElementById('formSection').classList.remove('hidden');
+    document.getElementById('errorBox').textContent='Something went wrong. Please try again.';
+    document.getElementById('errorBox').style.display='block';
+  }
+}
+
+function renderResult(result,specialist,patientName){
+  document.getElementById('loadingSection').classList.add('hidden');
+  const colors=['p1','p2','p3','p4','p5','p6'];
+  const prioritiesHtml=result.priorities.map((p,i)=>`<div class="priority-item"><div class="priority-num ${colors[i]||'p4'}">${i+1}</div><div class="priority-content"><h4>${p.title}</h4><p><strong>Say:</strong> "${p.script}"</p>${p.why?`<p style="margin-top:4px;font-size:12px;color:var(--ink-muted)">Why: ${p.why}</p>`:''}</div></div>`).join('');
+  const questionsHtml=result.questionsToAsk.map(q=>`<li>${q}</li>`).join('');
+  const html=`<div class="result-card"><div class="result-header"><div><div class="result-title">${patientName}'s ${specialist} Visit</div><div class="result-meta">Your personalized script is ready</div></div><div class="time-badge">⏱ 15 min</div></div><div class="result-body"><div class="script-section"><div class="section-label">Open with this</div><div class="opener-box">${result.openerLine}</div></div><div class="script-section"><div class="section-label">Priority talking points</div>${prioritiesHtml}</div><div class="script-section"><div class="section-label">Questions to ask</div><ul class="question-list">${questionsHtml}</ul></div><div class="divider"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div style="padding:16px;background:var(--sage-pale);border-radius:12px"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px">Timing tip</div><div style="font-size:13px;color:var(--ink-soft);line-height:1.6">${result.timingTip}</div></div><div style="padding:16px;background:var(--sage-pale);border-radius:12px"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px">Remember</div><div style="font-size:13px;color:var(--ink-soft);line-height:1.6;font-style:italic">${result.emotionalNote}</div></div></div></div></div><div class="action-row"><button class="btn-secondary" onclick="startOver()">↩ New Visit</button></div><div class="calm-banner">You are your child's best advocate. You've got this. 🌿</div>`;
+  document.getElementById('resultSection').innerHTML=html;
+  document.getElementById('resultSection').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function startOver(){
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('formSection').classList.remove('hidden');
+  document.getElementById('symptoms').value='';
+  document.getElementById('goals').value='';
+  document.getElementById('patientName').value='';
+  document.querySelectorAll('.specialist-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));
+  selectedSpecialist='';
+  updateCharCount();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
