@@ -195,7 +195,7 @@ async function generateScript(){
   const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:msg}]})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:sys,messages:[{role:'user',content:msg}]})
     });
     const d=await r.json();
     const txt=d.content?.[0]?.text||'';
