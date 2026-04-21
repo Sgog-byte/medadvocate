@@ -1386,13 +1386,11 @@ async function runSearch(lat = null, lng = null) {
     // In production this would call Google Places API — for now Claude generates structured results
     const locationDesc = lat ? `coordinates ${lat},${lng}` : address;
 
-    const resp = await fetch('/.netlify/functions/claude-proxy', {
+    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json',
-          'x-api-key': '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',
-          'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         system: `You are a helpful medical directory assistant. Generate realistic specialist search results.
 
