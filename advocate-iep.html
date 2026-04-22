@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — IEP & 504 Prep</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #171b26;
+    --surface2: #1e2333;
+    --border: #2a3045;
+    --border-bright: #3d4a6b;
+    --text: #e8eaf2;
+    --text-soft: #8892b0;
+    --text-muted: #4a5270;
+    --amber: #f0a645;
+    --amber-pale: rgba(240,166,69,0.08);
+    --amber-glow: rgba(240,166,69,0.15);
+    --blue: #5b8dee;
+    --blue-pale: rgba(91,141,238,0.08);
+    --green: #52c98a;
+    --green-pale: rgba(82,201,138,0.08);
+    --rose: #e05f7a;
+    --rose-pale: rgba(224,95,122,0.08);
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 20%, rgba(240,166,69,0.04) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 85% 75%, rgba(91,141,238,0.05) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+    position: relative; z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 56px 0 48px;
+    text-align: center;
+  }
+
+  .logo-bar {
+    display: inline-flex;
+    align-items: center; gap: 10px;
+    margin-bottom: 40px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+  }
+
+  .logo-gem {
+    width: 22px; height: 22px;
+    background: var(--amber);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+
+  .logo-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .logo-name span { color: var(--amber); }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 20px;
+    padding: 6px 16px;
+    border: 1px solid rgba(240,166,69,0.3);
+    border-radius: 100px;
+    background: var(--amber-pale);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 5.5vw, 50px);
+    font-weight: 400;
+    line-height: 1.18;
+    color: var(--text);
+    margin-bottom: 18px;
+  }
+
+  h1 em { font-style: italic; color: var(--amber); }
+
+  .header-sub {
+    font-size: 15px;
+    color: var(--text-soft);
+    line-height: 1.75;
+    max-width: 540px;
+    margin: 0 auto 32px;
+    font-weight: 300;
+  }
+
+  /* Know your rights banner */
+  .rights-banner {
+    display: flex;
+    align-items: flex-start; gap: 14px;
+    background: var(--blue-pale);
+    border: 1px solid rgba(91,141,238,0.25);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+
+  .rights-icon {
+    font-size: 22px; flex-shrink: 0; margin-top: 2px;
+  }
+
+  .rights-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 5px;
+    letter-spacing: 0.02em;
+  }
+
+  .rights-text {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* ── PLAN TYPE SELECTOR ── */
+  .plan-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .plan-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .plan-card:hover { border-color: var(--border-bright); }
+
+  .plan-card.selected {
+    border-color: var(--amber);
+    background: var(--amber-pale);
+  }
+
+  .plan-card-header {
+    display: flex;
+    align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .plan-badge {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 4px 10px; border-radius: 100px;
+    background: var(--surface2);
+    color: var(--text-soft);
+    transition: all 0.2s;
+  }
+
+  .plan-card.selected .plan-badge {
+    background: var(--amber);
+    color: var(--bg);
+  }
+
+  .plan-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 400;
+    color: var(--text);
+  }
+
+  .plan-desc {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  .plan-fits {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--amber);
+    font-weight: 500;
+  }
+
+  .plan-card.selected .plan-fits { opacity: 1; }
+  .plan-card:not(.selected) .plan-fits { opacity: 0.5; }
+
+  /* ── FORM CARDS ── */
+  .fcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 32px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s;
+  }
+
+  .fcard:hover { border-color: var(--border-bright); }
+
+  .fcard-head {
+    display: flex;
+    align-items: flex-start; gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .fcard-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0; margin-top: 1px;
+  }
+
+  .ic-amber { background: var(--amber-pale); border: 1px solid rgba(240,166,69,0.2); }
+  .ic-blue  { background: var(--blue-pale);  border: 1px solid rgba(91,141,238,0.2); }
+  .ic-green { background: var(--green-pale); border: 1px solid rgba(82,201,138,0.2); }
+  .ic-rose  { background: var(--rose-pale);  border: 1px solid rgba(224,95,122,0.2); }
+
+  .fcard-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 19px; font-weight: 400;
+    color: var(--text); margin-bottom: 3px;
+  }
+
+  .fcard-desc {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.6; font-weight: 300;
+  }
+
+  /* ── INPUTS ── */
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .flabel {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .fhint {
+    font-size: 12px; color: var(--text-muted);
+    margin-bottom: 8px; font-weight: 300;
+  }
+
+  .finput, .ftextarea, .fselect {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+    -webkit-appearance: none;
+  }
+
+  .finput:focus, .ftextarea:focus, .fselect:focus {
+    border-color: var(--amber);
+  }
+
+  .finput::placeholder, .ftextarea::placeholder { color: var(--text-muted); }
+  .ftextarea { min-height: 90px; line-height: 1.65; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── TAG INPUT ── */
+  .tag-wrap {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    padding: 10px 12px;
+    min-height: 50px;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    cursor: text; transition: border-color 0.2s;
+  }
+
+  .tag-wrap:focus-within { border-color: var(--amber); }
+
+  .vtag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--amber-glow);
+    border: 1px solid rgba(240,166,69,0.3);
+    color: var(--amber);
+    padding: 4px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  .vtag-x {
+    background: none; border: none;
+    color: inherit; cursor: pointer;
+    font-size: 14px; padding: 0; opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .vtag-x:hover { opacity: 1; }
+
+  .tinput {
+    border: none; outline: none;
+    background: transparent;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--text); flex: 1; min-width: 120px;
+  }
+
+  .tinput::placeholder { color: var(--text-muted); }
+
+  /* ── CHIPS ── */
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 10px;
+  }
+
+  .chip {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px; font-family: 'Outfit', sans-serif;
+    font-weight: 400; color: var(--text-soft);
+    cursor: pointer; transition: all 0.18s;
+    background: transparent;
+  }
+
+  .chip:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-pale); }
+  .chip.on { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); font-weight: 500; }
+
+  /* ── IMPACT CHECKLIST ── */
+  .impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+  }
+
+  .impact-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .impact-item:hover { border-color: var(--border-bright); }
+  .impact-item.checked { border-color: var(--amber); background: var(--amber-pale); }
+
+  .impact-check {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; transition: all 0.18s;
+  }
+
+  .impact-item.checked .impact-check {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: var(--bg);
+  }
+
+  .impact-label {
+    font-size: 13px; font-weight: 300;
+    color: var(--text-soft);
+    transition: color 0.18s;
+  }
+
+  .impact-item.checked .impact-label { color: var(--text); font-weight: 400; }
+
+  /* ── ACCOMMODATION CATEGORY CARDS ── */
+  .accom-categories {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .accom-cat {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .accom-cat-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+
+  .accom-cat-header:hover { background: rgba(255,255,255,0.02); }
+
+  .accom-cat-icon { font-size: 16px; }
+
+  .accom-cat-name {
+    font-size: 14px; font-weight: 500;
+    color: var(--text); flex: 1;
+  }
+
+  .accom-cat-count {
+    font-size: 12px; font-weight: 600;
+    background: var(--amber-glow);
+    color: var(--amber);
+    padding: 2px 9px; border-radius: 100px;
+    min-width: 28px; text-align: center;
+    transition: all 0.2s;
+  }
+
+  .accom-cat-arrow {
+    color: var(--text-muted); font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .accom-cat.open .accom-cat-arrow { transform: rotate(180deg); }
+
+  .accom-options {
+    padding: 0 18px 14px;
+    display: none;
+  }
+
+  .accom-cat.open .accom-options { display: block; }
+
+  .accom-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+  }
+
+  .accom-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .accom-item:hover { background: rgba(255,255,255,0.03); }
+  .accom-item.checked { background: var(--amber-pale); }
+
+  .accom-item-check {
+    width: 16px; height: 16px; margin-top: 1px;
+    border-radius: 4px; border: 1.5px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; transition: all 0.18s;
+  }
+
+  .accom-item.checked .accom-item-check {
+    background: var(--amber); border-color: var(--amber); color: var(--bg);
+  }
+
+  .accom-item-label {
+    font-size: 13px; font-weight: 300;
+    color: var(--text-soft); line-height: 1.4;
+    transition: color 0.18s;
+  }
+
+  .accom-item.checked .accom-item-label { color: var(--text); }
+
+  /* ── GENERATE BUTTON ── */
+  .gen-btn {
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--amber), #e08c20);
+    color: var(--bg);
+    border: none; border-radius: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px; font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.22s;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin-top: 8px;
+    box-shadow: 0 4px 20px rgba(240,166,69,0.25);
+  }
+
+  .gen-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(240,166,69,0.35);
+  }
+
+  .gen-btn:active { transform: translateY(0); }
+  .gen-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── LOADING ── */
+  .load-wrap {
+    text-align: center;
+    padding: 80px 32px;
+  }
+
+  .load-spinner {
+    width: 60px; height: 60px;
+    margin: 0 auto 28px;
+    position: relative;
+  }
+
+  .load-spinner::before, .load-spinner::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+
+  .load-spinner::before {
+    border-top-color: var(--amber);
+    animation: spin 1.2s linear infinite;
+  }
+
+  .load-spinner::after {
+    border-bottom-color: rgba(240,166,69,0.3);
+    animation: spin 1.8s linear infinite reverse;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .load-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 400;
+    color: var(--text); margin-bottom: 8px;
+  }
+
+  .load-sub { font-size: 14px; color: var(--text-soft); font-weight: 300; }
+
+  .load-steps {
+    margin-top: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+  }
+
+  .load-step {
+    font-size: 13px; color: var(--text-muted);
+    font-weight: 300; opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .load-step:nth-child(1) { animation-delay: 0.5s; }
+  .load-step:nth-child(2) { animation-delay: 1.5s; }
+  .load-step:nth-child(3) { animation-delay: 2.8s; }
+  .load-step:nth-child(4) { animation-delay: 4.0s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── DOCUMENT OUTPUT ── */
+  .out-wrap { animation: rise 0.6s ease; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .out-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .abtn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 18px; border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; border: none;
+  }
+
+  .abtn-amber { background: var(--amber); color: var(--bg); }
+  .abtn-amber:hover { background: #e08c20; }
+
+  .abtn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-soft);
+  }
+
+  .abtn-outline:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* ── THE DOCUMENT ── */
+  #docOut {
+    background: #fff;
+    color: #1a1f2e;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .doc-top {
+    background: #1a1f2e;
+    padding: 40px 48px 32px;
+    color: white;
+  }
+
+  .doc-plan-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--amber);
+    color: #1a1f2e;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  .doc-student-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px; font-weight: 400;
+    line-height: 1.1; margin-bottom: 6px;
+  }
+
+  .doc-plan-type {
+    font-size: 16px;
+    color: rgba(255,255,255,0.55);
+    font-weight: 300; margin-bottom: 20px;
+  }
+
+  .doc-meta {
+    display: flex; gap: 28px; flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .doc-meta-item {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+
+  .doc-meta-lbl {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+  }
+
+  .doc-meta-val {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 400;
+  }
+
+  .doc-content { padding: 40px 48px; }
+
+  .doc-sec { margin-bottom: 36px; animation: fadeIn 0.4s ease both; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .doc-sec-title {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: #c9a84c;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e8eaf2;
+  }
+
+  .doc-prose {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #2d3347;
+    font-weight: 400;
+  }
+
+  /* Accommodation table */
+  .accom-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .accom-table th {
+    text-align: left; padding: 10px 14px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #8892b0; border-bottom: 2px solid #e8eaf2;
+    background: #f8f9fc;
+  }
+
+  .accom-table td {
+    padding: 13px 14px;
+    font-size: 14px; color: #4a5270;
+    border-bottom: 1px solid #e8eaf2;
+    vertical-align: top; line-height: 1.6;
+  }
+
+  .accom-table tr:last-child td { border-bottom: none; }
+  .accom-table tr:hover td { background: #fdf8ed; }
+
+  .accom-type-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    padding: 3px 9px; border-radius: 100px;
+    margin-bottom: 4px;
+  }
+
+  .badge-present { background: #edf7f5; color: #2a7a65; }
+  .badge-testing { background: #fdf8ed; color: #8a6020; }
+  .badge-physical { background: #f0eeff; color: #5a3a9e; }
+  .badge-support  { background: #fff0f3; color: #8a2040; }
+
+  /* Rights section */
+  .rights-box {
+    background: #eef3ff;
+    border: 1px solid #c0d0f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .rights-box-title {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #3a5a9e; margin-bottom: 10px;
+  }
+
+  .rights-list {
+    display: flex; flex-direction: column; gap: 7px;
+  }
+
+  .rights-list-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; color: #4a5a7a; line-height: 1.5;
+  }
+
+  .rights-bullet {
+    color: #5b8dee; font-weight: 700; flex-shrink: 0;
+  }
+
+  /* Script box */
+  .script-box {
+    background: #fdf8ed;
+    border: 1px solid #f0e0b0;
+    border-left: 4px solid #c9a84c;
+    border-radius: 0 12px 12px 0;
+    padding: 18px 20px;
+  }
+
+  .script-label {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8a6020; margin-bottom: 10px;
+  }
+
+  .script-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-style: italic;
+    color: #1a1f2e; line-height: 1.75;
+  }
+
+  /* Pushback prep */
+  .pushback-list {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .pushback-item {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e8eaf2;
+  }
+
+  .pushback-q {
+    background: #fff0f3;
+    padding: 12px 16px;
+    font-size: 13px; color: #8a2040;
+    font-weight: 500;
+    border-bottom: 1px solid #f0d0d8;
+  }
+
+  .pushback-a {
+    padding: 12px 16px;
+    font-size: 13px; color: #4a5270;
+    line-height: 1.6; font-weight: 300;
+  }
+
+  /* Doc footer */
+  .doc-footer {
+    background: #f8f9fc;
+    border-top: 1px solid #e8eaf2;
+    padding: 18px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+
+  .doc-footer-note {
+    font-size: 11px; color: #8892b0; font-style: italic;
+  }
+
+  .doc-footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; color: #8892b0;
+  }
+
+  .doc-footer-brand span { color: #c9a84c; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; color: #1a1f2e; }
+    body::before, header, .rights-banner, .plan-toggle,
+    .fcard, .gen-btn, .out-actions, .no-print { display: none !important; }
+
+    .shell { max-width: 100%; padding: 0; }
+    #docOut { box-shadow: none; border-radius: 0; }
+    .doc-top { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .doc-sec { break-inside: avoid; }
+
+    @page { margin: 15mm; size: A4; }
+  }
+
+  /* ── MISC ── */
+  .hidden { display: none !important; }
+
+  .err-note {
+    background: var(--rose-pale);
+    border: 1px solid rgba(224,95,122,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px; color: var(--rose);
+    margin-top: 12px; display: none;
+  }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: #fff; color: #1a1f2e;
+    padding: 11px 24px; border-radius: 100px;
+    font-size: 14px; font-weight: 500;
+    transition: transform 0.3s; z-index: 999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 620px) {
+    .fcard { padding: 22px 18px; }
+    .plan-toggle { grid-template-columns: 1fr; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .doc-content { padding: 28px 24px; }
+    .doc-top { padding: 28px 24px; }
+    .doc-footer { padding: 16px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header>
+    <div class="logo-bar">
+      <div class="logo-gem">🌿</div>
+      <div class="logo-name">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+    </div>
+    <div class="eyebrow">⚖️ IEP & 504 Prep Tool</div>
+    <h1>Know exactly what to ask for.<br><em>And how to ask for it.</em></h1>
+    <p class="header-sub">Most parents leave IEP and 504 meetings with far less than their child is legally entitled to — because they didn't know the right language. This tool fixes that.</p>
+  </header>
+
+  <!-- Know Your Rights Banner -->
+  <div class="rights-banner no-print">
+    <div class="rights-icon">⚖️</div>
+    <div>
+      <div class="rights-title">Your child has federal rights. IDEA & Section 504 protect them.</div>
+      <div class="rights-text">Under IDEA, schools must provide a Free Appropriate Public Education (FAPE) in the Least Restrictive Environment (LRE). Under Section 504 of the Rehabilitation Act, any student with a physical or mental impairment that substantially limits a major life activity is entitled to accommodations — regardless of academic performance. You do not need to prove your child is failing to qualify.</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div id="formWrap">
+
+    <!-- Plan type -->
+    <div class="fcard">
+      <div class="fcard-head">
+        <div class="fcard-icon ic-amber">📋</div>
+        <div>
+          <div class="fcard-title">Which plan are you preparing for?</div>
+          <div class="fcard-desc">Not sure which applies? A 504 is easier to get and covers most medically complex kids. An IEP provides more intensive services but requires an educational disability category.</div>
+        </div>
+      </div>
+
+      <div class="plan-toggle">
+        <div class="plan-card selected" id="card504" onclick="selectPlan('504')">
+          <div class="plan-card-header">
+            <div class="plan-badge">504</div>
+            <div class="plan-name">Section 504 Plan</div>
+          </div>
+          <div class="plan-desc">Accommodations to level the playing field. Covers any physical or mental condition that limits a major life activity — including chronic illness, fatigue, pain, anxiety, ADHD, and more.</div>
+          <div class="plan-fits">✦ Best for: medical complexity, chronic illness, physical needs</div>
+        </div>
+        <div class="plan-card" id="cardIEP" onclick="selectPlan('IEP')">
+          <div class="plan-card-header">
+            <div class="plan-badge">IEP</div>
+            <div class="plan-name">Individualized Education Program</div>
+          </div>
+          <div class="plan-desc">Specialized instruction and related services. Requires qualifying under one of 13 federal disability categories. Includes measurable goals and dedicated service hours.</div>
+          <div class="plan-fits">✦ Best for: learning disabilities, autism, developmental delays, speech/OT needs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student info -->
+    <div class="fcard">
+      <div class="fcard-head">
+        <div class="fcard-icon ic-amber">👤</div>
+        <div>
+          <div class="fcard-title">Student Information</div>
+          <div class="fcard-desc">Basic info that anchors the document.</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label class="flabel">Student Name</label>
+          <input type="text" class="finput" id="studentName" placeholder="e.g. Emma Johnson">
+        </div>
+        <div class="field">
+          <label class="flabel">Grade & School</label>
+          <input type="text" class="finput" id="gradeSchool" placeholder="e.g. 4th grade, Lincoln Elementary">
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label class="flabel">Parent / Guardian Name</label>
+          <input type="text" class="finput" id="parentName" placeholder="e.g. Sarah Johnson">
+        </div>
+        <div class="field">
+          <label class="flabel">Meeting Date (if scheduled)</label>
+          <input type="text" class="finput" id="meetingDate" placeholder="e.g. April 22, 2026">
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnoses -->
+    <div class="fcard">
+      <div class="fcard-head">
+        <div class="fcard-icon ic-blue">🩺</div>
+        <div>
+          <div class="fcard-title">Diagnoses & Medical Conditions</div>
+          <div class="fcard-desc">List all confirmed and suspected diagnoses. Each one can justify accommodations — even ones that seem "mild" on paper.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Diagnoses (press Enter after each)</label>
+        <div class="tag-wrap" id="diagWrap" onclick="document.getElementById('diagIn').focus()">
+          <input type="text" class="tinput" id="diagIn" placeholder="Type diagnosis, press Enter…">
+        </div>
+        <div class="chips">
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">POTS / Dysautonomia</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">EDS</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">MCAS</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Anxiety / PTSD</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">ADHD</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Autism</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Crohn's / IBD</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Epilepsy</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Chronic fatigue</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Juvenile Arthritis</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Type 1 Diabetes</button>
+          <button class="chip" onclick="chipTag('diagIn','diagWrap',this)">Cerebral Palsy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- School impact -->
+    <div class="fcard">
+      <div class="fcard-head">
+        <div class="fcard-icon ic-green">🏫</div>
+        <div>
+          <div class="fcard-title">How Does This Affect School?</div>
+          <div class="fcard-desc">Check everything that applies. This is the legal foundation for accommodations — schools must address functional impact, not just diagnosis.</div>
+        </div>
+      </div>
+
+      <div class="impact-grid" id="impactGrid">
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Frequent absences or tardiness due to medical appointments or flare-ups">
+          <div class="impact-check"></div>
+          <div class="impact-label">Frequent absences / tardiness</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Difficulty concentrating or brain fog that affects learning">
+          <div class="impact-check"></div>
+          <div class="impact-label">Brain fog / concentration</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Fatigue that interferes with sustaining attention and completing work">
+          <div class="impact-check"></div>
+          <div class="impact-label">Fatigue during school day</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Chronic pain that makes sitting, writing, or focusing difficult">
+          <div class="impact-check"></div>
+          <div class="impact-label">Chronic pain affecting focus</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Need for frequent restroom access due to GI conditions or medications">
+          <div class="impact-check"></div>
+          <div class="impact-label">Frequent restroom needs</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Anxiety or emotional dysregulation that affects participation">
+          <div class="impact-check"></div>
+          <div class="impact-label">Anxiety / emotional regulation</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Difficulty with timed tests or standardized testing conditions">
+          <div class="impact-check"></div>
+          <div class="impact-label">Testing difficulties</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Need for medication administration or medical monitoring at school">
+          <div class="impact-check"></div>
+          <div class="impact-label">Medication / medical monitoring</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Physical limitations affecting PE, recess, or movement between classes">
+          <div class="impact-check"></div>
+          <div class="impact-label">Physical / mobility limitations</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Sensory sensitivities to light, sound, or environment">
+          <div class="impact-check"></div>
+          <div class="impact-label">Sensory sensitivities</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Difficulty writing by hand due to pain, fatigue, or motor issues">
+          <div class="impact-check"></div>
+          <div class="impact-label">Handwriting difficulties</div>
+        </div>
+        <div class="impact-item" onclick="toggleImpact(this)" data-val="Social difficulties or need for support with peer interactions">
+          <div class="impact-check"></div>
+          <div class="impact-label">Social challenges</div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:16px;">
+        <label class="flabel">Anything else the school needs to know</label>
+        <textarea class="ftextarea" id="extraImpact" placeholder="e.g. Emma sometimes needs to lie down during the day. She has a service dog in training. She has an emergency action plan for anaphylaxis..."></textarea>
+      </div>
+    </div>
+
+    <!-- Accommodations requested -->
+    <div class="fcard">
+      <div class="fcard-head">
+        <div class="fcard-icon ic-amber">✅</div>
+        <div>
+          <div class="fcard-title">Accommodations to Request</div>
+          <div class="fcard-desc">Select everything that could help your child. It is always easier to remove an accommodation than to add one later. Ask for more than you think you need.</div>
+        </div>
+      </div>
+
+      <div class="accom-categories" id="accomCats">
+
+        <div class="accom-cat open">
+          <div class="accom-cat-header" onclick="toggleCat(this)">
+            <div class="accom-cat-icon">📖</div>
+            <div class="accom-cat-name">Attendance & Schedule</div>
+            <div class="accom-cat-count" id="cnt-attend">0</div>
+            <div class="accom-cat-arrow">▼</div>
+          </div>
+          <div class="accom-options">
+            <div class="accom-check-grid" data-group="attend">
+              <div class="accom-item" onclick="toggleAccom(this,'attend')"><div class="accom-item-check"></div><div class="accom-item-label">Excused absences for medical appointments</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'attend')"><div class="accom-item-check"></div><div class="accom-item-label">Flexible arrival / tardy policy</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'attend')"><div class="accom-item-check"></div><div class="accom-item-label">Homebound / hospital instruction</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'attend')"><div class="accom-item-check"></div><div class="accom-item-label">Partial day attendance option</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'attend')"><div class="accom-item-check"></div><div class="accom-item-label">Rest / recovery period during day</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'attend')"><div class="accom-item-check"></div><div class="accom-item-label">Schedule adjusted for energy patterns</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accom-cat">
+          <div class="accom-cat-header" onclick="toggleCat(this)">
+            <div class="accom-cat-icon">📝</div>
+            <div class="accom-cat-name">Testing & Assignments</div>
+            <div class="accom-cat-count" id="cnt-testing">0</div>
+            <div class="accom-cat-arrow">▼</div>
+          </div>
+          <div class="accom-options">
+            <div class="accom-check-grid" data-group="testing">
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Extended time on tests (1.5× or 2×)</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Tests taken in separate, quiet room</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Breaks permitted during testing</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Makeup tests without grade penalty</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Reduced homework load on flare days</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Extended deadlines for assignments</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Oral testing option in place of written</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'testing')"><div class="accom-item-check"></div><div class="accom-item-label">Tests chunked / broken into parts</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accom-cat">
+          <div class="accom-cat-header" onclick="toggleCat(this)">
+            <div class="accom-cat-icon">💻</div>
+            <div class="accom-cat-name">Classroom & Environment</div>
+            <div class="accom-cat-count" id="cnt-class">0</div>
+            <div class="accom-cat-arrow">▼</div>
+          </div>
+          <div class="accom-options">
+            <div class="accom-check-grid" data-group="class">
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Preferential seating (near door / teacher)</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Unrestricted restroom access</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Water bottle / snacks at desk</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Reduced fluorescent lighting exposure</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Use of assistive technology / device</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Typed notes / note-taking assistance</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Elevator access / minimal stair use</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Extra set of textbooks at home</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Standing desk or alternative seating</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'class')"><div class="accom-item-check"></div><div class="accom-item-label">Noise-cancelling headphones permitted</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accom-cat">
+          <div class="accom-cat-header" onclick="toggleCat(this)">
+            <div class="accom-cat-icon">🏃</div>
+            <div class="accom-cat-name">Physical Education & Activities</div>
+            <div class="accom-cat-count" id="cnt-pe">0</div>
+            <div class="accom-cat-arrow">▼</div>
+          </div>
+          <div class="accom-options">
+            <div class="accom-check-grid" data-group="pe">
+              <div class="accom-item" onclick="toggleAccom(this,'pe')"><div class="accom-item-check"></div><div class="accom-item-label">Modified PE participation</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'pe')"><div class="accom-item-check"></div><div class="accom-item-label">PE excusal on flare days</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'pe')"><div class="accom-item-check"></div><div class="accom-item-label">Wheelchair / mobility aid at school</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'pe')"><div class="accom-item-check"></div><div class="accom-item-label">Exemption from outdoor activity in heat</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'pe')"><div class="accom-item-check"></div><div class="accom-item-label">No requirement to change for gym</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accom-cat">
+          <div class="accom-cat-header" onclick="toggleCat(this)">
+            <div class="accom-cat-icon">🏥</div>
+            <div class="accom-cat-name">Medical & Nursing Support</div>
+            <div class="accom-cat-count" id="cnt-med">0</div>
+            <div class="accom-cat-arrow">▼</div>
+          </div>
+          <div class="accom-options">
+            <div class="accom-check-grid" data-group="med">
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Emergency Action Plan on file</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Medication administered by nurse</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Self-carry / self-administer medication</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Blood glucose monitoring at school</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Access to nurse without pass</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Daily check-in with school counselor</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'med')"><div class="accom-item-check"></div><div class="accom-item-label">Staff trained on student's condition</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accom-cat">
+          <div class="accom-cat-header" onclick="toggleCat(this)">
+            <div class="accom-cat-icon">💬</div>
+            <div class="accom-cat-name">Communication & Support</div>
+            <div class="accom-cat-count" id="cnt-comm">0</div>
+            <div class="accom-cat-arrow">▼</div>
+          </div>
+          <div class="accom-options">
+            <div class="accom-check-grid" data-group="comm">
+              <div class="accom-item" onclick="toggleAccom(this,'comm')"><div class="accom-item-check"></div><div class="accom-item-label">Weekly check-in with case manager</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'comm')"><div class="accom-item-check"></div><div class="accom-item-label">Parent notified of any academic concerns</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'comm')"><div class="accom-item-check"></div><div class="accom-item-label">Teacher updates on absences / missed work</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'comm')"><div class="accom-item-check"></div><div class="accom-item-label">Behavioral / emotional support plan</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'comm')"><div class="accom-item-check"></div><div class="accom-item-label">Peer awareness / classroom education</div></div>
+              <div class="accom-item" onclick="toggleAccom(this,'comm')"><div class="accom-item-check"></div><div class="accom-item-label">Annual 504/IEP review meeting</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="field" style="margin-top:18px;">
+        <label class="flabel">Any specific accommodations not listed above?</label>
+        <textarea class="ftextarea" id="customAccom" placeholder="e.g. Permission to wear sunglasses indoors due to light sensitivity. Access to a quiet space for decompression..."></textarea>
+      </div>
+    </div>
+
+    <!-- Meeting context -->
+    <div class="fcard">
+      <div class="fcard-head">
+        <div class="fcard-icon ic-rose">🗣️</div>
+        <div>
+          <div class="fcard-title">Meeting Context</div>
+          <div class="fcard-desc">Help us prepare you for pushback. Schools often say no to things they're legally required to provide.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Has the school pushed back or said no to anything before?</label>
+        <textarea class="ftextarea" id="pushback" placeholder="e.g. They said Emma doesn't qualify because her grades are okay. They refused to excuse medical absences. They said they can't accommodate restroom access during class..."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Is this a new plan, annual review, or revision meeting?</label>
+        <select class="fselect" id="meetingType">
+          <option value="">Select meeting type…</option>
+          <option value="initial evaluation and plan development">Initial — first time requesting a plan</option>
+          <option value="annual review of existing plan">Annual review of existing plan</option>
+          <option value="revision due to changed needs">Revision — needs have changed</option>
+          <option value="re-evaluation">Re-evaluation meeting</option>
+          <option value="dispute resolution">Dispute / disagreement with school</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="err-note" id="errNote">Please enter the student's name and at least one diagnosis.</div>
+
+    <button class="gen-btn" onclick="generate()">
+      ✦ Generate My IEP / 504 Prep Package
+    </button>
+    <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-top:14px; font-style:italic;">
+      Includes your accommodation request letter, opening script, legal rights reminder, and pushback responses.
+    </p>
+
+  </div><!-- end formWrap -->
+
+  <!-- Loading -->
+  <div id="loadWrap" class="hidden">
+    <div class="load-wrap">
+      <div class="load-spinner"></div>
+      <div class="load-title">Preparing your IEP / 504 package…</div>
+      <div class="load-sub">Building language the school has to take seriously.</div>
+      <div class="load-steps">
+        <div class="load-step">⚖️ Reviewing your child's legal entitlements…</div>
+        <div class="load-step">📋 Drafting accommodation justifications…</div>
+        <div class="load-step">🗣️ Writing your opening script…</div>
+        <div class="load-step">🛡️ Preparing pushback responses…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div id="outWrap" class="hidden out-wrap">
+    <div class="out-actions no-print">
+      <button class="abtn abtn-amber" onclick="window.print()">🖨️ Print Full Package</button>
+      <button class="abtn abtn-outline" onclick="copyDoc()">📋 Copy Text</button>
+      <button class="abtn abtn-outline" onclick="startOver()">↩ Start Over</button>
+    </div>
+    <div id="docOut"></div>
+  </div>
+
+</div><!-- end shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PLAN TOGGLE ──
+let selectedPlan = '504';
+function selectPlan(p) {
+  selectedPlan = p;
+  document.getElementById('card504').classList.toggle('selected', p === '504');
+  document.getElementById('cardIEP').classList.toggle('selected', p === 'IEP');
+}
+
+// ── TAG INPUT ──
+function setupTag(inputId, wrapId) {
+  const inp = document.getElementById(inputId);
+  const wrap = document.getElementById(wrapId);
+  inp.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) {
+      e.preventDefault();
+      addVTag(inp.value.trim(), wrap, inp);
+    }
+    if (e.key === 'Backspace' && !inp.value) {
+      const tags = wrap.querySelectorAll('.vtag');
+      if (tags.length) tags[tags.length-1].remove();
+    }
+  });
+}
+setupTag('diagIn','diagWrap');
+
+function addVTag(text, wrap, inp) {
+  const t = document.createElement('span');
+  t.className = 'vtag';
+  t.innerHTML = `${text}<button class="vtag-x" onclick="this.parentElement.remove()">×</button>`;
+  wrap.insertBefore(t, inp);
+  inp.value = '';
+}
+
+function chipTag(inputId, wrapId, btn) {
+  const wrap = document.getElementById(wrapId);
+  const inp = document.getElementById(inputId);
+  addVTag(btn.textContent.trim(), wrap, inp);
+  btn.classList.add('on'); btn.disabled = true;
+}
+
+function getTags(wrapId) {
+  return [...document.getElementById(wrapId).querySelectorAll('.vtag')]
+    .map(t => t.textContent.replace('×','').trim()).filter(Boolean);
+}
+
+// ── IMPACT TOGGLE ──
+function toggleImpact(el) {
+  el.classList.toggle('checked');
+  const check = el.querySelector('.impact-check');
+  check.textContent = el.classList.contains('checked') ? '✓' : '';
+}
+
+function getImpacts() {
+  return [...document.querySelectorAll('.impact-item.checked')]
+    .map(el => el.dataset.val);
+}
+
+// ── ACCOMMODATION TOGGLES ──
+const accomSelected = {};
+
+function toggleAccom(el, group) {
+  el.classList.toggle('checked');
+  el.querySelector('.accom-item-check').textContent = el.classList.contains('checked') ? '✓' : '';
+  if (!accomSelected[group]) accomSelected[group] = 0;
+  accomSelected[group] += el.classList.contains('checked') ? 1 : -1;
+  document.getElementById('cnt-' + group).textContent =
+    [...document.querySelectorAll(`[data-group="${group}"] .accom-item.checked`)].length;
+}
+
+function toggleCat(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+function getAccoms() {
+  return [...document.querySelectorAll('.accom-item.checked')]
+    .map(el => el.querySelector('.accom-item-label').textContent.trim());
+}
+
+// ── GENERATE ──
+async function generate() {
+  const studentName = document.getElementById('studentName').value.trim();
+  const diagnoses = getTags('diagWrap');
+
+  if (!studentName || !diagnoses.length) {
+    const err = document.getElementById('errNote');
+    err.style.display = 'block';
+    err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  document.getElementById('errNote').style.display = 'none';
+
+  const data = {
+    planType: selectedPlan,
+    studentName,
+    gradeSchool: document.getElementById('gradeSchool').value.trim(),
+    parentName: document.getElementById('parentName').value.trim(),
+    meetingDate: document.getElementById('meetingDate').value.trim(),
+    diagnoses,
+    impacts: getImpacts(),
+    extraImpact: document.getElementById('extraImpact').value.trim(),
+    accommodations: getAccoms(),
+    customAccom: document.getElementById('customAccom').value.trim(),
+    pushback: document.getElementById('pushback').value.trim(),
+    meetingType: document.getElementById('meetingType').value
+  };
+
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('loadWrap').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const sysPrompt = `You are an expert special education advocate and disability rights attorney helping a parent prepare for an IEP or 504 meeting.
+
+Generate a comprehensive, legally-informed meeting prep package.
+
+Return ONLY valid JSON (no markdown, no backticks):
+{
+  "legalBasis": "2-3 sentences citing the specific federal law (IDEA / Section 504 / ADA) that entitles this student to accommodations, personalized to their diagnoses.",
+  "openingStatement": "A calm, confident 3-4 sentence opening statement the parent can read or paraphrase at the start of the meeting. Should establish legal awareness, focus on the child's needs, and set a collaborative tone without being aggressive.",
+  "accommodationJustifications": [
+    {
+      "accommodation": "name of accommodation",
+      "legalJustification": "1-2 sentences: why the law requires the school to provide this given the student's specific condition",
+      "category": "attendance | testing | classroom | physical | medical | communication"
+    }
+  ],
+  "pushbackResponses": [
+    {
+      "schoolSays": "Common thing the school might say to deny or minimize",
+      "parentResponds": "Confident, factual, legally-grounded response. Cite law where possible."
+    }
+  ],
+  "keyPhrasesToUse": ["Legal phrases and terminology the parent should use in the meeting — knowing these signals to the school that the parent knows their rights"],
+  "closingAsk": "One clear sentence to end the meeting with — what to ask them to commit to before leaving.",
+  "warningFlags": ["Things to watch out for in this meeting — red flags that the school may be trying to minimize the plan"]
+}
+
+Rules:
+- Be specific to the diagnoses provided — not generic
+- Cite IDEA, Section 504, ADA, FAPE, LRE by name where applicable
+- Keep tone collaborative but firm — parent as partner, not adversary
+- Pushback responses should be calm and factual, never emotional
+- 4-6 pushback scenarios minimum
+- Include any relevant case law or OCR guidance if applicable`;
+
+  const userMsg = `Plan type: ${data.planType}
+Student: ${data.studentName}, ${data.gradeSchool}
+Parent: ${data.parentName}
+Meeting type: ${data.meetingType || 'not specified'}
+
+Diagnoses: ${data.diagnoses.join(', ')}
+School impact areas: ${data.impacts.join('; ') || 'not specified'}
+Additional context: ${data.extraImpact || 'none'}
+
+Accommodations requested:
+${data.accommodations.join('\n') || 'not specified'}
+Custom accommodations: ${data.customAccom || 'none'}
+
+Previous pushback from school: ${data.pushback || 'none noted'}`;
+
+  try {
+    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: sysPrompt,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+
+    const res = await resp.json();
+    const raw = res.content?.[0]?.text || '';
+    const doc = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderDoc(data, doc);
+
+  } catch(err) {
+    document.getElementById('loadWrap').classList.add('hidden');
+    document.getElementById('formWrap').classList.remove('hidden');
+    document.getElementById('errNote').textContent = 'Something went wrong. Please try again.';
+    document.getElementById('errNote').style.display = 'block';
+    console.error(err);
+  }
+}
+
+// ── RENDER ──
+function renderDoc(data, doc) {
+  document.getElementById('loadWrap').classList.add('hidden');
+
+  const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+
+  const catBadge = { attendance:'badge-present', testing:'badge-testing', classroom:'badge-present', physical:'badge-physical', medical:'badge-support', communication:'badge-support' };
+  const catLabel = { attendance:'Attendance', testing:'Testing', classroom:'Classroom', physical:'Physical', medical:'Medical', communication:'Support' };
+
+  const accomRows = (doc.accommodationJustifications || []).map(a => `
+    <tr>
+      <td>
+        <span class="accom-type-badge ${catBadge[a.category] || 'badge-present'}">${catLabel[a.category] || a.category}</span><br>
+        <strong>${a.accommodation}</strong>
+      </td>
+      <td>${a.legalJustification}</td>
+    </tr>`).join('');
+
+  const pushbackHTML = (doc.pushbackResponses || []).map(p => `
+    <div class="pushback-item">
+      <div class="pushback-q">🏫 School says: "${p.schoolSays}"</div>
+      <div class="pushback-a">💬 You say: ${p.parentResponds}</div>
+    </div>`).join('');
+
+  const rightsHTML = (doc.keyPhrasesToUse || []).map(p => `
+    <div class="rights-list-item">
+      <span class="rights-bullet">✦</span>
+      <span>${p}</span>
+    </div>`).join('');
+
+  const flagsHTML = (doc.warningFlags || []).map(f => `
+    <div class="rights-list-item">
+      <span class="rights-bullet" style="color:#e05f7a">⚠</span>
+      <span>${f}</span>
+    </div>`).join('');
+
+  document.getElementById('docOut').innerHTML = `
+    <div class="doc-top">
+      <div class="doc-plan-badge">✦ ${data.planType} Prep Package — MedAdvocate</div>
+      <div class="doc-student-name">${data.studentName}</div>
+      <div class="doc-plan-type">${data.planType} Plan — ${data.meetingType || 'Meeting Preparation'}</div>
+      <div class="doc-meta">
+        ${data.gradeSchool ? `<div class="doc-meta-item"><div class="doc-meta-lbl">School</div><div class="doc-meta-val">${data.gradeSchool}</div></div>` : ''}
+        ${data.meetingDate ? `<div class="doc-meta-item"><div class="doc-meta-lbl">Meeting Date</div><div class="doc-meta-val">${data.meetingDate}</div></div>` : ''}
+        <div class="doc-meta-item"><div class="doc-meta-lbl">Prepared</div><div class="doc-meta-val">${today}</div></div>
+        ${data.parentName ? `<div class="doc-meta-item"><div class="doc-meta-lbl">Parent</div><div class="doc-meta-val">${data.parentName}</div></div>` : ''}
+      </div>
+    </div>
+
+    <div class="doc-content">
+
+      <div class="doc-sec" style="animation-delay:0.1s">
+        <div class="doc-sec-title">Legal Basis for This Plan</div>
+        <div class="rights-box">
+          <div class="rights-box-title">⚖️ Why the school is legally required to act</div>
+          <div class="doc-prose">${doc.legalBasis}</div>
+        </div>
+      </div>
+
+      <div class="doc-sec" style="animation-delay:0.15s">
+        <div class="doc-sec-title">Your Opening Statement</div>
+        <div class="script-box">
+          <div class="script-label">📢 Read or paraphrase this at the start of the meeting</div>
+          <div class="script-text">${doc.openingStatement}</div>
+        </div>
+      </div>
+
+      ${accomRows ? `
+      <div class="doc-sec" style="animation-delay:0.2s">
+        <div class="doc-sec-title">Accommodation Requests & Legal Justification</div>
+        <table class="accom-table">
+          <thead><tr><th>Accommodation</th><th>Why the Law Requires It</th></tr></thead>
+          <tbody>${accomRows}</tbody>
+        </table>
+      </div>` : ''}
+
+      <div class="doc-sec" style="animation-delay:0.25s">
+        <div class="doc-sec-title">If the School Pushes Back — Your Responses</div>
+        <div class="pushback-list">${pushbackHTML}</div>
+      </div>
+
+      <div class="doc-sec" style="animation-delay:0.3s">
+        <div class="doc-sec-title">Key Legal Phrases to Use in the Meeting</div>
+        <div class="rights-box">
+          <div class="rights-box-title">🗣️ Saying these signals you know your rights</div>
+          <div class="rights-list">${rightsHTML}</div>
+        </div>
+      </div>
+
+      ${flagsHTML ? `
+      <div class="doc-sec" style="animation-delay:0.35s">
+        <div class="doc-sec-title">⚠ Watch For These Red Flags</div>
+        <div class="rights-box" style="background:#fff5f7; border-color:#f0c0c8;">
+          <div class="rights-box-title" style="color:#8a2040;">Things the school may say to minimize your child's plan</div>
+          <div class="rights-list">${flagsHTML}</div>
+        </div>
+      </div>` : ''}
+
+      <div class="doc-sec" style="animation-delay:0.4s; background:#fdf8ed; border-radius:14px; padding:20px 24px; border:1px solid #f0e0b0;">
+        <div class="doc-sec-title">Before You Leave the Meeting — Your Closing Ask</div>
+        <div class="script-text" style="font-family:'Playfair Display',serif; font-style:italic; font-size:17px; color:#1a1f2e; line-height:1.75;">${doc.closingAsk}</div>
+      </div>
+
+    </div>
+
+    <div class="doc-footer">
+      <div class="doc-footer-note">Prepared with Advocate. This document is for educational and organizational purposes. For complex disputes, consult a special education attorney or advocate.</div>
+      <div class="doc-footer-brand">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+    </div>
+  `;
+
+  document.getElementById('outWrap').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function copyDoc() {
+  const text = document.getElementById('docOut').innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied ✓'));
+}
+
+function startOver() {
+  document.getElementById('outWrap').classList.add('hidden');
+  document.getElementById('formWrap').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
