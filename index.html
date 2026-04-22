@@ -61,6 +61,36 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.95);backdrop-
 .nav-btn-outline{background:transparent;border:1.5px solid var(--sage);color:var(--sage-deep)}
 .nav-btn-outline:hover{background:var(--sage-pale)}
 
+/* HERO LOGO */
+.hero-logo{margin-bottom:32px}
+.hero-logo-mark{
+  font-family:'Fraunces',serif;
+  font-size:clamp(52px,9vw,96px);
+  font-weight:400;
+  color:var(--ink);
+  line-height:1;
+  letter-spacing:-0.02em;
+}
+.hero-logo-dot{
+  display:inline-block;
+  width:clamp(10px,1.8vw,18px);
+  height:clamp(10px,1.8vw,18px);
+  background:var(--sage-light);
+  border-radius:50%;
+  margin:0 4px 6px 3px;
+  vertical-align:middle;
+}
+.hero-logo-adv{color:var(--sage);font-weight:300}
+.hero-logo-tagline{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:clamp(16px,2.5vw,22px);
+  color:var(--ink-muted);
+  font-weight:300;
+  margin-top:8px;
+  letter-spacing:0.01em;
+}
+
 /* HERO */
 .hero{position:relative;z-index:1;text-align:center;max-width:720px;margin:0 auto;padding:72px 28px 40px}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin-bottom:22px;padding:6px 16px;border:1.5px solid var(--sage-light);border-radius:100px;background:var(--sage-pale)}
@@ -218,11 +248,15 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 
 <!-- HERO -->
 <section class="hero">
+  <!-- Large logo -->
+  <div class="hero-logo">
+    <div class="hero-logo-mark">Med<span class="hero-logo-dot"></span><span class="hero-logo-adv">Advocate</span></div>
+    <div class="hero-logo-tagline">Beside you, always.</div>
+  </div>
   <div class="hero-eyebrow">🌿 Built by a Medical Mom, for Medical Moms</div>
   <h1>Your child's<br><em>most powerful</em><br>advocate is <strong>you.</strong></h1>
   <p class="hero-sub">The tools, language, and confidence to walk into every specialist appointment, IEP meeting, and insurance battle completely prepared — and never leave without answers.</p>
   <button class="hero-cta" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">See all your tools ↓</button>
-  <p class="hero-tagline">Beside you, always.</p>
 </section>
 
 <!-- TRUST STRIP -->
@@ -469,23 +503,8 @@ const TOOLS = {
 
 function openTool(key) {
   const t = TOOLS[key]; if (!t) return;
-  document.getElementById('frameTitle').textContent = t.title;
-  document.getElementById('toolFrame').src = t.src;
-  document.getElementById('overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  window.location.href = t.src;
 }
-
-function closeTool() {
-  document.getElementById('overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(() => { document.getElementById('toolFrame').src = ''; }, 400);
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('overlay')) closeTool();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
 
 let swReg = null, deferredPrompt = null;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
