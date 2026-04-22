@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Symptom Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+    --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;
+    --border:#b7d9c4;--white:#ffffff;
+    --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+    --red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;
+    --violet:#7b68ee;--violet-pale:#f3f0ff;
+    --shadow-sm:0 2px 12px rgba(28,43,34,.06);
+    --shadow:0 4px 24px rgba(28,43,34,.10);
+    --shadow-lg:0 12px 48px rgba(28,43,34,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 5% 10%,rgba(107,158,126,.06) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 95% 90%,rgba(201,146,58,.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+  .nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+  .nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+  .nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+  .nav-gem{width:30px;height:30px;background:#1b4332;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+  .nav-wordmark span{color:var(--sage)}
+  .nav-print{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1px solid var(--border);border-radius:100px;cursor:pointer;background:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+  .nav-print:hover{border-color:var(--sage);color:var(--sage-deep)}
+
+  .shell{max-width:960px;margin:0 auto;padding:0 22px 100px;position:relative;z-index:1}
+
+  /* PAGE HEADER */
+  .page-header{padding:36px 0 28px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px}
+  .page-title{font-family:'Fraunces',serif;font-size:clamp(26px,4vw,36px);font-weight:300;color:var(--ink);line-height:1.2}
+  .page-title em{font-style:italic;color:var(--sage)}
+  .page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;margin-top:5px}
+
+  /* TABS */
+  .tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:28px;overflow-x:auto;scrollbar-width:none}
+  .tab-bar::-webkit-scrollbar{display:none}
+  .tab{padding:11px 20px;font-size:14px;font-weight:400;color:var(--ink-muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--sage-deep);border-bottom-color:var(--sage);font-weight:500}
+
+  /* PANELS */
+  .panel{display:none}
+  .panel.active{display:block;animation:fadeUp .3s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* CARDS */
+  .card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px 26px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+  .card-title{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink);margin-bottom:4px}
+  .card-sub{font-size:13px;color:var(--ink-muted);font-weight:300;margin-bottom:18px}
+
+  /* SYMPTOM SETUP */
+  .sym-setup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px;margin-bottom:14px}
+  .sym-preset{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1.5px solid var(--border);border-radius:11px;cursor:pointer;transition:all .18s;user-select:none}
+  .sym-preset:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+  .sym-preset.on{border-color:var(--sage);background:var(--sage-pale)}
+  .sym-preset-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all .18s}
+  .sym-preset.on .sym-preset-check{background:var(--sage);border-color:var(--sage);color:white}
+  .sym-preset-label{font-size:13px;color:var(--ink-soft);font-weight:300}
+  .sym-preset.on .sym-preset-label{color:var(--ink);font-weight:400}
+  .sym-preset-icon{font-size:16px;flex-shrink:0}
+
+  .add-custom-row{display:flex;gap:9px;margin-top:10px}
+  .finput{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;-webkit-appearance:none}
+  .finput:focus{border-color:var(--sage);background:var(--white)}
+  .finput::placeholder{color:var(--ink-muted)}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
+  .btn-sage{background:var(--sage);color:white}
+  .btn-sage:hover{background:var(--sage-deep);transform:translateY(-1px)}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}
+  .btn-outline:hover{border-color:var(--sage);color:var(--sage-deep);background:var(--sage-pale)}
+  .btn-red{background:transparent;border:1.5px solid var(--red-border);color:var(--red)}
+  .btn-red:hover{background:var(--red-pale)}
+
+  /* DAILY LOG */
+  .log-date-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+  .log-date-nav{display:flex;align-items:center;gap:10px}
+  .date-nav-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--ink-soft)}
+  .date-nav-btn:hover{border-color:var(--sage);color:var(--sage);background:var(--sage-pale)}
+  .log-date-label{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+  .log-date-label.today-label{color:var(--sage-deep)}
+  .today-badge{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;background:var(--sage-pale);color:var(--sage-deep);padding:3px 10px;border-radius:100px}
+
+  /* SYMPTOM SLIDERS */
+  .sym-log-list{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+  .sym-log-item{background:var(--warm);border:1px solid var(--border);border-radius:13px;padding:14px 18px}
+  .sym-log-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .sym-log-name{font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:7px}
+  .sym-log-severity{display:flex;align-items:center;gap:10px}
+  .sev-num{font-family:'Fraunces',serif;font-size:22px;font-weight:400;min-width:28px;text-align:center}
+  .sev-0{color:var(--ink-muted)}
+  .sev-low{color:var(--sage)}
+  .sev-mid{color:var(--amber)}
+  .sev-high{color:var(--red)}
+
+  .sev-slider{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;cursor:pointer;transition:background .2s}
+  .sev-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--sage);box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;transition:background .2s}
+  .sev-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--sage);border:none;cursor:pointer}
+
+  .sym-log-notes{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;color:var(--ink);background:transparent;outline:none;resize:none;transition:border-color .2s;margin-top:6px;min-height:0}
+  .sym-log-notes:focus{border-color:var(--sage);background:var(--white)}
+  .sym-log-notes::placeholder{color:var(--ink-muted)}
+
+  /* OVERALL DAY */
+  .overall-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .overall-btn{padding:8px 16px;border:1.5px solid var(--border);border-radius:100px;font-size:13px;cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif;font-weight:400}
+  .overall-btn:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+  .overall-btn.sel-great{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep);font-weight:500}
+  .overall-btn.sel-ok{border-color:var(--amber);background:var(--amber-pale);color:var(--amber);font-weight:500}
+  .overall-btn.sel-hard{border-color:var(--red);background:var(--red-pale);color:var(--red);font-weight:500}
+  .overall-btn.sel-worst{border-color:#7b0000;background:#fff0f0;color:#7b0000;font-weight:500}
+
+  .save-entry-btn{width:100%;padding:16px;background:var(--ink);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px}
+  .save-entry-btn:hover{background:var(--ink-soft);transform:translateY(-1px)}
+  .save-entry-btn.saved{background:var(--sage)}
+
+  /* HISTORY LIST */
+  .history-item{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s}
+  .history-item:hover{box-shadow:var(--shadow);border-color:var(--sage-light)}
+  .history-date{font-family:'Fraunces',serif;font-size:15px;font-weight:400;color:var(--ink);min-width:110px}
+  .history-overall{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:3px 10px;border-radius:100px}
+  .ov-great{background:var(--sage-pale);color:var(--sage-deep)}
+  .ov-ok{background:var(--amber-pale);color:var(--amber)}
+  .ov-hard{background:var(--red-pale);color:var(--red)}
+  .ov-worst{background:#fff0f0;color:#7b0000}
+  .history-syms{flex:1;display:flex;flex-wrap:wrap;gap:5px}
+  .history-sym-chip{font-size:11px;padding:2px 8px;border-radius:100px;background:var(--warm);border:1px solid var(--border);color:var(--ink-soft)}
+  .history-sym-chip.high{background:var(--red-pale);border-color:var(--red-border);color:var(--red)}
+  .history-sym-chip.mid{background:var(--amber-pale);border-color:var(--amber-light);color:var(--amber)}
+  .history-del{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:16px;padding:4px;transition:color .2s;flex-shrink:0}
+  .history-del:hover{color:var(--red)}
+
+  /* CHARTS */
+  .chart-controls{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+  .chart-filter{padding:7px 15px;border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif;color:var(--ink-soft)}
+  .chart-filter:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+  .chart-filter.active{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep)}
+  .chart-wrap{position:relative;height:260px;margin-bottom:8px}
+  .chart-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+  .chart-card-title{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:var(--ink);margin-bottom:4px}
+  .chart-card-sub{font-size:12px;color:var(--ink-muted);font-weight:300;margin-bottom:16px}
+
+  /* INSIGHT CARDS */
+  .insight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+  .insight-tile{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow-sm)}
+  .insight-tile-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+  .insight-tile-value{font-family:'Fraunces',serif;font-size:22px;font-weight:400;color:var(--ink);line-height:1.2}
+  .insight-tile-sub{font-size:12px;color:var(--ink-muted);margin-top:4px;font-weight:300}
+
+  /* EMPTY */
+  .empty{text-align:center;padding:56px 24px;color:var(--ink-muted)}
+  .empty-icon{font-size:44px;margin-bottom:14px}
+  .empty-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--ink);margin-bottom:7px}
+  .empty-sub{font-size:14px;line-height:1.65;max-width:340px;margin:0 auto 20px;font-weight:300}
+
+  /* PRINT */
+  @media print {
+    body{background:white}body::before{display:none}
+    nav,.tab-bar,.chart-controls,.btn,.no-print{display:none !important}
+    .shell{max-width:100%;padding:0}
+    .panel{display:block !important}
+    .card,.chart-card{box-shadow:none;break-inside:avoid}
+    .chart-wrap{height:200px}
+    @page{margin:15mm}
+  }
+
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:600px){
+    .shell{padding:0 14px 80px}
+    nav{padding:0 14px}
+    .sym-setup-grid{grid-template-columns:1fr 1fr}
+    .insight-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="nav-back" onclick="window.location.href='advocate-home.html'">← Home</button>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+  </div>
+  <button class="nav-print no-print" onclick="window.print()">🖨️ Print Report</button>
+</nav>
+
+<div class="shell">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Symptom <em>Tracker</em></h1>
+      <div class="page-sub">Log daily. See patterns. Show the doctor what words can't.</div>
+    </div>
+    <button class="btn btn-outline no-print" onclick="switchTab('setup')">⚙️ Edit Symptoms</button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('log')" id="tab-log">📅 Today's Log</button>
+    <button class="tab" onclick="switchTab('history')" id="tab-history">📋 History</button>
+    <button class="tab" onclick="switchTab('trends')" id="tab-trends">📈 Trends</button>
+    <button class="tab" onclick="switchTab('setup')" id="tab-setup">⚙️ Setup</button>
+  </div>
+
+  <!-- ══ SETUP PANEL ══ -->
+  <div class="panel" id="panel-setup">
+    <div class="card">
+      <div class="card-title">Which symptoms do you want to track?</div>
+      <div class="card-sub">Choose from common ones below, or add your own. You can change these any time.</div>
+
+      <div class="sym-setup-grid" id="presetGrid">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="add-custom-row">
+        <input type="text" class="finput" id="customSymInput" placeholder="Add your own symptom…" style="flex:1" onkeydown="if(event.key==='Enter')addCustomSym()">
+        <button class="btn btn-sage" onclick="addCustomSym()">Add</button>
+      </div>
+    </div>
+
+    <div class="card" id="activeSymCard" style="display:none">
+      <div class="card-title">Your tracked symptoms</div>
+      <div class="card-sub">These will appear in your daily log.</div>
+      <div id="activeSymList"></div>
+    </div>
+
+    <button class="btn btn-sage" style="width:100%;padding:16px;font-size:15px;justify-content:center" onclick="switchTab('log')">
+      ✓ Done — Go to Today's Log
+    </button>
+  </div>
+
+  <!-- ══ LOG PANEL ══ -->
+  <div class="panel active" id="panel-log">
+
+    <div class="card">
+      <!-- Date nav -->
+      <div class="log-date-header">
+        <div class="log-date-nav">
+          <button class="date-nav-btn" onclick="changeLogDate(-1)">‹</button>
+          <div>
+            <div class="log-date-label" id="logDateLabel">Today</div>
+          </div>
+          <button class="date-nav-btn" onclick="changeLogDate(1)" id="nextDateBtn">›</button>
+        </div>
+        <span class="today-badge" id="todayBadge">Today</span>
+      </div>
+
+      <!-- No symptoms set up yet -->
+      <div id="noSymsMsg" class="empty" style="padding:32px 0">
+        <div class="empty-icon">⚙️</div>
+        <div class="empty-title">No symptoms set up yet</div>
+        <div class="empty-sub">Head to Setup to choose which symptoms you want to track daily.</div>
+        <button class="btn btn-sage" onclick="switchTab('setup')" style="margin:0 auto;display:inline-flex">Go to Setup →</button>
+      </div>
+
+      <!-- Symptom sliders -->
+      <div id="symLogList" class="sym-log-list"></div>
+
+      <!-- Overall day -->
+      <div id="overallSection" style="display:none">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px">How was today overall?</div>
+        <div class="overall-row">
+          <button class="overall-btn" id="ov-great" onclick="selectOverall('great')">😊 Good day</button>
+          <button class="overall-btn" id="ov-ok"    onclick="selectOverall('ok')">😐 Okay</button>
+          <button class="overall-btn" id="ov-hard"  onclick="selectOverall('hard')">😔 Hard day</button>
+          <button class="overall-btn" id="ov-worst" onclick="selectOverall('worst')">😢 Worst day</button>
+        </div>
+
+        <div style="margin-top:14px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:7px">Notes for today (optional)</div>
+          <textarea class="sym-log-notes" id="dayNotes" placeholder="e.g. Had a good morning but crashed after lunch. Missed school. Started new medication…" style="min-height:72px;width:100%"></textarea>
+        </div>
+
+        <button class="save-entry-btn" id="saveBtn" onclick="saveEntry()" style="margin-top:16px">
+          💾 Save Today's Entry
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ HISTORY PANEL ══ -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="card-title">Log History</div>
+      <div class="card-sub">All recorded days — tap any entry to view details.</div>
+      <div id="historyList">
+        <div class="empty">
+          <div class="empty-icon">📅</div>
+          <div class="empty-title">No entries yet</div>
+          <div class="empty-sub">Start logging daily and your history will appear here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TRENDS PANEL ══ -->
+  <div class="panel" id="panel-trends">
+
+    <div id="trendsEmpty" class="empty" style="padding:60px 0">
+      <div class="empty-icon">📈</div>
+      <div class="empty-title">Not enough data yet</div>
+      <div class="empty-sub">Log at least 3 days to start seeing trends. The more you log, the clearer the patterns become.</div>
+      <button class="btn btn-sage" onclick="switchTab('log')" style="margin:0 auto;display:inline-flex">Log Today →</button>
+    </div>
+
+    <div id="trendsContent" style="display:none">
+
+      <!-- Insights tiles -->
+      <div class="insight-grid" id="insightTiles"></div>
+
+      <!-- Range filter -->
+      <div class="chart-controls no-print">
+        <button class="chart-filter active" onclick="setRange(14,this)">2 Weeks</button>
+        <button class="chart-filter" onclick="setRange(30,this)">1 Month</button>
+        <button class="chart-filter" onclick="setRange(90,this)">3 Months</button>
+        <button class="chart-filter" onclick="setRange(0,this)">All Time</button>
+      </div>
+
+      <!-- Overall day trend -->
+      <div class="chart-card">
+        <div class="chart-card-title">Overall Day Rating</div>
+        <div class="chart-card-sub">How good or bad each day felt overall</div>
+        <div class="chart-wrap"><canvas id="overallChart"></canvas></div>
+      </div>
+
+      <!-- Individual symptom charts -->
+      <div id="symCharts"></div>
+
+      <!-- Doctor summary -->
+      <div class="card" style="margin-top:8px">
+        <div class="card-title">📋 For Your Doctor</div>
+        <div class="card-sub">A summary you can print or read aloud at your next appointment.</div>
+        <div id="doctorSummary" style="font-size:14px;line-height:1.8;color:var(--ink-soft);font-weight:300;white-space:pre-wrap"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══
+const STORAGE_KEY = 'advocate_symptoms';
+const ENTRIES_KEY = 'advocate_entries';
+
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"trackedSymptoms":[]}');
+let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
+let logDate = todayStr();
+let selectedOverall = '';
+let rangeFilter = 14;
+let charts = {};
+
+// Preset symptoms
+const PRESETS = [
+  { id:'fatigue',     label:'Fatigue',          icon:'😴' },
+  { id:'pain',        label:'Pain / Achiness',   icon:'💢' },
+  { id:'brainfog',    label:'Brain Fog',         icon:'🌫️' },
+  { id:'dizziness',   label:'Dizziness',         icon:'💫' },
+  { id:'nausea',      label:'Nausea',            icon:'🤢' },
+  { id:'headache',    label:'Headache',          icon:'🤕' },
+  { id:'sleep',       label:'Poor Sleep',        icon:'🌙' },
+  { id:'anxiety',     label:'Anxiety',           icon:'😰' },
+  { id:'heart',       label:'Heart Racing',      icon:'💓' },
+  { id:'gi',          label:'GI Issues',         icon:'🫁' },
+  { id:'joint',       label:'Joint Pain',        icon:'🦴' },
+  { id:'vision',      label:'Vision Issues',     icon:'👁️' },
+  { id:'energy',      label:'Low Energy',        icon:'🔋' },
+  { id:'mood',        label:'Low Mood',          icon:'🌧️' },
+];
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function dateLabel(str) {
+  const d = new Date(str + 'T12:00:00');
+  const today = todayStr();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  if (str === today) return 'Today';
+  if (str === yesterday) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function dateDisplay(str) {
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+
+// ══ TABS ══
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'trends') renderTrends();
+  if (tab === 'history') renderHistory();
+  if (tab === 'setup') renderSetup();
+  if (tab === 'log') renderLog();
+}
+
+// ══ SETUP ══
+function renderSetup() {
+  const grid = document.getElementById('presetGrid');
+  grid.innerHTML = PRESETS.map(p => {
+    const on = state.trackedSymptoms.some(s => s.id === p.id);
+    return `<div class="sym-preset ${on?'on':''}" onclick="togglePreset('${p.id}')" id="preset-${p.id}">
+      <div class="sym-preset-check">${on?'✓':''}</div>
+      <span class="sym-preset-icon">${p.icon}</span>
+      <span class="sym-preset-label">${p.label}</span>
+    </div>`;
+  }).join('');
+  renderActiveSyms();
+}
+
+function togglePreset(id) {
+  const existing = state.trackedSymptoms.findIndex(s => s.id === id);
+  if (existing >= 0) {
+    state.trackedSymptoms.splice(existing, 1);
+  } else {
+    const preset = PRESETS.find(p => p.id === id);
+    state.trackedSymptoms.push({ id, label: preset.label, icon: preset.icon });
+  }
+  save();
+  renderSetup();
+}
+
+function addCustomSym() {
+  const inp = document.getElementById('customSymInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  const id = 'custom_' + Date.now();
+  state.trackedSymptoms.push({ id, label: val, icon: '⚡', custom: true });
+  save();
+  inp.value = '';
+  renderSetup();
+  showToast('Added: ' + val);
+}
+
+function renderActiveSyms() {
+  const card = document.getElementById('activeSymCard');
+  const list = document.getElementById('activeSymList');
+  if (!state.trackedSymptoms.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  list.innerHTML = state.trackedSymptoms.map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:16px">${s.icon}</span>
+      <span style="font-size:14px;color:var(--ink-soft);flex:1">${escH(s.label)}</span>
+      <button class="btn btn-red" style="padding:5px 12px;font-size:12px" onclick="removeSym('${s.id}')">Remove</button>
+    </div>`).join('');
+}
+
+function removeSym(id) {
+  state.trackedSymptoms = state.trackedSymptoms.filter(s => s.id !== id);
+  save();
+  renderSetup();
+}
+
+// ══ LOG ══
+function renderLog() {
+  const syms = state.trackedSymptoms;
+  const noSyms = document.getElementById('noSymsMsg');
+  const logList = document.getElementById('symLogList');
+  const overallSec = document.getElementById('overallSection');
+
+  // Update date display
+  const isToday = logDate === todayStr();
+  const isFuture = logDate > todayStr();
+  document.getElementById('logDateLabel').textContent = dateDisplay(logDate);
+  document.getElementById('logDateLabel').className = 'log-date-label' + (isToday?' today-label':'');
+  document.getElementById('todayBadge').style.display = isToday ? 'inline-flex' : 'none';
+  document.getElementById('nextDateBtn').style.opacity = isFuture ? '0.3' : '1';
+  document.getElementById('nextDateBtn').disabled = isFuture;
+
+  if (!syms.length) {
+    noSyms.style.display = 'block';
+    logList.style.display = 'none';
+    overallSec.style.display = 'none';
+    return;
+  }
+
+  noSyms.style.display = 'none';
+  logList.style.display = 'flex';
+  overallSec.style.display = 'block';
+
+  // Load existing entry for this date
+  const existing = entries.find(e => e.date === logDate);
+  selectedOverall = existing?.overall || '';
+
+  // Update overall buttons
+  ['great','ok','hard','worst'].forEach(v => {
+    const btn = document.getElementById('ov-' + v);
+    btn.className = 'overall-btn' + (selectedOverall === v ? ' sel-' + v : '');
+  });
+
+  // Notes
+  document.getElementById('dayNotes').value = existing?.notes || '';
+
+  // Save button state
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.textContent = existing ? '✏️ Update Entry' : '💾 Save Today\'s Entry';
+  saveBtn.className = 'save-entry-btn' + (existing ? ' saved' : '');
+
+  // Render sliders
+  logList.innerHTML = syms.map(s => {
+    const val = existing?.symptoms?.[s.id] ?? 0;
+    const color = sevColor(val);
+    return `<div class="sym-log-item">
+      <div class="sym-log-top">
+        <div class="sym-log-name"><span style="font-size:18px">${s.icon}</span>${escH(s.label)}</div>
+        <div class="sym-log-severity">
+          <span style="font-size:12px;color:var(--ink-muted);font-weight:300">${val === 0 ? 'Not present' : val <= 3 ? 'Mild' : val <= 6 ? 'Moderate' : 'Severe'}</span>
+          <span class="sev-num" id="num-${s.id}" style="color:${color}">${val}</span>
+        </div>
+      </div>
+      <input type="range" min="0" max="10" value="${val}" class="sev-slider"
+        id="slider-${s.id}"
+        style="background:linear-gradient(to right,${color} ${val*10}%,var(--border) ${val*10}%)"
+        oninput="updateSlider('${s.id}',this.value)">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-muted);margin-top:4px;padding:0 2px">
+        <span>None</span><span>Mild</span><span>Moderate</span><span>Severe</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateSlider(id, val) {
+  val = parseInt(val);
+  const color = sevColor(val);
+  document.getElementById('num-' + id).textContent = val;
+  document.getElementById('num-' + id).style.color = color;
+  const slider = document.getElementById('slider-' + id);
+  slider.style.background = `linear-gradient(to right,${color} ${val*10}%,var(--border) ${val*10}%)`;
+}
+
+function sevColor(val) {
+  if (val === 0) return 'var(--ink-muted)';
+  if (val <= 3) return 'var(--sage)';
+  if (val <= 6) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function selectOverall(val) {
+  selectedOverall = val;
+  ['great','ok','hard','worst'].forEach(v => {
+    const btn = document.getElementById('ov-' + v);
+    btn.className = 'overall-btn' + (v === val ? ' sel-' + v : '');
+  });
+}
+
+function changeLogDate(dir) {
+  const d = new Date(logDate + 'T12:00:00');
+  d.setDate(d.getDate() + dir);
+  const newDate = d.toISOString().split('T')[0];
+  if (newDate > todayStr()) return;
+  logDate = newDate;
+  renderLog();
+}
+
+function saveEntry() {
+  const syms = state.trackedSymptoms;
+  if (!syms.length) return;
+
+  const symptoms = {};
+  syms.forEach(s => {
+    const slider = document.getElementById('slider-' + s.id);
+    symptoms[s.id] = slider ? parseInt(slider.value) : 0;
+  });
+
+  const entry = {
+    date: logDate,
+    symptoms,
+    overall: selectedOverall,
+    notes: document.getElementById('dayNotes').value.trim(),
+    savedAt: new Date().toISOString()
+  };
+
+  const idx = entries.findIndex(e => e.date === logDate);
+  if (idx >= 0) entries[idx] = entry;
+  else entries.push(entry);
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+
+  save();
+  renderLog();
+  showToast('Entry saved ✓');
+}
+
+// ══ HISTORY ══
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!entries.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No entries yet</div><div class="empty-sub">Start logging daily and your history will appear here.</div></div>`;
+    return;
+  }
+
+  const ovLabel = { great:'😊 Good day', ok:'😐 Okay', hard:'😔 Hard day', worst:'😢 Worst day' };
+  const ovCls   = { great:'ov-great', ok:'ov-ok', hard:'ov-hard', worst:'ov-worst' };
+
+  list.innerHTML = [...entries].reverse().map(e => {
+    const symChips = state.trackedSymptoms
+      .filter(s => e.symptoms?.[s.id] > 0)
+      .sort((a,b) => (e.symptoms[b.id]||0) - (e.symptoms[a.id]||0))
+      .slice(0,5)
+      .map(s => {
+        const v = e.symptoms[s.id] || 0;
+        const cls = v >= 7 ? 'high' : v >= 4 ? 'mid' : '';
+        return `<span class="history-sym-chip ${cls}">${s.icon} ${s.label} ${v}/10</span>`;
+      }).join('');
+
+    return `<div class="history-item" onclick="jumpToDate('${e.date}')">
+      <div>
+        <div class="history-date">${dateLabel(e.date)}</div>
+        <div style="font-size:11px;color:var(--ink-muted);font-weight:300">${dateDisplay(e.date)}</div>
+      </div>
+      ${e.overall ? `<div class="history-overall ${ovCls[e.overall]||''}">${ovLabel[e.overall]||''}</div>` : ''}
+      <div class="history-syms">${symChips || '<span style="font-size:12px;color:var(--ink-muted)">No symptoms logged</span>'}</div>
+      ${e.notes ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">"${escH(e.notes)}"</div>` : ''}
+      <button class="history-del no-print" onclick="event.stopPropagation();deleteEntry('${e.date}')" title="Delete">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function jumpToDate(date) {
+  logDate = date;
+  switchTab('log');
+}
+
+function deleteEntry(date) {
+  if (!confirm('Delete entry for ' + dateLabel(date) + '?')) return;
+  entries = entries.filter(e => e.date !== date);
+  save();
+  renderHistory();
+  showToast('Entry deleted');
+}
+
+// ══ TRENDS ══
+function setRange(days, btn) {
+  rangeFilter = days;
+  document.querySelectorAll('.chart-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrends();
+}
+
+function getFilteredEntries() {
+  if (!rangeFilter) return entries;
+  const cutoff = new Date(Date.now() - rangeFilter * 86400000).toISOString().split('T')[0];
+  return entries.filter(e => e.date >= cutoff);
+}
+
+function renderTrends() {
+  const filtered = getFilteredEntries();
+
+  if (entries.length < 3) {
+    document.getElementById('trendsEmpty').style.display = 'block';
+    document.getElementById('trendsContent').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('trendsEmpty').style.display = 'none';
+  document.getElementById('trendsContent').style.display = 'block';
+
+  // Destroy old charts
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+
+  const dates = filtered.map(e => {
+    const d = new Date(e.date + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  });
+
+  // ── Insight tiles ──
+  const symsWithData = state.trackedSymptoms.filter(s =>
+    filtered.some(e => (e.symptoms?.[s.id] || 0) > 0)
+  );
+
+  const avgSevs = symsWithData.map(s => ({
+    ...s,
+    avg: filtered.reduce((sum,e) => sum + (e.symptoms?.[s.id]||0), 0) / filtered.length
+  })).sort((a,b) => b.avg - a.avg);
+
+  const worstSym = avgSevs[0];
+  const bestSym = avgSevs[avgSevs.length - 1];
+  const hardDays = filtered.filter(e => e.overall === 'hard' || e.overall === 'worst').length;
+  const goodDays = filtered.filter(e => e.overall === 'great').length;
+
+  document.getElementById('insightTiles').innerHTML = `
+    <div class="insight-tile">
+      <div class="insight-tile-label">Days Logged</div>
+      <div class="insight-tile-value">${filtered.length}</div>
+      <div class="insight-tile-sub">in this period</div>
+    </div>
+    ${worstSym ? `<div class="insight-tile" style="border-color:var(--red-border);background:var(--red-pale)">
+      <div class="insight-tile-label" style="color:var(--red)">Highest Average</div>
+      <div class="insight-tile-value" style="color:var(--red)">${worstSym.icon} ${worstSym.label}</div>
+      <div class="insight-tile-sub">${worstSym.avg.toFixed(1)}/10 avg severity</div>
+    </div>` : ''}
+    <div class="insight-tile" style="border-color:${hardDays > goodDays ? 'var(--red-border)' : 'var(--sage-light)'}">
+      <div class="insight-tile-label">Hard / Worst Days</div>
+      <div class="insight-tile-value">${hardDays}</div>
+      <div class="insight-tile-sub">out of ${filtered.length} days logged</div>
+    </div>
+    <div class="insight-tile" style="border-color:var(--sage-light);background:var(--sage-pale)">
+      <div class="insight-tile-label">Good Days</div>
+      <div class="insight-tile-value" style="color:var(--sage)">${goodDays}</div>
+      <div class="insight-tile-sub">out of ${filtered.length} days logged</div>
+    </div>`;
+
+  // ── Overall day chart ──
+  const ovMap = { great:1, ok:2, hard:3, worst:4 };
+  const ovColors = filtered.map(e => {
+    if (e.overall==='great') return 'rgba(107,158,126,0.7)';
+    if (e.overall==='ok')    return 'rgba(201,146,58,0.7)';
+    if (e.overall==='hard')  return 'rgba(192,57,43,0.5)';
+    if (e.overall==='worst') return 'rgba(192,57,43,0.9)';
+    return 'rgba(200,200,200,0.4)';
+  });
+
+  const overallCtx = document.getElementById('overallChart').getContext('2d');
+  charts.overall = new Chart(overallCtx, {
+    type: 'bar',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Day Rating',
+        data: filtered.map(e => e.overall ? ovMap[e.overall] || 0 : null),
+        backgroundColor: ovColors,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const labels = ['','Good Day','Okay','Hard Day','Worst Day'];
+          return labels[ctx.parsed.y] || '';
+        }}}
+      },
+      scales: {
+        x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family:'DM Sans', size:11 }, color:'#7a9080', maxRotation:45 }},
+        y: { min:0, max:5, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: {
+          font: { family:'DM Sans', size:11 }, color:'#7a9080',
+          callback: v => ['','Good','Okay','Hard','Worst',''][v] || ''
+        }}
+      }
+    }
+  });
+
+  // ── Per-symptom charts ──
+  const symChartsEl = document.getElementById('symCharts');
+  symChartsEl.innerHTML = '';
+  const COLORS = ['#6b9e7e','#c9923a','#7b68ee','#2980b9','#c96070','#4a7a5e','#c9a84c','#8a6ab0'];
+
+  state.trackedSymptoms.forEach((s, idx) => {
+    const vals = filtered.map(e => e.symptoms?.[s.id] ?? null);
+    const hasData = vals.some(v => v !== null && v > 0);
+    if (!hasData) return;
+
+    const cardEl = document.createElement('div');
+    cardEl.className = 'chart-card';
+    const avg = vals.filter(v=>v!==null).reduce((a,b)=>a+b,0) / vals.filter(v=>v!==null).length;
+    const max = Math.max(...vals.filter(v=>v!==null));
+    const color = COLORS[idx % COLORS.length];
+
+    cardEl.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <div class="chart-card-title">${s.icon} ${escH(s.label)}</div>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--ink-muted)">
+          <span>Avg: <strong style="color:${color}">${avg.toFixed(1)}/10</strong></span>
+          <span>Peak: <strong style="color:var(--red)">${max}/10</strong></span>
+        </div>
+      </div>
+      <div class="chart-card-sub" style="margin-bottom:14px">Severity over time (0 = none, 10 = severe)</div>
+      <div class="chart-wrap"><canvas id="chart-${s.id}"></canvas></div>`;
+
+    symChartsEl.appendChild(cardEl);
+
+    requestAnimationFrame(() => {
+      const ctx = document.getElementById('chart-' + s.id)?.getContext('2d');
+      if (!ctx) return;
+      charts[s.id] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: s.label,
+            data: vals,
+            borderColor: color,
+            backgroundColor: color + '15',
+            borderWidth: 2.5,
+            pointRadius: vals.map(v => v !== null && v > 0 ? 4 : 2),
+            pointBackgroundColor: vals.map(v => v >= 7 ? '#c0392b' : v >= 4 ? '#c9923a' : color),
+            tension: 0.3, fill: true, spanGaps: true
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family:'DM Sans', size:11 }, color:'#7a9080', maxRotation:45 }},
+            y: { min:0, max:10, grid: { color: 'rgba(0,0,0,0.04)' },
+              ticks: { font: { family:'DM Sans', size:11 }, color:'#7a9080', stepSize:2 }
+            }
+          }
+        }
+      });
+    });
+  });
+
+  // ── Doctor summary ──
+  buildDoctorSummary(filtered);
+}
+
+function buildDoctorSummary(filtered) {
+  if (!filtered.length) return;
+
+  const start = new Date(filtered[0].date + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const end   = new Date(filtered[filtered.length-1].date + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const hardDays = filtered.filter(e => e.overall==='hard'||e.overall==='worst').length;
+  const goodDays = filtered.filter(e => e.overall==='great').length;
+
+  const symSummary = state.trackedSymptoms.map(s => {
+    const vals = filtered.map(e => e.symptoms?.[s.id]||0).filter(v=>v>0);
+    if (!vals.length) return null;
+    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const freq = Math.round((vals.length/filtered.length)*100);
+    return { ...s, avg, freq, peak: Math.max(...vals) };
+  }).filter(Boolean).sort((a,b) => b.avg - a.avg);
+
+  const lines = [
+    `Symptom tracking summary — ${start} to ${end} (${filtered.length} days logged)\n`,
+    `Out of ${filtered.length} days tracked:`,
+    `  • ${goodDays} good days (${Math.round(goodDays/filtered.length*100)}%)`,
+    `  • ${hardDays} hard or worst days (${Math.round(hardDays/filtered.length*100)}%)\n`,
+    symSummary.length ? 'Symptom averages (severity 0–10):' : '',
+    ...symSummary.map(s =>
+      `  • ${s.label}: average ${s.avg.toFixed(1)}/10 severity, present ${s.freq}% of days, peak ${s.peak}/10`
+    ),
+    symSummary.length ? '' : '',
+    symSummary.length && symSummary[0].avg >= 5 ?
+      `The most consistently severe symptom was ${symSummary[0].label}, averaging ${symSummary[0].avg.toFixed(1)}/10 and present on ${symSummary[0].freq}% of tracked days.` : '',
+  ];
+
+  document.getElementById('doctorSummary').textContent = lines.filter(l=>l!==null).join('\n');
+}
+
+// ══ UTILS ══
+function escH(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══ INIT ══
+// Load sample data for demo if empty
+if (!state.trackedSymptoms.length) {
+  state.trackedSymptoms = [
+    { id:'fatigue', label:'Fatigue', icon:'😴' },
+    { id:'pain', label:'Pain / Achiness', icon:'💢' },
+    { id:'brainfog', label:'Brain Fog', icon:'🌫️' },
+    { id:'dizziness', label:'Dizziness', icon:'💫' },
+    { id:'headache', label:'Headache', icon:'🤕' },
+  ];
+  save();
+}
+
+// Pre-populate some demo history if completely empty
+if (!entries.length) {
+  const today = new Date();
+  const ovOptions = ['great','ok','ok','hard','hard','worst','ok'];
+  for (let i = 20; i >= 1; i--) {
+    const d = new Date(today.getTime() - i * 86400000);
+    const dateStr = d.toISOString().split('T')[0];
+    const overall = ovOptions[Math.floor(Math.random()*ovOptions.length)];
+    entries.push({
+      date: dateStr,
+      symptoms: {
+        fatigue:   Math.floor(Math.random()*4)+4,
+        pain:      Math.floor(Math.random()*5)+2,
+        brainfog:  Math.floor(Math.random()*5)+1,
+        dizziness: Math.floor(Math.random()*6)+1,
+        headache:  Math.floor(Math.random()*5),
+      },
+      overall,
+      notes: '',
+      savedAt: new Date().toISOString()
+    });
+  }
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  save();
+}
+
+renderLog();
+</script>
+</body>
+</html>
