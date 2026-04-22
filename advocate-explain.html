@@ -159,7 +159,11 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let selectedAud = 'family';
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function createTag(text, wrap, inp, cls) { const t = document.createElement('span'); t.className = 'vtag ' + cls; t.innerHTML = escH(text) + '<button class="vtag-x" onclick="this.parentElement.remove()">×</button>'; wrap.insertBefore(t, inp); }
+function getTags(wrapId) { return [...document.getElementById(wrapId).querySelectorAll('.vtag')].map(t => t.textContent.replace('×','').trim()).filter(Boolean); }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; el.scrollIntoView({behavior:'smooth',block:'center'}); }
 function selectAud(el, aud) {
   selectedAud = aud;
   document.querySelectorAll('.aud-card').forEach(c => c.classList.remove('sel'));
