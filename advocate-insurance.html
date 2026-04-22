@@ -6,103 +6,92 @@
 <title>MedAdvocate — Insurance Appeal Letter</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
-  :root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow:0 4px 24px rgba(28,43,34,.10);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
-  *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
-  body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
-  nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
-  .nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
-  .nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
-  .nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
-  .nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
-  .nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
-  .nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
-  .nav-wordmark .adv{color:var(--sage);font-weight:300}
-  .shell{max-width:860px;margin:0 auto;padding:0 22px 100px}
-  .page-header{padding:32px 0 24px;text-align:center}
-  .page-icon{font-size:44px;margin-bottom:12px}
-  .page-title{font-family:'Fraunces',serif;font-size:32px;font-weight:300;color:var(--ink);margin-bottom:8px}
-  .page-title em{font-style:italic;color:var(--sage)}
-  .page-sub{font-size:15px;color:var(--ink-muted);font-weight:300;max-width:500px;margin:0 auto}
-  .fcard{background:var(--white);border:1.5px solid var(--border);border-radius:18px;padding:24px 26px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
-  .fcard-head{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
-  .fcard-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-  .ic-sage{background:var(--sage-pale);border:1px solid var(--sage-light)}
-  .ic-amber{background:var(--amber-pale);border:1px solid var(--amber-light)}
-  .fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:3px}
-  .fcard-desc{font-size:13px;color:var(--ink-muted);line-height:1.6;font-weight:300}
-  .field{margin-bottom:13px}.field:last-child{margin-bottom:0}
-  .flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
-  .fhint{font-size:12px;color:var(--ink-muted);margin-bottom:6px;font-weight:300}
-  .finput,.ftextarea,.fselect{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
-  .finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
-  .finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
-  .ftextarea{min-height:84px;line-height:1.65}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-  .tag-wrap{background:var(--warm);border:1.5px solid var(--border);border-radius:11px;padding:8px 11px;min-height:46px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text;transition:border-color .2s}
-  .tag-wrap:focus-within{border-color:var(--sage);background:var(--white)}
-  .vtag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:500}
-  .vtag-sage{background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)}
-  .vtag-x{background:none;border:none;cursor:pointer;color:inherit;font-size:14px;padding:0;opacity:.6}
-  .tinput{border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);flex:1;min-width:110px}
-  .tinput::placeholder{color:var(--ink-muted)}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
-  .chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:400;color:var(--ink-soft);cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif}
-  .chip:hover{border-color:var(--sage-light);background:var(--sage-pale);color:var(--ink)}
-  .chip.on{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep);font-weight:500}
-  .gen-btn{width:100%;padding:18px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;background:var(--ink);color:white;box-shadow:0 4px 20px rgba(28,43,34,.2)}
-  .gen-btn:hover{background:var(--ink-soft);transform:translateY(-2px)}
-  .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important}
-  .load-wrap{text-align:center;padding:70px 32px}
-  .load-ring{width:52px;height:52px;margin:0 auto 22px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .load-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:7px}
-  .load-sub{font-size:14px;color:var(--ink-muted);font-weight:300}
-  .load-steps{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
-  .load-step{font-size:13px;color:var(--ink-muted);font-weight:300;opacity:0;animation:fadeUp .5s ease forwards}
-  .load-step:nth-child(1){animation-delay:.5s}.load-step:nth-child(2){animation-delay:1.6s}.load-step:nth-child(3){animation-delay:2.8s}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .out-actions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
-  .abtn{display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
-  .abtn-dark{background:var(--ink);color:white}.abtn-dark:hover{background:var(--ink-soft)}
-  .abtn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}.abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
-  .ins-out{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg);animation:fadeUp .5s ease}
-  .ins-top{background:var(--ink);color:white;padding:28px 36px}
-  .ins-badge{display:inline-block;background:var(--sage);color:white;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:4px 13px;border-radius:100px;margin-bottom:14px}
-  .ins-title{font-family:'Fraunces',serif;font-size:25px;font-weight:300;margin-bottom:5px}
-  .ins-sub{font-size:13px;color:rgba(255,255,255,.5);font-weight:300}
-  .ins-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px}
-  .ins-meta-lbl{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:3px}
-  .ins-meta-val{font-size:13px;color:rgba(255,255,255,.8)}
-  .ins-body{padding:30px 36px}
-  .ins-sec{margin-bottom:26px}
-  .ins-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-  .ins-letter{font-size:15px;line-height:1.85;color:var(--ink-soft);font-weight:300;white-space:pre-wrap}
-  .key-phrases{display:flex;flex-direction:column;gap:7px}
-  .key-phrase{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-radius:10px;background:var(--sage-pale);border:1px solid var(--sage-light);font-size:14px;color:var(--ink-soft);font-weight:300}
-  .kp-dot{color:var(--sage);font-weight:700;flex-shrink:0}
-  .esc-steps{display:flex;flex-direction:column;gap:8px}
-  .esc-step{display:flex;align-items:flex-start;gap:12px;padding:12px 15px;border-radius:11px;background:var(--warm);border:1px solid var(--border)}
-  .esc-num{width:25px;height:25px;border-radius:50%;background:var(--ink);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-  .esc-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px}
-  .esc-desc{font-size:13px;color:var(--ink-soft);font-weight:300;line-height:1.55}
-  .ins-footer{background:var(--warm);border-top:1px solid var(--border);padding:13px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
-  .ins-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
-  .ins-footer-brand{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)}
-  .err-note{background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:11px 15px;font-size:14px;color:var(--red);margin-top:9px;display:none}
-  .hidden{display:none !important}
-  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
-  .toast.show{transform:translateX(-50%) translateY(0)}
-  @media print{body{background:white}nav,.out-actions,.fcard,.no-print{display:none !important}.shell{max-width:100%;padding:0}.ins-top{-webkit-print-color-adjust:exact;print-color-adjust:exact}.ins-sec{break-inside:avoid}@page{margin:12mm}}
-  @media(max-width:640px){.two-col{grid-template-columns:1fr}.ins-body,.ins-top{padding:18px 16px}.ins-footer{padding:11px 16px}}
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.shell{max-width:860px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:32px 0 24px;text-align:center}
+.page-icon{font-size:44px;margin-bottom:12px}
+.page-title{font-family:'Fraunces',serif;font-size:32px;font-weight:300;color:var(--ink);margin-bottom:8px}
+.page-title em{font-style:italic;color:var(--sage)}
+.page-sub{font-size:15px;color:var(--ink-muted);font-weight:300;max-width:500px;margin:0 auto}
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:18px;padding:24px 26px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-head{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
+.fcard-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ic-sage{background:var(--sage-pale);border:1px solid var(--sage-light)}
+.ic-amber{background:var(--amber-pale);border:1px solid var(--amber-light)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:3px}
+.fcard-desc{font-size:13px;color:var(--ink-muted);line-height:1.6;font-weight:300}
+.field{margin-bottom:13px}.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+.fhint{font-size:12px;color:var(--ink-muted);margin-bottom:6px;font-weight:300}
+.finput,.ftextarea,.fselect{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+.ftextarea{min-height:84px;line-height:1.65}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.tag-wrap{background:var(--warm);border:1.5px solid var(--border);border-radius:11px;padding:8px 11px;min-height:46px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text;transition:border-color .2s}
+.tag-wrap:focus-within{border-color:var(--sage);background:var(--white)}
+.vtag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:500}
+.vtag-sage{background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)}
+.vtag-x{background:none;border:none;cursor:pointer;color:inherit;font-size:14px;padding:0;opacity:.6;line-height:1}
+.tinput{border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);flex:1;min-width:110px}
+.tinput::placeholder{color:var(--ink-muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:400;color:var(--ink-soft);cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif}
+.chip:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+.chip.on{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep);font-weight:500}
+.gen-btn{width:100%;padding:18px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;background:var(--ink);color:white}
+.gen-btn:hover{background:var(--ink-soft);transform:translateY(-2px)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.out-actions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
+.abtn{display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
+.abtn-dark{background:var(--ink);color:white}.abtn-dark:hover{background:var(--ink-soft)}
+.abtn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}.abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.err-note{background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:11px 15px;font-size:14px;color:var(--red);margin-top:9px;display:none}
+.hidden{display:none!important}
+.load-wrap{text-align:center;padding:70px 32px}
+.load-ring{width:52px;height:52px;margin:0 auto 22px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.load-sub{font-size:14px;color:var(--ink-muted);font-weight:300}
+.ins-out{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.ins-top{background:var(--ink);color:white;padding:28px 34px}
+.ins-badge{display:inline-block;background:var(--sage);color:white;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:4px 13px;border-radius:100px;margin-bottom:14px}
+.ins-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;margin-bottom:5px}
+.ins-sub{font-size:13px;color:rgba(255,255,255,.5);font-weight:300}
+.ins-body{padding:28px 34px}
+.ins-sec{margin-bottom:24px}
+.ins-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.ins-letter{font-size:15px;line-height:1.85;color:var(--ink-soft);font-weight:300;white-space:pre-wrap}
+.key-phrases{display:flex;flex-direction:column;gap:7px}
+.key-phrase{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-radius:10px;background:var(--sage-pale);border:1px solid var(--sage-light);font-size:14px;color:var(--ink-soft);font-weight:300}
+.esc-steps{display:flex;flex-direction:column;gap:8px}
+.esc-step{display:flex;align-items:flex-start;gap:12px;padding:12px 15px;border-radius:11px;background:var(--warm);border:1px solid var(--border)}
+.esc-num{width:25px;height:25px;border-radius:50%;background:var(--ink);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.esc-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px}
+.esc-desc{font-size:13px;color:var(--ink-soft);font-weight:300;line-height:1.55}
+.ins-footer{background:var(--warm);border-top:1px solid var(--border);padding:13px 34px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+.ins-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
+.ins-footer-brand{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media print{body{background:white}nav,.out-actions,.fcard{display:none!important}.shell{max-width:100%;padding:0}.ins-top{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}}
+@media(max-width:640px){.two-col{grid-template-columns:1fr}.ins-body,.ins-top{padding:18px 16px}}
 </style>
 </head>
 <body>
 <nav>
   <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
-  <div class="nav-logo">
-    <div class="nav-gem">🌿</div>
-    <div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div>
-  </div>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
 </nav>
 <div class="shell">
   <div class="page-header">
@@ -112,9 +101,9 @@
   </div>
 
   <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-sage">📄</div><div><div class="fcard-title">The Denial</div><div class="fcard-desc">What was denied and why. The more detail, the stronger the appeal.</div></div></div>
+    <div class="fcard-head"><div class="fcard-icon ic-sage">📄</div><div><div class="fcard-title">The Denial</div><div class="fcard-desc">What was denied and why.</div></div></div>
     <div class="field"><label class="flabel">What was denied?</label><input type="text" class="finput" id="ins_denied" placeholder="e.g. Tilt table test, IVIG infusion, Florinef prescription"></div>
-    <div class="field"><label class="flabel">Denial reason given (from the letter)</label><textarea class="ftextarea" id="ins_reason" placeholder="Copy the exact reason, e.g. 'Not medically necessary', 'Experimental/investigational'"></textarea></div>
+    <div class="field"><label class="flabel">Denial reason given</label><textarea class="ftextarea" id="ins_reason" placeholder="e.g. Not medically necessary"></textarea></div>
     <div class="two-col">
       <div class="field"><label class="flabel">Insurance Company</label><input type="text" class="finput" id="ins_company" placeholder="e.g. BlueCross BlueShield"></div>
       <div class="field"><label class="flabel">Claim / Reference Number</label><input type="text" class="finput" id="ins_claim" placeholder="From your denial letter"></div>
@@ -123,44 +112,43 @@
   </div>
 
   <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-sage">👤</div><div><div class="fcard-title">Patient & Medical Context</div><div class="fcard-desc">Who this is for and why this treatment is medically necessary.</div></div></div>
+    <div class="fcard-head"><div class="fcard-icon ic-sage">👤</div><div><div class="fcard-title">Patient & Medical Context</div></div></div>
     <div class="two-col">
       <div class="field"><label class="flabel">Patient Name</label><input type="text" class="finput" id="ins_patient" placeholder="e.g. Emma Johnson"></div>
       <div class="field"><label class="flabel">Patient DOB</label><input type="text" class="finput" id="ins_dob" placeholder="e.g. March 15, 2016"></div>
     </div>
-    <div class="field">
-      <label class="flabel">Diagnoses</label>
+    <div class="field"><label class="flabel">Diagnoses</label>
       <div class="tag-wrap" id="ins_diag_wrap" onclick="document.getElementById('ins_diag_in').focus()">
         <input type="text" class="tinput" id="ins_diag_in" placeholder="Type diagnosis, press Enter…">
       </div>
     </div>
-    <div class="field"><label class="flabel">Why this treatment is medically necessary</label><div class="fhint">Be specific. Include what symptoms it treats, what has failed before, and what the doctor says.</div><textarea class="ftextarea" id="ins_necessity" placeholder="e.g. Emma has POTS and MCAS. She has tried beta blockers and salt loading without improvement. Her cardiologist recommends IVIG based on published clinical evidence…"></textarea></div>
-    <div class="field"><label class="flabel">Ordering Doctor & Specialty</label><input type="text" class="finput" id="ins_doctor" placeholder="e.g. Dr. Marcus Webb, Pediatric Cardiologist, Johns Hopkins"></div>
-    <div class="field"><label class="flabel">What happens if this is NOT approved?</label><textarea class="ftextarea" id="ins_consequences" placeholder="e.g. Without this test we cannot diagnose Emma's syncope episodes, which have resulted in 2 ER visits in the past 3 months…"></textarea></div>
+    <div class="field"><label class="flabel">Why this treatment is medically necessary</label>
+      <div class="fhint">Include what symptoms it treats, what has failed before, and what the doctor says.</div>
+      <textarea class="ftextarea" id="ins_necessity" placeholder="e.g. Emma has POTS and MCAS. She has tried beta blockers without improvement…"></textarea>
+    </div>
+    <div class="field"><label class="flabel">Ordering Doctor & Specialty</label><input type="text" class="finput" id="ins_doctor" placeholder="e.g. Dr. Marcus Webb, Pediatric Cardiologist"></div>
+    <div class="field"><label class="flabel">What happens if NOT approved?</label><textarea class="ftextarea" id="ins_consequences" placeholder="e.g. Without this test we cannot diagnose Emma's syncope episodes…"></textarea></div>
   </div>
 
   <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-amber">📋</div><div><div class="fcard-title">Appeal Details</div><div class="fcard-desc">Additional context that strengthens your case.</div></div></div>
-    <div class="field"><label class="flabel">Is this a first appeal or second/final appeal?</label>
+    <div class="fcard-head"><div class="fcard-icon ic-amber">📋</div><div><div class="fcard-title">Appeal Details</div></div></div>
+    <div class="field"><label class="flabel">Appeal level</label>
       <select class="fselect" id="ins_appeal_level">
-        <option value="first internal">First internal appeal (most common first step)</option>
+        <option value="first internal">First internal appeal</option>
         <option value="second internal">Second internal appeal</option>
         <option value="external independent review">External / independent medical review</option>
         <option value="state insurance commissioner complaint">State insurance commissioner complaint</option>
       </select>
     </div>
-    <div class="field">
-      <label class="flabel">Do you have supporting documentation?</label>
+    <div class="field"><label class="flabel">Supporting documentation you have</label>
       <div class="tag-wrap" id="ins_docs_wrap" onclick="document.getElementById('ins_docs_in').focus()">
-        <input type="text" class="tinput" id="ins_docs_in" placeholder="e.g. Doctor's letter of medical necessity, press Enter…">
+        <input type="text" class="tinput" id="ins_docs_in" placeholder="e.g. Letter of medical necessity, press Enter…">
       </div>
       <div class="chips">
-        <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Letter of medical necessity</button>
-        <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Peer-reviewed research</button>
-        <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Prior authorization records</button>
-        <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Lab results</button>
-        <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Hospital records</button>
-        <button class="chip" onclick="addTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Treatment failure history</button>
+        <button class="chip" onclick="quickTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Letter of medical necessity</button>
+        <button class="chip" onclick="quickTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Peer-reviewed research</button>
+        <button class="chip" onclick="quickTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Lab results</button>
+        <button class="chip" onclick="quickTag('ins_docs_in','ins_docs_wrap','vtag-sage',this)">Hospital records</button>
       </div>
     </div>
     <div class="field"><label class="flabel">Subscriber / Policy Holder Name</label><input type="text" class="finput" id="ins_subscriber" placeholder="The person whose name is on the insurance policy"></div>
@@ -168,89 +156,123 @@
 
   <div class="err-note" id="ins_err">Please fill in what was denied and the patient name.</div>
   <button class="gen-btn" onclick="generateIns()">📨 Generate Appeal Letter</button>
-  <p style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;font-style:italic;">Send via certified mail with return receipt. Keep copies of everything. 🌿</p>
-
-  <div id="ins_out" class="hidden" style="margin-top:26px">
-    <div class="out-actions no-print">
-      <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print Letter</button>
-      <button class="abtn abtn-outline" onclick="copyText('ins_copy_text')">📋 Copy</button>
-      <button class="abtn abtn-outline" onclick="document.getElementById('ins_out').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'})">✏️ Edit</button>
-    </div>
-    <div id="ins_card_html"></div>
-    <textarea id="ins_copy_text" style="position:absolute;opacity:0;pointer-events:none"></textarea>
-  </div>
+  <p style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;font-style:italic">Send via certified mail with return receipt. Keep copies of everything. 🌿</p>
+  <div id="ins_out" class="hidden" style="margin-top:26px"></div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function createTag(text, wrap, inp, cls) { const t = document.createElement('span'); t.className = 'vtag ' + (cls || 'vtag-sage'); t.innerHTML = escH(text) + '<button class="vtag-x" onclick="this.parentElement.remove()">×</button>'; wrap.insertBefore(t, inp); }
-function addTag(inputId, wrapId, cls, btn) { const wrap = document.getElementById(wrapId); const inp = document.getElementById(inputId); inp.dataset.tagclass = cls; createTag(btn.textContent.trim(), wrap, inp, cls); btn.classList.add('on'); btn.disabled = true; }
-function setupTag(inputId, wrapId) { const inp = document.getElementById(inputId); const wrap = document.getElementById(wrapId); inp.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) { e.preventDefault(); createTag(inp.value.trim(), wrap, inp, inp.dataset.tagclass || 'vtag-sage'); inp.value=''; } if (e.key === 'Backspace' && !inp.value) { const tags = wrap.querySelectorAll('.vtag'); if (tags.length) tags[tags.length-1].remove(); } }); }
-function getTags(wrapId) { return [...document.getElementById(wrapId).querySelectorAll('.vtag')].map(t => t.textContent.replace('×','').trim()).filter(Boolean); }
-function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
-function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; el.scrollIntoView({behavior:'smooth',block:'center'}); }
-[['ins_diag_in','ins_diag_wrap'],['ins_docs_in','ins_docs_wrap']].forEach(([i,w]) => setupTag(i,w));
+// ── UTILS ──
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'center'})}
 
-async function callClaude(system, user) {
-  const r = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, system, messages: [{ role: 'user', content: user }] })
+// ── TAG INPUTS ──
+function createTag(text,wrap,inp,cls){
+  const t=document.createElement('span');
+  t.className='vtag '+(cls||'vtag-sage');
+  t.innerHTML=escH(text)+'<button class="vtag-x" onclick="this.parentElement.remove()">×</button>';
+  wrap.insertBefore(t,inp);
+}
+function quickTag(inputId,wrapId,cls,btn){
+  const wrap=document.getElementById(wrapId);
+  const inp=document.getElementById(inputId);
+  createTag(btn.textContent.trim(),wrap,inp,cls);
+  btn.classList.add('on');btn.disabled=true;
+}
+function setupTagInput(inputId,wrapId,cls){
+  const inp=document.getElementById(inputId);
+  const wrap=document.getElementById(wrapId);
+  inp.addEventListener('keydown',e=>{
+    if((e.key==='Enter'||e.key===',')&&inp.value.trim()){
+      e.preventDefault();createTag(inp.value.trim(),wrap,inp,cls||'vtag-sage');inp.value='';
+    }
+    if(e.key==='Backspace'&&!inp.value){const tags=wrap.querySelectorAll('.vtag');if(tags.length)tags[tags.length-1].remove();}
   });
-  const d = await r.json();
-  const text = d.content?.[0]?.text || '';
+}
+function getTags(wrapId){
+  return [...document.getElementById(wrapId).querySelectorAll('.vtag')].map(t=>t.textContent.replace('×','').trim()).filter(Boolean);
+}
+setupTagInput('ins_diag_in','ins_diag_wrap','vtag-sage');
+setupTagInput('ins_docs_in','ins_docs_wrap','vtag-sage');
+
+// ── API ──
+async function callClaude(system,user){
+  const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,system,messages:[{role:'user',content:user}]})
+  });
+  const d=await r.json();
+  const text=d.content?.[0]?.text||'';
   return JSON.parse(text.replace(/```json|```/g,'').trim());
 }
 
-async function generateIns() {
-  const denied = document.getElementById('ins_denied').value.trim();
-  const patient = document.getElementById('ins_patient').value.trim();
-  if (!denied || !patient) { showErr('ins_err','Please fill in what was denied and the patient name.'); return; }
-  document.getElementById('ins_err').style.display = 'none';
-  showLoad();
-  const data = {
-    denied, patient, dob: document.getElementById('ins_dob').value.trim(),
-    diagnoses: getTags('ins_diag_wrap'),
-    reason: document.getElementById('ins_reason').value.trim(),
-    company: document.getElementById('ins_company').value.trim(),
-    claim: document.getElementById('ins_claim').value.trim(),
-    date: document.getElementById('ins_date').value.trim(),
-    necessity: document.getElementById('ins_necessity').value.trim(),
-    doctor: document.getElementById('ins_doctor').value.trim(),
-    consequences: document.getElementById('ins_consequences').value.trim(),
-    appealLevel: document.getElementById('ins_appeal_level').value,
-    docs: getTags('ins_docs_wrap'),
-    subscriber: document.getElementById('ins_subscriber').value.trim()
+// ── GENERATE ──
+async function generateIns(){
+  const denied=document.getElementById('ins_denied').value.trim();
+  const patient=document.getElementById('ins_patient').value.trim();
+  if(!denied||!patient){showErr('ins_err','Please fill in what was denied and the patient name.');return;}
+  document.getElementById('ins_err').style.display='none';
+
+  const out=document.getElementById('ins_out');
+  out.classList.remove('hidden');
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><div class="load-title">Writing your appeal letter…</div><div class="load-sub">Just a moment</div></div>`;
+  out.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelector('.gen-btn').disabled=true;
+
+  const data={
+    denied,patient,dob:document.getElementById('ins_dob').value.trim(),
+    diagnoses:getTags('ins_diag_wrap'),
+    reason:document.getElementById('ins_reason').value.trim(),
+    company:document.getElementById('ins_company').value.trim(),
+    claim:document.getElementById('ins_claim').value.trim(),
+    date:document.getElementById('ins_date').value.trim(),
+    necessity:document.getElementById('ins_necessity').value.trim(),
+    doctor:document.getElementById('ins_doctor').value.trim(),
+    consequences:document.getElementById('ins_consequences').value.trim(),
+    appealLevel:document.getElementById('ins_appeal_level').value,
+    docs:getTags('ins_docs_wrap'),
+    subscriber:document.getElementById('ins_subscriber').value.trim()
   };
-  try {
-    const result = await callClaude(
-      `You are an expert patient advocate writing insurance appeal letters. Return ONLY valid JSON: {"subject":"Appeal letter subject line","letter":"The complete formal appeal letter. Use \\n for line breaks. Include date placeholder [DATE], formal salutation, clear statement of denial being appealed, medical necessity argument citing clinical evidence, legal basis (ACA, state laws), request for specific action, and professional closing. Make it firm factual and impossible to ignore.","keyPhrases":["5-6 legally powerful phrases used in the letter"],"escalationSteps":[{"step":"Step title","description":"What to do and when"}],"tip":"One insider tip about this type of denial"} Write as a patient advocate with 20 years of experience. Cite ACA Section 2719 and appeal rights.`,
+
+  try{
+    const result=await callClaude(
+      'You are an expert patient advocate. Return ONLY valid JSON no markdown: {"subject":"Appeal subject line","letter":"Complete formal appeal letter using \\n for line breaks. Include [DATE], salutation, denial being appealed, medical necessity argument, legal basis citing ACA Section 2719, and professional closing. Keep under 500 words.","keyPhrases":["5 legally powerful phrases"],"escalationSteps":[{"step":"Step title","description":"What to do"}],"tip":"One insider tip"}',
       JSON.stringify(data)
     );
-    const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    const letterFormatted = result.letter.replace('[DATE]', today);
-    const phrasesHTML = (result.keyPhrases||[]).map(p=>`<div class="key-phrase"><span class="kp-dot">✦</span>${escH(p)}</div>`).join('');
-    const escHTML = (result.escalationSteps||[]).map((s,i)=>`<div class="esc-step"><div class="esc-num">${i+1}</div><div><div class="esc-title">${escH(s.step)}</div><div class="esc-desc">${escH(s.description)}</div></div></div>`).join('');
-    const html = `<div class="ins-out"><div class="ins-top"><div class="ins-badge">✦ Insurance Appeal — MedAdvocate</div><div class="ins-title">Appeal for: ${escH(data.denied)}</div><div class="ins-sub">Denied by ${data.company||'Insurance Company'} · ${data.date||today}</div><div class="ins-meta">${data.patient?`<div><div class="ins-meta-lbl">Patient</div><div class="ins-meta-val">${escH(data.patient)}</div></div>`:''} ${data.claim?`<div><div class="ins-meta-lbl">Claim #</div><div class="ins-meta-val">${escH(data.claim)}</div></div>`:''} <div><div class="ins-meta-lbl">Appeal Level</div><div class="ins-meta-val">${escH(data.appealLevel)}</div></div><div><div class="ins-meta-lbl">Prepared</div><div class="ins-meta-val">${today}</div></div></div></div><div class="ins-body"><div class="ins-sec"><div class="ins-sec-title">Appeal Letter</div><div class="ins-letter">${escH(letterFormatted)}</div></div><div class="ins-sec"><div class="ins-sec-title">Key Legal & Medical Phrases Used</div><div class="key-phrases">${phrasesHTML}</div></div>${result.tip?`<div class="ins-sec"><div class="ins-sec-title">Insider Tip</div><div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:12px;padding:14px 18px;font-size:14px;color:var(--ink-soft);font-weight:300;line-height:1.65">💡 ${escH(result.tip)}</div></div>`:''}<div class="ins-sec"><div class="ins-sec-title">If They Deny Again — Escalation Steps</div><div class="esc-steps">${escHTML}</div></div></div><div class="ins-footer"><div class="ins-footer-note">Send via certified mail with return receipt. Keep copies of everything. You have rights.</div><div class="ins-footer-brand">MedAdvocate</div></div></div>`;
-    document.getElementById('ins_out').innerHTML = `<div class="out-actions no-print"><button class="abtn abtn-dark" onclick="window.print()">🖨️ Print Letter</button><button class="abtn abtn-outline" onclick="navigator.clipboard.writeText(document.getElementById('ins_letter_text').value).then(()=>alert('Copied!'))">📋 Copy</button><button class="abtn abtn-outline" onclick="location.reload()">✏️ Start Over</button></div>${html}<textarea id="ins_letter_text" style="position:absolute;opacity:0;pointer-events:none">${escH(letterFormatted)}</textarea>`;
-    document.getElementById('ins_out').classList.remove('hidden');
-    document.getElementById('ins_out').scrollIntoView({behavior:'smooth',block:'start'});
-  } catch(e) { showErr('ins_err','Something went wrong. Please try again.'); console.error(e); }
-  finally { hideLoad(); }
-}
+    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const letterFormatted=result.letter.replace('[DATE]',today);
+    const phrasesHTML=(result.keyPhrases||[]).map(p=>`<div class="key-phrase"><span style="color:var(--sage);font-weight:700;flex-shrink:0">✦</span>${escH(p)}</div>`).join('');
+    const escHTML=(result.escalationSteps||[]).map((s,i)=>`<div class="esc-step"><div class="esc-num">${i+1}</div><div><div class="esc-title">${escH(s.step)}</div><div class="esc-desc">${escH(s.description)}</div></div></div>`).join('');
 
-function showLoad() {
-  const out = document.getElementById('ins_out');
-  out.classList.remove('hidden');
-  out.innerHTML = `<div class="load-wrap"><div class="load-ring"></div><div class="load-title">Writing your appeal letter…</div><div class="load-sub">Just a moment…</div><div class="load-steps"><div class="load-step">⚖️ Identifying legal and medical grounds…</div><div class="load-step">📝 Drafting medical necessity argument…</div><div class="load-step">🛡️ Building escalation strategy…</div></div></div>`;
-  out.scrollIntoView({behavior:'smooth',block:'start'});
-  document.querySelector('.gen-btn').disabled = true;
+    out.innerHTML=`
+      <div class="out-actions">
+        <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print Letter</button>
+        <button class="abtn abtn-outline" onclick="navigator.clipboard.writeText(document.getElementById('ins_copy').value).then(()=>showToast('Copied ✓'))">📋 Copy Letter</button>
+        <button class="abtn abtn-outline" onclick="location.reload()">✏️ Start Over</button>
+      </div>
+      <textarea id="ins_copy" style="position:absolute;opacity:0;pointer-events:none">${escH(letterFormatted)}</textarea>
+      <div class="ins-out">
+        <div class="ins-top">
+          <div class="ins-badge">✦ Insurance Appeal — MedAdvocate</div>
+          <div class="ins-title">Appeal for: ${escH(data.denied)}</div>
+          <div class="ins-sub">Denied by ${data.company||'Insurance Company'} · ${data.date||today}</div>
+        </div>
+        <div class="ins-body">
+          <div class="ins-sec"><div class="ins-sec-title">Appeal Letter</div><div class="ins-letter">${escH(letterFormatted)}</div></div>
+          ${phrasesHTML?`<div class="ins-sec"><div class="ins-sec-title">Key Legal Phrases Used</div><div class="key-phrases">${phrasesHTML}</div></div>`:''}
+          ${result.tip?`<div class="ins-sec"><div class="ins-sec-title">Insider Tip</div><div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:12px;padding:14px 18px;font-size:14px;color:var(--ink-soft);line-height:1.65">💡 ${escH(result.tip)}</div></div>`:''}
+          ${escHTML?`<div class="ins-sec"><div class="ins-sec-title">If Denied Again — Escalation Steps</div><div class="esc-steps">${escHTML}</div></div>`:''}
+        </div>
+        <div class="ins-footer"><div class="ins-footer-note">Send via certified mail with return receipt. Keep copies. You have rights.</div><div class="ins-footer-brand">MedAdvocate</div></div>
+      </div>`;
+  }catch(e){
+    out.innerHTML=`<div class="err-note" style="display:block">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }finally{
+    document.querySelector('.gen-btn').disabled=false;
+  }
 }
-function hideLoad() { document.querySelector('.gen-btn').disabled = false; }
-function copyText(id) { const t=document.getElementById(id); t.style.opacity='1'; t.select(); navigator.clipboard.writeText(t.value).then(()=>showToast('Copied ✓')).catch(()=>{document.execCommand('copy');showToast('Copied ✓');}); t.style.opacity='0'; }
-function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; el.scrollIntoView({behavior:'smooth',block:'center'}); }
-function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
-function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
 </body>
 </html>
