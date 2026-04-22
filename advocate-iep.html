@@ -7,32 +7,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #171b26;
-    --surface2: #1e2333;
-    --border: #2a3045;
-    --border-bright: #3d4a6b;
-    --text: #e8eaf2;
-    --text-soft: #8892b0;
-    --text-muted: #4a5270;
-    --amber: #f0a645;
-    --amber-pale: rgba(240,166,69,0.08);
-    --amber-glow: rgba(240,166,69,0.15);
-    --blue: #5b8dee;
-    --blue-pale: rgba(91,141,238,0.08);
-    --green: #52c98a;
-    --green-pale: rgba(82,201,138,0.08);
-    --rose: #e05f7a;
-    --rose-pale: rgba(224,95,122,0.08);
-    --shadow: 0 4px 24px rgba(0,0,0,0.3);
-    --shadow-lg: 0 12px 48px rgba(0,0,0,0.4);
+    --bg: #fdfcf8;
+    --surface: #ffffff;
+    --surface2: #e8f5ee;
+    --border: #b7d9c4;
+    --border-bright: #2d6a4f;
+    --text: #0d1f15;
+    --text-soft: #1b4332;
+    --text-muted: #2d6a4f;
+    --amber: #c9923a;
+    --amber-pale: #fdf3e7;
+    --amber-glow: rgba(201,146,58,0.15);
+    --blue: #4a7fa8;
+    --blue-pale: #eef4f9;
+    --green: #2d6a4f;
+    --green-pale: #e8f5ee;
+    --rose: #c0392b;
+    --rose-pale: #fff5f5;
+    --shadow: 0 4px 24px rgba(13,31,21,0.08);
+    --shadow-lg: 0 12px 48px rgba(13,31,21,0.15);
+    --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Outfit', sans-serif;
-    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm);
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
@@ -80,7 +81,7 @@
   }
 
   .logo-name {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 16px; font-weight: 400;
     letter-spacing: 0.04em;
     color: var(--text);
@@ -102,7 +103,7 @@
   }
 
   h1 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: clamp(30px, 5.5vw, 50px);
     font-weight: 400;
     line-height: 1.18;
@@ -197,7 +198,7 @@
   }
 
   .plan-name {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 18px; font-weight: 400;
     color: var(--text);
   }
@@ -251,7 +252,7 @@
   .ic-rose  { background: var(--rose-pale);  border: 1px solid rgba(224,95,122,0.2); }
 
   .fcard-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 19px; font-weight: 400;
     color: var(--text); margin-bottom: 3px;
   }
@@ -285,7 +286,7 @@
     background: var(--surface2);
     border: 1.5px solid var(--border);
     border-radius: 11px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 14px; font-weight: 300;
     color: var(--text);
     outline: none;
@@ -338,7 +339,7 @@
   .tinput {
     border: none; outline: none;
     background: transparent;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 14px; font-weight: 300;
     color: var(--text); flex: 1; min-width: 120px;
   }
@@ -355,7 +356,7 @@
     padding: 5px 12px;
     border: 1px solid var(--border);
     border-radius: 100px;
-    font-size: 12px; font-family: 'Outfit', sans-serif;
+    font-size: 12px; font-family: 'DM Sans', sans-serif;
     font-weight: 400; color: var(--text-soft);
     cursor: pointer; transition: all 0.18s;
     background: transparent;
@@ -504,7 +505,7 @@
     background: linear-gradient(135deg, var(--amber), #e08c20);
     color: var(--bg);
     border: none; border-radius: 14px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 16px; font-weight: 600;
     letter-spacing: 0.02em;
     cursor: pointer;
@@ -554,7 +555,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .load-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 24px; font-weight: 400;
     color: var(--text); margin-bottom: 8px;
   }
@@ -599,7 +600,7 @@
   .abtn {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 10px 18px; border-radius: 10px;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all 0.2s; border: none;
   }
@@ -641,7 +642,7 @@
   }
 
   .doc-student-name {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 38px; font-weight: 400;
     line-height: 1.1; margin-bottom: 6px;
   }
@@ -777,7 +778,7 @@
   }
 
   .script-text {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 16px; font-style: italic;
     color: #1a1f2e; line-height: 1.75;
   }
@@ -821,7 +822,7 @@
   }
 
   .doc-footer-brand {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
     font-size: 14px; color: #8892b0;
   }
 
@@ -883,7 +884,7 @@
   <header>
     <div class="logo-bar">
       <div class="logo-gem">🌿</div>
-      <div class="logo-name">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+      <div class="logo-name">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Med<span style="display:inline-block;width:7px;height:7px;background:#95d5b2;border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle"></span><span style="color:#2d6a4f;font-weight:300">Advocate</span></div>
     </div>
     <div class="eyebrow">⚖️ IEP & 504 Prep Tool</div>
     <h1>Know exactly what to ask for.<br><em>And how to ask for it.</em></h1>
@@ -1436,7 +1437,7 @@ Previous pushback from school: ${data.pushback || 'none noted'}`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 3000,
         system: sysPrompt,
         messages: [{ role: 'user', content: userMsg }]
       })
@@ -1556,7 +1557,7 @@ function renderDoc(data, doc) {
 
       <div class="doc-sec" style="animation-delay:0.4s; background:#fdf8ed; border-radius:14px; padding:20px 24px; border:1px solid #f0e0b0;">
         <div class="doc-sec-title">Before You Leave the Meeting — Your Closing Ask</div>
-        <div class="script-text" style="font-family:'Playfair Display',serif; font-style:italic; font-size:17px; color:#1a1f2e; line-height:1.75;">${doc.closingAsk}</div>
+        <div class="script-text" style="font-family:'Fraunces',serif; font-style:italic; font-size:17px; color:#1a1f2e; line-height:1.75;">${doc.closingAsk}</div>
       </div>
 
     </div>
