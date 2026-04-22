@@ -3,363 +3,1541 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MedAdvocate — ER Prep Card</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<title>MedAdvocate — My Saved Items</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 <style>
-:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
-*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
-nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
-.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
-.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
-.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
-.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
-.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
-.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
-.nav-wordmark .adv{color:var(--sage);font-weight:300}
-.shell{max-width:860px;margin:0 auto;padding:0 22px 100px}
-.page-header{padding:32px 0 24px;text-align:center}
-.page-icon{font-size:44px;margin-bottom:12px}
-.page-title{font-family:'Fraunces',serif;font-size:32px;font-weight:300;color:var(--ink);margin-bottom:8px}
-.page-title em{font-style:italic;color:var(--red)}
-.page-sub{font-size:15px;color:var(--ink-muted);font-weight:300;max-width:500px;margin:0 auto}
-.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:18px;padding:24px 26px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
-.fcard-head{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
-.fcard-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.ic-red{background:var(--red-pale);border:1px solid var(--red-border)}
-.ic-sage{background:var(--sage-pale);border:1px solid var(--sage-light)}
-.ic-amber{background:var(--amber-pale);border:1px solid var(--amber-light)}
-.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:3px}
-.fcard-desc{font-size:13px;color:var(--ink-muted);line-height:1.6;font-weight:300}
-.field{margin-bottom:13px}.field:last-child{margin-bottom:0}
-.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
-.finput,.ftextarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
-.finput:focus,.ftextarea:focus{border-color:var(--sage);background:var(--white)}
-.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
-.ftextarea{min-height:84px;line-height:1.65}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.tag-wrap{background:var(--warm);border:1.5px solid var(--border);border-radius:11px;padding:8px 11px;min-height:46px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;cursor:text;transition:border-color .2s}
-.tag-wrap:focus-within{border-color:var(--sage);background:var(--white)}
-.vtag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:500}
-.vtag-red{background:var(--red-pale);border:1px solid var(--red-border);color:var(--red)}
-.vtag-sage{background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)}
-.vtag-amber{background:var(--amber-pale);border:1px solid var(--amber-light);color:var(--amber)}
-.vtag-x{background:none;border:none;cursor:pointer;color:inherit;font-size:14px;padding:0;opacity:.6;line-height:1}
-.tinput{border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);flex:1;min-width:110px}
-.tinput::placeholder{color:var(--ink-muted)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
-.chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:400;color:var(--ink-soft);cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif}
-.chip:hover{border-color:var(--sage-light);background:var(--sage-pale)}
-.chip.on{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep);font-weight:500}
-.dyn-row{display:flex;gap:9px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
-.dyn-row .finput{flex:1;min-width:90px}
-.dyn-rm{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:18px;padding:3px;transition:color .2s;flex-shrink:0}
-.dyn-rm:hover{color:var(--red)}
-.gen-btn{width:100%;padding:18px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;background:var(--red);color:white}
-.gen-btn:hover{background:#a93226;transform:translateY(-2px)}
-.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
-.out-actions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
-.abtn{display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
-.abtn-red{background:var(--red);color:white}.abtn-red:hover{background:#a93226}
-.abtn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}.abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
-.err-note{background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:11px 15px;font-size:14px;color:var(--red);margin-top:9px;display:none}
-.hidden{display:none!important}
-.load-wrap{text-align:center;padding:70px 32px}
-.load-ring{width:52px;height:52px;margin:0 auto 22px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--red);animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.load-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:7px}
-.load-sub{font-size:14px;color:var(--ink-muted);font-weight:300}
-.er-card{background:white;border:3px solid var(--red);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-lg)}
-.er-top{background:var(--red);padding:22px 28px 18px;color:white}
-.er-badge-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:7px}
-.er-badge{background:rgba(255,255,255,.22);padding:4px 13px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
-.er-updated{font-size:11px;color:rgba(255,255,255,.55);font-weight:300}
-.er-name{font-family:'Fraunces',serif;font-size:28px;font-weight:400;line-height:1.1;margin-bottom:3px}
-.er-dob{font-size:13px;color:rgba(255,255,255,.7);font-weight:300}
-.er-alert{margin-top:13px;background:rgba(255,255,255,.2);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600}
-.er-body{padding:22px 28px}
-.er-sec{margin-bottom:20px}
-.er-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:10px;padding-bottom:7px;border-bottom:1.5px solid var(--red-border)}
-.er-list{display:flex;flex-direction:column;gap:6px}
-.er-item{display:flex;align-items:flex-start;gap:8px;padding:7px 11px;border-radius:9px;font-size:14px;line-height:1.5}
-.er-item-red{background:var(--red-pale)}.er-item-amber{background:var(--amber-pale)}.er-item-sage{background:var(--sage-pale)}
-.er-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.dot-red{background:var(--red)}.dot-amber{background:var(--amber)}.dot-sage{background:var(--sage)}
-.med-tbl{width:100%;border-collapse:collapse;font-size:14px}
-.med-tbl th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);padding:0 0 8px;border-bottom:1.5px solid var(--border)}
-.med-tbl td{padding:8px 0;border-bottom:1px solid var(--border);color:var(--ink-soft);vertical-align:top}
-.med-tbl tr:last-child td{border-bottom:none}
-.er-contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
-.er-contact{background:var(--warm);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
-.er-contact-name{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:2px}
-.er-contact-rel{font-size:12px;color:var(--ink-muted);margin-bottom:4px}
-.er-contact-phone{font-size:14px;font-weight:500;color:var(--sage-deep)}
-.er-footer{background:var(--warm);border-top:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
-.er-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
-.er-footer-brand{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)}
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
-.toast.show{transform:translateX(-50%) translateY(0)}
-@media print{body{background:white}nav,.out-actions,.fcard{display:none!important}.shell{max-width:100%;padding:0}.er-top{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}}
-@media(max-width:640px){.two-col{grid-template-columns:1fr}.er-body{padding:18px 16px}.er-top{padding:18px 16px}}
+  :root {
+    --sage: #6b9e7e;
+    --sage-deep: #4a7a5e;
+    --sage-light: #a8ceb8;
+    --sage-pale: #eef6f1;
+    --warm: #fdfcf8;
+    --ink: #1c2b22;
+    --ink-soft: #3d5245;
+    --ink-muted: #7a9080;
+    --border: #dde8e1;
+    --white: #ffffff;
+    --amber: #c9923a;
+    --amber-pale: #fdf3e7;
+    --amber-light: #f0d4a8;
+    --rose: #c96070;
+    --rose-pale: #fdf0f2;
+    --blue: #4a7fa8;
+    --blue-pale: #eef4f9;
+    --violet: #7a6ab0;
+    --violet-pale: #f3f0ff;
+    --shadow-sm: 0 2px 12px rgba(28,43,34,0.06);
+    --shadow: 0 4px 24px rgba(28,43,34,0.09);
+    --shadow-lg: 0 12px 48px rgba(28,43,34,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 5% 10%, rgba(107,158,126,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 95% 90%, rgba(201,146,58,0.05) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(253,252,248,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center;
+    height: 60px; gap: 12px;
+  }
+
+  .nav-back {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 500;
+    color: var(--ink-muted);
+    text-decoration: none;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    transition: all 0.2s;
+    cursor: pointer; background: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-back:hover { border-color: var(--sage); color: var(--sage-deep); }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 9px;
+    margin-right: auto;
+  }
+  .nav-gem {
+    width: 30px; height: 30px; background: var(--sage);
+    border-radius: 9px; display: flex; align-items: center;
+    justify-content: center; font-size: 14px;
+  }
+  .nav-wordmark {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 400; color: var(--ink);
+  }
+  .nav-wordmark span { color: var(--sage); }
+
+  /* ── SHELL ── */
+  .shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+    position: relative; z-index: 1;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    padding: 40px 0 32px;
+    display: flex; align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+  }
+
+  .page-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 300; color: var(--ink);
+    line-height: 1.2;
+  }
+  .page-title em { font-style: italic; color: var(--sage); }
+
+  .page-sub {
+    font-size: 14px; color: var(--ink-muted);
+    font-weight: 300; margin-top: 6px;
+  }
+
+  /* ── TAB BAR ── */
+  .tab-bar {
+    display: flex; gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 12px 20px;
+    font-size: 14px; font-weight: 400;
+    color: var(--ink-muted);
+    cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 7px;
+    background: none; border-top: none;
+    border-left: none; border-right: none;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--sage-deep);
+    border-bottom-color: var(--sage);
+    font-weight: 500;
+  }
+  .tab-count {
+    background: var(--sage-pale);
+    color: var(--sage);
+    font-size: 11px; font-weight: 600;
+    padding: 2px 7px; border-radius: 100px;
+    min-width: 22px; text-align: center;
+  }
+
+  /* ── PANELS ── */
+  .panel { display: none; animation: fadeIn 0.3s ease; }
+  .panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 64px 32px;
+    color: var(--ink-muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 300;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .empty-sub {
+    font-size: 14px; line-height: 1.65;
+    max-width: 360px; margin: 0 auto 24px;
+    font-weight: 300;
+  }
+
+  /* ── SAVED SCRIPTS ── */
+  .scripts-list {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .script-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+  }
+  .script-card:hover { box-shadow: var(--shadow); }
+
+  .script-card-top {
+    padding: 20px 24px 16px;
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 12px;
+  }
+
+  .script-type-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 100px;
+    margin-bottom: 8px;
+  }
+  .badge-visit { background: var(--sage-pale); color: var(--sage-deep); }
+  .badge-cred  { background: var(--violet-pale); color: var(--violet); }
+  .badge-iep   { background: var(--amber-pale); color: var(--amber); }
+  .badge-lab   { background: var(--blue-pale); color: var(--blue); }
+
+  .script-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 400;
+    color: var(--ink); margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .script-date {
+    font-size: 12px; color: var(--ink-muted); font-weight: 300;
+  }
+
+  .script-preview {
+    font-size: 13px; color: var(--ink-soft);
+    line-height: 1.6; font-weight: 300;
+    margin-top: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .script-actions {
+    display: flex; gap: 6px;
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(253,252,248,0.5);
+    flex-wrap: wrap;
+  }
+
+  .sact-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    border: 1.5px solid var(--border);
+    background: transparent; color: var(--ink-soft);
+  }
+  .sact-btn:hover { border-color: var(--sage); color: var(--sage-deep); background: var(--sage-pale); }
+  .sact-btn.danger:hover { border-color: var(--rose); color: var(--rose); background: var(--rose-pale); }
+  .sact-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
+  .sact-btn.primary:hover { background: var(--sage-deep); border-color: var(--sage-deep); }
+
+  /* Expanded script body */
+  .script-body {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    display: none;
+    background: var(--warm);
+  }
+  .script-body.open { display: block; animation: fadeIn 0.25s ease; }
+
+  .script-content {
+    font-size: 14px; line-height: 1.8;
+    color: var(--ink-soft); font-weight: 300;
+    white-space: pre-wrap;
+    max-height: 320px; overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .script-content::-webkit-scrollbar { width: 4px; }
+  .script-content::-webkit-scrollbar-track { background: transparent; }
+  .script-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── CONTACTS ── */
+  .contacts-toolbar {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+  }
+
+  .add-contact-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px;
+    background: var(--sage); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .add-contact-btn:hover { background: var(--sage-deep); }
+
+  .contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .contact-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+  }
+  .contact-card:hover { box-shadow: var(--shadow); }
+
+  .contact-card-top {
+    padding: 20px 22px 16px;
+  }
+
+  .contact-specialty {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--sage-pale); color: var(--sage-deep);
+    padding: 3px 10px; border-radius: 100px;
+    margin-bottom: 10px;
+  }
+
+  .contact-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 400;
+    color: var(--ink); margin-bottom: 2px;
+  }
+
+  .contact-practice {
+    font-size: 13px; color: var(--ink-muted);
+    font-weight: 300; margin-bottom: 12px;
+  }
+
+  .contact-details {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .contact-detail {
+    display: flex; align-items: flex-start; gap: 9px;
+    font-size: 13px; color: var(--ink-soft); font-weight: 300;
+  }
+
+  .cd-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
+
+  .cd-link {
+    color: var(--blue); text-decoration: none;
+    transition: color 0.2s;
+  }
+  .cd-link:hover { color: var(--sage-deep); }
+
+  .contact-actions {
+    display: flex; gap: 6px;
+    padding: 12px 22px;
+    border-top: 1px solid var(--border);
+    background: rgba(253,252,248,0.5);
+  }
+
+  /* ── CONTACT MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(28,43,34,0.55);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center;
+    justify-content: center; padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--white);
+    border-radius: 22px; padding: 32px;
+    width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(16px);
+    transition: transform 0.3s ease;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 400;
+    color: var(--ink); margin-bottom: 24px;
+  }
+
+  .form-field { margin-bottom: 16px; }
+  .form-label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-muted); margin-bottom: 8px;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 12px 15px;
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--ink); background: var(--warm);
+    outline: none; transition: border-color 0.2s;
+    resize: none; -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--sage); background: white;
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--ink-muted); }
+  .form-textarea { min-height: 80px; line-height: 1.6; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-actions {
+    display: flex; gap: 10px; margin-top: 24px;
+  }
+
+  .btn-save {
+    flex: 1; padding: 14px;
+    background: var(--sage); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-save:hover { background: var(--sage-deep); }
+
+  .btn-cancel {
+    padding: 14px 20px;
+    background: transparent; color: var(--ink-soft);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 400;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--ink-soft); }
+
+  /* ── EMAIL MODAL ── */
+  .email-modal {
+    background: var(--white);
+    border-radius: 22px; padding: 32px;
+    width: 100%; max-width: 500px;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(16px);
+    transition: transform 0.3s ease;
+  }
+  .modal-overlay.open .email-modal { transform: translateY(0); }
+
+  .email-to-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 10px 12px; min-height: 48px;
+    border: 1.5px solid var(--border); border-radius: 11px;
+    align-items: center; cursor: text;
+    background: var(--warm); transition: border-color 0.2s;
+  }
+  .email-to-tags:focus-within { border-color: var(--sage); }
+
+  .email-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--sage-pale); border: 1px solid var(--sage-light);
+    color: var(--sage-deep); padding: 3px 10px;
+    border-radius: 100px; font-size: 13px;
+  }
+  .email-tag-x {
+    background: none; border: none; cursor: pointer;
+    color: inherit; font-size: 14px; padding: 0; opacity: 0.6;
+  }
+  .email-tag-input {
+    border: none; outline: none; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--ink); flex: 1; min-width: 120px;
+  }
+  .email-tag-input::placeholder { color: var(--ink-muted); }
+
+  /* ── FIND SPECIALISTS ── */
+  .find-address-bar {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .find-address-inner { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+
+  .spec-chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+
+  .spec-chip {
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px; font-weight: 400;
+    color: var(--ink-soft); cursor: pointer;
+    transition: all 0.18s; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .spec-chip:hover { border-color: var(--sage-light); background: var(--sage-pale); color: var(--ink); }
+  .spec-chip.active { border-color: var(--sage); background: var(--sage-pale); color: var(--sage-deep); font-weight: 500; }
+
+  .find-loading {
+    text-align: center; padding: 60px 32px;
+  }
+
+  .find-spinner {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    border-top-color: var(--sage);
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .find-error {
+    background: var(--rose-pale);
+    border: 1px solid #f0c0c8;
+    border-radius: 12px; padding: 16px 20px;
+    font-size: 14px; color: var(--rose);
+    margin-bottom: 16px;
+  }
+
+  .find-results-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+  }
+
+  .find-results-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px; font-weight: 300; color: var(--ink);
+  }
+
+  .find-results-title em { font-style: italic; color: var(--sage); }
+
+  .find-results-sub { font-size: 13px; color: var(--ink-muted); font-weight: 300; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px;
+  }
+
+  .result-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+    display: flex; flex-direction: column;
+  }
+  .result-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+  .result-card-top { padding: 20px 22px 14px; flex: 1; }
+
+  .result-name {
+    font-family: 'Fraunces', serif;
+    font-size: 17px; font-weight: 400;
+    color: var(--ink); margin-bottom: 3px;
+    line-height: 1.3;
+  }
+
+  .result-type {
+    font-size: 12px; font-weight: 500;
+    color: var(--sage-deep);
+    letter-spacing: 0.04em; margin-bottom: 10px;
+  }
+
+  .result-details {
+    display: flex; flex-direction: column; gap: 5px;
+    margin-top: 8px;
+  }
+
+  .result-detail {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 13px; color: var(--ink-soft); font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .rd-icon { font-size: 12px; flex-shrink: 0; margin-top: 2px; opacity: 0.7; }
+
+  .result-rating {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--amber-pale);
+    border: 1px solid var(--amber-light);
+    color: var(--amber);
+    padding: 3px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .result-card-actions {
+    display: flex; gap: 6px;
+    padding: 12px 22px;
+    border-top: 1px solid var(--border);
+    background: rgba(253,252,248,0.5);
+    flex-wrap: wrap;
+  }
+
+  .tip-box {
+    background: var(--blue-pale);
+    border: 1px solid rgba(74,127,168,0.2);
+    border-radius: 14px; padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+
+  .tip-box-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .tip-box-text {
+    font-size: 13px; color: var(--blue);
+    font-weight: 400; line-height: 1.65;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    nav, .tab-bar, .script-actions,
+    .contact-actions, .contacts-toolbar,
+    .modal-overlay, .no-print { display: none !important; }
+
+    body { background: white; }
+    body::before { display: none; }
+    .shell { max-width: 100%; padding: 0; }
+
+    .script-body { display: block !important; }
+    .script-content { max-height: none; overflow: visible; }
+    .script-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 20px; }
+    .contact-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+
+    .print-header { display: block !important; }
+
+    @page { margin: 15mm; }
+  }
+
+  .print-header {
+    display: none;
+    font-family: 'Fraunces', serif;
+    font-size: 24px; font-weight: 300;
+    border-bottom: 2px solid var(--sage);
+    padding-bottom: 12px; margin-bottom: 24px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--ink); color: white;
+    padding: 11px 24px; border-radius: 100px;
+    font-size: 14px; font-weight: 500;
+    transition: transform 0.3s; z-index: 9999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .shell { padding: 0 16px 100px; }
+    nav { padding: 0 16px; }
+    .two-col { grid-template-columns: 1fr; }
+    .contacts-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
+
+<!-- PRINT HEADER -->
+<div class="print-header" id="printHeader">Advocate — My Saved Items</div>
+
+<!-- NAV -->
 <nav>
-  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
-  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
+  <button class="nav-back" onclick="window.location.href='advocate-home.html'">← Home</button>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+  </div>
+  <button class="sact-btn no-print" style="font-size:13px;" onclick="printCurrent()">🖨️ Print</button>
 </nav>
+
 <div class="shell">
+
   <div class="page-header">
-    <div class="page-icon">🚨</div>
-    <h1 class="page-title">ER <em>Prep Card</em></h1>
-    <p class="page-sub">Everything ER doctors need in the first 60 seconds. Print and keep one in your wallet, car, and on the fridge.</p>
+    <div>
+      <h1 class="page-title">My <em>Advocate</em></h1>
+      <div class="page-sub">Your saved scripts, documents, and care team — always ready.</div>
+    </div>
   </div>
 
-  <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-red">👤</div><div><div class="fcard-title">Patient Information</div><div class="fcard-desc">Basic details that appear at the top of the card.</div></div></div>
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('scripts')" id="tab-scripts">
+      📋 Saved Scripts <span class="tab-count" id="cnt-scripts">0</span>
+    </button>
+    <button class="tab" onclick="switchTab('contacts')" id="tab-contacts">
+      👩‍⚕️ Care Team <span class="tab-count" id="cnt-contacts">0</span>
+    </button>
+    <button class="tab" onclick="switchTab('find')" id="tab-find">
+      🔍 Find Specialists
+    </button>
+  </div>
+
+  <!-- ── SCRIPTS PANEL ── -->
+  <div class="panel active" id="panel-scripts">
+
+    <div id="scripts-empty" class="empty">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No saved scripts yet</div>
+      <div class="empty-sub">When you generate a Visit Script, Credibility Document, or IEP prep, use the "Save" button to store it here.</div>
+      <button class="add-contact-btn" onclick="window.location.href='advocate-home.html'" style="margin:0 auto; display:inline-flex;">Go to Tools →</button>
+    </div>
+
+    <div class="scripts-list" id="scriptsList"></div>
+
+  </div>
+
+  <!-- ── CONTACTS PANEL ── -->
+  <div class="panel" id="panel-contacts">
+
+    <div class="contacts-toolbar no-print">
+      <div style="font-size:14px; color:var(--ink-muted); font-weight:300;">Your doctors, specialists, and care team in one place.</div>
+      <button class="add-contact-btn" onclick="openContactModal()">+ Add Doctor / Contact</button>
+    </div>
+
+    <div id="contacts-empty" class="empty" style="display:none;">
+      <div class="empty-icon">👩‍⚕️</div>
+      <div class="empty-title">No contacts yet</div>
+      <div class="empty-sub">Add your doctors, specialists, therapists, and school contacts — with their address, email, fax, and phone all in one place.</div>
+      <button class="add-contact-btn" onclick="openContactModal()" style="margin:0 auto; display:inline-flex;">Add First Contact</button>
+    </div>
+
+    <div class="contacts-grid" id="contactsGrid"></div>
+
+  </div>
+
+  <!-- ── FIND SPECIALISTS PANEL ── -->
+  <div class="panel" id="panel-find">
+
+    <!-- Address bar -->
+    <div class="find-address-bar">
+      <div class="find-address-inner">
+        <div style="flex:1">
+          <div class="form-label" style="margin-bottom:6px;">Your Home Address or ZIP Code</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" class="form-input" id="homeAddress"
+              placeholder="e.g. 12345 or 111 Main St, Chicago IL"
+              style="flex:1; min-width:200px;"
+              onkeydown="if(event.key==='Enter') runSearch()">
+            <button class="add-contact-btn" style="padding:11px 20px; white-space:nowrap;" onclick="useMyLocation()">
+              📍 Use My Location
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Specialty chips -->
+    <div style="margin-bottom:20px;">
+      <div class="form-label" style="margin-bottom:10px;">Specialty to search</div>
+      <div class="spec-chips" id="specChips">
+        <button class="spec-chip active" data-q="pediatric cardiologist" onclick="selectSpec(this)">❤️ Cardiologist</button>
+        <button class="spec-chip" data-q="pediatric neurologist" onclick="selectSpec(this)">🧠 Neurologist</button>
+        <button class="spec-chip" data-q="immunologist" onclick="selectSpec(this)">🛡️ Immunologist</button>
+        <button class="spec-chip" data-q="pediatric rheumatologist" onclick="selectSpec(this)">🦴 Rheumatologist</button>
+        <button class="spec-chip" data-q="pediatric gastroenterologist" onclick="selectSpec(this)">🫁 GI Specialist</button>
+        <button class="spec-chip" data-q="dysautonomia POTS specialist" onclick="selectSpec(this)">⚡ POTS / Dysautonomia</button>
+        <button class="spec-chip" data-q="EDS connective tissue specialist" onclick="selectSpec(this)">🧬 EDS / Connective Tissue</button>
+        <button class="spec-chip" data-q="MCAS mast cell specialist" onclick="selectSpec(this)">🔬 MCAS Specialist</button>
+        <button class="spec-chip" data-q="pediatric endocrinologist" onclick="selectSpec(this)">⚗️ Endocrinologist</button>
+        <button class="spec-chip" data-q="pediatric pulmonologist" onclick="selectSpec(this)">💨 Pulmonologist</button>
+        <button class="spec-chip" data-q="pediatric hematologist" onclick="selectSpec(this)">🩸 Hematologist</button>
+        <button class="spec-chip" data-q="medical geneticist rare disease" onclick="selectSpec(this)">🧪 Geneticist</button>
+        <button class="spec-chip" data-q="special education IEP advocate" onclick="selectSpec(this)">⚖️ IEP Advocate</button>
+        <button class="spec-chip" data-q="pediatric psychiatrist" onclick="selectSpec(this)">💆 Psychiatrist</button>
+      </div>
+
+      <!-- Custom search -->
+      <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <input type="text" class="form-input" id="customSpec"
+          placeholder="Or type any specialty…"
+          style="flex:1;"
+          oninput="clearSpecChips()"
+          onkeydown="if(event.key==='Enter') runSearch()">
+        <button class="add-contact-btn" onclick="runSearch()" style="padding:11px 22px; white-space:nowrap;">
+          🔍 Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="findLoading" class="find-loading hidden">
+      <div class="find-spinner"></div>
+      <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:300; margin-bottom:6px;">Searching nearby…</div>
+      <div style="font-size:13px; color:var(--ink-muted); font-weight:300;">Finding specialists in your area</div>
+    </div>
+
+    <div id="findError" class="find-error hidden"></div>
+
+    <div id="findResults"></div>
+
+  </div>
+
+</div><!-- end shell -->
+
+<!-- ── CONTACT MODAL ── -->
+<div class="modal-overlay" id="contactModal" onclick="handleModalClick(event,'contactModal')">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Add Doctor / Contact</div>
+
+    <input type="hidden" id="editContactId">
+
+    <div class="form-field">
+      <label class="form-label">Full Name</label>
+      <input type="text" class="form-input" id="cName" placeholder="e.g. Dr. Sarah Chen">
+    </div>
+
     <div class="two-col">
-      <div class="field"><label class="flabel">Patient Full Name</label><input type="text" class="finput" id="er_name" placeholder="e.g. Emma Grace Johnson"></div>
-      <div class="field"><label class="flabel">Date of Birth</label><input type="text" class="finput" id="er_dob" placeholder="e.g. March 15, 2016"></div>
+      <div class="form-field">
+        <label class="form-label">Specialty / Role</label>
+        <input type="text" class="form-input" id="cSpecialty" placeholder="e.g. Cardiologist">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Practice / Hospital</label>
+        <input type="text" class="form-input" id="cPractice" placeholder="e.g. Children's National">
+      </div>
     </div>
+
+    <div class="form-field">
+      <label class="form-label">Address</label>
+      <input type="text" class="form-input" id="cAddress" placeholder="e.g. 111 Michigan Ave NW, Washington DC 20010">
+    </div>
+
     <div class="two-col">
-      <div class="field"><label class="flabel">Weight (optional)</label><input type="text" class="finput" id="er_weight" placeholder="e.g. 68 lbs"></div>
-      <div class="field"><label class="flabel">Blood Type (if known)</label><input type="text" class="finput" id="er_blood" placeholder="e.g. A positive"></div>
-    </div>
-  </div>
-
-  <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-red">🩺</div><div><div class="fcard-title">Diagnoses</div><div class="fcard-desc">All confirmed conditions.</div></div></div>
-    <div class="tag-wrap" id="er_diag_wrap" onclick="document.getElementById('er_diag_in').focus()">
-      <input type="text" class="tinput" id="er_diag_in" placeholder="Type diagnosis, press Enter…">
-    </div>
-    <div class="chips">
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">POTS</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">EDS</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">MCAS</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">Dysautonomia</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">Epilepsy</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">Type 1 Diabetes</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">Crohn's Disease</button>
-      <button class="chip" onclick="quickTag('er_diag_in','er_diag_wrap','vtag-red',this)">Autism</button>
-    </div>
-  </div>
-
-  <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-red">⚠️</div><div><div class="fcard-title">Allergies & Things to Avoid</div></div></div>
-    <div class="field"><label class="flabel">Drug / Food Allergies</label>
-      <div class="tag-wrap" id="er_allergy_wrap" onclick="document.getElementById('er_allergy_in').focus()">
-        <input type="text" class="tinput" id="er_allergy_in" placeholder="e.g. Penicillin — anaphylaxis, press Enter…">
+      <div class="form-field">
+        <label class="form-label">Phone</label>
+        <input type="tel" class="form-input" id="cPhone" placeholder="(202) 555-0100">
       </div>
-      <div class="chips">
-        <button class="chip" onclick="quickTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Penicillin</button>
-        <button class="chip" onclick="quickTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Sulfa drugs</button>
-        <button class="chip" onclick="quickTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Latex</button>
-        <button class="chip" onclick="quickTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">Contrast dye</button>
-        <button class="chip" onclick="quickTag('er_allergy_in','er_allergy_wrap','vtag-red',this)">NSAIDs</button>
+      <div class="form-field">
+        <label class="form-label">Fax</label>
+        <input type="tel" class="form-input" id="cFax" placeholder="(202) 555-0101">
       </div>
     </div>
-    <div class="field" style="margin-top:12px"><label class="flabel">Treatments to Avoid</label>
-      <div class="tag-wrap" id="er_avoid_wrap" onclick="document.getElementById('er_avoid_in').focus()">
-        <input type="text" class="tinput" id="er_avoid_in" placeholder="e.g. IV fluids too fast, press Enter…">
-      </div>
+
+    <div class="form-field">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="cEmail" placeholder="dr.chen@hospital.org">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Patient Portal / Website</label>
+      <input type="url" class="form-input" id="cPortal" placeholder="https://myhealth.childrens.org">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="cNotes" placeholder="e.g. Prefers fax for records requests. Next appointment: June 14. Parking: Garage B."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveContact()">Save Contact</button>
+      <button class="btn-cancel" onclick="closeModal('contactModal')">Cancel</button>
     </div>
   </div>
-
-  <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-amber">💊</div><div><div class="fcard-title">Current Medications</div></div></div>
-    <div id="med_rows"></div>
-    <button class="chip" style="margin-top:9px;padding:7px 15px" onclick="addMedRow()">+ Add medication</button>
-  </div>
-
-  <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-amber">⚡</div><div><div class="fcard-title">Triggers & Special Instructions</div></div></div>
-    <div class="field"><label class="flabel">Known Triggers</label>
-      <div class="tag-wrap" id="er_trigger_wrap" onclick="document.getElementById('er_trigger_in').focus()">
-        <input type="text" class="tinput" id="er_trigger_in" placeholder="e.g. Bright lights worsen migraines, press Enter…">
-      </div>
-      <div class="chips">
-        <button class="chip" onclick="quickTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Bright lights</button>
-        <button class="chip" onclick="quickTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Loud noises</button>
-        <button class="chip" onclick="quickTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Heat</button>
-        <button class="chip" onclick="quickTag('er_trigger_in','er_trigger_wrap','vtag-amber',this)">Standing too long</button>
-      </div>
-    </div>
-    <div class="field" style="margin-top:12px"><label class="flabel">Special Care Instructions</label>
-      <textarea class="ftextarea" id="er_special" placeholder="Anything the ER team needs to know…"></textarea>
-    </div>
-  </div>
-
-  <div class="fcard">
-    <div class="fcard-head"><div class="fcard-icon ic-sage">📞</div><div><div class="fcard-title">Emergency Contacts</div></div></div>
-    <div id="ec_rows"></div>
-    <button class="chip" style="margin-top:9px;padding:7px 15px" onclick="addECRow()">+ Add contact</button>
-    <div class="field" style="margin-top:16px"><label class="flabel">Primary Doctor</label>
-      <div class="two-col">
-        <input type="text" class="finput" id="er_pcp_name" placeholder="Dr. Name">
-        <input type="tel" class="finput" id="er_pcp_phone" placeholder="Phone number">
-      </div>
-    </div>
-  </div>
-
-  <div class="err-note" id="er_err">Please enter the patient name and at least one diagnosis.</div>
-  <button class="gen-btn" onclick="generateER()">🚨 Generate ER Prep Card</button>
-  <p style="text-align:center;font-size:12px;color:var(--ink-muted);margin-top:10px;font-style:italic">Print and keep in your wallet, car, and on the fridge. 🌿</p>
-  <div id="er_out" class="hidden" style="margin-top:26px"></div>
 </div>
+
+<!-- ── EMAIL MODAL ── -->
+<div class="modal-overlay" id="emailModal" onclick="handleModalClick(event,'emailModal')">
+  <div class="email-modal">
+    <div class="modal-title">Email This Script</div>
+
+    <div class="form-field">
+      <label class="form-label">To (press Enter after each address)</label>
+      <div class="email-to-tags" id="emailToWrap" onclick="document.getElementById('emailToInput').focus()">
+        <input type="email" class="email-tag-input" id="emailToInput" placeholder="email@example.com, press Enter…">
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Subject</label>
+      <input type="text" class="form-input" id="emailSubject" placeholder="e.g. Emma's Cardiology Visit — April 22">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Add a personal note (optional)</label>
+      <textarea class="form-textarea" id="emailNote" placeholder="e.g. Here's the script I prepared for Emma's appointment Thursday. Can you come with me?"></textarea>
+    </div>
+
+    <div style="background:var(--sage-pale); border-radius:10px; padding:12px 16px; margin-bottom:20px;">
+      <div style="font-size:12px; color:var(--sage-deep); font-weight:500; margin-bottom:4px;">📱 How this works</div>
+      <div style="font-size:12px; color:var(--ink-soft); font-weight:300; line-height:1.6;">Tapping "Open in Email" will open your phone's email app (Gmail, Apple Mail, etc.) with the script pre-filled and ready to send. Nothing is sent automatically.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-save" onclick="sendEmail()">Open in Email App →</button>
+      <button class="btn-cancel" onclick="closeModal('emailModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── UTILS ──
-function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
-function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'center'})}
+// ── STATE ──
+let scripts = JSON.parse(localStorage.getItem('advocate_scripts') || '[]');
+let contacts = JSON.parse(localStorage.getItem('advocate_contacts') || '[]');
+let currentEmailScript = null;
+let currentPrintPanel = 'scripts';
 
-// ── TAG INPUTS ──
-function createTag(text,wrap,inp,cls){
-  const t=document.createElement('span');
-  t.className='vtag '+(cls||'vtag-sage');
-  t.innerHTML=escH(text)+'<button class="vtag-x" onclick="this.parentElement.remove()">×</button>';
-  wrap.insertBefore(t,inp);
-}
-function quickTag(inputId,wrapId,cls,btn){
-  const wrap=document.getElementById(wrapId);
-  const inp=document.getElementById(inputId);
-  createTag(btn.textContent.trim(),wrap,inp,cls);
-  btn.classList.add('on');btn.disabled=true;
-}
-function setupTagInput(inputId,wrapId,cls){
-  const inp=document.getElementById(inputId);
-  const wrap=document.getElementById(wrapId);
-  inp.addEventListener('keydown',e=>{
-    if((e.key==='Enter'||e.key===',')&&inp.value.trim()){
-      e.preventDefault();createTag(inp.value.trim(),wrap,inp,cls||'vtag-sage');inp.value='';
-    }
-    if(e.key==='Backspace'&&!inp.value){const tags=wrap.querySelectorAll('.vtag');if(tags.length)tags[tags.length-1].remove();}
-  });
-}
-function getTags(wrapId){
-  return [...document.getElementById(wrapId).querySelectorAll('.vtag')].map(t=>t.textContent.replace('×','').trim()).filter(Boolean);
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  currentPrintPanel = tab;
 }
 
-// Setup tag inputs
-setupTagInput('er_diag_in','er_diag_wrap','vtag-red');
-setupTagInput('er_allergy_in','er_allergy_wrap','vtag-red');
-setupTagInput('er_avoid_in','er_avoid_wrap','vtag-amber');
-setupTagInput('er_trigger_in','er_trigger_wrap','vtag-amber');
+// ── RENDER SCRIPTS ──
+function renderScripts() {
+  const list = document.getElementById('scriptsList');
+  const empty = document.getElementById('scripts-empty');
+  document.getElementById('cnt-scripts').textContent = scripts.length;
 
-// ── DYNAMIC ROWS ──
-let medCount=0;
-function addMedRow(name='',dose='',freq=''){
-  const id=medCount++;
-  const div=document.createElement('div');
-  div.className='dyn-row';div.id='med-'+id;
-  div.innerHTML=`<input type="text" class="finput" placeholder="Medication name" value="${escH(name)}" style="flex:2"><input type="text" class="finput" placeholder="Dose" value="${escH(dose)}" style="flex:1"><input type="text" class="finput" placeholder="Frequency" value="${escH(freq)}" style="flex:1"><button class="dyn-rm" onclick="document.getElementById('med-${id}').remove()">×</button>`;
-  document.getElementById('med_rows').appendChild(div);
-}
-addMedRow();
+  if (scripts.length === 0) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
 
-function getMeds(){
-  return [...document.querySelectorAll('#med_rows .dyn-row')].map(r=>{
-    const ins=r.querySelectorAll('input');
-    return{name:ins[0].value.trim(),dose:ins[1].value.trim(),freq:ins[2].value.trim()};
-  }).filter(m=>m.name);
-}
+  empty.style.display = 'none';
 
-let ecCount=0;
-function addECRow(name='',rel='',phone=''){
-  const id=ecCount++;
-  const div=document.createElement('div');
-  div.className='dyn-row';div.id='ec-'+id;
-  div.innerHTML=`<input type="text" class="finput" placeholder="Name" value="${escH(name)}" style="flex:2"><input type="text" class="finput" placeholder="Relationship" value="${escH(rel)}" style="flex:1"><input type="tel" class="finput" placeholder="Phone" value="${escH(phone)}" style="flex:1.5"><button class="dyn-rm" onclick="document.getElementById('ec-${id}').remove()">×</button>`;
-  document.getElementById('ec_rows').appendChild(div);
-}
-addECRow();addECRow();
-
-function getECs(){
-  return [...document.querySelectorAll('#ec_rows .dyn-row')].map(r=>{
-    const ins=r.querySelectorAll('input');
-    return{name:ins[0].value.trim(),rel:ins[1].value.trim(),phone:ins[2].value.trim()};
-  }).filter(ec=>ec.name);
-}
-
-// ── API ──
-async function callClaude(system,user){
-  const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system,messages:[{role:'user',content:user}]})
-  });
-  const d=await r.json();
-  const text=d.content?.[0]?.text||'';
-  return JSON.parse(text.replace(/```json|```/g,'').trim());
-}
-
-// ── GENERATE ──
-async function generateER(){
-  const name=document.getElementById('er_name').value.trim();
-  const diags=getTags('er_diag_wrap');
-  if(!name||!diags.length){showErr('er_err','Please enter the patient name and at least one diagnosis.');return;}
-  document.getElementById('er_err').style.display='none';
-
-  const out=document.getElementById('er_out');
-  out.classList.remove('hidden');
-  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><div class="load-title">Building your ER card…</div><div class="load-sub">Just a moment</div></div>`;
-  out.scrollIntoView({behavior:'smooth',block:'start'});
-  document.querySelector('.gen-btn').disabled=true;
-
-  const data={
-    name,dob:document.getElementById('er_dob').value.trim(),
-    weight:document.getElementById('er_weight').value.trim(),
-    blood:document.getElementById('er_blood').value.trim(),
-    diagnoses:diags,allergies:getTags('er_allergy_wrap'),
-    avoid:getTags('er_avoid_wrap'),meds:getMeds(),
-    triggers:getTags('er_trigger_wrap'),
-    special:document.getElementById('er_special').value.trim(),
-    contacts:getECs(),
-    pcpName:document.getElementById('er_pcp_name').value.trim(),
-    pcpPhone:document.getElementById('er_pcp_phone').value.trim()
+  const typeConfig = {
+    visit:       { label: 'Visit Script',          badge: 'badge-visit', icon: '📋' },
+    credibility: { label: 'Credibility Document',  badge: 'badge-cred',  icon: '📄' },
+    iep:         { label: 'IEP / 504 Prep',        badge: 'badge-iep',   icon: '⚖️' },
+    lab:         { label: 'Lab Summary',            badge: 'badge-lab',   icon: '🧪' },
+    custom:      { label: 'Note',                   badge: 'badge-visit', icon: '📝' }
   };
 
-  try{
-    const result=await callClaude(
-      'You generate ER prep card content. Return ONLY valid JSON: {"complexityLevel":"HIGH COMPLEXITY PATIENT or MODERATE COMPLEXITY or MANAGED CONDITIONS","alertMessage":"One critical sentence ER staff must read first","criticalNotes":["2-4 bullet points"],"medicationNotes":"One sentence about medication considerations or null"}',
-      JSON.stringify(data)
-    );
-    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    const medsRows=data.meds.map(m=>`<tr><td><strong>${escH(m.name)}</strong></td><td>${escH(m.dose)}</td><td>${escH(m.freq)}</td></tr>`).join('');
-    const contactsHTML=[...data.contacts.map(c=>`<div class="er-contact"><div class="er-contact-name">${escH(c.name)}</div><div class="er-contact-rel">${escH(c.rel)}</div><div class="er-contact-phone">${escH(c.phone)}</div></div>`),
-      data.pcpName?`<div class="er-contact"><div class="er-contact-name">${escH(data.pcpName)}</div><div class="er-contact-rel">Primary Doctor</div><div class="er-contact-phone">${escH(data.pcpPhone)}</div></div>`:''
-    ].join('');
+  list.innerHTML = [...scripts].reverse().map((s, i) => {
+    const idx = scripts.length - 1 - i;
+    const cfg = typeConfig[s.type] || typeConfig.custom;
+    const preview = s.content.substring(0, 180).replace(/\n/g, ' ');
 
-    out.innerHTML=`
-      <div class="out-actions">
-        <button class="abtn abtn-red" onclick="window.print()">🖨️ Print Card</button>
-        <button class="abtn abtn-outline" onclick="location.reload()">✏️ Start Over</button>
-      </div>
-      <div class="er-card">
-        <div class="er-top">
-          <div class="er-badge-row"><div class="er-badge">🚨 Emergency Medical Card</div><div class="er-updated">Updated ${today}</div></div>
-          <div class="er-name">${escH(data.name)}</div>
-          <div class="er-dob">${data.dob?'DOB: '+escH(data.dob):''}${data.blood?' · Blood: '+escH(data.blood):''}${data.weight?' · Weight: '+escH(data.weight):''}</div>
-          <div class="er-alert">⚠️ ${result.complexityLevel} — ${escH(result.alertMessage)}</div>
+    return `
+      <div class="script-card" id="scard-${idx}">
+        <div class="script-card-top">
+          <div style="flex:1">
+            <div class="script-type-badge ${cfg.badge}">${cfg.icon} ${cfg.label}</div>
+            <div class="script-title">${escHtml(s.title)}</div>
+            <div class="script-date">${formatDate(s.savedAt)}</div>
+            <div class="script-preview">${escHtml(preview)}…</div>
+          </div>
         </div>
-        <div class="er-body">
-          <div class="er-sec"><div class="er-sec-title">Diagnoses</div><div class="er-list">${data.diagnoses.map(d=>`<div class="er-item er-item-red"><div class="er-dot dot-red"></div>${escH(d)}</div>`).join('')}</div></div>
-          ${data.allergies.length||data.avoid.length?`<div class="er-sec"><div class="er-sec-title">⚠️ Allergies & Do NOT Use</div><div class="er-list">${data.allergies.map(a=>`<div class="er-item er-item-red"><div class="er-dot dot-red"></div><strong>ALLERGY:</strong> ${escH(a)}</div>`).join('')}${data.avoid.map(a=>`<div class="er-item er-item-amber"><div class="er-dot dot-amber"></div><strong>AVOID:</strong> ${escH(a)}</div>`).join('')}</div></div>`:''}
-          ${data.meds.length?`<div class="er-sec"><div class="er-sec-title">Current Medications</div><table class="med-tbl"><thead><tr><th>Medication</th><th>Dose</th><th>Frequency</th></tr></thead><tbody>${medsRows}</tbody></table>${result.medicationNotes?`<p style="margin-top:9px;font-size:13px;color:var(--ink-muted);font-style:italic">💊 ${escH(result.medicationNotes)}</p>`:''}</div>`:''}
-          ${data.triggers.length?`<div class="er-sec"><div class="er-sec-title">Known Triggers</div><div class="er-list">${data.triggers.map(t=>`<div class="er-item er-item-amber"><div class="er-dot dot-amber"></div>${escH(t)}</div>`).join('')}</div></div>`:''}
-          ${result.criticalNotes?.length?`<div class="er-sec"><div class="er-sec-title">Critical Care Notes</div><div class="er-list">${result.criticalNotes.map(n=>`<div class="er-item er-item-sage"><div class="er-dot dot-sage"></div>${escH(n)}</div>`).join('')}</div></div>`:''}
-          ${data.special?`<div class="er-sec"><div class="er-sec-title">Special Instructions</div><div class="er-item er-item-sage"><div class="er-dot dot-sage"></div>${escH(data.special)}</div></div>`:''}
-          ${contactsHTML?`<div class="er-sec"><div class="er-sec-title">Emergency Contacts</div><div class="er-contacts-grid">${contactsHTML}</div></div>`:''}
+        <div class="script-actions no-print">
+          <button class="sact-btn primary" onclick="toggleScript(${idx})">👁 View</button>
+          <button class="sact-btn" onclick="printScript(${idx})">🖨️ Print</button>
+          <button class="sact-btn" onclick="openEmailModal(${idx})">✉️ Email</button>
+          <button class="sact-btn" onclick="copyScript(${idx})">📋 Copy</button>
+          <button class="sact-btn danger" onclick="deleteScript(${idx})">🗑 Delete</button>
         </div>
-        <div class="er-footer"><div class="er-footer-note">Print and keep in wallet, car, and at home. Update when medications change.</div><div class="er-footer-brand">MedAdvocate</div></div>
+        <div class="script-body" id="sbody-${idx}">
+          <div class="script-content">${escHtml(s.content)}</div>
+        </div>
       </div>`;
-  }catch(e){
-    out.innerHTML=`<div class="err-note" style="display:block">Something went wrong. Please try again.</div>`;
-    console.error(e);
-  }finally{
-    document.querySelector('.gen-btn').disabled=false;
+  }).join('');
+}
+
+function toggleScript(idx) {
+  const body = document.getElementById('sbody-' + idx);
+  body.classList.toggle('open');
+  const btn = document.querySelector(`#scard-${idx} .sact-btn.primary`);
+  btn.textContent = body.classList.contains('open') ? '▲ Hide' : '👁 View';
+}
+
+function printScript(idx) {
+  const s = scripts[idx];
+  const w = window.open('', '_blank');
+  w.document.write(`
+    <!DOCTYPE html><html><head>
+    <title>${escHtml(s.title)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400&display=swap" rel="stylesheet">
+    <style>
+      body { font-family:'DM Sans',sans-serif; color:#1c2b22; padding:20mm; max-width:720px; margin:0 auto; }
+      .top { border-bottom:2px solid #6b9e7e; padding-bottom:16px; margin-bottom:28px; }
+      .badge { background:#eef6f1; color:#4a7a5e; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; padding:4px 12px; border-radius:100px; display:inline-block; margin-bottom:12px; }
+      h1 { font-family:'Fraunces',serif; font-size:28px; font-weight:300; margin-bottom:4px; }
+      .date { font-size:12px; color:#7a9080; }
+      .content { font-size:14px; line-height:1.85; white-space:pre-wrap; color:#3d5245; font-weight:300; margin-top:20px; }
+      .footer { margin-top:40px; padding-top:14px; border-top:1px solid #dde8e1; font-size:11px; color:#7a9080; font-style:italic; display:flex; justify-content:space-between; }
+      @page { margin:15mm; }
+    </style>
+    </head><body>
+    <div class="top">
+      <div class="badge">Advocate — ${s.type?.toUpperCase() || 'SCRIPT'}</div>
+      <h1>${escHtml(s.title)}</h1>
+      <div class="date">Saved ${formatDate(s.savedAt)} · Printed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+    </div>
+    <div class="content">${escHtml(s.content)}</div>
+    <div class="footer"><span>advocate — your medical companion</span><span>${escHtml(s.title)}</span></div>
+    <script>window.onload=()=>{ window.print(); window.close(); }<\/script>
+    </body></html>`);
+  w.document.close();
+}
+
+function copyScript(idx) {
+  navigator.clipboard.writeText(scripts[idx].content)
+    .then(() => showToast('Copied to clipboard ✓'));
+}
+
+function deleteScript(idx) {
+  if (!confirm(`Delete "${scripts[idx].title}"? This can't be undone.`)) return;
+  scripts.splice(idx, 1);
+  localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
+  renderScripts();
+  showToast('Deleted');
+}
+
+// ── EMAIL ──
+function openEmailModal(idx) {
+  currentEmailScript = scripts[idx];
+  document.getElementById('emailSubject').value = currentEmailScript.title;
+  document.getElementById('emailNote').value = '';
+  document.getElementById('emailToWrap').querySelectorAll('.email-tag').forEach(t => t.remove());
+  openModal('emailModal');
+}
+
+// Email tag input
+document.getElementById('emailToInput').addEventListener('keydown', e => {
+  const inp = e.target;
+  if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) {
+    e.preventDefault();
+    addEmailTag(inp.value.trim());
+    inp.value = '';
+  }
+  if (e.key === 'Backspace' && !inp.value) {
+    const tags = document.getElementById('emailToWrap').querySelectorAll('.email-tag');
+    if (tags.length) tags[tags.length-1].remove();
+  }
+});
+
+function addEmailTag(email) {
+  const wrap = document.getElementById('emailToWrap');
+  const inp = document.getElementById('emailToInput');
+  const tag = document.createElement('span');
+  tag.className = 'email-tag';
+  tag.innerHTML = `${escHtml(email)}<button class="email-tag-x" onclick="this.parentElement.remove()">×</button>`;
+  wrap.insertBefore(tag, inp);
+}
+
+function getEmailAddresses() {
+  return [...document.getElementById('emailToWrap').querySelectorAll('.email-tag')]
+    .map(t => t.textContent.replace('×','').trim())
+    .filter(Boolean);
+}
+
+function sendEmail() {
+  const to = getEmailAddresses();
+  const subject = document.getElementById('emailSubject').value.trim();
+  const note = document.getElementById('emailNote').value.trim();
+  const content = currentEmailScript?.content || '';
+
+  if (!to.length) { showToast('Please add at least one email address'); return; }
+
+  const body = [
+    note ? note + '\n\n---\n\n' : '',
+    content
+  ].join('');
+
+  const mailto = `mailto:${encodeURIComponent(to.join(','))}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  window.location.href = mailto;
+  closeModal('emailModal');
+  showToast('Opening your email app… ✓');
+}
+
+// ── CONTACTS ──
+function renderContacts() {
+  const grid = document.getElementById('contactsGrid');
+  const empty = document.getElementById('contacts-empty');
+  document.getElementById('cnt-contacts').textContent = contacts.length;
+
+  if (contacts.length === 0) {
+    empty.style.display = 'block';
+    grid.innerHTML = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  grid.innerHTML = contacts.map((c, i) => `
+    <div class="contact-card">
+      <div class="contact-card-top">
+        ${c.specialty ? `<div class="contact-specialty">${escHtml(c.specialty)}</div>` : ''}
+        <div class="contact-name">${escHtml(c.name)}</div>
+        ${c.practice ? `<div class="contact-practice">${escHtml(c.practice)}</div>` : ''}
+        <div class="contact-details">
+          ${c.phone ? `<div class="contact-detail"><span class="cd-icon">📞</span><a href="tel:${escHtml(c.phone)}" class="cd-link">${escHtml(c.phone)}</a></div>` : ''}
+          ${c.fax ? `<div class="contact-detail"><span class="cd-icon">📠</span><span>${escHtml(c.fax)} (fax)</span></div>` : ''}
+          ${c.email ? `<div class="contact-detail"><span class="cd-icon">✉️</span><a href="mailto:${escHtml(c.email)}" class="cd-link">${escHtml(c.email)}</a></div>` : ''}
+          ${c.address ? `<div class="contact-detail"><span class="cd-icon">📍</span><a href="https://maps.google.com/?q=${encodeURIComponent(c.address)}" target="_blank" class="cd-link">${escHtml(c.address)}</a></div>` : ''}
+          ${c.portal ? `<div class="contact-detail"><span class="cd-icon">🔗</span><a href="${escHtml(c.portal)}" target="_blank" class="cd-link">Patient portal</a></div>` : ''}
+          ${c.notes ? `<div class="contact-detail" style="margin-top:4px;"><span class="cd-icon">📝</span><span style="font-style:italic;">${escHtml(c.notes)}</span></div>` : ''}
+        </div>
+      </div>
+      <div class="contact-actions no-print">
+        <button class="sact-btn" onclick="editContact(${i})">✏️ Edit</button>
+        ${c.email ? `<button class="sact-btn" onclick="emailContact(${i})">✉️ Email</button>` : ''}
+        ${c.phone ? `<button class="sact-btn" onclick="window.location.href='tel:${escHtml(c.phone)}'">📞 Call</button>` : ''}
+        <button class="sact-btn danger" onclick="deleteContact(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function openContactModal(prefill = null) {
+  document.getElementById('modalTitle').textContent = prefill ? 'Edit Contact' : 'Add Doctor / Contact';
+  document.getElementById('editContactId').value = prefill !== null ? prefill : '';
+  const c = prefill !== null ? contacts[prefill] : {};
+  ['Name','Specialty','Practice','Address','Phone','Fax','Email','Portal','Notes'].forEach(f => {
+    const el = document.getElementById('c' + f);
+    if (el) el.value = c[f.toLowerCase()] || '';
+  });
+  openModal('contactModal');
+}
+
+function editContact(i) { openContactModal(i); }
+
+function saveContact() {
+  const id = document.getElementById('editContactId').value;
+  const contact = {
+    name:      document.getElementById('cName').value.trim(),
+    specialty: document.getElementById('cSpecialty').value.trim(),
+    practice:  document.getElementById('cPractice').value.trim(),
+    address:   document.getElementById('cAddress').value.trim(),
+    phone:     document.getElementById('cPhone').value.trim(),
+    fax:       document.getElementById('cFax').value.trim(),
+    email:     document.getElementById('cEmail').value.trim(),
+    portal:    document.getElementById('cPortal').value.trim(),
+    notes:     document.getElementById('cNotes').value.trim(),
+    savedAt:   new Date().toISOString()
+  };
+
+  if (!contact.name) { showToast('Please enter a name'); return; }
+
+  if (id !== '') {
+    contacts[parseInt(id)] = contact;
+  } else {
+    contacts.push(contact);
+  }
+
+  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  renderContacts();
+  closeModal('contactModal');
+  showToast(id !== '' ? 'Contact updated ✓' : 'Contact saved ✓');
+}
+
+function deleteContact(i) {
+  if (!confirm(`Delete ${contacts[i].name}?`)) return;
+  contacts.splice(i, 1);
+  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  renderContacts();
+  showToast('Deleted');
+}
+
+function emailContact(i) {
+  const c = contacts[i];
+  window.location.href = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Re: ' + (c.specialty || 'Appointment'))}`;
+}
+
+// ── GLOBAL SAVE (called from other tools via postMessage or direct) ──
+// Other tools can call: window.opener.advocateSave(type, title, content)
+window.advocateSave = function(type, title, content) {
+  const script = { type, title, content, savedAt: new Date().toISOString() };
+  scripts.push(script);
+  localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
+  renderScripts();
+  showToast('Saved to My Advocate ✓');
+};
+
+// Listen for postMessage from tool iframes
+window.addEventListener('message', e => {
+  if (e.data?.type === 'advocate_save') {
+    window.advocateSave(e.data.scriptType, e.data.title, e.data.content);
+  }
+});
+
+// ── PRINT ──
+function printCurrent() {
+  document.getElementById('printHeader').textContent =
+    currentPrintPanel === 'scripts' ? 'Advocate — Saved Scripts' : 'Advocate — Care Team Contacts';
+
+  // Open all script bodies for print
+  if (currentPrintPanel === 'scripts') {
+    document.querySelectorAll('.script-body').forEach(b => b.classList.add('open'));
+  }
+
+  window.print();
+
+  setTimeout(() => {
+    document.querySelectorAll('.script-body').forEach(b => b.classList.remove('open'));
+  }, 1000);
+}
+
+// ── MODALS ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleModalClick(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal('contactModal');
+    closeModal('emailModal');
+  }
+});
+
+// ── UTILS ──
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── DEMO DATA (first visit) ──
+function loadDemoData() {
+  if (localStorage.getItem('advocate_demo_loaded')) return;
+
+  scripts.push({
+    type: 'visit',
+    title: 'Emma — Rheumatology Visit (Dr. Patel)',
+    content: `OPENING LINE:
+"Dr. Patel, thank you for seeing Emma. We've been managing multiple overlapping conditions for about two years, and we're hoping today can help us address some patterns we've been tracking."
+
+PRIORITY TALKING POINTS:
+
+1. Joint hypermobility and pain pattern
+   Say: "Emma's joint pain has worsened significantly over the past 6 months — affecting her knees, fingers, and shoulders most days. It correlates with increased fatigue and is limiting her school attendance."
+
+2. Elevated ANA result (Jan 2025)
+   Say: "Her ANA came back positive in January. Her immunologist suggested a rheumatology workup. We have the lab results with us."
+
+3. Response to prior treatment
+   Say: "We tried naproxen for 8 weeks with minimal relief. Physical therapy worsened her fatigue significantly."
+
+QUESTIONS TO ASK:
+• Given the ANA result and her joint pattern, should we be testing for specific autoimmune markers?
+• Is a connective tissue evaluation within your scope, or should we seek a geneticist referral?
+• What would you expect to see in 3 months if we try X?
+
+TIMING TIP: Lead with the ANA result — it's the most concrete item and will focus the conversation.`,
+    savedAt: new Date(Date.now() - 86400000 * 3).toISOString()
+  });
+
+  contacts.push({
+    name: 'Dr. Anika Patel',
+    specialty: 'Rheumatologist',
+    practice: 'Children\'s National Medical Center',
+    address: '111 Michigan Ave NW, Washington, DC 20010',
+    phone: '(202) 476-5000',
+    fax: '(202) 476-5001',
+    email: 'apatel@childrensnational.org',
+    portal: 'https://mychildrensnational.org',
+    notes: 'Prefers records via fax. Parking in Garage A. Next appt: June 14.',
+    savedAt: new Date().toISOString()
+  });
+
+  contacts.push({
+    name: 'Dr. Marcus Webb',
+    specialty: 'Cardiologist / POTS',
+    practice: 'Johns Hopkins Children\'s Center',
+    address: '1800 Orleans St, Baltimore, MD 21287',
+    phone: '(410) 955-5000',
+    fax: '(410) 955-5001',
+    email: 'mwebb@jhmi.edu',
+    portal: '',
+    notes: 'Call nurse line for urgent questions. Tilt table test pending.',
+    savedAt: new Date().toISOString()
+  });
+
+  localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
+  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  localStorage.setItem('advocate_demo_loaded', '1');
+}
+
+// Load demo on first visit
+if (scripts.length === 0 && contacts.length === 0) {
+  loadDemoData();
+}
+
+// ── INIT ──
+renderScripts();
+renderContacts();
+
+// ── FIND SPECIALISTS ──
+let selectedSpecQuery = 'pediatric cardiologist';
+let isSearching = false;
+
+function selectSpec(btn) {
+  document.querySelectorAll('.spec-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  selectedSpecQuery = btn.dataset.q;
+  document.getElementById('customSpec').value = '';
+}
+
+function clearSpecChips() {
+  document.querySelectorAll('.spec-chip').forEach(c => c.classList.remove('active'));
+  selectedSpecQuery = '';
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) {
+    showFindError('Geolocation is not supported by your browser.');
+    return;
+  }
+  const btn = document.querySelector('[onclick="useMyLocation()"]');
+  btn.textContent = '⏳ Getting location…';
+  btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn.textContent = '📍 Use My Location';
+      btn.disabled = false;
+      document.getElementById('homeAddress').value = `${pos.coords.latitude},${pos.coords.longitude}`;
+      runSearch(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      btn.textContent = '📍 Use My Location';
+      btn.disabled = false;
+      showFindError('Could not get your location. Please type your address or ZIP code instead.');
+    }
+  );
+}
+
+async function runSearch(lat = null, lng = null) {
+  if (isSearching) return;
+
+  const address = document.getElementById('homeAddress').value.trim();
+  const custom = document.getElementById('customSpec').value.trim();
+  const specQuery = custom || selectedSpecQuery;
+
+  if (!address && lat === null) {
+    showFindError('Please enter your address or ZIP code first.');
+    document.getElementById('homeAddress').focus();
+    return;
+  }
+
+  if (!specQuery) {
+    showFindError('Please select or type a specialty to search.');
+    return;
+  }
+
+  isSearching = true;
+  document.getElementById('findLoading').classList.remove('hidden');
+  document.getElementById('findResults').innerHTML = '';
+  document.getElementById('findError').classList.add('hidden');
+
+  try {
+    // Use Claude to generate realistic specialist search results
+    // In production this would call Google Places API — for now Claude generates structured results
+    const locationDesc = lat ? `coordinates ${lat},${lng}` : address;
+
+    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: `You are a helpful medical directory assistant. Generate realistic specialist search results.
+
+Return ONLY valid JSON (no markdown, no backticks):
+{
+  "locationName": "City, State or area name based on the location provided",
+  "specialty": "Cleaned specialty name for display",
+  "results": [
+    {
+      "name": "Full name of practice or doctor",
+      "type": "Specialty type",
+      "address": "Full street address",
+      "phone": "Phone number in (xxx) xxx-xxxx format",
+      "distance": "e.g. 2.4 miles",
+      "rating": 4.7,
+      "reviewCount": 234,
+      "acceptsNewPatients": true,
+      "insuranceNote": "e.g. Accepts most major insurance",
+      "tip": "One helpful tip specific to this type of specialist search — e.g. wait times, referral requirements, telehealth options"
+    }
+  ],
+  "searchTip": "One practical tip for finding a good specialist of this type — e.g. asking about wait times, what to bring, how to get a referral"
+}
+
+Generate 5-6 realistic results. Use real-sounding names and addresses near the provided location. Vary the distances (0.8 to 12 miles). Include a mix of hospital-based and private practices. For rare disease specialists like POTS/EDS/MCAS, note that these are hard to find and suggest academic medical centers.`,
+        messages: [{
+          role: 'user',
+          content: `Search for: ${specQuery} near ${locationDesc}`
+        }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = data.content?.[0]?.text || '';
+    const results = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    renderFindResults(results, specQuery);
+
+  } catch (err) {
+    showFindError('Search failed. Please check your connection and try again.');
+    console.error(err);
+  } finally {
+    isSearching = false;
+    document.getElementById('findLoading').classList.add('hidden');
   }
 }
+
+function renderFindResults(data, query) {
+  const container = document.getElementById('findResults');
+  const results = data.results || [];
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results found</div><div class="empty-sub">Try a broader search or different ZIP code.</div></div>`;
+    return;
+  }
+
+  const isRare = /pots|dysautonomia|eds|connective|mcas|mast|geneticist|rare/i.test(query);
+
+  const cardsHTML = results.map(r => {
+    const stars = '★'.repeat(Math.round(r.rating || 4)) + '☆'.repeat(5 - Math.round(r.rating || 4));
+    const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(r.name + ' ' + r.address)}`;
+    const newPtBadge = r.acceptsNewPatients
+      ? `<span style="background:var(--sage-pale);color:var(--sage-deep);font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;letter-spacing:.06em;">✓ NEW PATIENTS</span>`
+      : `<span style="background:#fff0f0;color:var(--rose);font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;letter-spacing:.06em;">CALL TO CONFIRM</span>`;
+
+    return `
+      <div class="result-card">
+        <div class="result-card-top">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <div>
+              <div class="result-name">${escHtml(r.name)}</div>
+              <div class="result-type">${escHtml(r.type)}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              ${newPtBadge}
+              <div style="font-size:12px;color:var(--ink-muted);margin-top:5px;font-weight:300;">${escHtml(r.distance)}</div>
+            </div>
+          </div>
+          ${r.rating ? `<div class="result-rating"><span style="color:var(--amber)">${stars}</span> ${r.rating} <span style="font-size:11px;font-weight:300;color:var(--ink-muted)">(${r.reviewCount || '?'} reviews)</span></div>` : ''}
+          <div class="result-details">
+            ${r.address ? `<div class="result-detail"><span class="rd-icon">📍</span><a href="${mapsUrl}" target="_blank" style="color:var(--blue);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--sage-deep)'" onmouseout="this.style.color='var(--blue)'">${escHtml(r.address)}</a></div>` : ''}
+            ${r.phone ? `<div class="result-detail"><span class="rd-icon">📞</span><a href="tel:${escHtml(r.phone)}" style="color:var(--blue);text-decoration:none;">${escHtml(r.phone)}</a></div>` : ''}
+            ${r.insuranceNote ? `<div class="result-detail"><span class="rd-icon">🏥</span><span>${escHtml(r.insuranceNote)}</span></div>` : ''}
+            ${r.tip ? `<div class="result-detail" style="margin-top:4px;font-style:italic;color:var(--ink-muted);"><span class="rd-icon">💡</span><span>${escHtml(r.tip)}</span></div>` : ''}
+          </div>
+        </div>
+        <div class="result-card-actions no-print">
+          <button class="sact-btn" onclick="window.open('${mapsUrl}','_blank')">🗺️ Directions</button>
+          ${r.phone ? `<button class="sact-btn" onclick="window.location.href='tel:${escHtml(r.phone)}'">📞 Call</button>` : ''}
+          <button class="sact-btn primary" onclick="addResultToContacts(${JSON.stringify(r).replace(/"/g,'&quot;')})">➕ Save to Care Team</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    ${isRare ? `
+    <div class="tip-box">
+      <div class="tip-box-icon">⚠️</div>
+      <div class="tip-box-text"><strong>Finding rare disease specialists is hard.</strong> Wait times can be 6–18 months. Academic medical centers (children's hospitals, university hospitals) tend to have the most experience. Consider telehealth options — many POTS/EDS/MCAS specialists see patients virtually across state lines.</div>
+    </div>` : ''}
+
+    <div class="find-results-header">
+      <div>
+        <div class="find-results-title">Results near <em>${escHtml(data.locationName || 'your area')}</em></div>
+        <div class="find-results-sub">${results.length} ${escHtml(data.specialty || query)} specialists found · Tap any result to get directions or call</div>
+      </div>
+    </div>
+
+    ${data.searchTip ? `
+    <div class="tip-box" style="margin-bottom:16px;">
+      <div class="tip-box-icon">💡</div>
+      <div class="tip-box-text">${escHtml(data.searchTip)}</div>
+    </div>` : ''}
+
+    <div class="results-grid">${cardsHTML}</div>
+
+    <div style="text-align:center;margin-top:24px;padding:16px;background:var(--sage-pale);border-radius:12px;font-size:13px;color:var(--ink-soft);font-weight:300;line-height:1.65;">
+      📍 Results are AI-generated estimates for illustration. Always verify availability, insurance, and new patient status by calling directly. For rare disease specialists, <a href="https://rarediseases.org/physician-guide/" target="_blank" style="color:var(--sage-deep);">NORD's physician finder</a> and <a href="https://dysautonomiainternational.org/page.php?ID=150" target="_blank" style="color:var(--sage-deep);">Dysautonomia International's doctor list</a> are excellent verified resources.
+    </div>`;
+}
+
+function addResultToContacts(r) {
+  const contact = {
+    name: r.name,
+    specialty: r.type,
+    practice: '',
+    address: r.address || '',
+    phone: r.phone || '',
+    fax: '',
+    email: '',
+    portal: '',
+    notes: r.tip || '',
+    savedAt: new Date().toISOString()
+  };
+  contacts.push(contact);
+  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  renderContacts();
+  showToast(`${r.name} added to your Care Team ✓`);
+}
+
+function showFindError(msg) {
+  const el = document.getElementById('findError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  document.getElementById('findLoading').classList.add('hidden');
+}
 </script>
+
 </body>
 </html>
