@@ -246,26 +246,16 @@
 <div class="toast" id="toast"></div>
 
 <script>
-function setupTag(inputId, wrapId) {
-  const inp = document.getElementById(inputId);
-  const wrap = document.getElementById(wrapId);
-  inp.addEventListener('keydown', e => {
-    if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) {
-      e.preventDefault();
-      createTag(inp.value.trim(), wrap, inp, inp.dataset.tagclass || 'vtag-sage');
-    }
-    if (e.key === 'Backspace' && !inp.value) {
-      const tags = wrap.querySelectorAll('.vtag');
-      if (tags.length) tags[tags.length-1].remove();
-    }
-  });
-}
+// ── CORE TAG FUNCTIONS (must be defined before inline onclick handlers fire) ──
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 function createTag(text, wrap, inp, cls) {
   const t = document.createElement('span');
   t.className = 'vtag ' + (cls || 'vtag-sage');
   t.innerHTML = escH(text) + '<button class="vtag-x" onclick="this.parentElement.remove()">×</button>';
   wrap.insertBefore(t, inp);
 }
+
 function addTag(inputId, wrapId, cls, btn) {
   const wrap = document.getElementById(wrapId);
   const inp = document.getElementById(inputId);
@@ -273,10 +263,24 @@ function addTag(inputId, wrapId, cls, btn) {
   createTag(btn.textContent.trim(), wrap, inp, cls);
   btn.classList.add('on'); btn.disabled = true;
 }
+
+function setupTag(inputId, wrapId) {
+  const inp = document.getElementById(inputId);
+  const wrap = document.getElementById(wrapId);
+  inp.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) { e.preventDefault(); createTag(inp.value.trim(), wrap, inp, inp.dataset.tagclass || 'vtag-sage'); inp.value=''; }
+    if (e.key === 'Backspace' && !inp.value) { const tags = wrap.querySelectorAll('.vtag'); if (tags.length) tags[tags.length-1].remove(); }
+  });
+}
+
 function getTags(wrapId) {
   return [...document.getElementById(wrapId).querySelectorAll('.vtag')]
     .map(t => t.textContent.replace('×','').trim()).filter(Boolean);
 }
+
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function copyText(id) { const t=document.getElementById(id); t.style.opacity='1'; t.select(); navigator.clipboard.writeText(t.value).then(()=>showToast('Copied ✓')).catch(()=>{document.execCommand('copy');showToast('Copied ✓');}); t.style.opacity='0'; }
+function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; el.scrollIntoView({behavior:'smooth',block:'center'}); }
 [['er_diag_in','er_diag_wrap'],['er_allergy_in','er_allergy_wrap'],['er_avoid_in','er_avoid_wrap'],['er_trigger_in','er_trigger_wrap']]
   .forEach(([i,w]) => setupTag(i,w));
 
