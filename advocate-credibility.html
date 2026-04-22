@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — The Credibility Document</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #1a1f2e;
+    --deep-soft: #2d3347;
+    --slate: #4a5270;
+    --muted: #8892b0;
+    --border: #e2e6f0;
+    --warm: #f8f7f4;
+    --white: #ffffff;
+    --teal: #4a9b8e;
+    --teal-pale: #edf7f5;
+    --teal-light: #a8d8d2;
+    --gold: #c9a84c;
+    --gold-pale: #fdf8ed;
+    --rose: #c96b6b;
+    --rose-pale: #fdf0f0;
+    --shadow: 0 2px 20px rgba(26,31,46,0.08);
+    --shadow-lg: 0 8px 40px rgba(26,31,46,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--warm);
+    color: var(--deep);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(74,155,142,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 60% at 10% 80%, rgba(201,168,76,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 52px 0 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 36px;
+  }
+
+  .logo-dot {
+    width: 30px; height: 30px;
+    background: var(--teal);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+
+  .logo-wordmark {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--deep);
+  }
+
+  .logo-wordmark span { color: var(--teal); }
+
+  .eyebrow {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--deep);
+    margin-bottom: 16px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--teal);
+  }
+
+  .header-sub {
+    font-size: 15px;
+    color: var(--slate);
+    line-height: 1.7;
+    max-width: 520px;
+    font-weight: 300;
+  }
+
+  /* ── STEP FLOW ── */
+  .step-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 0 0 40px;
+  }
+
+  .step-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+
+  .step-pill.active {
+    background: var(--teal-pale);
+    color: var(--teal);
+  }
+
+  .step-pill.done {
+    color: var(--teal-light);
+  }
+
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: currentColor;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600;
+    opacity: 0.6;
+  }
+
+  .step-pill.active .step-num { opacity: 1; background: var(--teal); }
+  .step-pill.done .step-num { background: var(--teal-light); opacity: 1; }
+
+  .step-dash {
+    width: 28px; height: 1px;
+    background: var(--border);
+  }
+
+  /* ── SECTIONS ── */
+  .form-section {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 36px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+  }
+
+  .form-section:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .section-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .icon-teal { background: var(--teal-pale); }
+  .icon-gold { background: var(--gold-pale); }
+  .icon-rose { background: var(--rose-pale); }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 400;
+    color: var(--deep);
+    margin-bottom: 4px;
+  }
+
+  .section-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* ── INPUTS ── */
+  .field-group {
+    margin-bottom: 18px;
+  }
+
+  .field-group:last-child { margin-bottom: 0; }
+
+  .field-label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 300;
+  }
+
+  .input, .textarea, .select {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--deep);
+    background: var(--warm);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    resize: none;
+    -webkit-appearance: none;
+  }
+
+  .input:focus, .textarea:focus, .select:focus {
+    border-color: var(--teal);
+    background: var(--white);
+  }
+
+  .input::placeholder, .textarea::placeholder { color: var(--muted); }
+
+  .textarea { min-height: 100px; line-height: 1.6; }
+  .textarea-sm { min-height: 72px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* ── TAG INPUT ── */
+  .tag-container {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: var(--warm);
+    min-height: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    cursor: text;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .tag-container:focus-within {
+    border-color: var(--teal);
+    background: var(--white);
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--teal-pale);
+    border: 1px solid var(--teal-light);
+    color: var(--teal);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  .tag-remove {
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    background: none; border: none;
+    color: inherit; padding: 0;
+  }
+
+  .tag-remove:hover { opacity: 1; }
+
+  .tag-input {
+    border: none; outline: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--deep);
+    background: transparent;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .tag-input::placeholder { color: var(--muted); }
+
+  /* ── SEVERITY SLIDER ── */
+  .severity-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: var(--warm);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .severity-name {
+    font-size: 14px;
+    color: var(--deep);
+    flex: 1;
+    font-weight: 300;
+  }
+
+  .severity-slider {
+    -webkit-appearance: none;
+    width: 120px; height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--teal) var(--pct, 50%), var(--border) var(--pct, 50%));
+    outline: none;
+    cursor: pointer;
+  }
+
+  .severity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+
+  .severity-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--teal);
+    width: 28px;
+    text-align: center;
+  }
+
+  .severity-remove {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 16px; padding: 0;
+    transition: color 0.2s;
+  }
+
+  .severity-remove:hover { color: var(--rose); }
+
+  /* ── QUICK CHIPS ── */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .chip {
+    padding: 6px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.18s;
+    background: transparent;
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+  }
+
+  .chip:hover { border-color: var(--teal-light); background: var(--teal-pale); color: var(--deep); }
+  .chip.on { border-color: var(--teal); background: var(--teal-pale); color: var(--teal); font-weight: 500; }
+
+  /* ── GENERATE BUTTON ── */
+  .generate-btn {
+    width: 100%;
+    padding: 20px;
+    background: var(--deep);
+    color: white;
+    border: none; border-radius: 16px;
+    font-family: 'Jost', sans-serif;
+    font-size: 16px; font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center; justify-content: center;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .generate-btn:hover {
+    background: var(--deep-soft);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-accent {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--teal);
+    border-radius: 50%;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── LOADING ── */
+  .loading-wrap {
+    text-align: center;
+    padding: 72px 32px;
+  }
+
+  .orbit {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 2px solid var(--teal-pale);
+    border-top-color: var(--teal);
+    animation: spin 1.4s linear infinite;
+    margin: 0 auto 28px;
+    position: relative;
+  }
+
+  .orbit::after {
+    content: '🌿';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    animation: spin 1.4s linear infinite reverse;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 300;
+    color: var(--deep); margin-bottom: 10px;
+  }
+
+  .loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    margin-top: 20px;
+  }
+
+  .loading-step {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeStep 0.5s ease forwards;
+  }
+
+  .loading-step:nth-child(1) { animation-delay: 0.3s; }
+  .loading-step:nth-child(2) { animation-delay: 1.2s; }
+  .loading-step:nth-child(3) { animation-delay: 2.4s; }
+  .loading-step:nth-child(4) { animation-delay: 3.6s; }
+
+  @keyframes fadeStep {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── DOCUMENT OUTPUT ── */
+  .doc-shell {
+    animation: rise 0.6s ease;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .doc-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center; gap: 7px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .btn-dark { background: var(--deep); color: white; }
+  .btn-dark:hover { background: var(--deep-soft); }
+  .btn-outline-dark {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--slate);
+  }
+  .btn-outline-dark:hover { border-color: var(--deep); color: var(--deep); }
+
+  /* ── THE DOCUMENT ── */
+  #docOutput {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .doc-header-band {
+    background: var(--deep);
+    padding: 36px 44px 28px;
+    color: white;
+  }
+
+  .doc-flag {
+    display: inline-block;
+    background: var(--teal);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 100px;
+    margin-bottom: 18px;
+  }
+
+  .doc-patient-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+
+  .doc-subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .doc-meta-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .doc-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .doc-meta-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .doc-meta-value {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 400;
+  }
+
+  .doc-body {
+    padding: 40px 44px;
+  }
+
+  .doc-section {
+    margin-bottom: 36px;
+    animation: fadeIn 0.4s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .doc-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-narrative {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--deep);
+    font-weight: 400;
+  }
+
+  .doc-narrative em {
+    font-style: italic;
+    color: var(--teal);
+  }
+
+  /* Impact grid */
+  .impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .impact-tile {
+    background: var(--warm);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  .impact-tile-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .impact-tile-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    color: var(--deep);
+    line-height: 1.4;
+  }
+
+  /* Symptom table */
+  .symptom-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .symptom-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .symptom-table td {
+    padding: 11px 12px;
+    font-size: 14px;
+    color: var(--slate);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    font-weight: 300;
+  }
+
+  .symptom-table tr:last-child td { border-bottom: none; }
+
+  .sev-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sev-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--teal);
+    min-width: 4px;
+  }
+
+  .sev-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal);
+  }
+
+  /* Specialist list */
+  .specialist-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .spec-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--teal-pale);
+    border: 1px solid var(--teal-light);
+    color: var(--teal);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+  }
+
+  /* Failed treatments */
+  .failed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .failed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--rose-pale);
+    border-radius: 10px;
+    border: 1px solid #f0d0d0;
+    font-size: 14px;
+    color: var(--slate);
+    font-weight: 300;
+  }
+
+  .failed-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--rose);
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  /* Ask list */
+  .ask-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    counter-reset: ask;
+  }
+
+  .ask-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--gold-pale);
+    border-radius: 10px;
+    border: 1px solid #f0e4c0;
+    font-size: 14px;
+    color: var(--deep);
+    font-weight: 300;
+  }
+
+  .ask-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Footer band */
+  .doc-footer-band {
+    background: var(--warm);
+    border-top: 1px solid var(--border);
+    padding: 20px 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .doc-footer-text {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .doc-footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .doc-footer-logo span { color: var(--teal); }
+
+  /* ── PRINT ── */
+  @media print {
+    body::before, .step-flow, .form-section,
+    .generate-btn, .doc-actions, .no-print { display: none !important; }
+
+    body { background: white; }
+    .shell { max-width: 100%; padding: 0; }
+    header { display: none; }
+
+    #docOutput {
+      box-shadow: none;
+      border: none;
+      border-radius: 0;
+    }
+
+    .doc-header-band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .doc-section { break-inside: avoid; }
+    .impact-grid { break-inside: avoid; }
+
+    @page { margin: 15mm; size: A4; }
+  }
+
+  /* ── MISC ── */
+  .hidden { display: none !important; }
+
+  .add-row-btn {
+    display: inline-flex;
+    align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+    margin-top: 10px;
+  }
+
+  .add-row-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-pale); }
+
+  .error-note {
+    background: var(--rose-pale);
+    border: 1px solid #f0c0c0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--rose);
+    margin-top: 12px;
+    display: none;
+  }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--deep); color: white;
+    padding: 11px 24px; border-radius: 100px;
+    font-size: 14px; font-weight: 500;
+    transition: transform 0.3s; z-index: 999;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .form-section { padding: 24px 20px; }
+    .doc-body { padding: 28px 24px; }
+    .doc-header-band { padding: 28px 24px; }
+    .doc-footer-band { padding: 16px 24px; }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-dot">🌿</div>
+      <div class="logo-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+    </div>
+    <div class="eyebrow">The Credibility Document</div>
+    <h1>Make them understand<br>how sick <em>your child really is.</em></h1>
+    <p class="header-sub">A professional one-page clinical summary you hand the doctor in the first 60 seconds. No more starting from zero. No more feeling dismissed.</p>
+  </header>
+
+  <!-- Step indicator -->
+  <div class="step-flow no-print" id="stepFlow">
+    <div class="step-pill active" id="sp1"><div class="step-num">1</div> Patient Info</div>
+    <div class="step-dash"></div>
+    <div class="step-pill" id="sp2"><div class="step-num">2</div> Conditions</div>
+    <div class="step-dash"></div>
+    <div class="step-pill" id="sp3"><div class="step-num">3</div> Impact</div>
+    <div class="step-dash"></div>
+    <div class="step-pill" id="sp4"><div class="step-num">4</div> Document</div>
+  </div>
+
+  <!-- ══ FORM ══ -->
+  <div id="formWrap">
+
+    <!-- 1. Patient Info -->
+    <div class="form-section">
+      <div class="section-head">
+        <div class="section-icon icon-teal">👤</div>
+        <div>
+          <div class="section-title">About the Patient</div>
+          <div class="section-desc">Basic information that anchors the document clinically.</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label">Patient Name</label>
+          <input type="text" class="input" id="patientName" placeholder="e.g. Emma Johnson">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Age / Date of Birth</label>
+          <input type="text" class="input" id="patientAge" placeholder="e.g. 9 years old / Born March 2015">
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label">Prepared by (your name)</label>
+          <input type="text" class="input" id="parentName" placeholder="e.g. Sarah Johnson, Mother">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Today's Specialist / Context</label>
+          <input type="text" class="input" id="visitContext" placeholder="e.g. New Rheumatologist, Dr. Patel">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Diagnoses & Conditions -->
+    <div class="form-section">
+      <div class="section-head">
+        <div class="section-icon icon-teal">🩺</div>
+        <div>
+          <div class="section-title">Diagnoses & Conditions</div>
+          <div class="section-desc">Type each diagnosis and press Enter to add it as a tag.</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Confirmed Diagnoses</label>
+        <div class="tag-container" id="diagnosisContainer" onclick="document.getElementById('diagInput').focus()">
+          <input type="text" class="tag-input" id="diagInput" placeholder="Type diagnosis, press Enter...">
+        </div>
+        <div class="chips" id="diagChips">
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">POTS</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">EDS</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">MCAS</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">Dysautonomia</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">Crohn's Disease</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">Lupus</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">PANDAS/PANS</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">Autism</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">Epilepsy</button>
+          <button class="chip" onclick="addChipTag('diagInput','diagnosisContainer',this)">Juvenile Arthritis</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Suspected / Undiagnosed Conditions</label>
+        <div class="field-hint">Things you're still trying to get answers for.</div>
+        <div class="tag-container" id="suspectContainer" onclick="document.getElementById('suspectInput').focus()">
+          <input type="text" class="tag-input" id="suspectInput" placeholder="Type suspected condition, press Enter...">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Current Specialists Involved</label>
+        <div class="tag-container" id="specContainer" onclick="document.getElementById('specInput').focus()">
+          <input type="text" class="tag-input" id="specInput" placeholder="e.g. Cardiologist — Dr. Smith, press Enter...">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Symptoms & Impact -->
+    <div class="form-section">
+      <div class="section-head">
+        <div class="section-icon icon-gold">⚡</div>
+        <div>
+          <div class="section-title">Symptoms & Their Severity</div>
+          <div class="section-desc">Rate each symptom 1–10. This turns "she's always tired" into clinical data a doctor must take seriously.</div>
+        </div>
+      </div>
+
+      <div id="symptomRows"></div>
+      <button class="add-row-btn" onclick="addSymptomRow()">+ Add symptom</button>
+
+      <div style="margin-top: 24px;">
+        <label class="field-label">Functional Impact on Daily Life</label>
+        <div class="field-hint">How does this affect school, sleep, activities, social life? Be specific and honest.</div>
+        <textarea class="textarea" id="functionalImpact" placeholder="e.g. Emma misses 2–3 days of school per week due to symptom flares. She can no longer participate in dance, which she did for 6 years. She requires a wheelchair on bad days. Sleep is disrupted 5 out of 7 nights..."></textarea>
+      </div>
+
+      <div style="margin-top: 18px;">
+        <label class="field-label">Symptom Duration</label>
+        <input type="text" class="input" id="duration" placeholder="e.g. Symptoms began approximately 3 years ago, worsening significantly in the past 8 months">
+      </div>
+    </div>
+
+    <!-- 4. Treatment History -->
+    <div class="form-section">
+      <div class="section-head">
+        <div class="section-icon icon-rose">💊</div>
+        <div>
+          <div class="section-title">What's Been Tried & What's Failed</div>
+          <div class="section-desc">Documenting failed treatments is one of the most powerful things you can put in front of a new specialist.</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Treatments Tried That Haven't Worked</label>
+        <div class="tag-container" id="failedContainer" onclick="document.getElementById('failedInput').focus()">
+          <input type="text" class="tag-input" id="failedInput" placeholder="Type treatment + why it failed, press Enter...">
+        </div>
+        <div class="chips">
+          <button class="chip" onclick="addChipTag('failedInput','failedContainer',this)">Multiple antibiotics — no improvement</button>
+          <button class="chip" onclick="addChipTag('failedInput','failedContainer',this)">Physical therapy — worsened symptoms</button>
+          <button class="chip" onclick="addChipTag('failedInput','failedContainer',this)">SSRIs — adverse reaction</button>
+          <button class="chip" onclick="addChipTag('failedInput','failedContainer',this)">Dietary changes — no effect</button>
+          <button class="chip" onclick="addChipTag('failedInput','failedContainer',this)">Steroids — temporary relief only</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Current Medications</label>
+        <div class="tag-container" id="medsContainer" onclick="document.getElementById('medsInput').focus()">
+          <input type="text" class="tag-input" id="medsInput" placeholder="e.g. Florinef 0.1mg daily, press Enter...">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">What You Need From This Visit</label>
+        <div class="field-hint">Be direct. What is the single most important thing you need this doctor to do or decide today?</div>
+        <textarea class="textarea textarea-sm" id="visitGoal" placeholder="e.g. We need a referral to a connective tissue specialist, a rheumatology workup, and clarity on whether her ANA result warrants further autoimmune testing..."></textarea>
+      </div>
+    </div>
+
+    <div class="error-note" id="errorNote">Please fill in at least the patient name and one diagnosis to generate the document.</div>
+
+    <button class="generate-btn" onclick="generate()">
+      <div class="btn-accent">✦</div>
+      Generate the Credibility Document
+    </button>
+
+    <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:14px; font-style:italic;">
+      Your document will read like a doctor wrote it — because it should.
+    </p>
+
+  </div>
+
+  <!-- ══ LOADING ══ -->
+  <div id="loadingWrap" class="hidden">
+    <div class="loading-wrap">
+      <div class="orbit"></div>
+      <div class="loading-title">Building your credibility document…</div>
+      <div style="font-size:14px; color:var(--muted); font-weight:300;">This will read like a clinician wrote it.</div>
+      <div class="loading-steps">
+        <div class="loading-step">✦ Translating symptoms into clinical language…</div>
+        <div class="loading-step">✦ Quantifying functional impact…</div>
+        <div class="loading-step">✦ Framing treatment history…</div>
+        <div class="loading-step">✦ Composing opening narrative…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ OUTPUT ══ -->
+  <div id="outputWrap" class="hidden doc-shell">
+
+    <div class="doc-actions no-print">
+      <button class="action-btn btn-dark" onclick="window.print()">🖨️ Print Document</button>
+      <button class="action-btn btn-outline-dark" onclick="copyDoc()">📋 Copy Text</button>
+      <button class="action-btn btn-outline-dark" onclick="startOver()">↩ Start Over</button>
+    </div>
+
+    <div id="docOutput">
+      <!-- Filled by JS -->
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── TAG INPUT ───
+function setupTagInput(inputId, containerId) {
+  const input = document.getElementById(inputId);
+  const container = document.getElementById(containerId);
+  input.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      addTag(input.value.trim(), container, input);
+    }
+    if (e.key === 'Backspace' && !input.value) {
+      const tags = container.querySelectorAll('.tag');
+      if (tags.length) tags[tags.length - 1].remove();
+    }
+  });
+}
+
+function addTag(text, container, input) {
+  const tag = document.createElement('span');
+  tag.className = 'tag';
+  tag.innerHTML = `${text}<button class="tag-remove" onclick="this.parentElement.remove()">×</button>`;
+  container.insertBefore(tag, input);
+  input.value = '';
+}
+
+function addChipTag(inputId, containerId, chipBtn) {
+  const container = document.getElementById(containerId);
+  const input = document.getElementById(inputId);
+  addTag(chipBtn.textContent.trim(), container, input);
+  chipBtn.classList.add('on');
+  chipBtn.disabled = true;
+}
+
+function getTags(containerId) {
+  return [...document.getElementById(containerId).querySelectorAll('.tag')]
+    .map(t => t.textContent.replace('×','').trim())
+    .filter(Boolean);
+}
+
+// Setup all tag inputs
+['diagInput,diagnosisContainer','suspectInput,suspectContainer',
+ 'specInput,specContainer','failedInput,failedContainer','medsInput,medsContainer']
+  .forEach(pair => {
+    const [i, c] = pair.split(',');
+    setupTagInput(i, c);
+  });
+
+// ─── SYMPTOM ROWS ───
+let symptoms = [];
+
+function addSymptomRow(name = '', severity = 6) {
+  const id = Date.now();
+  symptoms.push(id);
+  const row = document.createElement('div');
+  row.className = 'severity-row';
+  row.id = 'srow-' + id;
+  row.innerHTML = `
+    <input type="text" class="input" style="flex:1; background:transparent; border-color:transparent; padding:4px 0;"
+      placeholder="Symptom name (e.g. fatigue, joint pain, brain fog…)" value="${name}">
+    <input type="range" min="1" max="10" value="${severity}" class="severity-slider"
+      style="--pct:${(severity-1)/9*100}%"
+      oninput="this.style.setProperty('--pct',(this.value-1)/9*100+'%'); this.nextElementSibling.textContent=this.value">
+    <div class="severity-val">${severity}</div>
+    <button class="severity-remove" onclick="document.getElementById('srow-${id}').remove()">×</button>
+  `;
+  document.getElementById('symptomRows').appendChild(row);
+}
+
+// Pre-populate with common symptoms
+['Fatigue','Pain / achiness','Brain fog','Dizziness / fainting','Sleep disruption'].forEach(s => addSymptomRow(s, 7));
+
+// ─── STEP PROGRESS ───
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('sp' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+// ─── GENERATE ───
+async function generate() {
+  const patientName = document.getElementById('patientName').value.trim();
+  const diagnoses = getTags('diagnosisContainer');
+
+  if (!patientName || diagnoses.length === 0) {
+    const err = document.getElementById('errorNote');
+    err.style.display = 'block';
+    err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  document.getElementById('errorNote').style.display = 'none';
+
+  // Collect all data
+  const data = {
+    patientName,
+    patientAge: document.getElementById('patientAge').value.trim(),
+    parentName: document.getElementById('parentName').value.trim(),
+    visitContext: document.getElementById('visitContext').value.trim(),
+    diagnoses,
+    suspected: getTags('suspectContainer'),
+    specialists: getTags('specContainer'),
+    symptoms: [...document.querySelectorAll('.severity-row')].map(row => ({
+      name: row.querySelector('input[type=text]').value.trim(),
+      severity: parseInt(row.querySelector('input[type=range]').value)
+    })).filter(s => s.name),
+    functionalImpact: document.getElementById('functionalImpact').value.trim(),
+    duration: document.getElementById('duration').value.trim(),
+    failedTreatments: getTags('failedContainer'),
+    currentMeds: getTags('medsContainer'),
+    visitGoal: document.getElementById('visitGoal').value.trim()
+  };
+
+  // Show loading
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('loadingWrap').classList.remove('hidden');
+  setStep(4);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const systemPrompt = `You are a medical writer helping parents of medically complex children create a professional clinical summary document.
+
+Your job: transform the parent-provided information into a document that reads as if written by a knowledgeable medical professional — clear, clinical, authoritative, and impossible to dismiss.
+
+Return ONLY valid JSON (no markdown, no backticks) in this exact format:
+{
+  "openingNarrative": "A 3-4 sentence clinical-sounding paragraph that introduces this patient. Use third person. Quantify everything possible. Sound like a colleague briefing a specialist. This should immediately convey medical complexity and seriousness.",
+  "clinicalSummary": "2-3 sentences summarizing the overall clinical picture — diagnostic complexity, duration, trajectory (stable/worsening/unknown).",
+  "functionalImpactSummary": "2-3 sentences translating the functional impact into clinical terms. Quantify: school days missed, activities no longer possible, assistance required.",
+  "treatmentNarrativeNote": "1-2 sentences clinically framing why the failed treatments matter — e.g. 'The lack of response to X and Y suggests Z warrants consideration.'",
+  "keyAsk": "1 sentence — a direct, confident clinical ask for this visit. Should sound like one colleague asking another, not a parent pleading.",
+  "redFlags": ["Any symptom or pattern worth flagging as clinically significant — keep to 2-4 items, phrased clinically"],
+  "suggestedWorkup": ["2-4 reasonable next steps or tests worth considering given this picture — phrased as suggestions, not demands"]
+}
+
+Tone rules:
+- Clinical, confident, third person
+- Never emotional or pleading — data and function only
+- Quantify wherever possible (days/week, severity scores, duration)
+- Use correct medical terminology but keep it readable
+- This document is handed to a specialist — it must command respect immediately`;
+
+  const userContent = `Patient: ${data.patientName}, ${data.patientAge}
+Prepared by: ${data.parentName}
+Visit context: ${data.visitContext}
+
+Confirmed diagnoses: ${data.diagnoses.join(', ') || 'none listed'}
+Suspected/undiagnosed: ${data.suspected.join(', ') || 'none'}
+Current specialists: ${data.specialists.join(', ') || 'none listed'}
+
+Symptoms and severity (1-10):
+${data.symptoms.map(s => `- ${s.name}: ${s.severity}/10`).join('\n')}
+
+Functional impact: ${data.functionalImpact || 'not provided'}
+Symptom duration: ${data.duration || 'not provided'}
+
+Failed treatments: ${data.failedTreatments.join('; ') || 'none listed'}
+Current medications: ${data.currentMeds.join(', ') || 'none listed'}
+Visit goal: ${data.visitGoal || 'not specified'}`;
+
+  try {
+    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userContent }]
+      })
+    });
+
+    const res = await resp.json();
+    const raw = res.content?.[0]?.text || '';
+    const doc = JSON.parse(raw.replace(/```json|```/g,'').trim());
+
+    renderDocument(data, doc);
+
+  } catch (err) {
+    document.getElementById('loadingWrap').classList.add('hidden');
+    document.getElementById('formWrap').classList.remove('hidden');
+    document.getElementById('errorNote').textContent = 'Something went wrong. Please try again.';
+    document.getElementById('errorNote').style.display = 'block';
+    setStep(1);
+    console.error(err);
+  }
+}
+
+// ─── RENDER ───
+function renderDocument(data, doc) {
+  document.getElementById('loadingWrap').classList.add('hidden');
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Symptom table rows
+  const symptomRows = data.symptoms
+    .sort((a, b) => b.severity - a.severity)
+    .map(s => {
+      const pct = (s.severity / 10) * 80;
+      const cls = s.severity >= 8 ? 'var(--rose)' : s.severity >= 6 ? 'var(--gold)' : 'var(--teal)';
+      return `<tr>
+        <td>${s.name}</td>
+        <td>
+          <div class="sev-bar-wrap">
+            <div class="sev-bar" style="width:${pct}px; background:${cls}"></div>
+            <span class="sev-num" style="color:${cls}">${s.severity}/10</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+  // Failed treatments
+  const failedHTML = data.failedTreatments.length
+    ? `<div class="failed-list">${data.failedTreatments.map(f =>
+        `<div class="failed-item"><div class="failed-dot"></div>${f}</div>`
+      ).join('')}</div>`
+    : '<p style="font-size:14px; color:var(--muted); font-style:italic;">None documented</p>';
+
+  // Specialists
+  const specHTML = data.specialists.length
+    ? `<div class="specialist-list">${data.specialists.map(s =>
+        `<div class="spec-chip">✦ ${s}</div>`
+      ).join('')}</div>`
+    : '<p style="font-size:14px; color:var(--muted);">Not listed</p>';
+
+  // Red flags
+  const redFlagHTML = (doc.redFlags || []).map((f, i) => `
+    <div class="ask-item" style="background:var(--rose-pale); border-color:#f0c0c0;">
+      <div class="ask-num" style="background:var(--rose)">${i+1}</div>
+      ${f}
+    </div>`).join('');
+
+  // Suggested workup
+  const workupHTML = (doc.suggestedWorkup || []).map((w, i) => `
+    <div class="ask-item">
+      <div class="ask-num">${i+1}</div>
+      ${w}
+    </div>`).join('');
+
+  // Meds
+  const medsHTML = data.currentMeds.length
+    ? data.currentMeds.map(m => `<div class="spec-chip" style="background:var(--gold-pale); border-color:#f0e0b0; color:#8a6020;">💊 ${m}</div>`).join('')
+    : '<p style="font-size:14px; color:var(--muted);">None listed</p>';
+
+  document.getElementById('docOutput').innerHTML = `
+
+    <div class="doc-header-band">
+      <div class="doc-flag">Clinical Summary — MedAdvocate</div>
+      <div class="doc-patient-name">${data.patientName}</div>
+      <div class="doc-subtitle">${data.diagnoses.join(' · ')}</div>
+      <div class="doc-meta-row">
+        ${data.patientAge ? `<div class="doc-meta-item"><div class="doc-meta-label">Age</div><div class="doc-meta-value">${data.patientAge}</div></div>` : ''}
+        ${data.visitContext ? `<div class="doc-meta-item"><div class="doc-meta-label">This Visit</div><div class="doc-meta-value">${data.visitContext}</div></div>` : ''}
+        <div class="doc-meta-item"><div class="doc-meta-label">Prepared</div><div class="doc-meta-value">${today}</div></div>
+        ${data.parentName ? `<div class="doc-meta-item"><div class="doc-meta-label">By</div><div class="doc-meta-value">${data.parentName}</div></div>` : ''}
+      </div>
+    </div>
+
+    <div class="doc-body">
+
+      <div class="doc-section" style="animation-delay:0.1s">
+        <div class="doc-section-title">Clinical Overview</div>
+        <div class="doc-narrative">${doc.openingNarrative}</div>
+      </div>
+
+      <div class="doc-section" style="animation-delay:0.2s">
+        <div class="doc-section-title">Clinical Summary</div>
+        <div class="doc-narrative">${doc.clinicalSummary}</div>
+      </div>
+
+      ${data.symptoms.length ? `
+      <div class="doc-section" style="animation-delay:0.3s">
+        <div class="doc-section-title">Symptom Profile — Rated by Severity</div>
+        <table class="symptom-table">
+          <thead><tr><th>Symptom</th><th>Severity (patient-reported)</th></tr></thead>
+          <tbody>${symptomRows}</tbody>
+        </table>
+      </div>` : ''}
+
+      <div class="doc-section" style="animation-delay:0.35s">
+        <div class="doc-section-title">Functional Impact</div>
+        <div class="doc-narrative">${doc.functionalImpactSummary}</div>
+        ${data.functionalImpact ? `<div class="doc-narrative" style="margin-top:12px; font-size:15px; color:var(--slate);">${data.functionalImpact}</div>` : ''}
+      </div>
+
+      <div class="doc-section" style="animation-delay:0.4s">
+        <div class="doc-section-title">Current Care Team</div>
+        ${specHTML}
+      </div>
+
+      ${data.currentMeds.length ? `
+      <div class="doc-section" style="animation-delay:0.42s">
+        <div class="doc-section-title">Current Medications</div>
+        <div class="specialist-list">${medsHTML}</div>
+      </div>` : ''}
+
+      ${data.failedTreatments.length ? `
+      <div class="doc-section" style="animation-delay:0.45s">
+        <div class="doc-section-title">Treatment History — What Has Been Tried</div>
+        ${failedHTML}
+        <div class="doc-narrative" style="margin-top:14px; font-size:15px;">${doc.treatmentNarrativeNote}</div>
+      </div>` : ''}
+
+      ${doc.redFlags?.length ? `
+      <div class="doc-section" style="animation-delay:0.5s">
+        <div class="doc-section-title">Clinical Flags Worth Noting</div>
+        <div class="ask-list">${redFlagHTML}</div>
+      </div>` : ''}
+
+      ${doc.suggestedWorkup?.length ? `
+      <div class="doc-section" style="animation-delay:0.55s">
+        <div class="doc-section-title">Suggested Workup / Next Steps</div>
+        <div class="ask-list">${workupHTML}</div>
+      </div>` : ''}
+
+      <div class="doc-section" style="animation-delay:0.6s; background:var(--teal-pale); border-radius:14px; padding:20px 24px; border:1px solid var(--teal-light);">
+        <div class="doc-section-title" style="border-color:var(--teal-light)">Our Ask for This Visit</div>
+        <div class="doc-narrative" style="font-size:18px;">${doc.keyAsk}</div>
+      </div>
+
+    </div>
+
+    <div class="doc-footer-band">
+      <div class="doc-footer-text">This document was prepared by the patient's caregiver using Advocate. It is intended to support, not replace, clinical judgment.</div>
+      <div class="doc-footer-logo">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+    </div>
+  `;
+
+  document.getElementById('outputWrap').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── COPY ───
+function copyDoc() {
+  const el = document.getElementById('docOutput');
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard ✓'));
+}
+
+// ─── START OVER ───
+function startOver() {
+  document.getElementById('outputWrap').classList.add('hidden');
+  document.getElementById('formWrap').classList.remove('hidden');
+  setStep(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── TOAST ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+
+</body>
+</html>
