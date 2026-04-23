@@ -1382,39 +1382,7 @@ async function generate() {
   document.getElementById('loadWrap').classList.remove('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const sysPrompt = `You are an expert special education advocate and disability rights attorney helping a parent prepare for an IEP or 504 meeting.
-
-Generate a comprehensive, legally-informed meeting prep package.
-
-Return ONLY valid JSON (no markdown, no backticks):
-{
-  "legalBasis": "2-3 sentences citing the specific federal law (IDEA / Section 504 / ADA) that entitles this student to accommodations, personalized to their diagnoses.",
-  "openingStatement": "A calm, confident 3-4 sentence opening statement the parent can read or paraphrase at the start of the meeting. Should establish legal awareness, focus on the child's needs, and set a collaborative tone without being aggressive.",
-  "accommodationJustifications": [
-    {
-      "accommodation": "name of accommodation",
-      "legalJustification": "1-2 sentences: why the law requires the school to provide this given the student's specific condition",
-      "category": "attendance | testing | classroom | physical | medical | communication"
-    }
-  ],
-  "pushbackResponses": [
-    {
-      "schoolSays": "Common thing the school might say to deny or minimize",
-      "parentResponds": "Confident, factual, legally-grounded response. Cite law where possible."
-    }
-  ],
-  "keyPhrasesToUse": ["Legal phrases and terminology the parent should use in the meeting — knowing these signals to the school that the parent knows their rights"],
-  "closingAsk": "One clear sentence to end the meeting with — what to ask them to commit to before leaving.",
-  "warningFlags": ["Things to watch out for in this meeting — red flags that the school may be trying to minimize the plan"]
-}
-
-Rules:
-- Be specific to the diagnoses provided — not generic
-- Cite IDEA, Section 504, ADA, FAPE, LRE by name where applicable
-- Keep tone collaborative but firm — parent as partner, not adversary
-- Pushback responses should be calm and factual, never emotional
-- 4-6 pushback scenarios minimum
-- Include any relevant case law or OCR guidance if applicable`;
+  const sysPrompt = `You are a special education advocate. Return ONLY valid JSON no markdown no backticks: {"legalBasis":"2 sentences citing IDEA/Section 504/ADA specific to these diagnoses","openingStatement":"3 sentence calm opening the parent can read aloud","accommodationJustifications":[{"accommodation":"name","legalJustification":"1 sentence why law requires this","category":"attendance or testing or classroom or physical or medical or communication"}],"pushbackResponses":[{"schoolSays":"what school says","parentResponds":"calm legal response"}],"keyPhrasesToUse":["phrase1","phrase2","phrase3","phrase4"],"closingAsk":"One sentence closing ask","warningFlags":["flag1","flag2","flag3"]} Keep responses concise. Max 4 accommodations, 4 pushback scenarios.`;
 
   const userMsg = `Plan type: ${data.planType}
 Student: ${data.studentName}, ${data.gradeSchool}
