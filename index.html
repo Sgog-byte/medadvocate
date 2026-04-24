@@ -200,12 +200,11 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 .fb iframe{width:100%;height:100%;border:none;display:block}
 
 /* PWA */
-.offline-bar{position:fixed;top:64px;left:0;right:0;background:var(--amber);color:white;text-align:center;padding:8px 16px;font-size:13px;font-weight:500;z-index:150;transform:translateY(-100%);transition:transform .3s}
+.offline-bar{position:fixed;top:64px;left:0;right:0;background:var(--amber);color:white;text-align:center;padding:8px 16px;font-size:13px;font-weight:500;z-index:90;transform:translateY(-100%);transition:transform .3s}
 .offline-bar.show{transform:translateY(0)}
 .update-bar{position:fixed;top:64px;left:0;right:0;background:var(--sage-deep);color:white;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;z-index:90;transform:translateY(-100%);transition:transform .3s;cursor:pointer}
 .update-bar.show{transform:translateY(0)}
-.ib{position:fixed;bottom:82px;left:12px;right:12px;background:var(--sage-deep);color:white;border-radius:16px;padding:15px 17px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);z-index:300;transform:translateY(120px);opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);max-width:440px}
-@media(min-width:768px){.ib{bottom:22px;left:50%;right:auto;transform:translateX(-50%) translateY(120px);width:400px}.ib.show{transform:translateX(-50%) translateY(0)}}
+}
 .ib.show{transform:translateY(0);opacity:1}
 .ib-ic{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
 .ib-t{font-size:13px;font-weight:500;color:white;margin-bottom:2px}
@@ -475,11 +474,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   </div>
 </div>
 
-<!-- PWA -->
-<div class="offline-bar" id="offlineBar">📵 You're offline — your saved tools still work</div>
-<div class="update-bar" id="updateBar" onclick="applyUpdate()">✨ New version available — tap to update</div>
-<div class="ib" id="installBanner">
-  <div class="ib-ic">🌿</div>
+
   <div style="flex:1"><div class="ib-t">Add MedAdvocate to your home screen</div><div class="ib-s">Works like an app — no App Store needed</div></div>
   <button class="ib-add" onclick="triggerInstall()">Add</button>
   <button class="ib-x" onclick="dismissInstall()">×</button>
@@ -519,69 +514,6 @@ function handleOverlayClick(e) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
-
-let swReg = null, deferredPrompt = null;
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isStandalone = window.matchMedia('(display-mode:standalone)').matches || navigator.standalone;
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      swReg = await navigator.serviceWorker.register('./sw.js');
-      swReg.addEventListener('updatefound', () => {
-        const w = swReg.installing;
-        w.addEventListener('statechange', () => {
-          if (w.state === 'installed' && navigator.serviceWorker.controller)
-            document.getElementById('updateBar').classList.add('show');
-        });
-      });
-    } catch(e) {}
-  });
-}
-
-function applyUpdate() { swReg?.waiting?.postMessage('skipWaiting'); location.reload(); }
-
-if (!isStandalone) {
-  if (isIOS) {
-    setTimeout(() => {
-      if (!sessionStorage.getItem('ib_done')) {
-        const b = document.getElementById('installBanner');
-        b.querySelector('.ib-t').textContent = 'Add to your home screen';
-        b.querySelector('.ib-s').textContent = 'Tap Share ⬆️ then "Add to Home Screen"';
-        b.querySelector('.ib-add').textContent = 'How?';
-        b.querySelector('.ib-add').onclick = () => showToast('Tap Share ⬆️ in Safari, then "Add to Home Screen"');
-        b.classList.add('show');
-      }
-    }, 4000);
-  } else {
-    window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault(); deferredPrompt = e;
-      setTimeout(() => { if (!sessionStorage.getItem('ib_done')) document.getElementById('installBanner').classList.add('show'); }, 3000);
-    });
-    window.addEventListener('appinstalled', () => {
-      document.getElementById('installBanner').classList.remove('show');
-      showToast('🌿 MedAdvocate added to your home screen!');
-    });
-  }
-}
-
-async function triggerInstall() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  if (outcome === 'accepted') showToast('🌿 Added to home screen!');
-  deferredPrompt = null;
-  document.getElementById('installBanner').classList.remove('show');
-}
-
-function dismissInstall() {
-  document.getElementById('installBanner').classList.remove('show');
-  sessionStorage.setItem('ib_done', '1');
-}
-
-window.addEventListener('online',  () => document.getElementById('offlineBar').classList.remove('show'));
-window.addEventListener('offline', () => document.getElementById('offlineBar').classList.add('show'));
-if (!navigator.onLine) document.getElementById('offlineBar').classList.add('show');
 
 function showToast(msg) {
   const t = document.getElementById('toast');
