@@ -733,6 +733,25 @@ async function generateEscalation(){
 const now=new Date();
 document.getElementById('log_datetime').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
 document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).toISOString().split('T')[0];
+
+// Load care team contacts into dropdowns
+function loadCareTeamContacts(){
+  const contacts=JSON.parse(localStorage.getItem('advocate_contacts')||'[]');
+  if(!contacts.length) return;
+  const options=contacts.map(c=>`<option value="${c.name}${c.specialty?' ('+c.specialty+')':''}">${c.name}${c.specialty?' — '+c.specialty:''}${c.practice?' · '+c.practice:''}</option>`).join('');
+  const groupedOption=`<optgroup label="From My Care Team">${options}</optgroup>`;
+
+  // Add to task contact field as a datalist
+  let dl=document.getElementById('contact_datalist');
+  if(!dl){dl=document.createElement('datalist');dl.id='contact_datalist';document.body.appendChild(dl);}
+  dl.innerHTML=contacts.map(c=>`<option value="${c.name}${c.specialty?' ('+c.specialty+')':''}">`).join('');
+  document.getElementById('task_contact').setAttribute('list','contact_datalist');
+  document.getElementById('draft_recipient').setAttribute('list','contact_datalist');
+  document.getElementById('script_recipient').setAttribute('list','contact_datalist');
+  document.getElementById('log_contact').setAttribute('list','contact_datalist');
+}
+
+loadCareTeamContacts();
 renderTasks();
 renderLog();
 updateBadge();
