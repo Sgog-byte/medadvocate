@@ -273,8 +273,9 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 }
 @media(max-width:560px){
   .tools-grid,.for-grid,.coming-grid{grid-template-columns:1fr}
-  .hero{padding:32px 12px 32px}
-  .hero-circle-inner{padding:20px 22px}
+  .hero{padding:20px 12px 28px}
+  .hero-circle-outer{width:min(520px,92vw);height:min(520px,92vw)}
+  .hero-circle-inner{padding:28px 36px}
 }
 </style>
 </head>
@@ -342,21 +343,6 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Prep my next visit →</div><div class="tc-arr">→</div></div>
-    </div>
-
-    <div class="tc" onclick="openTool('research')">
-      <div class="tc-body">
-        <div class="tc-icon" style="background:linear-gradient(135deg,#3a7bc8,#7b68ee)">🔬</div>
-        <div class="tc-name">Research Library</div>
-        <div class="tc-tag tg-blue">Walk in with evidence they can't ignore</div>
-        <div class="tc-desc">Search PubMed for peer-reviewed papers on any diagnosis or doctor. Get plain-English summaries, save to your library, and generate a research brief for any appointment.</div>
-        <div class="tc-feats">
-          <div class="tc-feat"><div class="fd"></div>Real peer-reviewed papers from PubMed</div>
-          <div class="tc-feat"><div class="fd"></div>AI plain-English summaries</div>
-          <div class="tc-feat"><div class="fd"></div>Printable & emailable appointment brief</div>
-        </div>
-      </div>
-      <div class="tc-foot"><div class="tc-cta">Search the research →</div><div class="tc-arr">→</div></div>
     </div>
 
     <div class="tc" onclick="openTool('medications')">
@@ -462,6 +448,21 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Explain this diagnosis →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('research')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#3a7bc8,#7b68ee)">🔬</div>
+        <div class="tc-name">Research Library</div>
+        <div class="tc-tag tg-blue">Walk in with evidence they can't ignore</div>
+        <div class="tc-desc">Search PubMed for peer-reviewed papers on any diagnosis or doctor. Get plain-English summaries, save to your library, and generate a research brief for any appointment.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Real peer-reviewed papers from PubMed</div>
+          <div class="tc-feat"><div class="fd"></div>AI plain-English summaries</div>
+          <div class="tc-feat"><div class="fd"></div>Printable & emailable appointment brief</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Search the research →</div><div class="tc-arr">→</div></div>
     </div>
 
     <div class="tc" onclick="openTool('er')">
