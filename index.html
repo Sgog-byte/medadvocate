@@ -100,6 +100,9 @@ h1 strong{font-weight:600}
 .hero-sub{font-size:17px;color:var(--ink-soft);line-height:1.8;font-weight:300;margin-bottom:32px;max-width:540px;margin-left:auto;margin-right:auto}
 .hero-sub strong{font-weight:500;color:var(--ink)}
 .hero-cta{display:inline-flex;align-items:center;gap:9px;padding:15px 32px;background:var(--sage-deep);color:white;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:none;transition:all .22s;box-shadow:0 4px 18px rgba(27,67,50,.3)}
+.hero-cta:hover{background:var(--ink);transform:translateY(-2px)}
+.hero-for-tags{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+.hero-for-tag{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:100px;font-size:13px;font-weight:500;color:var(--ink-soft);box-shadow:var(--shadow-sm)}
 .hero-cta:hover{background:var(--ink);transform:translateY(-2px);box-shadow:0 8px 28px rgba(27,67,50,.35)}
 .hero-tagline{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--sage);margin-top:18px;font-weight:400}
 
@@ -251,9 +254,14 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="hero-logo-mark">Med<span class="hero-logo-dot"></span><span class="hero-logo-adv">Advocate</span></div>
     <div class="hero-logo-tagline">Beside you, always.</div>
   </div>
-  <div class="hero-eyebrow">🌿 Built by a Medical Mom, for Medical Moms</div>
-  <h1>Your child's<br><em>most powerful</em><br>advocate is <strong>you.</strong></h1>
-  <p class="hero-sub">The tools, language, and confidence to walk into every specialist appointment, IEP meeting, and insurance battle completely prepared — and never leave without answers.</p>
+  <div class="hero-eyebrow">🌿 Built by a Medical Mom, for Every Caregiver</div>
+  <h1>Your most <em>powerful</em><br>advocate is <strong>you.</strong></h1>
+  <p class="hero-sub">Whether you're fighting for your child or fighting for yourself — MedAdvocate gives you the tools, language, and confidence to walk into every appointment, IEP meeting, and insurance battle completely prepared.</p>
+  <div class="hero-for-tags">
+    <div class="hero-for-tag">👧 For your child</div>
+    <div class="hero-for-tag">🙋‍♀️ For yourself</div>
+    <div class="hero-for-tag">👨‍👩‍👧 For your family</div>
+  </div>
   <button class="hero-cta" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">See all your tools ↓</button>
 </section>
 
@@ -279,7 +287,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         <div class="tc-icon i1">📋</div>
         <div class="tc-name">Visit Script Generator</div>
         <div class="tc-tag tg-sage">Make every 15 minutes matter</div>
-        <div class="tc-desc">Enter your symptoms and specialist type — get a prioritized script telling you exactly what to say, in what order, calmly.</div>
+        <div class="tc-desc">Enter symptoms and specialist type — get a prioritized script for you or your child telling you exactly what to say, in what order, calmly.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Specialist-specific talking points</div>
           <div class="tc-feat"><div class="fd"></div>Questions to ask before you leave</div>
@@ -294,7 +302,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         <div class="tc-icon i2">📊</div>
         <div class="tc-name">Symptom Tracker</div>
         <div class="tc-tag tg-blue">Show the pattern they're missing</div>
-        <div class="tc-desc">Log daily severity scores. See trend charts over weeks and months. Hand a doctor 3 months of data they can't dismiss.</div>
+        <div class="tc-desc">Log daily severity scores for yourself or your child. See trend charts over weeks and months. Hand a doctor data they can't dismiss.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Daily log with 0–10 severity sliders</div>
           <div class="tc-feat"><div class="fd"></div>Trend charts over weeks & months</div>
@@ -324,7 +332,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         <div class="tc-icon i4">📄</div>
         <div class="tc-name">The Credibility Document</div>
         <div class="tc-tag tg-amber">Make them understand how sick your child really is</div>
-        <div class="tc-desc">A one-page clinical summary that reads like a doctor wrote it. Hand it to any new specialist in the first 60 seconds.</div>
+        <div class="tc-desc">A one-page clinical summary for you or your child that reads like a doctor wrote it. Hand it to any new specialist in the first 60 seconds.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Clinical narrative in medical language</div>
           <div class="tc-feat"><div class="fd"></div>Quantified symptom severity scores</div>
@@ -399,20 +407,33 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 
 <!-- MISSION -->
 <div class="mission" id="mission">
-  <div class="mission-q">"You waited months for this appointment. You know your child better than anyone in that room. You deserve to walk in <em>prepared, calm, and impossible to dismiss.</em>"</div>
-  <div class="mission-attr">— The belief behind every feature in MedAdvocate</div>
+  <div class="mission-q">"You waited months for this appointment. You know this patient — yourself or your child — better than anyone in that room. You deserve to walk in <em>prepared, calm, and impossible to dismiss.</em>"</div>
+  <div class="mission-attr">— The belief behind every feature in MedAdvocate, for every caregiver and every patient</div>
 </div>
 
 <!-- WHO IT'S FOR -->
 <section class="for-sec">
   <div class="sec-hdr">
     <div class="sec-eyebrow">Who MedAdvocate Is For</div>
-    <h2 class="sec-title">If you've ever felt <em>unheard,</em> this is for you.</h2>
+    <h2 class="sec-title">If you've ever felt <em>unheard,</em><br>this is for you.</h2>
+    <p class="sec-sub" style="margin-top:10px">For your child. For yourself. For anyone navigating a system that wasn't designed for complexity.</p>
   </div>
   <div class="for-grid">
-    <div class="for-card"><div class="for-icon">👩‍👧</div><div class="for-title">Moms of medically complex kids</div><div class="for-desc">Navigating multiple specialists, rare diseases, and a system that moves slowly. You need tools that match your child's complexity.</div></div>
-    <div class="for-card"><div class="for-icon">🤱</div><div class="for-title">Moms with chronic illness themselves</div><div class="for-desc">Advocating for your own health while caring for your family. MedAdvocate works for your appointments too — because you matter as much as they do.</div></div>
-    <div class="for-card"><div class="for-icon">🏫</div><div class="for-title">Parents fighting for school support</div><div class="for-desc">Navigating IEP and 504 meetings without knowing your rights. We level the playing field so your child gets what they're legally entitled to.</div></div>
+    <div class="for-card" style="border-color:var(--sage);background:var(--sage-pale)">
+      <div class="for-icon">🙋‍♀️</div>
+      <div class="for-title">Adults with chronic illness</div>
+      <div class="for-desc">You deserve to be taken seriously too. MedAdvocate works just as powerfully for your own appointments — visit scripts, credibility documents, lab tracking, insurance appeals. All of it.</div>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">👩‍👧</div>
+      <div class="for-title">Moms of medically complex kids</div>
+      <div class="for-desc">Navigating multiple specialists, rare diseases, and a system that moves slowly. You need tools that match your child's complexity.</div>
+    </div>
+    <div class="for-card">
+      <div class="for-icon">🏫</div>
+      <div class="for-title">Parents fighting for school support</div>
+      <div class="for-desc">Navigating IEP and 504 meetings without knowing your rights. We level the playing field so your child gets what they're legally entitled to.</div>
+    </div>
   </div>
 </section>
 
@@ -438,7 +459,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   <div>
     <div class="fl-logo">Med<span class="dot"></span><span class="adv">Advocate</span></div>
     <div class="fl-tag">Beside you, always.</div>
-    <div class="fl-miss">Built by a mom who knows what it's like to feel dismissed, overwhelmed, and alone in a system that wasn't designed for complexity. This is the tool I wish I'd had.</div>
+    <div class="fl-miss">Built by a mom who knows what it's like to feel dismissed — whether you're fighting for your child or for yourself. This is the tool I wish I'd had.</div>
   </div>
   <div class="fl-links">
     <a href="#tools" class="fl-link">Tools</a>
@@ -490,36 +511,4 @@ const TOOLS = {
   credibility: { title:'The Credibility Document',    src:'advocate-credibility.html' },
   iep:         { title:'IEP & 504 Prep',              src:'advocate-iep.html' },
   er:          { title:'ER Prep Card',                src:'advocate-er.html' },
-  insurance:   { title:'Insurance Appeal Letter',     src:'advocate-insurance.html' },
-  explain:     { title:'Explain My Diagnosis',        src:'advocate-explain.html' },
-  saved:       { title:'My Saved Items & Care Team',  src:'advocate-myadvocate.html' },
-};
-
-function openTool(key) {
-  const t = TOOLS[key]; if (!t) return;
-  document.getElementById('frameTitle').textContent = t.title;
-  document.getElementById('toolFrame').src = t.src;
-  document.getElementById('overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeTool() {
-  document.getElementById('overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(() => { document.getElementById('toolFrame').src = ''; }, 400);
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('overlay')) closeTool();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-</script>
-</body>
-</html>
+  insurance:   { title:'Insurance Appeal Letter',   
