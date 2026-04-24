@@ -37,6 +37,10 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 .btn-primary:hover{background:var(--ink)}
 .btn-blue{padding:12px 22px;background:var(--blue);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
 .btn-blue:hover{background:#2d6ab5}
+.tabs{display:flex;margin-bottom:0;gap:0}
+.tab{padding:11px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--blue);font-weight:600;border-bottom-color:var(--blue)}
 .btn-outline{padding:10px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
 .btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
 .btn-danger{padding:5px 10px;background:transparent;border:1.5px solid var(--red-border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--red);cursor:pointer}
@@ -98,10 +102,53 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
     <p class="page-sub">Your complete medical history in chronological order. Every diagnosis, hospitalization, procedure, and milestone — all in one place.</p>
   </div>
 
-  <!-- Add Event -->
+  <!-- AI Extraction -->
+  <div class="fcard no-print" style="border:2px solid var(--sage-deep);margin-bottom:14px">
+    <div class="fcard-title">🧠 Extract from Records <span style="font-size:12px;font-weight:400;color:var(--ink-muted);font-family:'DM Sans',sans-serif"> — fastest way to build your timeline</span></div>
+    <div class="fcard-sub">Paste discharge summaries, doctor notes, medical records, or insurance EOBs — Claude will extract all the events and add them to your timeline automatically. Or upload a PDF or image.</div>
+
+    <div class="tabs" style="border-bottom:1px solid var(--border);margin-bottom:16px">
+      <button class="tab active" id="tab-paste" onclick="switchExtractTab('paste',this)" style="padding:8px 16px;font-size:13px">📋 Paste Text</button>
+      <button class="tab" id="tab-upload" onclick="switchExtractTab('upload',this)" style="padding:8px 16px;font-size:13px">📄 Upload File</button>
+    </div>
+
+    <div id="extract-paste">
+      <textarea class="ftextarea" id="extract_text" style="min-height:130px" placeholder="Paste any medical records here — discharge summaries, doctor notes, visit summaries, insurance EOBs, lab reports with dates, referral letters…
+
+Claude will identify every significant event and extract it into your timeline automatically."></textarea>
+    </div>
+
+    <div id="extract-upload" class="hidden">
+      <div id="extract_drop" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--warm)"
+        ondragover="event.preventDefault();this.style.borderColor='var(--sage)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handleExtractDrop(event)">
+        <input type="file" id="extract_file" accept=".pdf,.png,.jpg,.jpeg,.txt" onchange="handleExtractFile(event)" style="display:none">
+        <div style="font-size:32px;margin-bottom:10px">📄</div>
+        <div style="font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px">Drop a file here</div>
+        <div style="font-size:13px;color:var(--ink-muted);margin-bottom:14px">PDF, image, or text file</div>
+        <button class="btn-outline" onclick="document.getElementById('extract_file').click()">Choose File</button>
+      </div>
+      <div id="extract_file_name" style="font-size:13px;color:var(--sage-deep);margin-top:8px;font-weight:500"></div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn-blue" onclick="extractFromRecords()">🧠 Extract Timeline Events</button>
+      <span style="font-size:12px;color:var(--ink-muted)">Claude will add extracted events to your timeline below</span>
+    </div>
+    <div id="extract_status" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Manual Add -->
   <div class="fcard no-print">
-    <div class="fcard-title">Add an Event</div>
-    <div class="fcard-sub">Build your timeline one event at a time. Include diagnoses, hospitalizations, procedures, symptoms, medications, and milestones.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleManual()">
+      <div>
+        <div class="fcard-title" style="margin-bottom:0">➕ Add Event Manually</div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Add a single event by hand</div>
+      </div>
+      <span id="manual_toggle_icon" style="font-size:18px;color:var(--ink-muted)">▲</span>
+    </div>
+    <div id="manual_form" style="margin-top:16px">
     <div class="two-col">
       <div class="field"><label class="flabel">Date</label><input type="date" class="finput" id="ev_date"></div>
       <div class="field"><label class="flabel">Category</label>
@@ -125,6 +172,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
       <button class="btn-primary" onclick="addEvent()">+ Add to Timeline</button>
     </div>
   </div>
+</div>
 
   <!-- Controls -->
   <div id="controls" class="hidden no-print" style="margin-bottom:6px">
@@ -155,11 +203,147 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 <div class="toast" id="toast"></div>
 
 <script>
+// ── EXTRACTION TAB TOGGLE ──
+function switchExtractTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('extract-paste').classList.toggle('hidden', tab !== 'paste');
+  document.getElementById('extract-upload').classList.toggle('hidden', tab !== 'upload');
+}
+
+function toggleManual() {
+  const form = document.getElementById('manual_form');
+  const icon = document.getElementById('manual_toggle_icon');
+  form.classList.toggle('hidden');
+  icon.textContent = form.classList.contains('hidden') ? '▼' : '▲';
+}
+
+// ── FILE HANDLING FOR EXTRACTION ──
+let extractFileData = null;
+let extractFileType = null;
+let extractIsImage = false;
+
+function handleExtractDrop(e) {
+  e.preventDefault();
+  document.getElementById('extract_drop').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) processExtractFile(file);
+}
+
+function handleExtractFile(e) {
+  const file = e.target.files[0];
+  if (file) processExtractFile(file);
+}
+
+function processExtractFile(file) {
+  const name = file.name;
+  document.getElementById('extract_file_name').textContent = '📄 ' + name;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const result = ev.target.result;
+    if (file.type === 'text/plain') {
+      extractFileData = null;
+      document.getElementById('extract_text').value = atob(result.split(',')[1] || '') || result;
+      switchExtractTab('paste', document.getElementById('tab-paste'));
+    } else {
+      extractFileData = result.split(',')[1];
+      extractFileType = file.type;
+      extractIsImage = file.type.startsWith('image/');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── EXTRACT FROM RECORDS ──
+async function extractFromRecords() {
+  const text = document.getElementById('extract_text').value.trim();
+  const hasFile = extractFileData && extractFileType;
+  const statusEl = document.getElementById('extract_status');
+
+  if (!text && !hasFile) {
+    statusEl.innerHTML = '<div style="color:var(--red);font-size:13px">Please paste some text or upload a file first.</div>';
+    return;
+  }
+
+  statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-muted)"><div class="load-ring" style="width:22px;height:22px;border-width:2px;margin:0"></div> Analyzing your records and extracting timeline events…</div>`;
+
+  const system = `You are a medical records analyst extracting timeline events from medical documents.
+
+Extract every significant medical event and return ONLY valid JSON no markdown:
+{
+  "events": [
+    {
+      "date": "YYYY-MM-DD (use approximate date if only month/year known, e.g. 2021-06-01 for June 2021)",
+      "cat": "diagnosis | symptom | medication | procedure | hospitalization | appointment | test | milestone | other",
+      "title": "Brief clear description of the event (e.g. Diagnosed with POTS, Started Florinef 0.1mg, Tilt table test positive)",
+      "doctor": "Doctor name or facility if mentioned",
+      "notes": "Any additional relevant detail worth capturing"
+    }
+  ],
+  "summary": "One sentence describing what type of records these are and the time period covered",
+  "eventsFound": number
+}
+
+Extract everything that happened — diagnoses, medications started or stopped, procedures, tests, hospitalizations, ER visits, specialist appointments, symptom onsets, and milestones. If a date is unclear, make your best estimate. Do NOT skip events — capture everything significant.`;
+
+  try {
+    let body;
+    if (hasFile) {
+      const contentBlock = extractIsImage
+        ? { type: 'image', source: { type: 'base64', media_type: extractFileType, data: extractFileData } }
+        : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: extractFileData } };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 3000, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Please extract all medical timeline events from this document.' }] }] };
+    } else {
+      body = { model: 'claude-sonnet-4-6', max_tokens: 3000, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
+    }
+
+    const r = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    const result = JSON.parse((d.content?.[0]?.text || '').replace(/```json|```/g, '').trim());
+
+    if (!result.events?.length) {
+      statusEl.innerHTML = '<div style="color:var(--amber);font-size:13px">No events found. Try pasting more detailed medical records.</div>';
+      return;
+    }
+
+    // Add extracted events to timeline
+    const existing = getEvents();
+    let added = 0;
+    result.events.forEach(ev => {
+      if (ev.date && ev.title) {
+        existing.push({ id: Date.now() + Math.random(), date: ev.date, cat: ev.cat || 'other', title: ev.title, doctor: ev.doctor || '', notes: ev.notes || '' });
+        added++;
+      }
+    });
+    existing.sort((a, b) => new Date(a.date) - new Date(b.date));
+    saveEvents(existing);
+
+    statusEl.innerHTML = `<div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--sage-deep)">✓ Added <strong>${added} events</strong> to your timeline. ${result.summary || ''}</div>`;
+
+    // Clear inputs
+    document.getElementById('extract_text').value = '';
+    extractFileData = null;
+    document.getElementById('extract_file_name').textContent = '';
+
+    renderTimeline();
+    document.getElementById('timeline_wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (e) {
+    statusEl.innerHTML = '<div style="color:var(--red);font-size:13px">Something went wrong. Please try again.</div>';
+    console.error(e);
+  }
+}
+
 // ── UTILS ──
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});}catch{return d}}
 function getYear(d){return d?d.substring(0,4):'Unknown'}
+
+// ── EXTRACTION TAB TOGGLE ──
 
 // ── STORAGE ──
 const TL_KEY='advocate_timeline';
