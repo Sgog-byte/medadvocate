@@ -61,49 +61,93 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.95);backdrop-
 .nav-btn-outline{background:transparent;border:1.5px solid var(--sage);color:var(--sage-deep)}
 .nav-btn-outline:hover{background:var(--sage-pale)}
 
-/* HERO LOGO */
-.hero-logo{margin-bottom:32px}
+/* HERO CIRCLE */
+.hero{position:relative;z-index:1;text-align:center;padding:48px 28px 40px;display:flex;flex-direction:column;align-items:center;background:var(--sage-deep);margin:0}
+.hero-circle-outer{
+  width:min(680px,94vw);
+  height:min(680px,94vw);
+  background:var(--sage-deep);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  margin-bottom:28px;
+  box-shadow:0 0 0 16px rgba(149,213,178,.08), 0 0 0 32px rgba(149,213,178,.04);
+  position:relative;
+}
+.hero-circle-outer::before{
+  content:'';
+  position:absolute;
+  inset:8px;
+  border-radius:50%;
+  border:1.5px solid rgba(149,213,178,.25);
+  pointer-events:none;
+}
+.hero-circle-inner{
+  width:100%;
+  height:100%;
+  background:var(--warm);
+  border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 60px;
+  text-align:center;
+}
 .hero-logo-mark{
   font-family:'Fraunces',serif;
-  font-size:clamp(52px,9vw,96px);
+  font-size:clamp(42px,7vw,72px);
   font-weight:400;
   color:var(--ink);
   line-height:1;
   letter-spacing:-0.02em;
+  margin-bottom:4px;
 }
 .hero-logo-dot{
   display:inline-block;
-  width:clamp(10px,1.8vw,18px);
-  height:clamp(10px,1.8vw,18px);
+  width:clamp(7px,1.3vw,13px);
+  height:clamp(7px,1.3vw,13px);
   background:var(--sage-light);
   border-radius:50%;
-  margin:0 4px 6px 3px;
+  margin:0 3px 5px 2px;
   vertical-align:middle;
 }
 .hero-logo-adv{color:var(--sage);font-weight:300}
 .hero-logo-tagline{
   font-family:'Fraunces',serif;
   font-style:italic;
-  font-size:clamp(16px,2.5vw,22px);
+  font-size:clamp(13px,2vw,17px);
   color:var(--ink-muted);
   font-weight:300;
-  margin-top:8px;
-  letter-spacing:0.01em;
+  margin-bottom:12px;
 }
-
-/* HERO */
-.hero{position:relative;z-index:1;text-align:center;max-width:720px;margin:0 auto;padding:72px 28px 40px}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin-bottom:22px;padding:6px 16px;border:1.5px solid var(--sage-light);border-radius:100px;background:var(--sage-pale)}
+.hero-divider{width:36px;height:2px;background:var(--sage-light);border-radius:2px;margin:0 auto 12px}
+.hero h1{
+  font-family:'Fraunces',serif;
+  font-size:clamp(20px,3.5vw,32px);
+  font-weight:300;
+  line-height:1.25;
+  color:var(--ink);
+  margin-bottom:9px;
+}
+.hero h1 em{font-style:italic;color:var(--sage)}
+.hero h1 strong{font-weight:700;color:var(--sage-deep)}
+.hero-sub{
+  font-size:clamp(12px,1.8vw,14px);
+  color:var(--ink-soft);
+  line-height:1.6;
+  font-weight:300;
+  max-width:400px;
+  margin:0 auto 12px;
+}
+.hero-for-tags{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.hero-for-tag{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:var(--sage-pale);border:1.5px solid var(--border);border-radius:100px;font-size:11px;font-weight:500;color:var(--ink-soft)}
+.hero-cta{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:var(--sage-deep);color:white;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .22s;box-shadow:0 4px 18px rgba(27,67,50,.3)}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border:1.5px solid rgba(149,213,178,.4);border-radius:100px;font-size:11px;font-weight:500;color:rgba(255,255,255,.8);background:rgba(149,213,178,.1)}
 h1{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,58px);font-weight:300;line-height:1.12;color:var(--ink);margin-bottom:20px}
 h1 em{font-style:italic;color:var(--sage)}
 h1 strong{font-weight:600}
 .hero-sub{font-size:17px;color:var(--ink-soft);line-height:1.8;font-weight:300;margin-bottom:32px;max-width:540px;margin-left:auto;margin-right:auto}
 .hero-sub strong{font-weight:500;color:var(--ink)}
-.hero-cta{display:inline-flex;align-items:center;gap:9px;padding:15px 32px;background:var(--sage-deep);color:white;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:none;transition:all .22s;box-shadow:0 4px 18px rgba(27,67,50,.3)}
 .hero-cta:hover{background:var(--ink);transform:translateY(-2px)}
 .hero-for-tags{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin-bottom:24px}
-.hero-for-tag{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:100px;font-size:13px;font-weight:500;color:var(--ink-soft);box-shadow:var(--shadow-sm)}
-.hero-cta:hover{background:var(--ink);transform:translateY(-2px);box-shadow:0 8px 28px rgba(27,67,50,.35)}
 .hero-tagline{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--sage);margin-top:18px;font-weight:400}
 
 /* TRUST STRIP */
@@ -229,7 +273,8 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 }
 @media(max-width:560px){
   .tools-grid,.for-grid,.coming-grid{grid-template-columns:1fr}
-  .hero{padding:48px 18px 32px}
+  .hero{padding:32px 12px 32px}
+  .hero-circle-inner{padding:20px 22px}
 }
 </style>
 </head>
@@ -249,20 +294,22 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 
 <!-- HERO -->
 <section class="hero">
-  <!-- Large logo -->
-  <div class="hero-logo">
-    <div class="hero-logo-mark">Med<span class="hero-logo-dot"></span><span class="hero-logo-adv">Advocate</span></div>
-    <div class="hero-logo-tagline">Beside you, always.</div>
+  <div class="hero-circle-outer">
+    <div class="hero-circle-inner">
+      <div class="hero-logo-mark">Med<span class="hero-logo-dot"></span><span class="hero-logo-adv">Advocate</span></div>
+      <div class="hero-logo-tagline">Beside you, always.</div>
+      <div class="hero-divider"></div>
+      <h1>Your most <em>powerful</em><br>advocate is <strong>you.</strong></h1>
+      <p class="hero-sub">Whether you're fighting for your child or fighting for yourself — MedAdvocate gives you the tools, language, and confidence to walk into every appointment completely prepared.</p>
+      <div class="hero-for-tags">
+        <div class="hero-for-tag">👧 For your child</div>
+        <div class="hero-for-tag">🙋‍♀️ For yourself</div>
+        <div class="hero-for-tag">👨‍👩‍👧 For your family</div>
+      </div>
+      <button class="hero-cta" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">See all your tools ↓</button>
+    </div>
   </div>
   <div class="hero-eyebrow">🌿 Built by a Medical Mom, for Every Caregiver</div>
-  <h1>Your most <em>powerful</em><br>advocate is <strong>you.</strong></h1>
-  <p class="hero-sub">Whether you're fighting for your child or fighting for yourself — MedAdvocate gives you the tools, language, and confidence to walk into every appointment, IEP meeting, and insurance battle completely prepared.</p>
-  <div class="hero-for-tags">
-    <div class="hero-for-tag">👧 For your child</div>
-    <div class="hero-for-tag">🙋‍♀️ For yourself</div>
-    <div class="hero-for-tag">👨‍👩‍👧 For your family</div>
-  </div>
-  <button class="hero-cta" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">See all your tools ↓</button>
 </section>
 
 <!-- TRUST STRIP -->
@@ -276,7 +323,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 <section class="tools-section" id="tools">
   <div class="sec-hdr">
     <div class="sec-eyebrow">Your Complete Toolkit</div>
-    <h2 class="sec-title">Eleven tools. <em>One mission.</em></h2>
+    <h2 class="sec-title">Twelve tools. <em>One mission.</em></h2>
     <p class="sec-sub">Everything you need to advocate effectively — for every appointment, every meeting, every moment.</p>
   </div>
 
@@ -295,6 +342,21 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Prep my next visit →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('research')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#3a7bc8,#7b68ee)">🔬</div>
+        <div class="tc-name">Research Library</div>
+        <div class="tc-tag tg-blue">Walk in with evidence they can't ignore</div>
+        <div class="tc-desc">Search PubMed for peer-reviewed papers on any diagnosis or doctor. Get plain-English summaries, save to your library, and generate a research brief for any appointment.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Real peer-reviewed papers from PubMed</div>
+          <div class="tc-feat"><div class="fd"></div>AI plain-English summaries</div>
+          <div class="tc-feat"><div class="fd"></div>Printable & emailable appointment brief</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Search the research →</div><div class="tc-arr">→</div></div>
     </div>
 
     <div class="tc" onclick="openTool('medications')">
@@ -472,12 +534,12 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="for-card">
       <div class="for-icon">👩‍👧</div>
       <div class="for-title">Moms of medically complex kids</div>
-      <div class="for-desc">Navigating multiple specialists, rare diseases, and a system that moves slowly. You need tools that match your child's complexity.</div>
+      <div class="for-desc">Navigating multiple specialists, rare diseases, and a system that moves slowly. You need tools that match their complexity.</div>
     </div>
     <div class="for-card">
       <div class="for-icon">🏫</div>
       <div class="for-title">Parents fighting for school support</div>
-      <div class="for-desc">Navigating IEP and 504 meetings without knowing your rights. We level the playing field so your child gets what they're legally entitled to.</div>
+      <div class="for-desc">Navigating IEP and 504 meetings without knowing your rights. We level the playing field so they get what they're legally entitled to.</div>
     </div>
   </div>
 </section>
@@ -493,7 +555,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="cc"><div class="cc-icon">🎙️</div><div class="cc-name">Appointment Recorder</div><div class="cc-desc">Record your visit, get an AI summary with action items and next steps. Requires microphone access.</div></div>
     <div class="cc"><div class="cc-icon">💊</div><div class="cc-name">Drug Interaction Checker</div><div class="cc-desc">Paste your full medication list and flag potential interactions in plain English.</div></div>
     <div class="cc"><div class="cc-icon">🔬</div><div class="cc-name">Second Opinion Prep</div><div class="cc-desc">Know exactly what to ask, what records to bring, and how to frame your case for a second opinion.</div></div>
-    <div class="cc"><div class="cc-icon">👥</div><div class="cc-name">Multi-Profile Support</div><div class="cc-desc">Separate profiles for each child — each with their own complete history.</div></div>
+    <div class="cc"><div class="cc-icon">👥</div><div class="cc-name">Multi-Profile Support</div><div class="cc-desc">Separate profiles for each person — each with their own complete history.</div></div>
     <div class="cc"><div class="cc-icon">💛</div><div class="cc-name">Caregiver Check-In</div><div class="cc-desc">A gentle space that sees the mom, not just the patient. Burnout is real.</div></div>
   </div>
 </section>
@@ -557,6 +619,7 @@ const TOOLS = {
   er:          { title:'ER Prep Card',                src:'advocate-er.html' },
   insurance:   { title:'Insurance Appeal Letter',     src:'advocate-insurance.html' },
   explain:     { title:'Explain My Diagnosis',        src:'advocate-explain.html' },
+  research:    { title:'Research Library',             src:'advocate-research.html' },
   medications: { title:'Medication Tracker',          src:'advocate-medications.html' },
   timeline:    { title:'Medical Timeline',            src:'advocate-timeline.html' },
   flare:       { title:'Flare Tracker',               src:'advocate-flare.html' },

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Research Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;--violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow:0 4px 24px rgba(28,43,34,.10);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.shell{max-width:920px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--blue)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:520px;margin:0 auto}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;gap:0}
+.tab{padding:11px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--blue);font-weight:600;border-bottom-color:var(--blue)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--sage-deep);color:white;border-radius:50%;font-size:10px;font-weight:700;margin-left:6px}
+.panel{display:none}.panel.active{display:block}
+.search-card{background:var(--white);border:2px solid var(--sage-deep);border-radius:18px;padding:24px 26px;margin-bottom:18px;box-shadow:var(--shadow)}
+.search-card-title{font-family:'Fraunces',serif;font-size:19px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.search-card-sub{font-size:13px;color:var(--ink-muted);margin-bottom:18px;font-weight:300}
+.search-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:13px 16px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--sage);background:var(--white)}
+.search-input::placeholder{color:var(--ink-muted)}
+.search-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-chip{padding:6px 14px;border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;font-family:'DM Sans',sans-serif;color:var(--ink-soft);transition:all .2s}
+.filter-chip:hover{border-color:var(--blue);background:var(--blue-pale)}
+.filter-chip.active{background:var(--blue-pale);border-color:var(--blue);color:var(--blue)}
+.search-type-row{display:flex;gap:8px;margin-bottom:14px}
+.type-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;cursor:pointer;background:transparent;color:var(--ink-soft);transition:all .2s;text-align:center}
+.type-btn:hover{border-color:var(--blue);background:var(--blue-pale)}
+.type-btn.active{background:var(--blue-pale);border-color:var(--blue);color:var(--blue);font-weight:600}
+.btn-search{padding:13px 28px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-search:hover{background:var(--ink)}
+.btn-search:disabled{opacity:.5;cursor:not-allowed}
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.results-count{font-size:13px;color:var(--ink-muted);font-weight:300}
+.paper-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:12px;box-shadow:var(--shadow-sm);transition:border-color .2s}
+.paper-card:hover{border-color:var(--sage-light)}
+.paper-card.saved{border-color:var(--sage);background:var(--sage-pale)}
+.paper-meta{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.paper-year{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--blue);text-transform:uppercase;background:var(--blue-pale);border:1px solid var(--blue-border);padding:2px 9px;border-radius:100px;flex-shrink:0}
+.paper-journal{font-size:12px;color:var(--ink-muted);font-weight:300;flex:1;text-align:right}
+.paper-title{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:var(--ink);line-height:1.4;margin-bottom:6px}
+.paper-authors{font-size:12px;color:var(--ink-muted);margin-bottom:10px;font-weight:300;line-height:1.5}
+.paper-abstract{font-size:13px;color:var(--ink-soft);line-height:1.7;font-weight:300;margin-bottom:12px}
+.paper-abstract.collapsed{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.paper-ai-summary{background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:10px;padding:13px 16px;margin-bottom:12px;font-size:13px;color:var(--ink-soft);line-height:1.7;font-weight:300}
+.paper-ai-summary-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:6px}
+.paper-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-sm{padding:7px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:5px}
+.btn-save{background:var(--sage-pale);border:1.5px solid var(--sage-light);color:var(--sage-deep)}
+.btn-save:hover{background:var(--sage-light)}
+.btn-save.saved{background:var(--sage);color:white;border-color:var(--sage)}
+.btn-summarize{background:var(--violet-pale);border:1.5px solid var(--violet-border);color:var(--violet)}
+.btn-summarize:hover{background:var(--violet-border)}
+.btn-link{background:var(--blue-pale);border:1.5px solid var(--blue-border);color:var(--blue)}
+.btn-link:hover{background:var(--blue-border)}
+.btn-expand{background:transparent;border:1.5px solid var(--border);color:var(--ink-muted)}
+.btn-expand:hover{border-color:var(--sage);color:var(--sage-deep)}
+.load-wrap{text-align:center;padding:48px 24px}
+.load-ring{width:48px;height:48px;margin:0 auto 18px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--blue);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.load-sub{font-size:13px;color:var(--ink-muted);font-weight:300}
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink-muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.empty-sub{font-size:13px;font-weight:300;line-height:1.6;max-width:380px;margin:0 auto}
+.lib-group{margin-bottom:24px}
+.lib-group-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.brief-card{background:var(--white);border:2px solid var(--sage-deep);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);margin-top:6px}
+.brief-top{background:var(--sage-deep);padding:20px 26px;color:white}
+.brief-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;margin-bottom:3px}
+.brief-sub{font-size:12px;color:rgba(255,255,255,.6)}
+.brief-body{padding:22px 26px}
+.brief-section{margin-bottom:18px}
+.brief-section-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.brief-paper{padding:12px 15px;background:var(--sage-pale);border-radius:10px;margin-bottom:8px}
+.brief-paper-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px;line-height:1.4}
+.brief-paper-meta{font-size:11px;color:var(--ink-muted);margin-bottom:5px}
+.brief-paper-summary{font-size:13px;color:var(--ink-soft);line-height:1.6;font-weight:300}
+.brief-footer{background:var(--warm);border-top:1px solid var(--border);padding:12px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.brief-footer-note{font-size:11px;color:var(--ink-muted);font-style:italic}
+.action-row{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.abtn{display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
+.abtn-dark{background:var(--ink);color:white}.abtn-dark:hover{background:var(--ink-soft)}
+.abtn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}.abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.error-box{background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:12px 16px;color:var(--red);font-size:13px;margin-bottom:14px}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media print{body{background:white}nav,.search-card,.tabs,.action-row,.paper-actions,.filter-chip,.type-btn,.btn-search{display:none!important}.shell{max-width:100%;padding:0}.brief-top{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}}
+@media(max-width:640px){.search-row{flex-direction:column}.type-btn{flex:none;width:100%}.brief-body,.brief-top{padding:16px}}
+</style>
+</head>
+<body>
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
+</nav>
+
+<div class="shell">
+  <div class="page-header">
+    <div class="page-icon">🔬</div>
+    <h1 class="page-title">Research <em>Library</em></h1>
+    <p class="page-sub">Search peer-reviewed medical literature by diagnosis or doctor name. Save papers, get plain-English summaries, and walk into any appointment with evidence in hand.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('search',this)">🔍 Search Papers</button>
+    <button class="tab" onclick="switchTab('library',this)">📚 My Library <span class="tab-badge" id="lib_badge">0</span></button>
+    <button class="tab" onclick="switchTab('brief',this)">📄 Appointment Brief</button>
+  </div>
+
+  <!-- SEARCH PANEL -->
+  <div class="panel active" id="panel-search">
+    <div class="search-card">
+      <div class="search-card-title">Search Medical Literature</div>
+      <div class="search-card-sub">Searches PubMed — the same database used by doctors and researchers worldwide. Real peer-reviewed papers only.</div>
+
+      <div class="search-type-row">
+        <button class="type-btn active" id="type-condition" onclick="setSearchType('condition',this)">🔴 By Diagnosis / Condition</button>
+        <button class="type-btn" id="type-doctor" onclick="setSearchType('doctor',this)">👨‍⚕️ By Doctor Name</button>
+        <button class="type-btn" id="type-topic" onclick="setSearchType('topic',this)">📖 By Topic / Treatment</button>
+      </div>
+
+      <div class="search-row">
+        <input type="text" class="search-input" id="search_input" placeholder="e.g. POTS postural orthostatic tachycardia syndrome treatment" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="btn-search" onclick="doSearch()">Search PubMed →</button>
+      </div>
+
+      <div class="search-filters">
+        <span style="font-size:12px;color:var(--ink-muted);align-self:center;margin-right:4px">Published:</span>
+        <button class="filter-chip active" onclick="setDateFilter('1',this)">Last year</button>
+        <button class="filter-chip" onclick="setDateFilter('3',this)">Last 3 years</button>
+        <button class="filter-chip" onclick="setDateFilter('5',this)">Last 5 years</button>
+        <button class="filter-chip" onclick="setDateFilter('10',this)">Last 10 years</button>
+        <button class="filter-chip" onclick="setDateFilter('all',this)">Any time</button>
+      </div>
+
+      <div style="font-size:12px;color:var(--ink-muted);font-style:italic">
+        💡 Tips: Search "POTS treatment 2024" · "EDS hypermobility pain management" · "MCAS mast cell diagnosis criteria" · "Dr. Anne Maitland MCAS"
+      </div>
+    </div>
+
+    <div id="search_results"></div>
+  </div>
+
+  <!-- LIBRARY PANEL -->
+  <div class="panel" id="panel-library">
+    <div id="library_content"></div>
+  </div>
+
+  <!-- BRIEF PANEL -->
+  <div class="panel" id="panel-brief">
+    <div class="search-card">
+      <div class="search-card-title">Generate Appointment Brief</div>
+      <div class="search-card-sub">A formatted document of your saved research — ready to hand to a doctor or send by email.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px">Patient Name</label>
+          <input type="text" class="search-input" id="brief_name" placeholder="e.g. Emma Johnson or myself" style="width:100%;padding:10px 13px">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px">Appointment / Doctor</label>
+          <input type="text" class="search-input" id="brief_doctor" placeholder="e.g. Cardiology follow-up, Dr. Webb" style="width:100%;padding:10px 13px">
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px">What are you trying to prove or discuss?</label>
+        <textarea class="search-input" id="brief_goal" placeholder="e.g. I want to show evidence that POTS can cause severe fatigue and ask about IVIG treatment options…" style="width:100%;min-height:70px;resize:none;line-height:1.6;padding:10px 13px"></textarea>
+      </div>
+      <button class="btn-search" onclick="generateBrief()">📄 Generate Brief from My Library</button>
+    </div>
+    <div id="brief_out"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── UTILS ──
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+
+// ── STORAGE ──
+const LIB_KEY='advocate_research_library';
+function getLibrary(){return JSON.parse(localStorage.getItem(LIB_KEY)||'[]')}
+function saveLibrary(lib){localStorage.setItem(LIB_KEY,JSON.stringify(lib));updateBadge()}
+function updateBadge(){document.getElementById('lib_badge').textContent=getLibrary().length}
+function isPaperSaved(pmid){return getLibrary().some(p=>p.pmid===pmid)}
+
+// ── SEARCH STATE ──
+let searchType='condition';
+let dateFilter='1';
+let currentResults=[];
+
+function setSearchType(type,btn){
+  searchType=type;
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const input=document.getElementById('search_input');
+  if(type==='condition') input.placeholder='e.g. POTS treatment, EDS hypermobility, MCAS diagnosis criteria';
+  if(type==='doctor') input.placeholder='e.g. Anne Maitland, Lawrence Afrin MCAS, Clair Francomano EDS';
+  if(type==='topic') input.placeholder='e.g. low dose naltrexone fibromyalgia, IVIG dysautonomia, mast cell triggers';
+}
+
+function setDateFilter(filter,btn){
+  dateFilter=filter;
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── TABS ──
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='library')renderLibrary();
+  if(tab==='brief')prefillBrief();
+}
+
+// ── PUBMED SEARCH ──
+async function doSearch(){
+  const query=document.getElementById('search_input').value.trim();
+  if(!query){showToast('Please enter a search term');return;}
+
+  const resultsEl=document.getElementById('search_results');
+  resultsEl.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><div class="load-title">Searching PubMed…</div><div class="load-sub">Checking ${query.length>40?query.substring(0,40)+'…':query} in peer-reviewed literature</div></div>`;
+
+  try{
+    // Build PubMed query
+    let pubmedQuery=query;
+    if(searchType==='doctor') pubmedQuery=`${query}[Author]`;
+    if(searchType==='condition') pubmedQuery=`${query}[Title/Abstract]`;
+
+    // Add date filter
+    let dateParam='';
+    if(dateFilter!=='all'){
+      const year=new Date().getFullYear()-parseInt(dateFilter);
+      dateParam=`&mindate=${year}&maxdate=3000&datetype=pdat`;
+    }
+
+    // Search PubMed via E-utilities (free, no key needed)
+    const searchUrl=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(pubmedQuery)}&retmax=15&retmode=json&sort=relevance${dateParam}`;
+
+    const searchResp=await fetch(searchUrl);
+    const searchData=await searchResp.json();
+    const ids=searchData.esearchresult?.idlist||[];
+
+    if(!ids.length){
+      resultsEl.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No papers found</div><div class="empty-sub">Try different search terms. For rare conditions, try the full name (e.g. "postural orthostatic tachycardia" instead of "POTS").</div></div>`;
+      return;
+    }
+
+    // Fetch paper details
+    const fetchUrl=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${ids.join(',')}&retmode=xml`;
+    const fetchResp=await fetch(fetchUrl);
+    const xml=await fetchResp.text();
+    const papers=parsePubMedXML(xml);
+    currentResults=papers;
+
+    renderSearchResults(papers,query);
+
+  }catch(e){
+    resultsEl.innerHTML=`<div class="error-box">Search failed. Check your connection and try again.</div>`;
+    console.error(e);
+  }
+}
+
+// ── PARSE PUBMED XML ──
+function parsePubMedXML(xml){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(xml,'text/xml');
+  const articles=doc.querySelectorAll('PubmedArticle');
+  const papers=[];
+
+  articles.forEach(art=>{
+    try{
+      const pmid=art.querySelector('PMID')?.textContent||'';
+      const title=art.querySelector('ArticleTitle')?.textContent||'No title';
+      const journal=art.querySelector('Title')?.textContent||art.querySelector('ISOAbbreviation')?.textContent||'Unknown journal';
+      const year=art.querySelector('PubDate Year')?.textContent||art.querySelector('MedlineDate')?.textContent?.substring(0,4)||'Unknown';
+      const abstractEl=art.querySelectorAll('AbstractText');
+      let abstract='';
+      abstractEl.forEach(el=>{
+        const label=el.getAttribute('Label');
+        if(label) abstract+=`${label}: `;
+        abstract+=el.textContent+' ';
+      });
+      abstract=abstract.trim()||'No abstract available.';
+
+      const authorEls=art.querySelectorAll('Author');
+      const authors=[];
+      authorEls.forEach((a,i)=>{
+        if(i>4)return;
+        const last=a.querySelector('LastName')?.textContent||'';
+        const first=a.querySelector('ForeName')?.textContent||a.querySelector('Initials')?.textContent||'';
+        if(last) authors.push(`${last} ${first}`.trim());
+      });
+      if(authorEls.length>5) authors.push('et al.');
+
+      const doi=art.querySelector('ArticleId[IdType="doi"]')?.textContent||'';
+
+      papers.push({pmid,title,journal,year,abstract,authors:authors.join(', '),doi,aiSummary:null,savedAt:null});
+    }catch(err){console.error('Parse error',err);}
+  });
+
+  return papers;
+}
+
+// ── RENDER SEARCH RESULTS ──
+function renderSearchResults(papers,query){
+  const el=document.getElementById('search_results');
+  const saved=getLibrary();
+
+  el.innerHTML=`
+    <div class="results-header">
+      <div class="results-count">${papers.length} paper${papers.length!==1?'s':''} found for "<strong>${escH(query)}</strong>"</div>
+      ${papers.length?`<button class="abtn abtn-outline" onclick="saveAllVisible()" style="font-size:12px;padding:7px 13px">💾 Save all to library</button>`:''}
+    </div>
+    ${papers.map((p,i)=>`
+      <div class="paper-card ${isPaperSaved(p.pmid)?'saved':''}" id="paper-${p.pmid}">
+        <div class="paper-meta">
+          <span class="paper-year">${escH(p.year)}</span>
+          <span class="paper-journal">${escH(p.journal)}</span>
+        </div>
+        <div class="paper-title">${escH(p.title)}</div>
+        <div class="paper-authors">${escH(p.authors)}</div>
+        <div class="paper-abstract collapsed" id="abstract-${p.pmid}">${escH(p.abstract)}</div>
+        <div id="ai-summary-${p.pmid}"></div>
+        <div class="paper-actions">
+          <button class="btn-sm btn-save ${isPaperSaved(p.pmid)?'saved':''}" id="save-btn-${p.pmid}" onclick="toggleSave(${i})">
+            ${isPaperSaved(p.pmid)?'✓ Saved':'💾 Save to Library'}
+          </button>
+          <button class="btn-sm btn-summarize" onclick="summarizePaper(${i})">🧠 Plain-English Summary</button>
+          <button class="btn-sm btn-expand" onclick="toggleAbstract('${p.pmid}')">Read Abstract</button>
+          ${p.doi?`<a href="https://doi.org/${p.doi}" target="_blank" class="btn-sm btn-link" style="text-decoration:none">🔗 View Paper</a>`:`<a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}" target="_blank" class="btn-sm btn-link" style="text-decoration:none">🔗 PubMed</a>`}
+        </div>
+      </div>`).join('')}`;
+}
+
+// ── TOGGLE ABSTRACT ──
+function toggleAbstract(pmid){
+  const el=document.getElementById('abstract-'+pmid);
+  const isCollapsed=el.classList.contains('collapsed');
+  el.classList.toggle('collapsed',!isCollapsed);
+  event.target.textContent=isCollapsed?'Collapse':'Read Abstract';
+}
+
+// ── AI PLAIN ENGLISH SUMMARY ──
+async function summarizePaper(idx){
+  const paper=currentResults[idx];
+  if(!paper) return;
+  const summaryEl=document.getElementById('ai-summary-'+paper.pmid);
+  summaryEl.innerHTML=`<div style="font-size:12px;color:var(--ink-muted);padding:8px 0">🧠 Summarizing in plain English…</div>`;
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
+        system:'You summarize medical research papers for non-medical caregivers. Be clear, warm, and direct. No jargon without explanation.',
+        messages:[{role:'user',content:`Summarize this paper in 3-4 plain-English sentences for a caregiver who wants to understand what it means for their family member's condition and how to use this information with a doctor:\n\nTitle: ${paper.title}\nJournal: ${paper.journal} (${paper.year})\nAbstract: ${paper.abstract}`}]})
+    });
+    const d=await r.json();
+    const summary=d.content?.[0]?.text||'';
+    paper.aiSummary=summary;
+    // Update saved copy if saved
+    const lib=getLibrary();
+    const saved=lib.find(p=>p.pmid===paper.pmid);
+    if(saved){saved.aiSummary=summary;saveLibrary(lib);}
+    summaryEl.innerHTML=`<div class="paper-ai-summary"><div class="paper-ai-summary-label">🧠 Plain-English Summary</div>${escH(summary)}</div>`;
+  }catch(e){
+    summaryEl.innerHTML=`<div style="color:var(--red);font-size:12px;padding:6px 0">Summary failed. Please try again.</div>`;
+  }
+}
+
+// ── SAVE / UNSAVE ──
+function toggleSave(idx){
+  const paper=currentResults[idx];
+  if(!paper) return;
+  const lib=getLibrary();
+  const existingIdx=lib.findIndex(p=>p.pmid===paper.pmid);
+
+  if(existingIdx>-1){
+    lib.splice(existingIdx,1);
+    saveLibrary(lib);
+    updatePaperCardSaved(paper.pmid,false);
+    showToast('Removed from library');
+  }else{
+    lib.unshift({...paper,savedAt:new Date().toISOString()});
+    saveLibrary(lib);
+    updatePaperCardSaved(paper.pmid,true);
+    showToast('Saved to library ✓');
+  }
+}
+
+function updatePaperCardSaved(pmid,saved){
+  const card=document.getElementById('paper-'+pmid);
+  const btn=document.getElementById('save-btn-'+pmid);
+  if(card) card.classList.toggle('saved',saved);
+  if(btn){btn.classList.toggle('saved',saved);btn.textContent=saved?'✓ Saved':'💾 Save to Library';}
+}
+
+function saveAllVisible(){
+  const lib=getLibrary();
+  let added=0;
+  currentResults.forEach(p=>{
+    if(!lib.find(l=>l.pmid===p.pmid)){
+      lib.unshift({...p,savedAt:new Date().toISOString()});
+      added++;
+      updatePaperCardSaved(p.pmid,true);
+    }
+  });
+  saveLibrary(lib);
+  showToast(`${added} paper${added!==1?'s':''} saved to library ✓`);
+}
+
+// ── LIBRARY ──
+function renderLibrary(){
+  const lib=getLibrary();
+  const el=document.getElementById('library_content');
+  updateBadge();
+
+  if(!lib.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Your library is empty</div><div class="empty-sub">Search for papers and save them here. Build your evidence base for upcoming appointments.</div></div>`;
+    return;
+  }
+
+  // Group by condition/topic (by search context or just show all)
+  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;color:var(--ink-muted)">${lib.length} paper${lib.length!==1?'s':''} saved</div>
+      <div style="display:flex;gap:8px">
+        <button class="abtn abtn-outline" onclick="if(confirm('Clear your entire library?')){saveLibrary([]);renderLibrary()}" style="font-size:12px;padding:7px 13px;color:var(--red);border-color:var(--red-border)">Clear All</button>
+      </div>
+    </div>
+    ${lib.map((p,i)=>`
+      <div class="paper-card ${p.aiSummary?'':''}">
+        <div class="paper-meta">
+          <span class="paper-year">${escH(p.year)}</span>
+          <span class="paper-journal">${escH(p.journal)}</span>
+        </div>
+        <div class="paper-title">${escH(p.title)}</div>
+        <div class="paper-authors">${escH(p.authors)}</div>
+        ${p.aiSummary?`<div class="paper-ai-summary"><div class="paper-ai-summary-label">🧠 Plain-English Summary</div>${escH(p.aiSummary)}</div>`:''}
+        <div class="paper-abstract collapsed" id="lib-abstract-${p.pmid}">${escH(p.abstract)}</div>
+        <div class="paper-actions" style="margin-top:10px">
+          <button class="btn-sm btn-save saved" onclick="removeFromLib('${p.pmid}')">✕ Remove</button>
+          ${!p.aiSummary?`<button class="btn-sm btn-summarize" onclick="summarizeLibPaper(${i})">🧠 Summarize</button>`:''}
+          <button class="btn-sm btn-expand" onclick="toggleLibAbstract('${p.pmid}')">Read Abstract</button>
+          ${p.doi?`<a href="https://doi.org/${p.doi}" target="_blank" class="btn-sm btn-link" style="text-decoration:none">🔗 View Paper</a>`:`<a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}" target="_blank" class="btn-sm btn-link" style="text-decoration:none">🔗 PubMed</a>`}
+        </div>
+      </div>`).join('')}`;
+}
+
+function toggleLibAbstract(pmid){
+  const el=document.getElementById('lib-abstract-'+pmid);
+  el.classList.toggle('collapsed');
+  event.target.textContent=el.classList.contains('collapsed')?'Read Abstract':'Collapse';
+}
+
+function removeFromLib(pmid){
+  const lib=getLibrary().filter(p=>p.pmid!==pmid);
+  saveLibrary(lib);
+  renderLibrary();
+  showToast('Removed');
+}
+
+async function summarizeLibPaper(idx){
+  const lib=getLibrary();
+  const paper=lib[idx];
+  if(!paper)return;
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
+        system:'Summarize medical research for non-medical caregivers. Clear, warm, no jargon.',
+        messages:[{role:'user',content:`Summarize in 3-4 plain-English sentences:\n\nTitle: ${paper.title}\nJournal: ${paper.journal} (${paper.year})\nAbstract: ${paper.abstract}`}]})
+    });
+    const d=await r.json();
+    lib[idx].aiSummary=d.content?.[0]?.text||'';
+    saveLibrary(lib);
+    renderLibrary();
+    showToast('Summary added ✓');
+  }catch(e){showToast('Summary failed. Please try again.');}
+}
+
+// ── APPOINTMENT BRIEF ──
+function prefillBrief(){
+  if(!document.getElementById('brief_date')&&document.getElementById('brief_doctor')){
+    // Already set up
+  }
+}
+
+async function generateBrief(){
+  const lib=getLibrary();
+  if(!lib.length){showToast('Save some papers to your library first');return;}
+  const name=document.getElementById('brief_name').value.trim()||'Patient';
+  const doctor=document.getElementById('brief_doctor').value.trim();
+  const goal=document.getElementById('brief_goal').value.trim();
+  const out=document.getElementById('brief_out');
+
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><div class="load-title">Building your research brief…</div><div class="load-sub">Synthesizing ${lib.length} papers into a clear argument</div></div>`;
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
+        system:'You help patients present medical research to their doctors. Return ONLY valid JSON no markdown: {"headline":"One powerful sentence summarizing what the research shows","keyFindings":["3-4 key findings from across the papers that support the patient\'s case"],"clinicalImplication":"2-3 sentences on what this research means clinically and what the patient should ask for","questionsToAsk":["3 specific evidence-based questions to ask the doctor"]}',
+        messages:[{role:'user',content:`Patient: ${name}\nAppointment: ${doctor||'Doctor visit'}\nGoal: ${goal||'Present research on my condition'}\n\nSaved papers:\n${lib.map(p=>`- ${p.title} (${p.year}, ${p.journal})${p.aiSummary?' — '+p.aiSummary:' — Abstract: '+p.abstract.substring(0,200)+'...'}`).join('\n')}`}]})
+    });
+    const d=await r.json();
+    const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+    out.innerHTML=`
+      <div class="action-row">
+        <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print Brief</button>
+        <button class="abtn abtn-outline" onclick="emailBrief()">✉️ Email</button>
+        <button class="abtn abtn-outline" onclick="document.getElementById('brief_out').innerHTML=''">✕ Clear</button>
+      </div>
+      <div class="brief-card">
+        <div class="brief-top">
+          <div class="brief-title">Research Brief — ${escH(name)}</div>
+          <div class="brief-sub">${doctor?escH(doctor)+' · ':''}${today} · ${lib.length} peer-reviewed sources · MedAdvocate</div>
+        </div>
+        <div class="brief-body">
+          <div class="brief-section">
+            <div class="brief-section-title">What the Research Shows</div>
+            <div style="font-family:'Fraunces',serif;font-size:17px;font-style:italic;color:var(--sage-deep);line-height:1.6;margin-bottom:10px">"${escH(result.headline)}"</div>
+            ${(result.keyFindings||[]).map(f=>`<div style="padding:9px 13px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;margin-bottom:7px;font-size:13px;color:var(--ink-soft);line-height:1.6">✦ ${escH(f)}</div>`).join('')}
+          </div>
+          <div class="brief-section">
+            <div class="brief-section-title">Clinical Implication</div>
+            <div style="font-size:14px;color:var(--ink-soft);line-height:1.75">${escH(result.clinicalImplication)}</div>
+          </div>
+          <div class="brief-section">
+            <div class="brief-section-title">Questions to Ask Based on This Research</div>
+            ${(result.questionsToAsk||[]).map(q=>`<div style="padding:9px 13px;background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:9px;margin-bottom:7px;font-size:13px;color:var(--ink-soft);line-height:1.6">? ${escH(q)}</div>`).join('')}
+          </div>
+          <div class="brief-section">
+            <div class="brief-section-title">Sources (${lib.length} peer-reviewed papers)</div>
+            ${lib.map(p=>`
+              <div class="brief-paper">
+                <div class="brief-paper-title">${escH(p.title)}</div>
+                <div class="brief-paper-meta">${escH(p.authors)} · ${escH(p.journal)} · ${escH(p.year)} · PMID: ${p.pmid}</div>
+                ${p.aiSummary?`<div class="brief-paper-summary">${escH(p.aiSummary)}</div>`:''}
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="brief-footer">
+          <div class="brief-footer-note">Sources retrieved from PubMed (NCBI). For reference purposes. Consult your healthcare provider about applying this research to your care.</div>
+          <div style="font-family:'Fraunces',serif;font-size:13px;color:var(--ink-muted)">MedAdvocate</div>
+        </div>
+      </div>`;
+
+    // Store for email
+    window._briefText=`Research Brief — ${name}\n${doctor?doctor+' · ':''}${today}\n\nWhat the Research Shows:\n"${result.headline}"\n\nKey Findings:\n${(result.keyFindings||[]).map(f=>'• '+f).join('\n')}\n\nClinical Implication:\n${result.clinicalImplication}\n\nQuestions to Ask:\n${(result.questionsToAsk||[]).map(q=>'? '+q).join('\n')}\n\nSources:\n${lib.map(p=>`${p.title} — ${p.journal} (${p.year}) — PMID: ${p.pmid}`).join('\n')}`;
+
+  }catch(e){
+    out.innerHTML=`<div class="error-box">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }
+}
+
+function emailBrief(){
+  const name=document.getElementById('brief_name').value.trim()||'Patient';
+  const subject=`Medical Research Brief — ${name}`;
+  window.location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(window._briefText||'See attached research brief.')}`;
+}
+
+// ── INIT ──
+updateBadge();
+</script>
+</body>
+</html>
