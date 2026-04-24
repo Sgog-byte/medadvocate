@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Care Concierge</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;--violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow:0 4px 24px rgba(28,43,34,.10);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:#fdfcf8;backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.shell{max-width:940px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--sage)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:520px;margin:0 auto}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;gap:0;overflow-x:auto}
+.tab{padding:11px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--sage-deep);font-weight:600;border-bottom-color:var(--sage-deep)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--red);color:white;border-radius:100px;font-size:10px;font-weight:700;margin-left:5px;padding:0 4px}
+.panel{display:none}.panel.active{display:block}
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300}
+.field{margin-bottom:12px}.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.finput,.ftextarea,.fselect{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+.ftextarea{min-height:80px;line-height:1.6}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+/* Buttons */
+.btn-primary{padding:11px 20px;background:var(--sage-deep);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--ink)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{padding:9px 16px;background:transparent;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn-sm{padding:6px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:4px}
+.btn-danger{background:transparent;border:1.5px solid var(--red-border);color:var(--red);border-radius:7px;padding:5px 10px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer}
+.btn-danger:hover{background:var(--red-pale)}
+/* Task cards */
+.task-card{background:var(--white);border:1.5px solid var(--border);border-radius:13px;padding:16px 18px;margin-bottom:10px;box-shadow:var(--shadow-sm);transition:all .2s}
+.task-card:hover{border-color:var(--sage-light)}
+.task-card.overdue{border-color:var(--red);background:var(--red-pale)}
+.task-card.done{opacity:.6;border-style:dashed}
+.task-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.task-title{font-size:15px;font-weight:500;color:var(--ink);line-height:1.35}
+.task-title.done{text-decoration:line-through;color:var(--ink-muted)}
+.task-meta{font-size:12px;color:var(--ink-muted);margin-bottom:8px;display:flex;flex-wrap:wrap;gap:10px}
+.task-actions{display:flex;gap:7px;flex-wrap:wrap}
+.priority-badge{padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;flex-shrink:0}
+.p-urgent{background:var(--red-pale);border:1px solid var(--red-border);color:var(--red)}
+.p-high{background:var(--amber-pale);border:1px solid var(--amber-light);color:var(--amber)}
+.p-normal{background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)}
+/* Draft card */
+.draft-card{background:var(--white);border:2px solid var(--sage-deep);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);margin-top:6px}
+.draft-top{background:var(--sage-deep);padding:18px 22px;color:white;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.draft-title{font-family:'Fraunces',serif;font-size:17px;font-weight:300}
+.draft-type-tag{background:rgba(255,255,255,.18);padding:3px 11px;border-radius:100px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.draft-body{padding:22px}
+.draft-field{margin-bottom:14px}
+.draft-field-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+.draft-text{font-size:14px;line-height:1.85;color:var(--ink-soft);font-weight:300;white-space:pre-wrap;background:var(--warm);border-radius:10px;padding:14px 16px;border:1px solid var(--border)}
+.draft-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.abtn{display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none}
+.abtn-dark{background:var(--ink);color:white}.abtn-dark:hover{background:var(--ink-soft)}
+.abtn-sage{background:var(--sage-deep);color:white}.abtn-sage:hover{background:var(--ink)}
+.abtn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink-soft)}.abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+/* Log entries */
+.log-entry{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.log-entry:last-child{border-bottom:none}
+.log-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.log-date{font-size:11px;color:var(--ink-muted);margin-bottom:2px}
+.log-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px}
+.log-notes{font-size:13px;color:var(--ink-muted);font-weight:300;line-height:1.55}
+.log-outcome{display:inline-block;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:500;margin-top:5px}
+.out-success{background:var(--sage-pale);color:var(--sage-deep);border:1px solid var(--sage-light)}
+.out-pending{background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber-light)}
+.out-failed{background:var(--red-pale);color:var(--red);border:1px solid var(--red-border)}
+/* Script card */
+.script-card{background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:13px;padding:18px 20px;margin-top:10px}
+.script-section{margin-bottom:16px}
+.script-section:last-child{margin-bottom:0}
+.script-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px}
+.script-line{font-size:14px;line-height:1.75;color:var(--ink-soft);font-style:italic;padding:10px 14px;background:var(--white);border-radius:8px;border-left:3px solid var(--sage)}
+/* Escalation */
+.esc-step{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--white);border-radius:10px;border:1px solid var(--border);margin-bottom:8px}
+.esc-num{width:24px;height:24px;border-radius:50%;background:var(--sage-deep);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.esc-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:2px}
+.esc-desc{font-size:13px;color:var(--ink-muted);font-weight:300;line-height:1.55}
+/* Stat row */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+.stat-box{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow-sm)}
+.stat-val{font-family:'Fraunces',serif;font-size:26px;font-weight:300;color:var(--ink);margin-bottom:3px}
+.stat-label{font-size:11px;color:var(--ink-muted);font-weight:400;text-transform:uppercase;letter-spacing:.08em}
+/* Loading */
+.load-wrap{text-align:center;padding:40px 24px}
+.load-ring{width:44px;height:44px;margin:0 auto 16px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:40px 24px;color:var(--ink-muted)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-title{font-family:'Fraunces',serif;font-size:17px;font-weight:300;color:var(--ink);margin-bottom:5px}
+.empty-sub{font-size:13px;font-weight:300;line-height:1.6;max-width:360px;margin:0 auto}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){.two-col,.three-col{grid-template-columns:1fr}.tabs{gap:0}}
+</style>
+</head>
+<body>
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
+</nav>
+
+<div class="shell">
+  <div class="page-header">
+    <div class="page-icon">🤝</div>
+    <h1 class="page-title">Care <em>Concierge</em></h1>
+    <p class="page-sub">Your personal medical advocate. Track every outstanding task, draft perfect follow-up messages, log every call, and never let anything fall through the cracks.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tasks',this)">✅ Tasks <span class="tab-badge" id="tasks_badge">0</span></button>
+    <button class="tab" onclick="switchTab('draft',this)">✍️ Draft a Message</button>
+    <button class="tab" onclick="switchTab('script',this)">📞 Phone Script</button>
+    <button class="tab" onclick="switchTab('log',this)">📋 Communication Log</button>
+    <button class="tab" onclick="switchTab('escalate',this)">⚠️ Escalation Guide</button>
+  </div>
+
+  <!-- TASKS PANEL -->
+  <div class="panel active" id="panel-tasks">
+    <div class="fcard">
+      <div class="fcard-title">Add a Task</div>
+      <div class="fcard-sub">Anything outstanding with a doctor, pharmacy, insurance, or school. Log it here so nothing gets forgotten.</div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Task</label><input type="text" class="finput" id="task_title" placeholder="e.g. Follow up on referral to Dr. Chen"></div>
+        <div class="field"><label class="flabel">Who is it with?</label><input type="text" class="finput" id="task_contact" placeholder="e.g. Dr. Webb's office, CVS pharmacy"></div>
+      </div>
+      <div class="three-col">
+        <div class="field"><label class="flabel">Category</label>
+          <select class="fselect" id="task_cat">
+            <option value="doctor">Doctor / Specialist</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="insurance">Insurance</option>
+            <option value="school">School / IEP</option>
+            <option value="lab">Lab / Test</option>
+            <option value="referral">Referral</option>
+            <option value="prescription">Prescription</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field"><label class="flabel">Priority</label>
+          <select class="fselect" id="task_priority">
+            <option value="urgent">🔴 Urgent</option>
+            <option value="high">🟠 High</option>
+            <option value="normal" selected>🟢 Normal</option>
+          </select>
+        </div>
+        <div class="field"><label class="flabel">Follow up by</label><input type="date" class="finput" id="task_due"></div>
+      </div>
+      <div class="field"><label class="flabel">Notes</label><input type="text" class="finput" id="task_notes" placeholder="Any context — what you've already tried, what you need, reference numbers…"></div>
+      <div style="margin-top:14px"><button class="btn-primary" onclick="addTask()">+ Add Task</button></div>
+    </div>
+
+    <div id="task_stats" class="hidden">
+      <div class="stat-row" id="stat_row"></div>
+    </div>
+
+    <div id="task_filters" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="filterTasks('all',this)">All</button>
+      <button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="filterTasks('urgent',this)">🔴 Urgent</button>
+      <button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="filterTasks('doctor',this)">Doctor</button>
+      <button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="filterTasks('pharmacy',this)">Pharmacy</button>
+      <button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="filterTasks('insurance',this)">Insurance</button>
+      <button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="filterTasks('done',this)">✓ Done</button>
+    </div>
+
+    <div id="task_list"></div>
+  </div>
+
+  <!-- DRAFT PANEL -->
+  <div class="panel" id="panel-draft">
+    <div class="fcard">
+      <div class="fcard-title">Draft a Message</div>
+      <div class="fcard-sub">AI writes the perfect message for any situation — follow-ups, complaints, prescription requests, referral chases, and more.</div>
+
+      <div class="field"><label class="flabel">What do you need to send?</label>
+        <select class="fselect" id="draft_type" onchange="updateDraftPlaceholder()">
+          <option value="followup_appointment">Follow up on appointment / referral</option>
+          <option value="followup_prescription">Follow up on prescription / prior auth</option>
+          <option value="followup_results">Follow up on test results</option>
+          <option value="request_records">Request medical records</option>
+          <option value="complaint">Complaint about care / wait times</option>
+          <option value="insurance_question">Question for insurance</option>
+          <option value="pharmacy_issue">Pharmacy issue / medication problem</option>
+          <option value="school_accommodation">School accommodation request</option>
+          <option value="new_patient">New patient inquiry</option>
+          <option value="cancellation_waitlist">Get on cancellation waitlist</option>
+          <option value="second_opinion">Request for second opinion</option>
+          <option value="custom">Custom situation</option>
+        </select>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Recipient</label><input type="text" class="finput" id="draft_recipient" placeholder="e.g. Dr. Webb's office, CVS, BlueCross"></div>
+        <div class="field"><label class="flabel">Patient name</label><input type="text" class="finput" id="draft_patient" placeholder="e.g. Emma Johnson or myself"></div>
+      </div>
+      <div class="field"><label class="flabel">Situation / context</label>
+        <textarea class="ftextarea" id="draft_context" placeholder="What's the situation? What have you already tried? What do you need them to do? Any reference numbers, dates, or names to include?"></textarea>
+      </div>
+      <div class="field"><label class="flabel">Tone</label>
+        <select class="fselect" id="draft_tone">
+          <option value="firm but professional">Firm but professional</option>
+          <option value="warm and collaborative">Warm and collaborative</option>
+          <option value="urgent and direct">Urgent and direct</option>
+          <option value="formal complaint">Formal complaint</option>
+          <option value="friendly follow-up">Friendly follow-up</option>
+        </select>
+      </div>
+      <div style="margin-top:14px"><button class="btn-primary" onclick="generateDraft()" id="draft_btn">✍️ Generate Message</button></div>
+    </div>
+    <div id="draft_out"></div>
+  </div>
+
+  <!-- PHONE SCRIPT PANEL -->
+  <div class="panel" id="panel-script">
+    <div class="fcard">
+      <div class="fcard-title">Generate a Phone Script</div>
+      <div class="fcard-sub">Calling a doctor's office, insurance company, or pharmacy can be intimidating. Get a calm, structured script with exactly what to say — and what to say when they push back.</div>
+
+      <div class="field"><label class="flabel">Who are you calling?</label>
+        <select class="fselect" id="script_type">
+          <option value="doctor_office">Doctor's office — appointment / referral</option>
+          <option value="specialist_waitlist">Specialist — get on cancellation list</option>
+          <option value="insurance_appeal">Insurance — appeal a denial</option>
+          <option value="insurance_auth">Insurance — check prior authorization status</option>
+          <option value="pharmacy_delay">Pharmacy — delayed / missing prescription</option>
+          <option value="pharmacy_pa">Pharmacy — prior auth issue</option>
+          <option value="records_request">Medical records department</option>
+          <option value="complaint_call">Patient advocate / complaint line</option>
+          <option value="custom_call">Custom call</option>
+        </select>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Who you're calling</label><input type="text" class="finput" id="script_recipient" placeholder="e.g. Dr. Chen's office, BlueCross member services"></div>
+        <div class="field"><label class="flabel">Patient name</label><input type="text" class="finput" id="script_patient" placeholder="e.g. Emma Johnson or myself"></div>
+      </div>
+      <div class="field"><label class="flabel">What do you need to accomplish?</label>
+        <textarea class="ftextarea" id="script_goal" placeholder="e.g. Get an appointment within the next 2 weeks. The referral was sent 3 weeks ago and I haven't heard back. Emma is getting worse."></textarea>
+      </div>
+      <div style="margin-top:14px"><button class="btn-primary" onclick="generateScript()" id="script_btn">📞 Generate Phone Script</button></div>
+    </div>
+    <div id="script_out"></div>
+  </div>
+
+  <!-- COMMUNICATION LOG PANEL -->
+  <div class="panel" id="panel-log">
+    <div class="fcard">
+      <div class="fcard-title">Log a Communication</div>
+      <div class="fcard-sub">Record every call, email, and appointment. This log is your evidence trail if anything goes wrong.</div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Date & Time</label><input type="datetime-local" class="finput" id="log_datetime"></div>
+        <div class="field"><label class="flabel">Type</label>
+          <select class="fselect" id="log_type">
+            <option value="📞 Phone call">📞 Phone call</option>
+            <option value="📧 Email sent">📧 Email sent</option>
+            <option value="📧 Email received">📧 Email received</option>
+            <option value="🏥 In-person visit">🏥 In-person visit</option>
+            <option value="💬 Portal message">💬 Portal message</option>
+            <option value="📮 Letter sent">📮 Letter sent</option>
+            <option value="📮 Letter received">📮 Letter received</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Who did you contact?</label><input type="text" class="finput" id="log_contact" placeholder="e.g. Dr. Webb's nurse, CVS pharmacy, BlueCross"></div>
+        <div class="field"><label class="flabel">Person you spoke with</label><input type="text" class="finput" id="log_person" placeholder="e.g. Sarah (nurse), John (ext 204)"></div>
+      </div>
+      <div class="field"><label class="flabel">What was discussed?</label>
+        <textarea class="ftextarea" id="log_notes" placeholder="Summary of the conversation — what you asked, what they said, what was promised…"></textarea>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Outcome</label>
+          <select class="fselect" id="log_outcome">
+            <option value="resolved">✅ Resolved</option>
+            <option value="pending">⏳ Pending / follow-up needed</option>
+            <option value="escalating">⚠️ Escalating</option>
+            <option value="no_answer">📵 No answer / voicemail</option>
+            <option value="refused">❌ Refused / denied</option>
+          </select>
+        </div>
+        <div class="field"><label class="flabel">Reference / Confirmation #</label><input type="text" class="finput" id="log_ref" placeholder="Claim #, case #, confirmation #…"></div>
+      </div>
+      <div class="field"><label class="flabel">Follow-up needed by</label><input type="date" class="finput" id="log_followup"></div>
+      <div style="margin-top:14px"><button class="btn-primary" onclick="addLogEntry()">+ Log This Communication</button></div>
+    </div>
+    <div id="log_list"></div>
+  </div>
+
+  <!-- ESCALATION PANEL -->
+  <div class="panel" id="panel-escalate">
+    <div class="fcard">
+      <div class="fcard-title">Get an Escalation Plan</div>
+      <div class="fcard-sub">When the normal path isn't working, escalation is your right. Tell us what's happening and we'll give you a step-by-step plan.</div>
+      <div class="field"><label class="flabel">What situation are you escalating?</label>
+        <select class="fselect" id="esc_type">
+          <option value="cant_get_appointment">Can't get an appointment — waiting too long</option>
+          <option value="insurance_denial">Insurance keeps denying a claim</option>
+          <option value="dismissed_ignored">Doctor dismissing or ignoring concerns</option>
+          <option value="prescription_denied">Prescription denied / can't get medication</option>
+          <option value="referral_stuck">Referral is stuck / not moving forward</option>
+          <option value="records_refused">Medical records being withheld</option>
+          <option value="billing_dispute">Billing dispute or surprise bill</option>
+          <option value="school_refusing">School refusing accommodations</option>
+          <option value="er_mistreatment">Mistreatment in ER or hospital</option>
+          <option value="custom_escalation">Custom situation</option>
+        </select>
+      </div>
+      <div class="field"><label class="flabel">What's happened so far?</label>
+        <textarea class="ftextarea" id="esc_context" placeholder="Tell us what you've already tried, how long this has been going on, and what the impact is on the patient…"></textarea>
+      </div>
+      <div class="field"><label class="flabel">Patient name & state (for state-specific resources)</label>
+        <div class="two-col">
+          <input type="text" class="finput" id="esc_patient" placeholder="e.g. Emma or myself">
+          <input type="text" class="finput" id="esc_state" placeholder="e.g. Maryland, California">
+        </div>
+      </div>
+      <div style="margin-top:14px"><button class="btn-primary" onclick="generateEscalation()" id="esc_btn">⚠️ Generate Escalation Plan</button></div>
+    </div>
+    <div id="esc_out"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── UTILS ──
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function fmtDate(d){if(!d)return '';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
+function fmtDT(d){if(!d)return '';try{return new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});}catch{return d}}
+function isOverdue(due){return due && new Date(due+'T23:59:59') < new Date()}
+
+// ── STORAGE ──
+const TASK_KEY='advocate_concierge_tasks';
+const LOG_KEY='advocate_concierge_log';
+function getTasks(){return JSON.parse(localStorage.getItem(TASK_KEY)||'[]')}
+function saveTasks(t){localStorage.setItem(TASK_KEY,JSON.stringify(t));updateBadge()}
+function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
+function saveLogs(l){localStorage.setItem(LOG_KEY,JSON.stringify(l))}
+
+function updateBadge(){
+  const tasks=getTasks().filter(t=>!t.done);
+  const overdue=tasks.filter(t=>isOverdue(t.due)).length;
+  const badge=document.getElementById('tasks_badge');
+  badge.textContent=tasks.length;
+  badge.style.background=overdue>0?'var(--red)':'var(--sage-deep)';
+}
+
+// ── TABS ──
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='tasks')renderTasks();
+  if(tab==='log')renderLog();
+}
+
+// ── TASKS ──
+let taskFilter='all';
+
+function addTask(){
+  const title=document.getElementById('task_title').value.trim();
+  if(!title){showToast('Please enter a task description');return;}
+  const tasks=getTasks();
+  tasks.unshift({
+    id:Date.now(),
+    title,
+    contact:document.getElementById('task_contact').value.trim(),
+    cat:document.getElementById('task_cat').value,
+    priority:document.getElementById('task_priority').value,
+    due:document.getElementById('task_due').value,
+    notes:document.getElementById('task_notes').value.trim(),
+    done:false,
+    createdAt:new Date().toISOString()
+  });
+  saveTasks(tasks);
+  document.getElementById('task_title').value='';
+  document.getElementById('task_contact').value='';
+  document.getElementById('task_notes').value='';
+  document.getElementById('task_due').value='';
+  renderTasks();
+  showToast('Task added ✓');
+}
+
+function completeTask(id){
+  const tasks=getTasks().map(t=>t.id===id?{...t,done:!t.done,doneAt:!t.done?new Date().toISOString():null}:t);
+  saveTasks(tasks);renderTasks();
+}
+
+function deleteTask(id){
+  saveTasks(getTasks().filter(t=>t.id!==id));
+  renderTasks();showToast('Removed');
+}
+
+function filterTasks(filter,btn){
+  taskFilter=filter;
+  document.querySelectorAll('#task_filters button').forEach(b=>{b.style.borderColor='';b.style.color='';});
+  btn.style.borderColor='var(--sage)';btn.style.color='var(--sage-deep)';
+  renderTasks();
+}
+
+function renderTasks(){
+  let tasks=getTasks();
+  const el=document.getElementById('task_list');
+  const statsEl=document.getElementById('task_stats');
+  const filtersEl=document.getElementById('task_filters');
+
+  if(!tasks.length){
+    statsEl.classList.add('hidden');
+    filtersEl.classList.add('hidden');
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No tasks yet</div><div class="empty-sub">Add anything outstanding — follow-ups, prescriptions, referrals, callbacks. Never let anything fall through the cracks again.</div></div>`;
+    return;
+  }
+
+  statsEl.classList.remove('hidden');
+  filtersEl.classList.remove('hidden');
+
+  const total=tasks.filter(t=>!t.done).length;
+  const overdue=tasks.filter(t=>!t.done&&isOverdue(t.due)).length;
+  const urgent=tasks.filter(t=>!t.done&&t.priority==='urgent').length;
+  const done=tasks.filter(t=>t.done).length;
+  document.getElementById('stat_row').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${total}</div><div class="stat-label">Open</div></div>
+    <div class="stat-box" style="${overdue?'border-color:var(--red)':''}"><div class="stat-val" style="${overdue?'color:var(--red)':''}">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat-box"><div class="stat-val" style="${urgent?'color:var(--amber)':''}">${urgent}</div><div class="stat-label">Urgent</div></div>
+    <div class="stat-box"><div class="stat-val">${done}</div><div class="stat-label">Done</div></div>`;
+
+  // Filter
+  if(taskFilter==='all') tasks=tasks.filter(t=>!t.done);
+  else if(taskFilter==='done') tasks=tasks.filter(t=>t.done);
+  else if(taskFilter==='urgent') tasks=tasks.filter(t=>!t.done&&t.priority==='urgent');
+  else tasks=tasks.filter(t=>!t.done&&t.cat===taskFilter);
+
+  if(!tasks.length){el.innerHTML=`<div class="empty-state" style="padding:24px"><div class="empty-sub">No tasks in this category.</div></div>`;return;}
+
+  const catIcons={doctor:'🏥',pharmacy:'💊',insurance:'📋',school:'🏫',lab:'🧪',referral:'📨',prescription:'💊',other:'📌'};
+  const priorityClass={urgent:'p-urgent',high:'p-high',normal:'p-normal'};
+  const priorityLabel={urgent:'Urgent',high:'High',normal:'Normal'};
+
+  el.innerHTML=tasks.map(t=>`
+    <div class="task-card ${!t.done&&isOverdue(t.due)?'overdue':''} ${t.done?'done':''}">
+      <div class="task-header">
+        <div style="flex:1">
+          <div class="task-title ${t.done?'done':''}">${catIcons[t.cat]||'📌'} ${escH(t.title)}</div>
+          ${t.contact?`<div style="font-size:12px;color:var(--ink-muted);margin-top:2px">With: ${escH(t.contact)}</div>`:''}
+        </div>
+        <span class="priority-badge ${priorityClass[t.priority]||'p-normal'}">${priorityLabel[t.priority]||'Normal'}</span>
+      </div>
+      <div class="task-meta">
+        ${t.due?`<span style="${isOverdue(t.due)&&!t.done?'color:var(--red);font-weight:600':''}">📅 ${isOverdue(t.due)&&!t.done?'OVERDUE — ':''}Follow up by ${fmtDate(t.due)}</span>`:''}
+        ${t.notes?`<span>💬 ${escH(t.notes)}</span>`:''}
+      </div>
+      <div class="task-actions">
+        <button class="btn-sm" style="background:${t.done?'var(--border)':'var(--sage-pale)'};border:1.5px solid ${t.done?'var(--border)':'var(--sage-light)'};color:${t.done?'var(--ink-muted)':'var(--sage-deep)'}" onclick="completeTask(${t.id})">${t.done?'↩ Reopen':'✓ Mark Done'}</button>
+        <button class="btn-sm" style="background:var(--blue-pale);border:1.5px solid var(--blue-border);color:var(--blue)" onclick="quickDraft(${JSON.stringify(t.title).replace(/'/g,"&#39;")},${JSON.stringify(t.contact||'').replace(/'/g,"&#39;")})">✍️ Draft Follow-up</button>
+        <button class="btn-sm" style="background:var(--violet-pale);border:1.5px solid var(--violet-border);color:var(--violet)" onclick="quickScript(${JSON.stringify(t.title).replace(/'/g,"&#39;")},${JSON.stringify(t.contact||'').replace(/'/g,"&#39;")})">📞 Phone Script</button>
+        <button class="btn-danger" onclick="deleteTask(${t.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function quickDraft(title,contact){
+  document.querySelector('[onclick*="switchTab(\'draft\'"]').click();
+  document.getElementById('draft_context').value=title;
+  document.getElementById('draft_recipient').value=contact||'';
+  document.getElementById('draft_type').value='followup_appointment';
+}
+
+function quickScript(title,contact){
+  document.querySelector('[onclick*="switchTab(\'script\'"]').click();
+  document.getElementById('script_goal').value=title;
+  document.getElementById('script_recipient').value=contact||'';
+}
+
+// ── API ──
+async function callClaude(system,user,maxTokens=1500){
+  const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,system,messages:[{role:'user',content:user}]})
+  });
+  const d=await r.json();
+  const text=d.content?.[0]?.text||'';
+  return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+// ── DRAFT ──
+function updateDraftPlaceholder(){
+  const type=document.getElementById('draft_type').value;
+  const placeholders={
+    followup_appointment:'e.g. I sent a referral request 3 weeks ago and haven\'t heard back. The patient is getting worse and needs to be seen urgently.',
+    followup_prescription:'e.g. The prior authorization was submitted 2 weeks ago. The pharmacy says they haven\'t received approval yet.',
+    complaint:'e.g. We waited 4 hours and the doctor dismissed our concerns without examining the patient properly.',
+    insurance_question:'e.g. I need to understand why claim #12345 was denied and what the appeal process looks like.',
+  };
+  document.getElementById('draft_context').placeholder=placeholders[type]||'What\'s the situation? What do you need them to do?';
+}
+
+async function generateDraft(){
+  const type=document.getElementById('draft_type').value;
+  const recipient=document.getElementById('draft_recipient').value.trim();
+  const patient=document.getElementById('draft_patient').value.trim()||'the patient';
+  const context=document.getElementById('draft_context').value.trim();
+  const tone=document.getElementById('draft_tone').value;
+  if(!context){showToast('Please describe the situation');return;}
+
+  const out=document.getElementById('draft_out');
+  document.getElementById('draft_btn').disabled=true;
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Drafting your message…</p></div>`;
+
+  const typeLabels={followup_appointment:'Follow-up — Appointment/Referral',followup_prescription:'Follow-up — Prescription',followup_results:'Follow-up — Test Results',request_records:'Records Request',complaint:'Formal Complaint',insurance_question:'Insurance Inquiry',pharmacy_issue:'Pharmacy Issue',school_accommodation:'School Accommodation Request',new_patient:'New Patient Inquiry',cancellation_waitlist:'Cancellation Waitlist Request',second_opinion:'Second Opinion Request',custom:'Custom Message'};
+
+  try{
+    const result=await callClaude(
+      `You are a patient advocate drafting professional medical communications. Return ONLY valid JSON no markdown: {"subject":"Email subject line (if email)","greeting":"Opening salutation","body":"Main message body. Professional, clear, and ${tone}. Reference specific details. End with a clear ask and deadline.","closing":"Professional closing","keyPoints":["3-4 key points made in this message"],"followUpDate":"Suggested follow-up date if no response (e.g. In 3 business days)"}`,
+      `Message type: ${typeLabels[type]||type}\nRecipient: ${recipient||'the recipient'}\nPatient: ${patient}\nTone: ${tone}\nSituation: ${context}\n\nWrite a complete professional message.`,
+      1200
+    );
+    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const fullMessage=`${result.greeting}\n\n${result.body}\n\n${result.closing}`;
+    window._lastDraft=fullMessage;
+    window._lastDraftSubject=result.subject||'';
+
+    out.innerHTML=`
+      <div class="draft-actions" style="margin-bottom:12px">
+        <button class="abtn abtn-outline" onclick="window.print()">🖨️ Print</button>
+        <button class="abtn abtn-outline" onclick="emailDraft()">✉️ Open in Email</button>
+        <button class="abtn abtn-outline" onclick="copyDraft()">📋 Copy</button>
+      </div>
+      <div class="draft-card">
+        <div class="draft-top">
+          <div class="draft-title">${escH(typeLabels[type]||type)}</div>
+          <span class="draft-type-tag">${escH(tone)}</span>
+        </div>
+        <div class="draft-body">
+          ${result.subject?`<div class="draft-field"><div class="draft-field-label">Subject Line</div><div style="font-size:14px;font-weight:500;color:var(--ink);padding:8px 12px;background:var(--sage-pale);border-radius:8px">${escH(result.subject)}</div></div>`:''}
+          <div class="draft-field"><div class="draft-field-label">Message</div><div class="draft-text">${escH(fullMessage)}</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+            <div style="padding:12px 14px;background:var(--sage-pale);border-radius:10px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:7px">Key points made</div>
+              ${(result.keyPoints||[]).map(p=>`<div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">✦ ${escH(p)}</div>`).join('')}
+            </div>
+            <div style="padding:12px 14px;background:var(--amber-pale);border-radius:10px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:7px">If no response</div>
+              <div style="font-size:13px;color:var(--ink-soft)">Follow up: ${escH(result.followUpDate||'In 3 business days')}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }catch(e){
+    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }finally{document.getElementById('draft_btn').disabled=false;}
+}
+
+function emailDraft(){
+  window.location.href=`mailto:?subject=${encodeURIComponent(window._lastDraftSubject||'MedAdvocate Draft')}&body=${encodeURIComponent(window._lastDraft||'')}`;
+}
+function copyDraft(){
+  navigator.clipboard.writeText(`Subject: ${window._lastDraftSubject||''}\n\n${window._lastDraft||''}`).then(()=>showToast('Copied ✓'));
+}
+
+// ── PHONE SCRIPT ──
+async function generateScript(){
+  const type=document.getElementById('script_type').value;
+  const recipient=document.getElementById('script_recipient').value.trim();
+  const patient=document.getElementById('script_patient').value.trim()||'the patient';
+  const goal=document.getElementById('script_goal').value.trim();
+  if(!goal){showToast('Please describe what you need to accomplish');return;}
+
+  const out=document.getElementById('script_out');
+  document.getElementById('script_btn').disabled=true;
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Writing your phone script…</p></div>`;
+
+  try{
+    const result=await callClaude(
+      `You write phone scripts for medical advocates. Return ONLY valid JSON no markdown: {"opener":"What to say when someone picks up (2-3 sentences)","keyAsk":"The main thing to request — stated clearly and specifically","information":["List of information to have ready before calling"],"pushbacks":[{"they_say":"Common response or pushback","you_say":"Calm assertive response"}],"ifNoAnswer":"What to say when leaving a voicemail","escalationLine":"One firm sentence to use if they refuse or stall","closing":"How to end the call professionally"}`,
+      `Call type: ${type}\nCalling: ${recipient||'the provider'}\nPatient: ${patient}\nGoal: ${goal}`,
+      1200
+    );
+
+    out.innerHTML=`
+      <div class="script-card">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:14px">📞 Your Phone Script — ${escH(recipient||'Provider')}</div>
+
+        ${result.information?.length?`<div class="script-section"><div class="script-label">Have ready before calling</div>${result.information.map(i=>`<div style="font-size:13px;color:var(--ink-soft);padding:5px 0;border-bottom:1px solid var(--border)">📋 ${escH(i)}</div>`).join('')}</div>`:''}
+
+        <div class="script-section"><div class="script-label">When they answer — say this</div><div class="script-line">${escH(result.opener)}</div></div>
+
+        <div class="script-section"><div class="script-label">Your main ask</div><div class="script-line" style="border-color:var(--sage-deep);font-weight:500">${escH(result.keyAsk)}</div></div>
+
+        ${result.pushbacks?.length?`<div class="script-section"><div class="script-label">If they push back</div>${result.pushbacks.map(p=>`<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--ink-muted);margin-bottom:4px">They say: "${escH(p.they_say)}"</div><div class="script-line">${escH(p.you_say)}</div></div>`).join('')}</div>`:''}
+
+        <div class="script-section"><div class="script-label">If they still refuse — say this</div><div class="script-line" style="border-color:var(--amber);color:var(--ink)">${escH(result.escalationLine)}</div></div>
+
+        <div class="script-section"><div class="script-label">If you get voicemail</div><div class="script-line">${escH(result.ifNoAnswer)}</div></div>
+
+        <div class="script-section"><div class="script-label">How to end the call</div><div class="script-line">${escH(result.closing)}</div></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap">
+        <button class="abtn abtn-outline" onclick="window.print()">🖨️ Print Script</button>
+        <button class="abtn abtn-outline" onclick="navigator.clipboard.writeText(document.querySelector('.script-card').innerText).then(()=>showToast('Copied ✓'))">📋 Copy</button>
+      </div>`;
+  }catch(e){
+    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }finally{document.getElementById('script_btn').disabled=false;}
+}
+
+// ── COMMUNICATION LOG ──
+function addLogEntry(){
+  const contact=document.getElementById('log_contact').value.trim();
+  const notes=document.getElementById('log_notes').value.trim();
+  if(!contact||!notes){showToast('Please fill in who you contacted and what was discussed');return;}
+  const logs=getLogs();
+  logs.unshift({
+    id:Date.now(),
+    datetime:document.getElementById('log_datetime').value||new Date().toISOString(),
+    type:document.getElementById('log_type').value,
+    contact,
+    person:document.getElementById('log_person').value.trim(),
+    notes,
+    outcome:document.getElementById('log_outcome').value,
+    ref:document.getElementById('log_ref').value.trim(),
+    followup:document.getElementById('log_followup').value
+  });
+  saveLogs(logs);
+  ['log_contact','log_person','log_notes','log_ref','log_followup'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('log_outcome').value='resolved';
+  renderLog();
+  showToast('Logged ✓');
+}
+
+function renderLog(){
+  const logs=getLogs();
+  const el=document.getElementById('log_list');
+  if(!logs.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No communications logged yet</div><div class="empty-sub">Start logging every call and email. This becomes your evidence trail and ensures nothing gets forgotten.</div></div>`;
+    return;
+  }
+  const outcomeClass={resolved:'out-success',pending:'out-pending',escalating:'out-pending',no_answer:'out-pending',refused:'out-failed'};
+  const outcomeLabel={resolved:'✅ Resolved','pending':'⏳ Follow-up needed','escalating':'⚠️ Escalating','no_answer':'📵 No answer','refused':'❌ Refused'};
+  const typeIcons={'📞 Phone call':'📞','📧 Email sent':'📧','📧 Email received':'📬','🏥 In-person visit':'🏥','💬 Portal message':'💬','📮 Letter sent':'📮','📮 Letter received':'📬'};
+
+  el.innerHTML=`<div class="fcard" style="padding:16px 20px">${logs.map(l=>`
+    <div class="log-entry">
+      <div class="log-icon" style="background:var(--sage-pale)">${typeIcons[l.type]||'📋'}</div>
+      <div style="flex:1">
+        <div class="log-date">${fmtDT(l.datetime)} · ${escH(l.type)}</div>
+        <div class="log-title">${escH(l.contact)}${l.person?' — '+escH(l.person):''}</div>
+        <div class="log-notes">${escH(l.notes)}</div>
+        ${l.ref?`<div style="font-size:11px;color:var(--ink-muted);margin-top:3px">Ref: ${escH(l.ref)}</div>`:''}
+        ${l.followup?`<div style="font-size:11px;color:var(--amber);margin-top:3px;font-weight:500">📅 Follow up by ${fmtDate(l.followup)}</div>`:''}
+        <span class="log-outcome ${outcomeClass[l.outcome]||'out-pending'}">${outcomeLabel[l.outcome]||l.outcome}</span>
+      </div>
+      <button class="btn-danger" onclick="deleteLog(${l.id})" style="flex-shrink:0;align-self:flex-start">✕</button>
+    </div>`).join('')}</div>`;
+}
+
+function deleteLog(id){
+  saveLogs(getLogs().filter(l=>l.id!==id));
+  renderLog();showToast('Removed');
+}
+
+// ── ESCALATION ──
+async function generateEscalation(){
+  const type=document.getElementById('esc_type').value;
+  const context=document.getElementById('esc_context').value.trim();
+  const patient=document.getElementById('esc_patient').value.trim()||'the patient';
+  const state=document.getElementById('esc_state').value.trim();
+  if(!context){showToast('Please describe the situation');return;}
+
+  const out=document.getElementById('esc_out');
+  document.getElementById('esc_btn').disabled=true;
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Building your escalation plan…</p></div>`;
+
+  try{
+    const result=await callClaude(
+      `You are an expert patient advocate building escalation plans. Return ONLY valid JSON no markdown: {"assessment":"2 sentences: how serious is this and what is the patient's right here","steps":[{"step":"Action title","description":"What to do and say","who":"Who to contact","timeline":"When to do this"}],"keyRights":["3-4 specific legal rights or regulations the patient has in this situation"],"resources":["Specific organizations, hotlines, or agencies to contact — include names not just types"],"redFlags":["Warning signs that require immediate escalation"],"powerStatement":"One powerful statement the patient can make to assert their rights"}`,
+      `Situation: ${type}\nPatient: ${patient}${state?' in '+state:''}\nContext: ${context}`,
+      1500
+    );
+
+    out.innerHTML=`
+      <div class="fcard" style="border:2px solid var(--amber);margin-top:6px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:10px">⚠️ Escalation Plan</div>
+        <div style="font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px;padding:12px 14px;background:var(--amber-pale);border-radius:10px">${escH(result.assessment)}</div>
+
+        <div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--sage-deep);padding:12px 16px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 10px 10px 0;margin-bottom:18px;line-height:1.6">"${escH(result.powerStatement)}"</div>
+
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px">Step-by-Step Escalation</div>
+        ${(result.steps||[]).map((s,i)=>`<div class="esc-step"><div class="esc-num">${i+1}</div><div><div class="esc-title">${escH(s.step)}</div><div class="esc-desc">${escH(s.description)}</div>${s.who?`<div style="font-size:11px;color:var(--blue);margin-top:3px;font-weight:500">Contact: ${escH(s.who)}</div>`:''}${s.timeline?`<div style="font-size:11px;color:var(--ink-muted);margin-top:2px">⏱ ${escH(s.timeline)}</div>`:''}</div></div>`).join('')}
+
+        ${result.keyRights?.length?`<div style="margin-top:16px"><div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px">Your Legal Rights</div>${result.keyRights.map(r=>`<div style="padding:8px 12px;background:var(--blue-pale);border:1px solid var(--blue-border);border-radius:8px;margin-bottom:6px;font-size:13px;color:var(--ink-soft)">⚖️ ${escH(r)}</div>`).join('')}</div>`:''}
+
+        ${result.resources?.length?`<div style="margin-top:16px"><div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px">Resources & Organizations</div>${result.resources.map(r=>`<div style="padding:8px 12px;background:var(--violet-pale);border:1px solid var(--violet-border);border-radius:8px;margin-bottom:6px;font-size:13px;color:var(--ink-soft)">📞 ${escH(r)}</div>`).join('')}</div>`:''}
+
+        ${result.redFlags?.length?`<div style="margin-top:16px"><div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:8px">🚨 Red Flags — Escalate Immediately If</div>${result.redFlags.map(f=>`<div style="padding:8px 12px;background:var(--red-pale);border:1px solid var(--red-border);border-radius:8px;margin-bottom:6px;font-size:13px;color:var(--red)">! ${escH(f)}</div>`).join('')}</div>`:''}
+
+        <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+          <button class="abtn abtn-outline" onclick="window.print()">🖨️ Print Plan</button>
+          <button class="abtn abtn-outline" onclick="navigator.clipboard.writeText(document.querySelector('.fcard').innerText).then(()=>showToast('Copied ✓'))">📋 Copy</button>
+        </div>
+      </div>`;
+  }catch(e){
+    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }finally{document.getElementById('esc_btn').disabled=false;}
+}
+
+// ── INIT ──
+const now=new Date();
+document.getElementById('log_datetime').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).toISOString().split('T')[0];
+renderTasks();
+renderLog();
+updateBadge();
+</script>
+</body>
+</html>
