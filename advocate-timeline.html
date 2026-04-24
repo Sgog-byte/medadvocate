@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Medical Timeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;--blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow:0 4px 24px rgba(28,43,34,.10);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.shell{max-width:860px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--blue)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:480px;margin:0 auto}
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300}
+.field{margin-bottom:12px}.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.finput,.ftextarea,.fselect{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+.ftextarea{min-height:70px;line-height:1.6}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.btn-primary{padding:12px 22px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--ink)}
+.btn-blue{padding:12px 22px;background:var(--blue);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-blue:hover{background:#2d6ab5}
+.btn-outline{padding:10px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn-danger{padding:5px 10px;background:transparent;border:1.5px solid var(--red-border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--red);cursor:pointer}
+.btn-danger:hover{background:var(--red-pale)}
+/* Category colors */
+.cat-diagnosis{--cat:#c0392b;--cat-pale:#fff5f5;--cat-border:#fccaca}
+.cat-symptom{--cat:#c9923a;--cat-pale:#fdf3e7;--cat-border:#f0d4a8}
+.cat-medication{--cat:#7b68ee;--cat-pale:#f3f0ff;--cat-border:#d4d0ff}
+.cat-procedure{--cat:#3a7bc8;--cat-pale:#eef4fc;--cat-border:#b8d4f0}
+.cat-hospitalization{--cat:#c0392b;--cat-pale:#fff5f5;--cat-border:#fccaca}
+.cat-appointment{--cat:#2d6a4f;--cat-pale:#e8f5ee;--cat-border:#b7d9c4}
+.cat-test{--cat:#4a7a8a;--cat-pale:#e8f4f8;--cat-border:#b0d4e0}
+.cat-milestone{--cat:#2d6a4f;--cat-pale:#e8f5ee;--cat-border:#b7d9c4}
+.cat-other{--cat:#666;--cat-pale:#f5f5f5;--cat-border:#ddd}
+/* Timeline */
+.timeline{position:relative;padding:0 0 20px}
+.timeline::before{content:'';position:absolute;left:22px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-year{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-muted);padding:16px 0 8px 54px}
+.tl-item{display:flex;gap:16px;margin-bottom:14px;position:relative}
+.tl-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:14px;border:2px solid white;box-shadow:0 0 0 2px var(--cat,var(--sage));background:var(--cat,var(--sage));z-index:1;position:relative;left:16px}
+.tl-card{flex:1;background:var(--white);border:1.5px solid var(--cat-border,var(--border));border-radius:13px;padding:14px 16px;box-shadow:var(--shadow-sm);margin-left:12px}
+.tl-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.tl-date{font-size:11px;color:var(--ink-muted);font-weight:400;margin-bottom:3px}
+.tl-event{font-size:15px;font-weight:500;color:var(--ink);line-height:1.35}
+.tl-cat-tag{padding:2px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.05em;background:var(--cat-pale,var(--sage-pale));border:1px solid var(--cat-border,var(--sage-light));color:var(--cat,var(--sage));white-space:nowrap;flex-shrink:0;text-transform:capitalize}
+.tl-notes{font-size:13px;color:var(--ink-muted);font-weight:300;line-height:1.6;margin-top:6px}
+.tl-doctor{font-size:12px;color:var(--ink-muted);margin-top:4px}
+/* Summary card */
+.summary-card{background:var(--sage-deep);color:white;border-radius:16px;padding:22px 26px;margin-bottom:20px}
+.summary-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;margin-bottom:4px}
+.summary-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px}
+.summary-text{font-size:14px;line-height:1.8;color:rgba(255,255,255,.85);font-weight:300}
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.filter-btn{padding:5px 13px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);font-family:'DM Sans',sans-serif;transition:all .2s}
+.filter-btn.active{background:var(--sage-pale);border-color:var(--sage);color:var(--sage-deep)}
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink-muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.empty-sub{font-size:13px;font-weight:300;line-height:1.6}
+.load-wrap{text-align:center;padding:48px 24px}
+.load-ring{width:44px;height:44px;margin:0 auto 16px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--blue);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media print{body{background:white}nav,.fcard,.filter-bar,.no-print{display:none!important}.shell{max-width:100%;padding:0}.timeline::before{background:#ccc}.summary-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}}
+@media(max-width:640px){.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
+</nav>
+<div class="shell">
+  <div class="page-header">
+    <div class="page-icon">📅</div>
+    <h1 class="page-title">Medical <em>Timeline</em></h1>
+    <p class="page-sub">Your complete medical history in chronological order. Every diagnosis, hospitalization, procedure, and milestone — all in one place.</p>
+  </div>
+
+  <!-- Add Event -->
+  <div class="fcard no-print">
+    <div class="fcard-title">Add an Event</div>
+    <div class="fcard-sub">Build your timeline one event at a time. Include diagnoses, hospitalizations, procedures, symptoms, medications, and milestones.</div>
+    <div class="two-col">
+      <div class="field"><label class="flabel">Date</label><input type="date" class="finput" id="ev_date"></div>
+      <div class="field"><label class="flabel">Category</label>
+        <select class="fselect" id="ev_cat">
+          <option value="diagnosis">Diagnosis</option>
+          <option value="symptom">New Symptom</option>
+          <option value="medication">Medication Started / Stopped</option>
+          <option value="procedure">Procedure / Surgery</option>
+          <option value="hospitalization">Hospitalization / ER</option>
+          <option value="appointment">Specialist Appointment</option>
+          <option value="test">Test / Lab Result</option>
+          <option value="milestone">Milestone / Improvement</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label class="flabel">What happened?</label><input type="text" class="finput" id="ev_title" placeholder="e.g. Diagnosed with POTS after tilt table test, First syncope episode, Started Florinef…"></div>
+    <div class="field"><label class="flabel">Doctor / Facility (optional)</label><input type="text" class="finput" id="ev_doctor" placeholder="e.g. Dr. Webb, Johns Hopkins, Children's Hospital"></div>
+    <div class="field"><label class="flabel">Notes / Details (optional)</label><textarea class="ftextarea" id="ev_notes" placeholder="Any additional context — symptoms present, test results, decisions made, how things went…"></textarea></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-primary" onclick="addEvent()">+ Add to Timeline</button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls" class="hidden no-print" style="margin-bottom:6px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--ink-muted)" id="event_count"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-blue" onclick="generateSummary()">🧠 Generate AI Summary</button>
+        <button class="btn-outline" onclick="window.print()">🖨️ Print Timeline</button>
+      </div>
+    </div>
+    <div class="filter-bar" id="filter_bar">
+      <button class="filter-btn active" onclick="filterTimeline('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTimeline('diagnosis',this)">Diagnoses</button>
+      <button class="filter-btn" onclick="filterTimeline('medication',this)">Medications</button>
+      <button class="filter-btn" onclick="filterTimeline('hospitalization',this)">Hospitalizations</button>
+      <button class="filter-btn" onclick="filterTimeline('procedure',this)">Procedures</button>
+      <button class="filter-btn" onclick="filterTimeline('appointment',this)">Appointments</button>
+      <button class="filter-btn" onclick="filterTimeline('milestone',this)">Milestones</button>
+    </div>
+  </div>
+
+  <!-- AI Summary -->
+  <div id="ai_summary" class="hidden"></div>
+
+  <!-- Timeline -->
+  <div id="timeline_wrap"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── UTILS ──
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});}catch{return d}}
+function getYear(d){return d?d.substring(0,4):'Unknown'}
+
+// ── STORAGE ──
+const TL_KEY='advocate_timeline';
+function getEvents(){return JSON.parse(localStorage.getItem(TL_KEY)||'[]')}
+function saveEvents(evs){localStorage.setItem(TL_KEY,JSON.stringify(evs))}
+
+// ── CATEGORY CONFIG ──
+const CAT_CONFIG={
+  diagnosis:{label:'Diagnosis',icon:'🔴',color:'var(--red)'},
+  symptom:{label:'New Symptom',icon:'🟠',color:'var(--amber)'},
+  medication:{label:'Medication',icon:'💜',color:'var(--violet)'},
+  procedure:{label:'Procedure',icon:'🔵',color:'var(--blue)'},
+  hospitalization:{label:'Hospitalization',icon:'🏥',color:'var(--red)'},
+  appointment:{label:'Appointment',icon:'🟢',color:'var(--sage)'},
+  test:{label:'Test/Labs',icon:'🔷',color:'#4a7a8a'},
+  milestone:{label:'Milestone',icon:'✨',color:'var(--sage)'},
+  other:{label:'Other',icon:'⚪',color:'#666'}
+};
+
+// ── ADD EVENT ──
+function addEvent(){
+  const title=document.getElementById('ev_title').value.trim();
+  const date=document.getElementById('ev_date').value;
+  if(!title||!date){showToast('Please enter a date and event description');return;}
+  const evs=getEvents();
+  evs.push({
+    id:Date.now(),
+    date,
+    cat:document.getElementById('ev_cat').value,
+    title,
+    doctor:document.getElementById('ev_doctor').value.trim(),
+    notes:document.getElementById('ev_notes').value.trim()
+  });
+  evs.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  saveEvents(evs);
+  document.getElementById('ev_title').value='';
+  document.getElementById('ev_doctor').value='';
+  document.getElementById('ev_notes').value='';
+  renderTimeline();
+  showToast('Event added ✓');
+}
+
+// ── DELETE ──
+function deleteEvent(id){
+  saveEvents(getEvents().filter(e=>e.id!==id));
+  renderTimeline();showToast('Removed');
+}
+
+// ── FILTER ──
+let activeFilter='all';
+function filterTimeline(cat,btn){
+  activeFilter=cat;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTimeline();
+}
+
+// ── RENDER ──
+function renderTimeline(){
+  const allEvents=getEvents();
+  const events=activeFilter==='all'?allEvents:allEvents.filter(e=>e.cat===activeFilter);
+  const wrap=document.getElementById('timeline_wrap');
+  const controls=document.getElementById('controls');
+  const count=document.getElementById('event_count');
+
+  if(!allEvents.length){
+    controls.classList.add('hidden');
+    wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Your timeline is empty</div><div class="empty-sub">Start adding events above — diagnoses, hospitalizations, procedures, milestones. Build the complete picture of your medical history.</div></div>`;
+    return;
+  }
+  controls.classList.remove('hidden');
+  count.textContent=`${events.length} event${events.length!==1?'s':''} ${activeFilter!=='all'?'(filtered)':''}`;
+
+  // Group by year
+  const byYear={};
+  events.forEach(e=>{
+    const y=getYear(e.date);
+    if(!byYear[y])byYear[y]=[];
+    byYear[y].push(e);
+  });
+
+  wrap.innerHTML=`<div class="timeline">${
+    Object.entries(byYear).sort(([a],[b])=>a.localeCompare(b)).map(([year,evs])=>`
+      <div class="tl-year">📅 ${year}</div>
+      ${evs.map(e=>{
+        const cfg=CAT_CONFIG[e.cat]||CAT_CONFIG.other;
+        return `<div class="tl-item cat-${e.cat}">
+          <div class="tl-dot"></div>
+          <div class="tl-card">
+            <div class="tl-card-header">
+              <div>
+                <div class="tl-date">${fmtDate(e.date)}</div>
+                <div class="tl-event">${escH(e.title)}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                <span class="tl-cat-tag">${cfg.icon} ${cfg.label}</span>
+                <button class="btn-danger no-print" onclick="deleteEvent(${e.id})">✕</button>
+              </div>
+            </div>
+            ${e.doctor?`<div class="tl-doctor">🏥 ${escH(e.doctor)}</div>`:''}
+            ${e.notes?`<div class="tl-notes">${escH(e.notes)}</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}`).join('')
+  }</div>`;
+}
+
+// ── AI SUMMARY ──
+async function generateSummary(){
+  const events=getEvents();
+  if(!events.length){showToast('Add events first');return;}
+  const summaryEl=document.getElementById('ai_summary');
+  summaryEl.classList.remove('hidden');
+  summaryEl.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Analyzing your medical timeline…</p></div>`;
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
+        system:'You are a medical advocate analyzing a patient timeline. Return ONLY valid JSON no markdown: {"headline":"One powerful sentence capturing the patient medical journey","summary":"3-4 sentences describing the full picture clinically — diagnoses, progression, key events, current status","patterns":["2-3 notable patterns or connections you see in the timeline"],"keyMoments":["3 most significant events in this medical history"],"questionsForDoctor":["3 questions this timeline raises that should be discussed with a doctor"]}',
+        messages:[{role:'user',content:`Medical Timeline:\n\n${events.map(e=>`${fmtDate(e.date)} [${e.cat}]: ${e.title}${e.doctor?' at '+e.doctor:''}${e.notes?' — '+e.notes:''}`).join('\n')}`}]})
+    });
+    const d=await r.json();
+    const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    summaryEl.innerHTML=`
+      <div class="summary-card">
+        <div class="summary-title">📊 AI Analysis of Your Timeline</div>
+        <div class="summary-sub">Based on ${events.length} events spanning ${getYear(events[0].date)}${getYear(events[events.length-1].date)!==getYear(events[0].date)?'–'+getYear(events[events.length-1].date):''}</div>
+        <div class="summary-text" style="font-family:'Fraunces',serif;font-size:17px;font-style:italic;margin-bottom:12px">"${escH(result.headline)}"</div>
+        <div class="summary-text">${escH(result.summary)}</div>
+      </div>
+      ${result.patterns?.length?`<div class="fcard"><div class="fcard-title" style="margin-bottom:12px">🔍 Patterns We Notice</div>${result.patterns.map(p=>`<div style="padding:10px 14px;background:var(--blue-pale);border:1px solid var(--blue-border);border-radius:10px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6">${escH(p)}</div>`).join('')}</div>`:''}
+      ${result.keyMoments?.length?`<div class="fcard"><div class="fcard-title" style="margin-bottom:12px">⭐ Key Moments</div>${result.keyMoments.map(m=>`<div style="padding:10px 14px;background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:10px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6">→ ${escH(m)}</div>`).join('')}</div>`:''}
+      ${result.questionsForDoctor?.length?`<div class="fcard"><div class="fcard-title" style="margin-bottom:12px">❓ Questions This Raises</div>${result.questionsForDoctor.map(q=>`<div style="padding:10px 14px;background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:10px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6">? ${escH(q)}</div>`).join('')}</div>`:''}
+      <div style="text-align:center;margin:8px 0"><button class="btn-outline" onclick="document.getElementById('ai_summary').classList.add('hidden')">Hide Summary</button></div>`;
+  }catch(e){
+    summaryEl.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:14px;color:var(--red);margin-bottom:16px">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }
+}
+
+// ── INIT ──
+document.getElementById('ev_date').value=new Date().toISOString().split('T')[0];
+renderTimeline();
+</script>
+</body>
+</html>

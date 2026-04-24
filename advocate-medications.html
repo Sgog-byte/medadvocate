@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Medication Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow:0 4px 24px rgba(28,43,34,.10);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.shell{max-width:900px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--violet)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:480px;margin:0 auto}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px;gap:0}
+.tab{padding:11px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--sage-deep);font-weight:600;border-bottom-color:var(--sage-deep)}
+.panel{display:none}.panel.active{display:block}
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300}
+.field{margin-bottom:12px}.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.finput,.ftextarea,.fselect{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+.ftextarea{min-height:70px;line-height:1.6}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.btn-primary{padding:12px 22px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--ink)}
+.btn-outline{padding:10px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn-danger{padding:7px 13px;background:transparent;border:1.5px solid var(--red-border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--red);cursor:pointer;transition:all .2s}
+.btn-danger:hover{background:var(--red-pale)}
+.med-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow-sm);transition:all .2s}
+.med-card:hover{border-color:var(--sage-light)}
+.med-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.med-name{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink)}
+.med-dose{font-size:13px;color:var(--ink-muted);font-weight:300;margin-top:2px}
+.med-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.med-tag{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:500}
+.tag-active{background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)}
+.tag-paused{background:var(--amber-pale);border:1px solid var(--amber-light);color:var(--amber)}
+.tag-stopped{background:var(--red-pale);border:1px solid var(--red-border);color:var(--red)}
+.tag-rx{background:var(--violet-pale);border:1px solid var(--violet-border);color:var(--violet)}
+.tag-otc{background:#f0f4ff;border:1px solid #c8d4ff;color:#4a6eb5}
+.tag-supplement{background:var(--amber-pale);border:1px solid var(--amber-light);color:var(--amber)}
+.med-notes{font-size:13px;color:var(--ink-muted);font-weight:300;line-height:1.6;border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
+.med-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.log-entry{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.log-entry:last-child{border-bottom:none}
+.log-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.log-date{font-size:12px;color:var(--ink-muted);margin-bottom:2px}
+.log-text{font-size:14px;color:var(--ink-soft);line-height:1.5}
+.effectiveness-bar{display:flex;gap:4px;margin-top:6px}
+.eff-pip{width:20px;height:8px;border-radius:100px;background:var(--border);transition:background .2s}
+.eff-pip.filled{background:var(--sage)}
+.report-out{background:var(--white);border:1.5px solid var(--sage-deep);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.report-top{background:var(--sage-deep);padding:22px 28px;color:white}
+.report-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;margin-bottom:4px}
+.report-sub{font-size:13px;color:rgba(255,255,255,.6)}
+.report-body{padding:24px 28px}
+.report-sec{margin-bottom:20px}
+.report-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.report-item{padding:10px 14px;background:var(--sage-pale);border-radius:10px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6}
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink-muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.empty-sub{font-size:13px;font-weight:300;line-height:1.6}
+.load-wrap{text-align:center;padding:48px 24px}
+.load-ring{width:44px;height:44px;margin:0 auto 16px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){.two-col,.three-col{grid-template-columns:1fr}.report-body,.report-top{padding:18px 16px}}
+</style>
+</head>
+<body>
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
+</nav>
+<div class="shell">
+  <div class="page-header">
+    <div class="page-icon">💊</div>
+    <h1 class="page-title">Medication <em>Tracker</em></h1>
+    <p class="page-sub">Log every medication, track what's working, and generate a clean report for any appointment.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('medications')">💊 Medications</button>
+    <button class="tab" onclick="switchTab('log')">📋 Log & Notes</button>
+    <button class="tab" onclick="switchTab('report')">📄 Appointment Report</button>
+  </div>
+
+  <!-- MEDICATIONS PANEL -->
+  <div class="panel active" id="panel-medications">
+    <div class="fcard">
+      <div class="fcard-title">Add a Medication</div>
+      <div class="fcard-sub">Prescription, supplement, or OTC — track them all in one place.</div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Medication Name</label><input type="text" class="finput" id="med_name" placeholder="e.g. Florinef, Vitamin D, Melatonin"></div>
+        <div class="field"><label class="flabel">Dose</label><input type="text" class="finput" id="med_dose" placeholder="e.g. 0.1mg, 5000 IU"></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Frequency</label><input type="text" class="finput" id="med_freq" placeholder="e.g. Once daily, twice daily with food"></div>
+        <div class="field"><label class="flabel">Type</label>
+          <select class="fselect" id="med_type">
+            <option value="prescription">Prescription</option>
+            <option value="otc">Over the Counter</option>
+            <option value="supplement">Supplement / Vitamin</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Prescribing Doctor (if Rx)</label><input type="text" class="finput" id="med_doctor" placeholder="e.g. Dr. Webb, Cardiology"></div>
+        <div class="field"><label class="flabel">Start Date</label><input type="date" class="finput" id="med_start"></div>
+      </div>
+      <div class="field"><label class="flabel">What it's for / Reason</label><input type="text" class="finput" id="med_reason" placeholder="e.g. Blood pressure / POTS, Sleep, Inflammation"></div>
+      <div class="field"><label class="flabel">Notes (side effects, instructions, etc.)</label><textarea class="ftextarea" id="med_notes" placeholder="e.g. Take with food. Can cause dizziness in first week. Refrigerate."></textarea></div>
+      <div style="margin-top:14px">
+        <button class="btn-primary" onclick="addMedication()">+ Add Medication</button>
+      </div>
+    </div>
+
+    <div id="med_list"></div>
+  </div>
+
+  <!-- LOG PANEL -->
+  <div class="panel" id="panel-log">
+    <div class="fcard">
+      <div class="fcard-title">Add a Log Entry</div>
+      <div class="fcard-sub">Track side effects, effectiveness, dosage changes, or anything worth noting.</div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Medication</label>
+          <select class="fselect" id="log_med">
+            <option value="">Select medication…</option>
+          </select>
+        </div>
+        <div class="field"><label class="flabel">Date</label><input type="date" class="finput" id="log_date"></div>
+      </div>
+      <div class="field"><label class="flabel">What happened?</label>
+        <textarea class="ftextarea" id="log_note" placeholder="e.g. Noticed dizziness 30 min after dose. Felt better after drinking extra fluids. Consider taking at night instead."></textarea>
+      </div>
+      <div class="field"><label class="flabel">Effectiveness today (1 = not working, 5 = working well)</label>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+          <input type="range" id="log_effectiveness" min="1" max="5" value="3" style="flex:1;accent-color:var(--sage)">
+          <span id="log_eff_label" style="font-size:14px;font-weight:500;color:var(--sage-deep);min-width:20px">3</span>
+        </div>
+      </div>
+      <div class="field"><label class="flabel">Entry type</label>
+        <select class="fselect" id="log_type">
+          <option value="note">General note</option>
+          <option value="side_effect">Side effect observed</option>
+          <option value="dose_change">Dose change</option>
+          <option value="started">Started medication</option>
+          <option value="stopped">Stopped medication</option>
+          <option value="improvement">Improvement noted</option>
+        </select>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn-primary" onclick="addLogEntry()">+ Add Log Entry</button>
+      </div>
+    </div>
+    <div id="log_list"></div>
+  </div>
+
+  <!-- REPORT PANEL -->
+  <div class="panel" id="panel-report">
+    <div class="fcard">
+      <div class="fcard-title">Generate Appointment Report</div>
+      <div class="fcard-sub">A clean, printable medication summary your doctor can review in 60 seconds.</div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Patient Name</label><input type="text" class="finput" id="rpt_name" placeholder="e.g. Emma Johnson or myself"></div>
+        <div class="field"><label class="flabel">Appointment Date</label><input type="date" class="finput" id="rpt_date"></div>
+      </div>
+      <div class="field"><label class="flabel">Appointment type / Doctor</label><input type="text" class="finput" id="rpt_doctor" placeholder="e.g. Cardiology follow-up with Dr. Webb"></div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="generateReport()">📄 Generate Report</button>
+        <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </div>
+    <div id="report_out"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── UTILS ──
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
+
+// ── STORAGE ──
+const MED_KEY='advocate_medications';
+const LOG_KEY='advocate_med_logs';
+function getMeds(){return JSON.parse(localStorage.getItem(MED_KEY)||'[]')}
+function saveMeds(meds){localStorage.setItem(MED_KEY,JSON.stringify(meds))}
+function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
+function saveLogs(logs){localStorage.setItem(LOG_KEY,JSON.stringify(logs))}
+
+// ── TABS ──
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='log')populateLogSelect();
+  if(tab==='report')prefillReport();
+  if(tab==='medications')renderMeds();
+  if(tab==='log')renderLogs();
+}
+
+// ── MEDICATIONS ──
+function addMedication(){
+  const name=document.getElementById('med_name').value.trim();
+  if(!name){showToast('Please enter a medication name');return;}
+  const meds=getMeds();
+  meds.push({
+    id:Date.now(),
+    name,
+    dose:document.getElementById('med_dose').value.trim(),
+    freq:document.getElementById('med_freq').value.trim(),
+    type:document.getElementById('med_type').value,
+    doctor:document.getElementById('med_doctor').value.trim(),
+    start:document.getElementById('med_start').value,
+    reason:document.getElementById('med_reason').value.trim(),
+    notes:document.getElementById('med_notes').value.trim(),
+    status:'active'
+  });
+  saveMeds(meds);
+  // Clear form
+  ['med_name','med_dose','med_freq','med_doctor','med_start','med_reason','med_notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('med_type').value='prescription';
+  renderMeds();
+  showToast('Medication added ✓');
+}
+
+function updateMedStatus(id,status){
+  const meds=getMeds().map(m=>m.id===id?{...m,status}:m);
+  saveMeds(meds);renderMeds();
+  showToast('Status updated ✓');
+}
+
+function deleteMed(id){
+  if(!confirm('Remove this medication?'))return;
+  saveMeds(getMeds().filter(m=>m.id!==id));
+  renderMeds();showToast('Removed');
+}
+
+function renderMeds(){
+  const meds=getMeds();
+  const el=document.getElementById('med_list');
+  if(!meds.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">💊</div><div class="empty-title">No medications yet</div><div class="empty-sub">Add your first medication above to start tracking.</div></div>`;
+    return;
+  }
+  const statusTag={active:'tag-active',paused:'tag-paused',stopped:'tag-stopped'};
+  const typeTag={prescription:'tag-rx',otc:'tag-otc',supplement:'tag-supplement'};
+  const typeLabel={prescription:'Rx',otc:'OTC',supplement:'Supplement'};
+  const statusLabel={active:'Active',paused:'Paused',stopped:'Stopped'};
+  el.innerHTML=meds.map(m=>`
+    <div class="med-card">
+      <div class="med-card-header">
+        <div>
+          <div class="med-name">${escH(m.name)}</div>
+          <div class="med-dose">${m.dose?escH(m.dose)+' · ':''}${m.freq?escH(m.freq):''}${m.reason?' · For: '+escH(m.reason):''}</div>
+        </div>
+        <button class="btn-danger" onclick="deleteMed(${m.id})">✕</button>
+      </div>
+      <div class="med-tags">
+        <span class="med-tag ${statusTag[m.status]||'tag-active'}">${statusLabel[m.status]||'Active'}</span>
+        <span class="med-tag ${typeTag[m.type]||'tag-rx'}">${typeLabel[m.type]||'Rx'}</span>
+        ${m.doctor?`<span class="med-tag" style="background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep)">${escH(m.doctor)}</span>`:''}
+        ${m.start?`<span class="med-tag" style="background:#f5f5f5;border:1px solid #ddd;color:#666">Since ${fmtDate(m.start)}</span>`:''}
+      </div>
+      ${m.notes?`<div class="med-notes">${escH(m.notes)}</div>`:''}
+      <div class="med-actions">
+        ${m.status!=='active'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus(${m.id},'active')">Mark Active</button>`:''}
+        ${m.status!=='paused'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus(${m.id},'paused')">Pause</button>`:''}
+        ${m.status!=='stopped'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus(${m.id},'stopped')">Mark Stopped</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ── LOG ──
+function populateLogSelect(){
+  const sel=document.getElementById('log_med');
+  const meds=getMeds();
+  sel.innerHTML='<option value="">Select medication…</option>'+meds.map(m=>`<option value="${m.id}">${escH(m.name)}</option>`).join('');
+}
+
+function addLogEntry(){
+  const medId=parseInt(document.getElementById('log_med').value);
+  const note=document.getElementById('log_note').value.trim();
+  if(!medId||!note){showToast('Please select a medication and add a note');return;}
+  const logs=getLogs();
+  logs.unshift({
+    id:Date.now(),
+    medId,
+    date:document.getElementById('log_date').value||new Date().toISOString().split('T')[0],
+    note,
+    effectiveness:parseInt(document.getElementById('log_effectiveness').value),
+    type:document.getElementById('log_type').value
+  });
+  saveLogs(logs);
+  document.getElementById('log_note').value='';
+  document.getElementById('log_type').value='note';
+  document.getElementById('log_effectiveness').value=3;
+  document.getElementById('log_eff_label').textContent='3';
+  renderLogs();
+  showToast('Log entry saved ✓');
+}
+
+function renderLogs(){
+  const logs=getLogs();
+  const meds=getMeds();
+  const el=document.getElementById('log_list');
+  if(!logs.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No log entries yet</div><div class="empty-sub">Start logging side effects, improvements, and dosage changes here.</div></div>`;
+    return;
+  }
+  const typeColors={side_effect:'var(--red)',improvement:'var(--sage)',dose_change:'var(--amber)',started:'var(--sage)',stopped:'var(--red)',note:'var(--ink-muted)'};
+  const typeLabels={side_effect:'Side effect',improvement:'Improvement',dose_change:'Dose change',started:'Started',stopped:'Stopped',note:'Note'};
+  const grouped={};
+  logs.forEach(l=>{
+    const med=meds.find(m=>m.id===l.medId);
+    const key=med?med.name:'Unknown';
+    if(!grouped[key])grouped[key]=[];
+    grouped[key].push(l);
+  });
+  el.innerHTML=Object.entries(grouped).map(([name,entries])=>`
+    <div class="fcard">
+      <div class="fcard-title" style="margin-bottom:12px">📋 ${escH(name)}</div>
+      ${entries.map(l=>`
+        <div class="log-entry">
+          <div class="log-dot" style="background:${typeColors[l.type]||'var(--ink-muted)'}"></div>
+          <div style="flex:1">
+            <div class="log-date">${fmtDate(l.date)} · <span style="color:${typeColors[l.type]}">${typeLabels[l.type]||'Note'}</span></div>
+            <div class="log-text">${escH(l.note)}</div>
+            <div class="effectiveness-bar" title="Effectiveness: ${l.effectiveness}/5">
+              ${[1,2,3,4,5].map(i=>`<div class="eff-pip ${i<=l.effectiveness?'filled':''}"></div>`).join('')}
+              <span style="font-size:11px;color:var(--ink-muted);margin-left:6px">${l.effectiveness}/5</span>
+            </div>
+          </div>
+          <button class="btn-danger" onclick="deleteLog(${l.id})" style="padding:4px 8px;font-size:11px">✕</button>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function deleteLog(id){
+  saveLogs(getLogs().filter(l=>l.id!==id));
+  renderLogs();showToast('Removed');
+}
+
+// ── REPORT ──
+function prefillReport(){
+  if(!document.getElementById('rpt_date').value){
+    document.getElementById('rpt_date').value=new Date().toISOString().split('T')[0];
+  }
+}
+
+async function generateReport(){
+  const meds=getMeds();
+  if(!meds.length){showToast('Add medications first');return;}
+  const logs=getLogs();
+  const name=document.getElementById('rpt_name').value.trim()||'Patient';
+  const date=document.getElementById('rpt_date').value;
+  const doctor=document.getElementById('rpt_doctor').value.trim();
+
+  const out=document.getElementById('report_out');
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Generating your medication report…</p></div>`;
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
+        system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary of the medication picture","activeMedsSummary":"One sentence describing the current active medications and their purpose","concerns":["2-4 notable concerns, interactions, or things to discuss with the doctor"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns, or empty array if none"]}',
+        messages:[{role:'user',content:`Patient: ${name}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
+    });
+    const d=await r.json();
+    const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const activeMeds=meds.filter(m=>m.status==='active');
+    const stoppedMeds=meds.filter(m=>m.status!=='active');
+
+    out.innerHTML=`
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
+        <button class="btn-outline" onclick="document.getElementById('report_out').innerHTML=''">✕ Clear</button>
+      </div>
+      <div class="report-out">
+        <div class="report-top">
+          <div class="report-title">Medication Report — ${escH(name)}</div>
+          <div class="report-sub">${doctor?escH(doctor)+' · ':''}${fmtDate(date)||today} · Generated by MedAdvocate</div>
+        </div>
+        <div class="report-body">
+          <div class="report-sec"><div class="report-sec-title">Clinical Summary</div><div class="report-item">${escH(result.summary)}</div></div>
+          <div class="report-sec"><div class="report-sec-title">Active Medications (${activeMeds.length})</div>${activeMeds.map(m=>`<div class="report-item"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.freq?' '+escH(m.freq):''}${m.reason?'<br><span style="font-size:12px;color:var(--ink-muted)">For: '+escH(m.reason)+'</span>':''}${m.doctor?'<span style="font-size:12px;color:var(--ink-muted)"> · '+escH(m.doctor)+'</span>':''}</div>`).join('')}</div>
+          ${stoppedMeds.length?`<div class="report-sec"><div class="report-sec-title">Stopped / Paused</div>${stoppedMeds.map(m=>`<div class="report-item" style="opacity:.7">${escH(m.name)} (${m.status})</div>`).join('')}</div>`:''}
+          ${result.concerns?.length?`<div class="report-sec"><div class="report-sec-title">Notable Considerations</div>${result.concerns.map(c=>`<div class="report-item">⚠️ ${escH(c)}</div>`).join('')}</div>`:''}
+          ${result.redFlags?.length?`<div class="report-sec"><div class="report-sec-title">🚨 Potential Concerns to Discuss</div>${result.redFlags.map(f=>`<div class="report-item" style="background:var(--red-pale);border:1px solid var(--red-border)">🚨 ${escH(f)}</div>`).join('')}</div>`:''}
+          ${result.questionsToAsk?.length?`<div class="report-sec"><div class="report-sec-title">Questions to Ask Your Doctor</div>${result.questionsToAsk.map(q=>`<div class="report-item">→ ${escH(q)}</div>`).join('')}</div>`:''}
+        </div>
+      </div>`;
+  }catch(e){
+    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }
+}
+
+// ── INIT ──
+document.getElementById('log_effectiveness').addEventListener('input',function(){
+  document.getElementById('log_eff_label').textContent=this.value;
+});
+document.getElementById('log_date').value=new Date().toISOString().split('T')[0];
+renderMeds();
+renderLogs();
+</script>
+</body>
+</html>

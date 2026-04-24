@@ -402,6 +402,51 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">Write my appeal →</div><div class="tc-arr">→</div></div>
     </div>
 
+    <div class="tc" onclick="openTool('medications')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#7b68ee,#a855f7)">💊</div>
+        <div class="tc-name">Medication Tracker</div>
+        <div class="tc-tag tg-sage">Every med. Every note. One place.</div>
+        <div class="tc-desc">Log every medication for you or your child, track side effects and effectiveness, and generate a clean report for any appointment.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Track Rx, OTC, and supplements</div>
+          <div class="tc-feat"><div class="fd"></div>Log side effects and effectiveness</div>
+          <div class="tc-feat"><div class="fd"></div>AI-generated appointment report</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Track my medications →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('timeline')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#3a7bc8,#2d6a4f)">📅</div>
+        <div class="tc-name">Medical Timeline</div>
+        <div class="tc-tag tg-sage">Your entire history in one view</div>
+        <div class="tc-desc">Build a chronological record of every diagnosis, hospitalization, procedure, and milestone. Get an AI analysis of your complete medical picture.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Categorized by type and date</div>
+          <div class="tc-feat"><div class="fd"></div>Filterable and printable</div>
+          <div class="tc-feat"><div class="fd"></div>AI pattern analysis</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Build my timeline →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('flare')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#c0392b,#e74c3c)">🔥</div>
+        <div class="tc-name">Flare Tracker</div>
+        <div class="tc-tag tg-amber">Find the patterns hiding in plain sight</div>
+        <div class="tc-desc">Log every flare with triggers, severity, symptoms, and what helped. Over time, AI identifies patterns that can change your treatment plan.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Trigger and symptom tracking</div>
+          <div class="tc-feat"><div class="fd"></div>Visual frequency charts</div>
+          <div class="tc-feat"><div class="fd"></div>AI pattern analysis</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Track my flares →</div><div class="tc-arr">→</div></div>
+    </div>
+
   </div>
 </section>
 
@@ -445,10 +490,9 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <p class="sec-sub">Built from real experiences. Requested by real moms.</p>
   </div>
   <div class="coming-grid">
-    <div class="cc"><div class="cc-icon">🎙️</div><div class="cc-name">Appointment Recorder</div><div class="cc-desc">Record your visit, get an AI summary with action items and next steps.</div></div>
-    <div class="cc"><div class="cc-icon">📬</div><div class="cc-name">Care Team Coordinator</div><div class="cc-desc">Communication templates between specialists who don't talk to each other.</div></div>
-    <div class="cc"><div class="cc-icon">💊</div><div class="cc-name">Medication Tracker</div><div class="cc-desc">Log medications and side effects. Generate a clean report for any appointment.</div></div>
-    <div class="cc"><div class="cc-icon">🗓️</div><div class="cc-name">Medical Timeline</div><div class="cc-desc">Upload years of records — get a timeline a new specialist can read in 60 seconds.</div></div>
+    <div class="cc"><div class="cc-icon">🎙️</div><div class="cc-name">Appointment Recorder</div><div class="cc-desc">Record your visit, get an AI summary with action items and next steps. Requires microphone access.</div></div>
+    <div class="cc"><div class="cc-icon">💊</div><div class="cc-name">Drug Interaction Checker</div><div class="cc-desc">Paste your full medication list and flag potential interactions in plain English.</div></div>
+    <div class="cc"><div class="cc-icon">🔬</div><div class="cc-name">Second Opinion Prep</div><div class="cc-desc">Know exactly what to ask, what records to bring, and how to frame your case for a second opinion.</div></div>
     <div class="cc"><div class="cc-icon">👥</div><div class="cc-name">Multi-Profile Support</div><div class="cc-desc">Separate profiles for each child — each with their own complete history.</div></div>
     <div class="cc"><div class="cc-icon">💛</div><div class="cc-name">Caregiver Check-In</div><div class="cc-desc">A gentle space that sees the mom, not just the patient. Burnout is real.</div></div>
   </div>
@@ -511,4 +555,39 @@ const TOOLS = {
   credibility: { title:'The Credibility Document',    src:'advocate-credibility.html' },
   iep:         { title:'IEP & 504 Prep',              src:'advocate-iep.html' },
   er:          { title:'ER Prep Card',                src:'advocate-er.html' },
-  insurance:   { title:'Insurance Appeal Letter',   
+  insurance:   { title:'Insurance Appeal Letter',     src:'advocate-insurance.html' },
+  explain:     { title:'Explain My Diagnosis',        src:'advocate-explain.html' },
+  medications: { title:'Medication Tracker',          src:'advocate-medications.html' },
+  timeline:    { title:'Medical Timeline',            src:'advocate-timeline.html' },
+  flare:       { title:'Flare Tracker',               src:'advocate-flare.html' },
+  saved:       { title:'My Saved Items & Care Team',  src:'advocate-myadvocate.html' },
+};
+
+function openTool(key) {
+  const t = TOOLS[key]; if (!t) return;
+  document.getElementById('frameTitle').textContent = t.title;
+  document.getElementById('toolFrame').src = t.src;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTool() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => { document.getElementById('toolFrame').src = ''; }, 400);
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeTool();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

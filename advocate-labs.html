@@ -494,10 +494,51 @@
       <div class="page-header">
         <div>
           <div class="page-title">Lab <em>Tracker</em></div>
-          <div class="page-sub">Upload lab reports — we'll extract, organize, and track everything.</div>
+          <div class="page-sub">Upload lab reports — we'll extract, organize, and give you contextual insights based on your medical history.</div>
         </div>
         <div class="btn-row" style="margin-top:0">
           <button class="btn btn-outline no-print" onclick="printPage()">🖨️ Print Report</button>
+        </div>
+      </div>
+
+      <!-- Patient Profile for Contextual Interpretation -->
+      <div class="card no-print" id="profileCard" style="margin-bottom:18px;border:2px solid var(--sage-dark)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="card-title" style="margin-bottom:2px">🧠 Patient Profile <span style="font-size:11px;font-weight:400;color:var(--ink-muted);font-family:'DM Sans',sans-serif"> — helps Claude interpret labs in context</span></div>
+            <div class="card-sub" style="margin-bottom:0">The more you share, the more meaningful your lab insights will be.</div>
+          </div>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="toggleProfile()">
+            <span id="profileToggleLabel">▼ Edit Profile</span>
+          </button>
+        </div>
+        <div id="profileSummary" style="font-size:13px;color:var(--ink-soft);line-height:1.6;font-weight:300;font-style:italic">
+          No profile set — add diagnoses and medications below for personalized lab insights.
+        </div>
+        <div id="profileForm" class="hidden" style="margin-top:14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Patient Name</label>
+              <input type="text" id="profile_name" placeholder="e.g. Emma or myself" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm-white);outline:none">
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Age</label>
+              <input type="text" id="profile_age" placeholder="e.g. 14 or 38" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm-white);outline:none">
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Diagnoses</label>
+            <textarea id="profile_diagnoses" placeholder="e.g. POTS, EDS, MCAS, Hashimoto's, Crohn's Disease…" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm-white);outline:none;resize:none;min-height:70px;line-height:1.6"></textarea>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Current Medications</label>
+            <textarea id="profile_meds" placeholder="e.g. Florinef 0.1mg, Propranolol 10mg, Vitamin D 5000IU, Iron supplements…" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm-white);outline:none;resize:none;min-height:70px;line-height:1.6"></textarea>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px">Anything else Claude should know?</label>
+            <textarea id="profile_notes" placeholder="e.g. Has been having more fatigue lately. Recently started iron supplements. Doctor suspects autoimmune involvement…" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm-white);outline:none;resize:none;min-height:60px;line-height:1.6"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="saveProfile()" style="width:100%">💾 Save Profile</button>
         </div>
       </div>
 
@@ -729,41 +770,118 @@ function fileToBase64(file) {
 }
 
 // ─────────────────────────────────
+// PATIENT PROFILE
+// ─────────────────────────────────
+const PROFILE_KEY = 'advocate_lab_profile';
+
+function getProfile() {
+  return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+}
+
+function saveProfile() {
+  const profile = {
+    name: document.getElementById('profile_name').value.trim(),
+    age: document.getElementById('profile_age').value.trim(),
+    diagnoses: document.getElementById('profile_diagnoses').value.trim(),
+    meds: document.getElementById('profile_meds').value.trim(),
+    notes: document.getElementById('profile_notes').value.trim()
+  };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  updateProfileSummary(profile);
+  document.getElementById('profileForm').classList.add('hidden');
+  document.getElementById('profileToggleLabel').textContent = '▼ Edit Profile';
+  showToast('Profile saved ✓');
+}
+
+function loadProfile() {
+  const profile = getProfile();
+  if (profile.name) document.getElementById('profile_name').value = profile.name;
+  if (profile.age) document.getElementById('profile_age').value = profile.age;
+  if (profile.diagnoses) document.getElementById('profile_diagnoses').value = profile.diagnoses;
+  if (profile.meds) document.getElementById('profile_meds').value = profile.meds;
+  if (profile.notes) document.getElementById('profile_notes').value = profile.notes;
+  updateProfileSummary(profile);
+}
+
+function updateProfileSummary(profile) {
+  const el = document.getElementById('profileSummary');
+  if (!profile.name && !profile.diagnoses) {
+    el.textContent = 'No profile set — add diagnoses and medications below for personalized lab insights.';
+    return;
+  }
+  const parts = [];
+  if (profile.name) parts.push(`Patient: ${profile.name}${profile.age ? ', age ' + profile.age : ''}`);
+  if (profile.diagnoses) parts.push(`Diagnoses: ${profile.diagnoses}`);
+  if (profile.meds) parts.push(`Medications: ${profile.meds}`);
+  el.innerHTML = parts.map(p => `<span style="display:inline-block;margin-right:16px">✓ ${p}</span>`).join('');
+}
+
+function toggleProfile() {
+  const form = document.getElementById('profileForm');
+  const label = document.getElementById('profileToggleLabel');
+  if (form.classList.contains('hidden')) {
+    form.classList.remove('hidden');
+    label.textContent = '▲ Close';
+  } else {
+    form.classList.add('hidden');
+    label.textContent = '▼ Edit Profile';
+  }
+}
+
+function getProfileContext() {
+  const p = getProfile();
+  if (!p.name && !p.diagnoses) return '';
+  const parts = [];
+  if (p.name) parts.push(`Patient: ${p.name}${p.age ? ', age ' + p.age : ''}`);
+  if (p.diagnoses) parts.push(`Diagnoses: ${p.diagnoses}`);
+  if (p.meds) parts.push(`Current medications: ${p.meds}`);
+  if (p.notes) parts.push(`Additional context: ${p.notes}`);
+  return '\n\nPATIENT CONTEXT (use this to personalize your interpretation):\n' + parts.join('\n');
+}
+
+// ─────────────────────────────────
 // AI EXTRACTION
 // ─────────────────────────────────
-const SYSTEM_PROMPT = `You are a medical lab report parser. Extract all lab results from the provided content.
+function buildSystemPrompt() {
+  const profileContext = getProfileContext();
+  const hasProfile = profileContext.length > 0;
 
-Return ONLY valid JSON (no markdown, no backticks) in this exact format:
+  return `You are a medical lab report analyzer helping a caregiver understand their loved one's results.${profileContext}
+
+Extract all lab results and provide ${hasProfile ? 'PERSONALIZED contextual insights based on the patient profile above' : 'general insights'}.
+
+Return ONLY valid JSON (no markdown, no backticks):
 {
-  "reportDate": "YYYY-MM-DD or approximate date found in report, or today's date if none",
+  "reportDate": "YYYY-MM-DD or today if not found",
   "patientName": "patient name if found, else null",
   "results": [
     {
-      "name": "Test name (abbreviation + full name if available, e.g. WBC - White Blood Cell Count)",
+      "name": "Test name (abbreviation + full name e.g. WBC - White Blood Cell Count)",
       "value": 5.2,
-      "unit": "unit string e.g. g/dL, mg/dL, %",
+      "unit": "unit string e.g. g/dL",
       "low": 4.0,
       "high": 11.0,
       "status": "normal | high | low | critical",
-      "note": "Brief plain-English note about what this test measures and whether this result is concerning. 1-2 sentences max. Write for a non-medical parent."
+      "note": "Brief plain-English note for a non-medical parent. 1-2 sentences.${hasProfile ? ' Consider the patient context.' : ''}"
     }
   ],
   "insights": [
     {
       "level": "urgent | watch | info",
-      "text": "Plain English insight about this result or pattern. What it might mean. What to ask the doctor. Keep it reassuring but honest."
+      "text": "${hasProfile ? 'Personalized insight considering the patient diagnoses and medications. Explain what this means for someone with their specific conditions. What to ask the doctor.' : 'Plain English insight about this result. What it might mean. What to ask the doctor.'} Keep it honest but reassuring."
     }
-  ]
+  ]${hasProfile ? `,
+  "contextualSummary": "2-3 sentence summary of what these results mean specifically for this patient given their diagnoses. What patterns stand out? What should they bring up at their next appointment?"` : ''}
 }
 
 Rules:
-- Extract every numeric lab result you can find
-- If a value is outside the reference range, mark it high or low accordingly
-- Use the reference range from the report if provided; otherwise use standard clinical reference ranges
-- status "critical" = significantly outside range, needs prompt attention
-- For insights, prioritize: abnormal values first, then notable normals, then general observations
-- Keep notes parent-friendly — no medical jargon without explanation
-- If you cannot find a date, use today's date: ${new Date().toISOString().split('T')[0]}`;
+- Extract every numeric lab result
+- Mark values outside reference range as high/low
+- status "critical" = significantly outside range
+- Prioritize abnormal values in insights
+- Keep language parent-friendly
+- Today's date: ${new Date().toISOString().split('T')[0]}`;
+}
 
 async function extractLabsFromFile(base64, mediaType, isImage) {
   const contentBlock = isImage
@@ -775,13 +893,13 @@ async function extractLabsFromFile(base64, mediaType, isImage) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
-      system: SYSTEM_PROMPT,
+      max_tokens: 2500,
+      system: buildSystemPrompt(),
       messages: [{
         role: 'user',
         content: [
           contentBlock,
-          { type: 'text', text: 'Please extract all lab results from this report.' }
+          { type: 'text', text: 'Please extract all lab results from this report and provide personalized insights.' }
         ]
       }]
     })
@@ -798,8 +916,8 @@ async function extractLabsFromText(text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
-      system: SYSTEM_PROMPT,
+      max_tokens: 2500,
+      system: buildSystemPrompt(),
       messages: [{ role: 'user', content: `Lab report text:\n\n${text}` }]
     })
   });
@@ -1071,8 +1189,20 @@ function renderInsights() {
 
   const latest = allLabDates[allLabDates.length - 1];
   const insights = latest.insights || [];
-
   const dotColor = { urgent: 'dot-red', watch: 'dot-gold', info: 'dot-sage' };
+
+  // Show contextual summary if available
+  const insightsCard = document.getElementById('insightsCard');
+  if (latest.contextualSummary) {
+    const existingSummary = document.getElementById('contextualSummaryBox');
+    if (!existingSummary) {
+      const summaryBox = document.createElement('div');
+      summaryBox.id = 'contextualSummaryBox';
+      summaryBox.style.cssText = 'background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:13px;padding:16px 18px;margin-bottom:18px;font-size:14px;line-height:1.75;color:var(--ink-soft)';
+      summaryBox.innerHTML = `<div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-dark);margin-bottom:8px">🧠 Personalized Summary for ${getProfile().name || 'this patient'}</div>${latest.contextualSummary}`;
+      insightsCard.insertBefore(summaryBox, insightsCard.firstChild);
+    }
+  }
 
   document.getElementById('insightsList').innerHTML = insights.length > 0
     ? insights.map(ins => `
@@ -1221,6 +1351,7 @@ function loadDemo() {
 
 // Load demo on first visit if no data
 document.addEventListener('DOMContentLoaded', () => {
+  loadProfile();
   // Add demo button to empty state
   document.getElementById('emptyLabs').innerHTML += `
     <button class="btn btn-outline" style="margin:20px auto 0; display:inline-flex;" onclick="loadDemo()">
