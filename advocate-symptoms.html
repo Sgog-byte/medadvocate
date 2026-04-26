@@ -268,6 +268,10 @@
       <!-- Symptom sliders -->
       <div id="symLogList" class="sym-log-list"></div>
 
+      <div style="margin-top:8px;font-size:11px;color:var(--ink-muted);font-weight:300;text-align:right">
+        Pain scale descriptors adapted from the DoD/VA Pain & Symptom Rating Scale · <a href="https://neurahealth.co" target="_blank" style="color:var(--sage-deep);text-decoration:none;font-weight:500">NeuraHealth.co</a>
+      </div>
+
       <!-- Overall day -->
       <div id="overallSection" style="display:none">
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px">How was today overall?</div>
@@ -366,20 +370,52 @@ let charts = {};
 
 // Preset symptoms
 const PRESETS = [
-  { id:'fatigue',     label:'Fatigue',          icon:'😴' },
-  { id:'pain',        label:'Pain / Achiness',   icon:'💢' },
-  { id:'brainfog',    label:'Brain Fog',         icon:'🌫️' },
-  { id:'dizziness',   label:'Dizziness',         icon:'💫' },
-  { id:'nausea',      label:'Nausea',            icon:'🤢' },
-  { id:'headache',    label:'Headache',          icon:'🤕' },
-  { id:'sleep',       label:'Poor Sleep',        icon:'🌙' },
-  { id:'anxiety',     label:'Anxiety',           icon:'😰' },
-  { id:'heart',       label:'Heart Racing',      icon:'💓' },
-  { id:'gi',          label:'GI Issues',         icon:'🫁' },
-  { id:'joint',       label:'Joint Pain',        icon:'🦴' },
-  { id:'vision',      label:'Vision Issues',     icon:'👁️' },
-  { id:'energy',      label:'Low Energy',        icon:'🔋' },
-  { id:'mood',        label:'Low Mood',          icon:'🌧️' },
+  { id:'fatigue',        label:'Fatigue',                icon:'😴' },
+  { id:'pain',           label:'Pain / Achiness',        icon:'💢' },
+  { id:'brainfog',       label:'Brain Fog',              icon:'🌫️' },
+  { id:'dizziness',      label:'Dizziness / Lightheadedness', icon:'💫' },
+  { id:'nausea',         label:'Nausea',                 icon:'🤢' },
+  { id:'headache',       label:'Headache / Migraine',    icon:'🤕' },
+  { id:'sleep',          label:'Poor Sleep',             icon:'🌙' },
+  { id:'anxiety',        label:'Anxiety',                icon:'😰' },
+  { id:'heart',          label:'Heart Racing / Palpitations', icon:'💓' },
+  { id:'stomach',        label:'Stomach Pain',           icon:'🫃' },
+  { id:'gi',             label:'GI Issues / Bloating',   icon:'🫁' },
+  { id:'joint',          label:'Joint Pain',             icon:'🦴' },
+  { id:'subluxation',    label:'Joint Subluxations',     icon:'⚡' },
+  { id:'dislocation',    label:'Joint Dislocations',     icon:'🔴' },
+  { id:'fainting',       label:'Fainting / Near-Fainting', icon:'😵' },
+  { id:'vision',         label:'Vision Issues',          icon:'👁️' },
+  { id:'energy',         label:'Low Energy',             icon:'🔋' },
+  { id:'mood',           label:'Low Mood',               icon:'🌧️' },
+  { id:'sensory',        label:'Sensory Overload',       icon:'🔊' },
+  { id:'ocd',            label:'OCD / Intrusive Thoughts', icon:'🔄' },
+  { id:'tics',           label:'Tics',                   icon:'⚡' },
+  { id:'seizure',        label:'Seizures / Episodes',    icon:'🌊' },
+  { id:'catatonia',      label:'Catatonia / Freezing',   icon:'🧊' },
+  { id:'paranoia',       label:'Paranoia / Fear',        icon:'😨' },
+  { id:'hallucination',  label:'Hallucinations',         icon:'👁️' },
+  { id:'appetite_low',   label:'Low Appetite',           icon:'🍽️' },
+  { id:'appetite_high',  label:'Excessive Appetite',     icon:'🍔' },
+  { id:'arfid',          label:'Food Restriction / ARFID', icon:'🚫' },
+  { id:'breathing',      label:'Shortness of Breath',    icon:'💨' },
+  { id:'skin',           label:'Skin Reactions / Flushing', icon:'🔴' },
+  { id:'swelling',       label:'Swelling / Inflammation', icon:'🫧' },
+  { id:'temperature',    label:'Temperature Dysregulation', icon:'🌡️' },
+  { id:'pem',            label:'Post-Exertional Malaise', icon:'📉' },
+  { id:'orthostatic',    label:'Worsens When Standing',  icon:'⬆️' },
+  { id:'bleeding',       label:'Easy Bruising / Bleeding', icon:'🩸' },
+  { id:'inflammation',   label:'Widespread Inflammation', icon:'🔥' },
+  { id:'constipation',   label:'Constipation',           icon:'🚽' },
+  { id:'diarrhea',       label:'Diarrhea',               icon:'💧' },
+  { id:'reflux',         label:'Reflux / GERD',          icon:'🔥' },
+  { id:'urinary',        label:'Urinary Issues',         icon:'💧' },
+  { id:'concentration',  label:'Difficulty Concentrating', icon:'🎯' },
+  { id:'memory',         label:'Memory Issues',          icon:'🧠' },
+  { id:'speech',         label:'Speech / Communication Issues', icon:'💬' },
+  { id:'tremor',         label:'Tremors / Shaking',      icon:'〰️' },
+  { id:'weakness',       label:'Muscle Weakness',        icon:'💪' },
+  { id:'numbness',       label:'Numbness / Tingling',    icon:'⚡' },
 ];
 
 function save() {
@@ -519,15 +555,31 @@ function renderLog() {
   saveBtn.textContent = existing ? '✏️ Update Entry' : '💾 Save Today\'s Entry';
   saveBtn.className = 'save-entry-btn' + (existing ? ' saved' : '');
 
+  // DoD/VA Pain Scale descriptors (adapted from NeuraHealth.co)
+  const DOD_SCALE = {
+    0:  { label: 'Not present',           detail: 'No symptoms',                           color: 'var(--ink-muted)' },
+    1:  { label: 'Mild — hardly notice',  detail: 'Hardly notice it',                      color: '#52b788' },
+    2:  { label: 'Mild — no interference',detail: 'Notice it, does not interfere with activities', color: '#52b788' },
+    3:  { label: 'Mild — distracts',      detail: 'Sometimes distracts me',                color: 'var(--sage)' },
+    4:  { label: 'Moderate — distracts',  detail: 'Distracts me, can do usual activities', color: '#c9923a' },
+    5:  { label: 'Moderate — interrupts', detail: 'Interrupts some activities',            color: 'var(--amber)' },
+    6:  { label: 'Moderate — hard to ignore', detail: 'Hard to ignore, avoiding usual activities', color: '#e08030' },
+    7:  { label: 'Severe — prevents daily', detail: 'Focus of attention, prevents doing daily activities', color: 'var(--red)' },
+    8:  { label: 'Severe — awful',        detail: 'Awful, hard to do anything',            color: 'var(--red)' },
+    9:  { label: 'Severe — can\'t bear',  detail: 'Can\'t bear it, unable to do anything', color: '#a93226' },
+    10: { label: 'Worst possible',        detail: 'As bad as it could be, nothing else matters', color: '#7b1f1f' }
+  };
+
   // Render sliders
   logList.innerHTML = syms.map(s => {
     const val = existing?.symptoms?.[s.id] ?? 0;
-    const color = sevColor(val);
+    const scale = DOD_SCALE[val];
+    const color = scale.color;
     return `<div class="sym-log-item">
       <div class="sym-log-top">
         <div class="sym-log-name"><span style="font-size:18px">${s.icon}</span>${escH(s.label)}</div>
         <div class="sym-log-severity">
-          <span style="font-size:12px;color:var(--ink-muted);font-weight:300">${val === 0 ? 'Not present' : val <= 3 ? 'Mild' : val <= 6 ? 'Moderate' : 'Severe'}</span>
+          <span style="font-size:12px;color:${color};font-weight:500" id="label-${s.id}">${scale.label}</span>
           <span class="sev-num" id="num-${s.id}" style="color:${color}">${val}</span>
         </div>
       </div>
@@ -535,8 +587,9 @@ function renderLog() {
         id="slider-${s.id}"
         style="background:linear-gradient(to right,${color} ${val*10}%,var(--border) ${val*10}%)"
         oninput="updateSlider('${s.id}',this.value)">
+      <div style="font-size:11px;color:${color};font-style:italic;margin-top:5px;min-height:16px;font-weight:300" id="detail-${s.id}">${val > 0 ? scale.detail : ''}</div>
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-muted);margin-top:4px;padding:0 2px">
-        <span>None</span><span>Mild</span><span>Moderate</span><span>Severe</span>
+        <span>None</span><span style="color:#52b788">Mild</span><span style="color:var(--amber)">Moderate</span><span style="color:var(--red)">Severe</span>
       </div>
     </div>`;
   }).join('');
@@ -544,18 +597,24 @@ function renderLog() {
 
 function updateSlider(id, val) {
   val = parseInt(val);
-  const color = sevColor(val);
+  const scale = DOD_SCALE[val];
+  const color = scale.color;
   document.getElementById('num-' + id).textContent = val;
   document.getElementById('num-' + id).style.color = color;
+  document.getElementById('label-' + id).textContent = scale.label;
+  document.getElementById('label-' + id).style.color = color;
+  document.getElementById('detail-' + id).textContent = val > 0 ? scale.detail : '';
+  document.getElementById('detail-' + id).style.color = color;
   const slider = document.getElementById('slider-' + id);
   slider.style.background = `linear-gradient(to right,${color} ${val*10}%,var(--border) ${val*10}%)`;
 }
 
 function sevColor(val) {
   if (val === 0) return 'var(--ink-muted)';
-  if (val <= 3) return 'var(--sage)';
+  if (val <= 3) return '#52b788';
   if (val <= 6) return 'var(--amber)';
-  return 'var(--red)';
+  if (val <= 8) return 'var(--red)';
+  return '#7b1f1f';
 }
 
 function selectOverall(val) {
