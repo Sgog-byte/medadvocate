@@ -174,6 +174,45 @@ function setupTagInput(inputId,wrapId,cls){
 function getTags(wrapId){
   return [...document.getElementById(wrapId).querySelectorAll('.vtag')].map(t=>t.textContent.replace('×','').trim()).filter(Boolean);
 }
+// ── INIT ──
+// Pre-fill from shared patient profile
+(function prefillFromProfile(){
+  const profile = JSON.parse(localStorage.getItem('advocate_lab_profile') || '{}');
+  if (profile.diagnoses) {
+    const diagInput = document.getElementById('diag_name');
+    if (diagInput && !diagInput.value) diagInput.value = profile.diagnoses;
+  }
+  if (profile.name) {
+    const patientInput = document.getElementById('diag_patient');
+    if (patientInput && !patientInput.value) patientInput.value = profile.name;
+  }
+  // Pre-fill symptoms from recent symptom tracker entries
+  const entries = JSON.parse(localStorage.getItem('advocate_entries') || '[]');
+  const state = JSON.parse(localStorage.getItem('advocate_symptoms') || '{"trackedSymptoms":[]}');
+  if (entries.length && state.trackedSymptoms?.length) {
+    const latest = entries[entries.length - 1];
+    const symptoms = state.trackedSymptoms
+      .filter(s => latest.symptoms?.[s.id] > 0)
+      .sort((a,b) => (latest.symptoms[b.id]||0) - (latest.symptoms[a.id]||0))
+      .slice(0, 5)
+      .map(s => s.label);
+    if (symptoms.length) {
+      const symWrap = document.getElementById('diag_sym_wrap');
+      const symInput = document.getElementById('diag_sym_in');
+      if (symWrap && symInput && !symWrap.querySelectorAll('.vtag').length) {
+        symptoms.forEach(sym => {
+          createTag(sym, symWrap, symInput, 'vtag-sage');
+        });
+        // Show a helpful note
+        const note = document.createElement('div');
+        note.style.cssText = 'font-size:11px;color:var(--ink-muted);margin-top:6px;font-style:italic';
+        note.textContent = '✓ Pre-filled from your Symptom Tracker';
+        symWrap.parentElement.appendChild(note);
+      }
+    }
+  }
+})();
+
 setupTagInput('diag_sym_in','diag_sym_wrap','vtag-sage');
 
 // ── API ──

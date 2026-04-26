@@ -661,12 +661,32 @@
           <button class="chip" data-text="Chronic pain">Pain</button>
           <button class="chip" data-text="Brain fog / cognitive issues">Brain fog</button>
           <button class="chip" data-text="Sleep problems">Sleep issues</button>
+          <button class="chip" data-text="Joint pain and hypermobility">Joint pain</button>
+          <button class="chip" data-text="Joint subluxations — joints partially slipping out of place">Joint subluxations</button>
+          <button class="chip" data-text="Joint dislocations">Dislocations</button>
+          <button class="chip" data-text="Dizziness or lightheadedness especially when standing">Dizziness</button>
+          <button class="chip" data-text="Fainting or near-fainting episodes (syncope)">Fainting</button>
+          <button class="chip" data-text="Heart racing or pounding (palpitations)">Heart racing</button>
+          <button class="chip" data-text="Nausea">Nausea</button>
+          <button class="chip" data-text="Stomach pain and GI issues">Stomach pain</button>
+          <button class="chip" data-text="Headaches or migraines">Headaches</button>
+          <button class="chip" data-text="Anxiety that is severe or debilitating">Anxiety</button>
+          <button class="chip" data-text="OCD symptoms — intrusive thoughts or compulsive behaviors">OCD</button>
+          <button class="chip" data-text="Tics — motor or vocal">Tics</button>
+          <button class="chip" data-text="Sensory processing issues — sensitivity to light, sound, touch, or texture">Sensory issues</button>
+          <button class="chip" data-text="Seizures or seizure-like episodes">Seizures</button>
+          <button class="chip" data-text="Catatonia — episodes of being unresponsive or frozen">Catatonia</button>
+          <button class="chip" data-text="Paranoia or irrational fears">Paranoia</button>
+          <button class="chip" data-text="Hallucinations — seeing or hearing things">Hallucinations</button>
+          <button class="chip" data-text="Low appetite or food restriction">Low appetite</button>
+          <button class="chip" data-text="Excessive appetite">Excessive appetite</button>
+          <button class="chip" data-text="ARFID — extremely restricted food intake based on sensory or fear-based avoidance">ARFID</button>
+          <button class="chip" data-text="Shortness of breath">Breathing</button>
+          <button class="chip" data-text="Skin reactions — flushing, hives, or rashes">Skin reactions</button>
           <button class="chip" data-text="Symptoms have worsened recently">Getting worse</button>
           <button class="chip" data-text="Previous treatments haven't worked">No improvement</button>
-          <button class="chip" data-text="Symptoms affect school or work">Impacts school/work</button>
-          <button class="chip" data-text="Waiting for diagnosis">Need a diagnosis</button>
+          <button class="chip" data-text="Symptoms affect school or daily functioning">Impacts school/life</button>
           <button class="chip" data-text="Multiple diagnoses that may be connected">Multiple conditions</button>
-          <button class="chip" data-text="Insurance coverage concerns">Insurance issues</button>
         </div>
       </div>
     </div>
@@ -745,6 +765,40 @@
     document.getElementById('charCount').textContent = document.getElementById('symptoms').value.length;
     if (document.getElementById('symptoms').value.length > 10) updateProgress(2);
   }
+
+  // ── PRE-FILL FROM SHARED PROFILE & SYMPTOM TRACKER ──
+  (function prefillFromProfile() {
+    const profile = JSON.parse(localStorage.getItem('advocate_lab_profile') || '{}');
+    if (profile.name) {
+      const nameField = document.getElementById('patientName');
+      if (nameField && !nameField.value) nameField.value = profile.name;
+    }
+    const entries = JSON.parse(localStorage.getItem('advocate_entries') || '[]');
+    const state = JSON.parse(localStorage.getItem('advocate_symptoms') || '{"trackedSymptoms":[]}');
+    const symptomsField = document.getElementById('symptoms');
+    if (entries.length && state.trackedSymptoms?.length && symptomsField && !symptomsField.value) {
+      const latest = entries[entries.length - 1];
+      const topSymptoms = state.trackedSymptoms
+        .filter(s => latest.symptoms?.[s.id] >= 4)
+        .sort((a,b) => (latest.symptoms[b.id]||0) - (latest.symptoms[a.id]||0))
+        .slice(0, 6);
+      if (topSymptoms.length) {
+        const DOD = {4:'Distracts me, can do usual activities',5:'Interrupts some activities',6:'Hard to ignore, avoiding usual activities',7:'Prevents doing daily activities',8:'Awful, hard to do anything',9:"Can't bear it, unable to do anything",10:'As bad as it could be'};
+        symptomsField.value = topSymptoms.map(s => `• ${s.label}: ${latest.symptoms[s.id]}/10 — ${DOD[latest.symptoms[s.id]]||'Severe'}`).join('\n');
+        updateCharCount();
+        const note = document.createElement('div');
+        note.style.cssText = 'font-size:11px;color:var(--ink-muted);margin-top:4px;font-style:italic';
+        note.textContent = '✓ Pre-filled from your Symptom Tracker — edit as needed';
+        symptomsField.parentElement.appendChild(note);
+      }
+    }
+    if (profile.diagnoses) {
+      const goalsField = document.getElementById('goals');
+      if (goalsField && !goalsField.value) {
+        goalsField.placeholder = `Diagnoses on file: ${profile.diagnoses.substring(0,60)}${profile.diagnoses.length>60?'…':''} — add your goals for this visit`;
+      }
+    }
+  })();
 
   // Progress
   function updateProgress(step) {
