@@ -121,11 +121,20 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
         </div>
       </div>
       <div class="field">
-        <label class="flabel">Severity</label>
-        <div class="severity-row">
-          <button class="sev-btn" onclick="setSeverity(1,this)">1 — Mild</button>
-          <button class="sev-btn" onclick="setSeverity(2,this)">2 — Moderate</button>
-          <button class="sev-btn" onclick="setSeverity(3,this)">3 — Severe</button>
+        <label class="flabel">Severity <span style="font-size:10px;font-weight:400;color:var(--ink-muted)">(DoD/VA Pain Scale)</span></label>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+          <input type="range" id="fl_severity_slider" min="1" max="10" value="5"
+            style="flex:1;accent-color:var(--red);height:6px;cursor:pointer"
+            oninput="updateFlareSeverity(this.value)">
+          <div style="text-align:center;min-width:32px">
+            <div id="fl_sev_num" style="font-family:'Fraunces',serif;font-size:24px;font-weight:400;color:var(--amber);line-height:1">5</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-muted);margin-top:3px;padding:0 2px">
+          <span style="color:#52b788">Mild</span><span style="color:var(--amber)">Moderate</span><span style="color:var(--red)">Severe</span>
+        </div>
+        <div id="fl_sev_label" style="margin-top:8px;padding:9px 14px;border-radius:10px;background:var(--amber-pale);border:1px solid var(--amber-light);font-size:13px;color:var(--amber);font-weight:500;line-height:1.4;transition:all .2s">
+          <strong>5</strong> — Interrupts some activities
         </div>
       </div>
       <div class="field">
@@ -187,6 +196,36 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- DoD/VA Pain Scale Reference -->
+<div style="max-width:900px;margin:0 auto;padding:0 22px 60px">
+  <div style="background:var(--white);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm)">
+    <div style="background:var(--sage-deep);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:300;color:white;margin-bottom:2px">DoD/VA Pain & Symptom Rating Scale</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6)">Reference guide for rating flare severity</div>
+      </div>
+      <a href="https://neurahealth.co" target="_blank" style="font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;border:1px solid rgba(255,255,255,.3);padding:3px 11px;border-radius:100px">Source: NeuraHealth.co ↗</a>
+    </div>
+    <div style="padding:18px 22px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+        <div style="padding:9px 13px;background:#f0faf5;border:1px solid #b7e4c7;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#1b4332;margin-bottom:2px">1 — Hardly notice</div><div style="font-size:12px;color:#2d6a4f">Hardly notice the symptom</div></div>
+        <div style="padding:9px 13px;background:#f0faf5;border:1px solid #b7e4c7;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#1b4332;margin-bottom:2px">2 — Notice, no interference</div><div style="font-size:12px;color:#2d6a4f">Notice it, does not interfere with activities</div></div>
+        <div style="padding:9px 13px;background:#f0faf5;border:1px solid #b7e4c7;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#1b4332;margin-bottom:2px">3 — Sometimes distracts</div><div style="font-size:12px;color:#2d6a4f">Sometimes distracts me</div></div>
+        <div style="padding:9px 13px;background:#fdf6e8;border:1px solid #f0d4a8;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#7a4f00;margin-bottom:2px">4 — Distracts, can function</div><div style="font-size:12px;color:#c9923a">Distracts me, can do usual activities</div></div>
+        <div style="padding:9px 13px;background:#fdf6e8;border:1px solid #f0d4a8;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#7a4f00;margin-bottom:2px">5 — Interrupts activities</div><div style="font-size:12px;color:#c9923a">Interrupts some activities</div></div>
+        <div style="padding:9px 13px;background:#fdf6e8;border:1px solid #f0d4a8;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#7a4f00;margin-bottom:2px">6 — Hard to ignore</div><div style="font-size:12px;color:#c9923a">Hard to ignore, avoiding usual activities</div></div>
+        <div style="padding:9px 13px;background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px"><div style="font-size:13px;font-weight:600;color:#7b1f1f;margin-bottom:2px">7 — Prevents daily activities</div><div style="font-size:12px;color:var(--red)">Focus of attention, prevents doing daily activities</div></div>
+        <div style="padding:9px 13px;background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px"><div style="font-size:13px;font-weight:600;color:#7b1f1f;margin-bottom:2px">8 — Awful</div><div style="font-size:12px;color:var(--red)">Awful, hard to do anything</div></div>
+        <div style="padding:9px 13px;background:#fde8e8;border:1px solid #f5a0a0;border-radius:10px"><div style="font-size:13px;font-weight:600;color:#7b1f1f;margin-bottom:2px">9 — Can't bear it</div><div style="font-size:12px;color:#a93226">Can't bear it, unable to do anything</div></div>
+        <div style="padding:9px 13px;background:#fde8e8;border:1px solid #f5a0a0;border-radius:10px;border-left:3px solid #7b1f1f"><div style="font-size:13px;font-weight:700;color:#7b1f1f;margin-bottom:2px">10 — Worst possible</div><div style="font-size:12px;color:#7b1f1f">As bad as it could be, nothing else matters</div></div>
+      </div>
+      <div style="text-align:right;margin-top:12px;font-size:11px;color:var(--ink-muted)">
+        Adapted from the Department of Defense & VA Pain & Symptom Rating Scale · <a href="https://neurahealth.co" target="_blank" style="color:var(--sage-deep);font-weight:500;text-decoration:none">NeuraHealth.co</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── UTILS ──
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -209,11 +248,37 @@ function switchTab(tab){
 }
 
 // ── FORM HELPERS ──
-let currentSeverity=2;
-function setSeverity(n,btn){
-  currentSeverity=n;
-  document.querySelectorAll('.sev-btn').forEach(b=>b.className='sev-btn');
-  btn.classList.add('sel-'+n);
+// ── DoD/VA Pain Scale ──
+const FLARE_DOD = {
+  1:{label:'Hardly notice it',bg:'#f0faf5',border:'#b7e4c7',color:'#52b788'},
+  2:{label:'Notice it, does not interfere with activities',bg:'#f0faf5',border:'#b7e4c7',color:'#52b788'},
+  3:{label:'Sometimes distracts me',bg:'#f0faf5',border:'#b7e4c7',color:'#2d6a4f'},
+  4:{label:'Distracts me, can do usual activities',bg:'#fdf6e8',border:'#f0d4a8',color:'#c9923a'},
+  5:{label:'Interrupts some activities',bg:'#fdf6e8',border:'#f0d4a8',color:'#c9923a'},
+  6:{label:'Hard to ignore, avoiding usual activities',bg:'#fdf6e8',border:'#f0d4a8',color:'#e08030'},
+  7:{label:'Prevents doing daily activities',bg:'#fff5f5',border:'#fccaca',color:'#c0392b'},
+  8:{label:'Awful, hard to do anything',bg:'#fff5f5',border:'#fccaca',color:'#c0392b'},
+  9:{label:"Can't bear it, unable to do anything",bg:'#fde8e8',border:'#f5a0a0',color:'#a93226'},
+  10:{label:'As bad as it could be, nothing else matters',bg:'#fde8e8',border:'#f5a0a0',color:'#7b1f1f'}
+};
+
+let currentSeverity=5;
+
+function updateFlareSeverity(val){
+  val=parseInt(val);
+  currentSeverity=val;
+  const scale=FLARE_DOD[val];
+  const numEl=document.getElementById('fl_sev_num');
+  const labelEl=document.getElementById('fl_sev_label');
+  numEl.textContent=val;
+  numEl.style.color=scale.color;
+  labelEl.innerHTML=`<strong>${val}</strong> — ${scale.label}`;
+  labelEl.style.background=scale.bg;
+  labelEl.style.borderColor=scale.border;
+  labelEl.style.color=scale.color;
+  // Update slider track color
+  const slider=document.getElementById('fl_severity_slider');
+  slider.style.accentColor=scale.color;
 }
 function toggleChip(btn){btn.classList.toggle('on')}
 function getChips(containerId){
@@ -235,6 +300,7 @@ function logFlare(){
   flares.unshift({
     id:Date.now(),date,
     severity:currentSeverity,
+    severityLabel:FLARE_DOD[currentSeverity]?.label||'',
     duration:document.getElementById('fl_duration').value,
     symptoms,triggers,
     helped:document.getElementById('fl_helped').value.trim(),
@@ -262,14 +328,14 @@ function renderHistory(){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">No flares logged yet</div><div class="empty-sub">Start logging flare days to build your history and identify patterns.</div></div>`;
     return;
   }
-  const sevLabel=['','Mild','Moderate','Severe'];
-  const sevClass=['','sev-1','sev-2','sev-3'];
+  const sevLabel=['','Mild','Moderate','Moderate','Moderate','Moderate','Moderate','Severe','Severe','Severe','Severe'];
+  const sevClass=['','sev-1','sev-1','sev-1','sev-2','sev-2','sev-2','sev-3','sev-3','sev-3','sev-3'];
   el.innerHTML=flares.map(f=>`
     <div class="flare-card">
       <div class="flare-header">
         <div>
           <div class="flare-date">${fmtDate(f.date)} · ${f.duration}</div>
-          <div class="flare-title">Severity ${f.severity} — ${sevLabel[f.severity]}</div>
+          <div class="flare-title">Severity ${f.severity}/10 — ${f.severityLabel||FLARE_DOD[f.severity]?.label||sevLabel[Math.min(f.severity,10)]||''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="sev-badge ${sevClass[f.severity]}">${sevLabel[f.severity]}</span>
@@ -398,8 +464,7 @@ async function generateAIPatterns(){
 
 // ── INIT ──
 document.getElementById('fl_date').value=new Date().toISOString().split('T')[0];
-// Pre-select moderate severity
-document.querySelector('.sev-btn:nth-child(2)').classList.add('sel-2');
+updateFlareSeverity(5);
 </script>
 </body>
 </html>
