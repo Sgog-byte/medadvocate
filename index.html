@@ -633,8 +633,59 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   <button class="mob-btn" onclick="openTool('symptoms')"><div class="mob-ico">📊</div><div class="mob-lbl">Symptoms</div></button>
   <button class="mob-btn" onclick="openTool('er')"><div class="mob-ico">🚨</div><div class="mob-lbl">ER Card</div></button>
   <button class="mob-btn" onclick="openTool('insurance')"><div class="mob-ico">📨</div><div class="mob-lbl">Appeal</div></button>
-  <button class="mob-btn" onclick="openTool('saved')"><div class="mob-ico">💾</div><div class="mob-lbl">Saved</div></button>
+  <button class="mob-btn" onclick="showInstallPrompt()"><div class="mob-ico">📲</div><div class="mob-lbl">Install</div></button>
 </div>
+
+<!-- iOS INSTALL INSTRUCTIONS MODAL -->
+<div id="ios_install_modal" style="display:none;position:fixed;inset:0;background:rgba(13,31,21,.6);z-index:600;align-items:flex-end;justify-content:center;padding:0">
+  <div style="background:var(--warm);border-radius:20px 20px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;box-shadow:var(--shadow-lg);animation:slideUp .3s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:400;color:var(--ink)">Add to Home Screen</div>
+      <button onclick="document.getElementById('ios_install_modal').style.display='none'" style="background:none;border:none;font-size:22px;color:var(--ink-muted);cursor:pointer">✕</button>
+    </div>
+    <div id="ios_instructions" style="display:none">
+      <div style="font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:20px">To install MedAdvocate on your iPhone:</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--sage-pale);border-radius:12px;border:1px solid var(--sage-light)">
+          <div style="font-size:28px;flex-shrink:0">1️⃣</div>
+          <div style="font-size:14px;color:var(--ink-soft)">Tap the <strong>Share button</strong> <span style="font-size:18px">⬆️</span> at the bottom of your browser</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--sage-pale);border-radius:12px;border:1px solid var(--sage-light)">
+          <div style="font-size:28px;flex-shrink:0">2️⃣</div>
+          <div style="font-size:14px;color:var(--ink-soft)">Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--sage-pale);border-radius:12px;border:1px solid var(--sage-light)">
+          <div style="font-size:28px;flex-shrink:0">3️⃣</div>
+          <div style="font-size:14px;color:var(--ink-soft)">Tap <strong>"Add"</strong> in the top right corner</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--ink-muted);font-style:italic;text-align:center">MedAdvocate will appear on your home screen like an app 🌿</div>
+    </div>
+    <div id="android_instructions" style="display:none">
+      <div style="font-size:14px;color:var(--ink-soft);line-height:1.7;margin-bottom:20px">To install MedAdvocate on your Android device:</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--sage-pale);border-radius:12px;border:1px solid var(--sage-light)">
+          <div style="font-size:28px;flex-shrink:0">1️⃣</div>
+          <div style="font-size:14px;color:var(--ink-soft)">Tap the <strong>three dots menu ⋮</strong> at the top right of Chrome</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--sage-pale);border-radius:12px;border:1px solid var(--sage-light)">
+          <div style="font-size:28px;flex-shrink:0">2️⃣</div>
+          <div style="font-size:14px;color:var(--ink-soft)">Tap <strong>"Add to Home screen"</strong></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--sage-pale);border-radius:12px;border:1px solid var(--sage-light)">
+          <div style="font-size:28px;flex-shrink:0">3️⃣</div>
+          <div style="font-size:14px;color:var(--ink-soft)">Tap <strong>"Add"</strong> to confirm</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--ink-muted);font-style:italic;text-align:center">MedAdvocate will appear on your home screen like an app 🌿</div>
+    </div>
+    <div id="install_btn_wrap" style="display:none;margin-top:20px">
+      <button id="native_install_btn" onclick="triggerNativeInstall()" style="width:100%;padding:16px;background:var(--sage-deep);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer">📲 Install MedAdvocate</button>
+    </div>
+  </div>
+</div>
+
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 
 <!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
@@ -675,6 +726,43 @@ const TOOLS = {
   saved:       { title:'My Saved Items & Care Team',  src:'advocate-myadvocate.html' },
 };
 
+// ── INSTALL TO HOME SCREEN ──
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+function showInstallPrompt() {
+  const modal = document.getElementById('ios_install_modal');
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+
+  if (isStandalone) {
+    showToast('MedAdvocate is already installed! 🌿');
+    return;
+  }
+
+  modal.style.display = 'flex';
+  document.getElementById('ios_instructions').style.display = isIOS ? 'block' : 'none';
+  document.getElementById('android_instructions').style.display = (!isIOS && !deferredInstallPrompt) ? 'block' : 'none';
+  document.getElementById('install_btn_wrap').style.display = deferredInstallPrompt ? 'block' : 'none';
+}
+
+async function triggerNativeInstall() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const result = await deferredInstallPrompt.userChoice;
+  if (result.outcome === 'accepted') {
+    document.getElementById('ios_install_modal').style.display = 'none';
+    showToast('MedAdvocate installed! 🌿');
+  }
+  deferredInstallPrompt = null;
+}
+
+// ── TOOL OVERLAY ──
 function openTool(key) {
   const t = TOOLS[key]; if (!t) return;
   document.getElementById('frameTitle').textContent = t.title;
