@@ -113,6 +113,17 @@
   .sym-log-notes::placeholder{color:var(--ink-muted)}
 
   /* OVERALL DAY */
+  .interference-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
+  .interference-item{background:var(--warm);border:1.5px solid var(--border);border-radius:11px;padding:12px 14px}
+  .interference-label{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:8px}
+  .interference-options{display:flex;flex-wrap:wrap;gap:5px}
+  .int-btn{padding:5px 10px;border:1.5px solid var(--border);border-radius:100px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;cursor:pointer;background:transparent;color:var(--ink-muted);transition:all .18s}
+  .int-btn:hover{border-color:var(--sage);background:var(--sage-pale);color:var(--sage-deep)}
+  .int-btn.selected-none{background:var(--sage-pale);border-color:var(--sage-light);color:var(--sage-deep);font-weight:600}
+  .int-btn.selected-mild{background:var(--amber-pale);border-color:var(--amber-light);color:var(--amber);font-weight:600}
+  .int-btn.selected-moderate{background:#fff0e0;border-color:#f4b84a;color:#c06010;font-weight:600}
+  .int-btn.selected-severe{background:var(--red-pale);border-color:var(--red-border);color:var(--red);font-weight:600}
+  @media(max-width:540px){.interference-grid{grid-template-columns:1fr}}
   .overall-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   .overall-btn{padding:8px 16px;border:1.5px solid var(--border);border-radius:100px;font-size:13px;cursor:pointer;transition:all .18s;background:transparent;font-family:'DM Sans',sans-serif;font-weight:400}
   .overall-btn:hover{border-color:var(--sage-light);background:var(--sage-pale)}
@@ -274,6 +285,56 @@
 
       <!-- Overall day -->
       <div id="overallSection" style="display:none">
+
+        <!-- DoD/VA Interference Questions -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:4px">How much did symptoms interfere today?</div>
+          <div style="font-size:11px;color:var(--ink-muted);font-weight:300;margin-bottom:14px;font-style:italic">Adapted from the DoD/VA Pain & Symptom Rating Scale · <a href="https://neurahealth.co" target="_blank" style="color:var(--sage-deep);text-decoration:none;font-weight:500">NeuraHealth.co</a></div>
+
+          <div class="interference-grid">
+
+            <div class="interference-item">
+              <div class="interference-label">🏃 Physical Activity</div>
+              <div class="interference-options" id="int-activity">
+                <button class="int-btn" onclick="selectInterference('activity','none',this)">Not at all</button>
+                <button class="int-btn" onclick="selectInterference('activity','mild',this)">A little</button>
+                <button class="int-btn" onclick="selectInterference('activity','moderate',this)">Quite a bit</button>
+                <button class="int-btn" onclick="selectInterference('activity','severe',this)">Completely</button>
+              </div>
+            </div>
+
+            <div class="interference-item">
+              <div class="interference-label">😴 Sleep</div>
+              <div class="interference-options" id="int-sleep">
+                <button class="int-btn" onclick="selectInterference('sleep','none',this)">Not at all</button>
+                <button class="int-btn" onclick="selectInterference('sleep','mild',this)">A little</button>
+                <button class="int-btn" onclick="selectInterference('sleep','moderate',this)">Quite a bit</button>
+                <button class="int-btn" onclick="selectInterference('sleep','severe',this)">Completely</button>
+              </div>
+            </div>
+
+            <div class="interference-item">
+              <div class="interference-label">💭 Mood</div>
+              <div class="interference-options" id="int-mood">
+                <button class="int-btn" onclick="selectInterference('mood','none',this)">Not at all</button>
+                <button class="int-btn" onclick="selectInterference('mood','mild',this)">A little</button>
+                <button class="int-btn" onclick="selectInterference('mood','moderate',this)">Quite a bit</button>
+                <button class="int-btn" onclick="selectInterference('mood','severe',this)">Completely</button>
+              </div>
+            </div>
+
+            <div class="interference-item">
+              <div class="interference-label">⚡ Stress Level</div>
+              <div class="interference-options" id="int-stress">
+                <button class="int-btn" onclick="selectInterference('stress','none',this)">Not at all</button>
+                <button class="int-btn" onclick="selectInterference('stress','mild',this)">A little</button>
+                <button class="int-btn" onclick="selectInterference('stress','moderate',this)">Quite a bit</button>
+                <button class="int-btn" onclick="selectInterference('stress','severe',this)">Completely</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px">How was today overall?</div>
         <div class="overall-row">
           <button class="overall-btn" id="ov-great" onclick="selectOverall('great')">😊 Good day</button>
@@ -357,7 +418,36 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ══ STATE ══
+// ── INTERFERENCE ──
+let interference = { activity: null, sleep: null, mood: null, stress: null };
+
+function selectInterference(domain, level, btn) {
+  interference[domain] = level;
+  const container = document.getElementById('int-' + domain);
+  container.querySelectorAll('.int-btn').forEach(b => {
+    b.className = 'int-btn';
+  });
+  btn.classList.add('selected-' + level);
+}
+
+function renderInterference(saved) {
+  if (!saved) return;
+  ['activity','sleep','mood','stress'].forEach(domain => {
+    const val = saved[domain];
+    if (!val) return;
+    interference[domain] = val;
+    const container = document.getElementById('int-' + domain);
+    if (!container) return;
+    container.querySelectorAll('.int-btn').forEach(b => {
+      b.className = 'int-btn';
+      if (b.getAttribute('onclick').includes("'"+val+"'")) {
+        b.classList.add('selected-' + val);
+      }
+    });
+  });
+}
+
+// ── STATE ──
 const STORAGE_KEY = 'advocate_symptoms';
 const ENTRIES_KEY = 'advocate_entries';
 
@@ -540,6 +630,8 @@ function renderLog() {
   // Load existing entry for this date
   const existing = entries.find(e => e.date === logDate);
   selectedOverall = existing?.overall || '';
+  interference = { activity: null, sleep: null, mood: null, stress: null };
+  if (existing?.interference) renderInterference(existing.interference);
 
   // Update overall buttons
   ['great','ok','hard','worst'].forEach(v => {
@@ -648,6 +740,7 @@ function saveEntry() {
     date: logDate,
     symptoms,
     overall: selectedOverall,
+    interference: { ...interference },
     notes: document.getElementById('dayNotes').value.trim(),
     savedAt: new Date().toISOString()
   };
@@ -904,18 +997,39 @@ function buildDoctorSummary(filtered) {
     return { ...s, avg, freq, peak: Math.max(...vals) };
   }).filter(Boolean).sort((a,b) => b.avg - a.avg);
 
+  // Interference summary
+  const intDomains = ['activity','sleep','mood','stress'];
+  const intLabels = {activity:'Physical Activity',sleep:'Sleep',mood:'Mood',stress:'Stress Level'};
+  const intData = {};
+  intDomains.forEach(d => {
+    const vals = filtered.map(e => e.interference?.[d]).filter(Boolean);
+    if (!vals.length) return;
+    const severe = vals.filter(v=>v==='severe').length;
+    const moderate = vals.filter(v=>v==='moderate').length;
+    const mild = vals.filter(v=>v==='mild').length;
+    intData[d] = { severe, moderate, mild, total: vals.length };
+  });
+
+  const intLines = Object.entries(intData).map(([d, v]) => {
+    const worst = v.severe > 0 ? `severely (${v.severe} days)` : v.moderate > 0 ? `moderately (${v.moderate} days)` : `mildly (${v.mild} days)`;
+    return `  • ${intLabels[d]}: interfered ${worst} out of ${v.total} tracked days`;
+  });
+
   const lines = [
     `Symptom tracking summary — ${start} to ${end} (${filtered.length} days logged)\n`,
     `Out of ${filtered.length} days tracked:`,
     `  • ${goodDays} good days (${Math.round(goodDays/filtered.length*100)}%)`,
     `  • ${hardDays} hard or worst days (${Math.round(hardDays/filtered.length*100)}%)\n`,
-    symSummary.length ? 'Symptom averages (severity 0–10):' : '',
+    symSummary.length ? 'Symptom averages (DoD/VA severity scale 0–10):' : '',
     ...symSummary.map(s =>
-      `  • ${s.label}: average ${s.avg.toFixed(1)}/10 severity, present ${s.freq}% of days, peak ${s.peak}/10`
+      `  • ${s.label}: average ${s.avg.toFixed(1)}/10 — "${DOD_SCALE[Math.round(s.avg)]?.detail||''}", present ${s.freq}% of days, peak ${s.peak}/10`
     ),
+    intLines.length ? '\nHow symptoms interfered with daily life:' : '',
+    ...intLines,
     symSummary.length ? '' : '',
     symSummary.length && symSummary[0].avg >= 5 ?
       `The most consistently severe symptom was ${symSummary[0].label}, averaging ${symSummary[0].avg.toFixed(1)}/10 and present on ${symSummary[0].freq}% of tracked days.` : '',
+    '\nPain scale descriptors from the DoD/VA Pain & Symptom Rating Scale (NeuraHealth.co)',
   ];
 
   document.getElementById('doctorSummary').textContent = lines.filter(l=>l!==null).join('\n');
@@ -973,5 +1087,92 @@ if (!entries.length) {
 
 renderLog();
 </script>
+<!-- DoD/VA Pain Scale Reference Chart -->
+<div style="max-width:960px;margin:0 auto;padding:0 22px 60px;position:relative;z-index:1">
+  <div style="background:var(--white);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm)">
+    <div style="background:var(--sage-deep);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:white;margin-bottom:2px">DoD/VA Pain & Symptom Rating Scale</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.6)">Reference guide for rating your symptoms accurately</div>
+      </div>
+      <a href="https://neurahealth.co" target="_blank" style="font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;border:1px solid rgba(255,255,255,.3);padding:4px 12px;border-radius:100px">Source: NeuraHealth.co ↗</a>
+    </div>
+    <div style="padding:20px 24px">
+      <!-- Green - Mild -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#52b788;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #52b788">🟢 Mild (1–3)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+          <div style="padding:10px 13px;background:#f0faf5;border:1px solid #b7e4c7;border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#1b4332;margin-bottom:2px">1 — Hardly notice</div>
+            <div style="font-size:12px;color:#2d6a4f">Hardly notice the symptom</div>
+          </div>
+          <div style="padding:10px 13px;background:#f0faf5;border:1px solid #b7e4c7;border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#1b4332;margin-bottom:2px">2 — Notice, no interference</div>
+            <div style="font-size:12px;color:#2d6a4f">Notice it, does not interfere with activities</div>
+          </div>
+          <div style="padding:10px 13px;background:#f0faf5;border:1px solid #b7e4c7;border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#1b4332;margin-bottom:2px">3 — Sometimes distracts</div>
+            <div style="font-size:12px;color:#2d6a4f">Sometimes distracts me</div>
+          </div>
+        </div>
+      </div>
+      <!-- Amber - Moderate -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--amber)">🟡 Moderate (4–6)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+          <div style="padding:10px 13px;background:#fdf6e8;border:1px solid #f0d4a8;border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#7a4f00;margin-bottom:2px">4 — Distracts, can function</div>
+            <div style="font-size:12px;color:#c9923a">Distracts me, can do usual activities</div>
+          </div>
+          <div style="padding:10px 13px;background:#fdf6e8;border:1px solid #f0d4a8;border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#7a4f00;margin-bottom:2px">5 — Interrupts activities</div>
+            <div style="font-size:12px;color:#c9923a">Interrupts some activities</div>
+          </div>
+          <div style="padding:10px 13px;background:#fdf6e8;border:1px solid #f0d4a8;border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#7a4f00;margin-bottom:2px">6 — Hard to ignore</div>
+            <div style="font-size:12px;color:#c9923a">Hard to ignore, avoiding usual activities</div>
+          </div>
+        </div>
+      </div>
+      <!-- Red - Severe -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--red);margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--red)">🔴 Severe (7–10)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+          <div style="padding:10px 13px;background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#7b1f1f;margin-bottom:2px">7 — Prevents daily activities</div>
+            <div style="font-size:12px;color:var(--red)">Focus of attention, prevents doing daily activities</div>
+          </div>
+          <div style="padding:10px 13px;background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#7b1f1f;margin-bottom:2px">8 — Awful, hard to do anything</div>
+            <div style="font-size:12px;color:var(--red)">Awful, hard to do anything</div>
+          </div>
+          <div style="padding:10px 13px;background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px">
+            <div style="font-size:14px;font-weight:600;color:#7b1f1f;margin-bottom:2px">9 — Can't bear it</div>
+            <div style="font-size:12px;color:var(--red)">Can't bear it, unable to do anything</div>
+          </div>
+          <div style="padding:10px 13px;background:#fde8e8;border:1px solid #f5a0a0;border-radius:10px;border-left:3px solid #7b1f1f">
+            <div style="font-size:14px;font-weight:700;color:#7b1f1f;margin-bottom:2px">10 — Worst possible</div>
+            <div style="font-size:12px;color:#7b1f1f">As bad as it could be, nothing else matters</div>
+          </div>
+        </div>
+      </div>
+      <!-- Additional questions note -->
+      <div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:14px 18px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px">Also consider how symptoms affect:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)">🏃 <span><strong>Activity</strong> — Can you do what you normally do?</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)">😴 <span><strong>Sleep</strong> — Does it wake you or prevent sleep?</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)">😔 <span><strong>Mood</strong> — Is it affecting how you feel emotionally?</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)">😰 <span><strong>Stress</strong> — Is worrying about it adding to your burden?</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);margin-top:10px;font-style:italic">These four dimensions are included in the full DoD/VA scale and help doctors understand the complete impact of your symptoms — not just the number.</div>
+      </div>
+      <div style="text-align:right;margin-top:12px;font-size:11px;color:var(--ink-muted)">
+        Adapted from the Department of Defense & VA Pain & Symptom Rating Scale · <a href="https://neurahealth.co" target="_blank" style="color:var(--sage-deep);font-weight:500;text-decoration:none">NeuraHealth.co</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
