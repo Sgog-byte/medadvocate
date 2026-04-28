@@ -172,10 +172,10 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 .fb iframe{width:100%;height:100%;min-height:75vh;border:none}
 
 /* PWA */
-.offline-bar{position:fixed;top:64px;left:0;right:0;background:var(--amber);color:white;text-align:center;padding:8px 16px;font-size:13px;font-weight:500;z-index:150;transform:translateY(-100%);transition:transform .3s}
-.offline-bar.show{transform:translateY(0)}
-.update-bar{position:fixed;top:64px;left:0;right:0;background:var(--sage-deep);color:white;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;z-index:150;transform:translateY(-100%);transition:transform .3s;cursor:pointer}
-.update-bar.show{transform:translateY(0)}
+
+
+
+
 .ib{position:fixed;bottom:82px;left:12px;right:12px;background:var(--sage-deep);color:white;border-radius:16px;padding:15px 17px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);z-index:300;transform:translateY(120px);opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);max-width:440px}
 @media(min-width:768px){.ib{bottom:22px;left:50%;right:auto;transform:translateX(-50%) translateY(120px);width:400px}.ib.show{transform:translateX(-50%) translateY(0)}}
 .ib.show{transform:translateY(0);opacity:1}
@@ -189,7 +189,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 #toast.show{transform:translateX(-50%) translateY(0)}
 
 @media(max-width:960px){
-  .tools-grid{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:900px){.tools-grid{grid-template-columns:repeat(2,1fr)}} @media(max-width:580px){.tools-grid{grid-template-columns:1fr}}
   .for-grid,.coming-grid{grid-template-columns:repeat(2,1fr)}
   .tools-section,.for-sec,.coming-sec{padding-left:20px;padding-right:20px}
   nav{padding:0 16px}.nav-link{display:none}
@@ -266,7 +266,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         <div class="tc-desc">Log daily severity scores. See trend charts over weeks and months. Hand a doctor 3 months of data they can't dismiss.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Daily log with 0–10 severity sliders</div>
-          <div class="tc-feat"><div class="fd"></div>Trend charts over weeks & months</div>
+          <div class="tc-feat"><div class="fd"></div>Trend charts over weeks &amp; months</div>
           <div class="tc-feat"><div class="fd"></div>Auto-generated doctor summary</div>
         </div>
       </div>
@@ -276,7 +276,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="tc" onclick="openTool('labs')">
       <div class="tc-body">
         <div class="tc-icon i3">🧪</div>
-        <div class="tc-name">Lab Tracker & Trends</div>
+        <div class="tc-name">Lab Tracker &amp; Trends</div>
         <div class="tc-tag tg-violet">Upload. Extract. See the pattern.</div>
         <div class="tc-desc">Upload lab reports — AI extracts every value, flags what's out of range, and charts trends over months.</div>
         <div class="tc-feats">
@@ -291,13 +291,13 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="tc" onclick="openTool('credibility')">
       <div class="tc-body">
         <div class="tc-icon i4">📄</div>
-        <div class="tc-name">The Credibility Document</div>
-        <div class="tc-tag tg-amber">Make them understand how sick your child really is</div>
-        <div class="tc-desc">A one-page clinical summary that reads like a doctor wrote it. Hand it to any new specialist in the first 60 seconds.</div>
+        <div class="tc-name">Credibility Document</div>
+        <div class="tc-tag tg-amber">Walk in with proof, not just words</div>
+        <div class="tc-desc">A professionally formatted document summarizing the patient's history, diagnoses, and evidence — built to be taken seriously.</div>
         <div class="tc-feats">
-          <div class="tc-feat"><div class="fd"></div>Clinical narrative in medical language</div>
-          <div class="tc-feat"><div class="fd"></div>Quantified symptom severity scores</div>
-          <div class="tc-feat"><div class="fd"></div>Failed treatment history framed clinically</div>
+          <div class="tc-feat"><div class="fd"></div>Clinical-quality formatting</div>
+          <div class="tc-feat"><div class="fd"></div>Pulls from your profile data</div>
+          <div class="tc-feat"><div class="fd"></div>Print-ready in one click</div>
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Build my document →</div><div class="tc-arr">→</div></div>
@@ -307,12 +307,12 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-body">
         <div class="tc-icon i5">🚨</div>
         <div class="tc-name">ER Prep Card</div>
-        <div class="tc-tag tg-red">For emergencies — day or night</div>
-        <div class="tc-desc">A printable card with everything ER doctors need in 60 seconds. Keep one in your wallet, your car, and on the fridge.</div>
+        <div class="tc-tag tg-red">Be taken seriously from triage</div>
+        <div class="tc-desc">A concise, printable card with the most critical information — what to say, what not to say, and what to hand the nurse immediately.</div>
         <div class="tc-feats">
-          <div class="tc-feat"><div class="fd"></div>Diagnoses, meds & allergies</div>
-          <div class="tc-feat"><div class="fd"></div>Treatments to avoid — prominently flagged</div>
-          <div class="tc-feat"><div class="fd"></div>Emergency contacts</div>
+          <div class="tc-feat"><div class="fd"></div>Triage-optimized language</div>
+          <div class="tc-feat"><div class="fd"></div>Key diagnoses &amp; medications</div>
+          <div class="tc-feat"><div class="fd"></div>Printable pocket card</div>
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Build my ER card →</div><div class="tc-arr">→</div></div>
@@ -322,12 +322,12 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-body">
         <div class="tc-icon i6">💜</div>
         <div class="tc-name">Explain My Diagnosis</div>
-        <div class="tc-tag tg-sage">Help others truly understand</div>
-        <div class="tc-desc">Plain-English explanation of any diagnosis tailored to family, teachers, coaches, employers, or a new doctor.</div>
+        <div class="tc-tag tg-violet">Finally understand what's happening</div>
+        <div class="tc-desc">Paste a diagnosis or medical term and get a plain-English explanation — what it means, how it connects to symptoms, and what to ask next.</div>
         <div class="tc-feats">
-          <div class="tc-feat"><div class="fd"></div>Tailored for 6 different audiences</div>
-          <div class="tc-feat"><div class="fd"></div>Common misconceptions corrected</div>
-          <div class="tc-feat"><div class="fd"></div>Ready-to-share text for email or text</div>
+          <div class="tc-feat"><div class="fd"></div>Plain-English breakdown</div>
+          <div class="tc-feat"><div class="fd"></div>Connects symptoms to diagnosis</div>
+          <div class="tc-feat"><div class="fd"></div>Questions to ask your doctor</div>
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Explain this diagnosis →</div><div class="tc-arr">→</div></div>
@@ -336,8 +336,8 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="tc" onclick="openTool('iep')">
       <div class="tc-body">
         <div class="tc-icon i7">⚖️</div>
-        <div class="tc-name">IEP & 504 Prep</div>
-        <div class="tc-tag tg-violet">Know exactly what to ask for — and how</div>
+        <div class="tc-name">IEP &amp; 504 Prep</div>
+        <div class="tc-tag tg-blue">Know exactly what to ask for — and how</div>
         <div class="tc-desc">Legal language, opening script, accommodation justifications, and pushback responses for IEP and 504 meetings.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Legally-grounded accommodation requests</div>
@@ -356,11 +356,12 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         <div class="tc-desc">Turn any denial into a professional appeal letter using exact medical necessity language insurers must respond to.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Complete formal letter generated</div>
-          <div class="tc-feat"><div class="fd"></div>Cites ACA & internal appeal rights</div>
+          <div class="tc-feat"><div class="fd"></div>Cites ACA &amp; internal appeal rights</div>
           <div class="tc-feat"><div class="fd"></div>Escalation steps if denied again</div>
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Write my appeal →</div><div class="tc-arr">→</div></div>
+    </div>
 
     <div class="tc" onclick="openTool('summary')">
       <div class="tc-body">
@@ -377,7 +378,52 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">Build my summary →</div><div class="tc-arr">→</div></div>
     </div>
 
-    <div class="tc" onclick="openTool('documents')">
+    <div class="tc" onclick="openTool('medications')">
+      <div class="tc-body">
+        <div class="tc-icon i2">💊</div>
+        <div class="tc-name">Medication Tracker</div>
+        <div class="tc-tag tg-sage">Every med. Every dose. Every change.</div>
+        <div class="tc-desc">Log every medication, dose, and side effect. Generate a clean report for any appointment automatically.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Full medication history</div>
+          <div class="tc-feat"><div class="fd"></div>Side effect logging</div>
+          <div class="tc-feat"><div class="fd"></div>Appointment-ready report</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Track my medications →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('timeline')">
+      <div class="tc-body">
+        <div class="tc-icon i3">📅</div>
+        <div class="tc-name">Medical Timeline</div>
+        <div class="tc-tag tg-violet">Your full history, at a glance</div>
+        <div class="tc-desc">Upload years of records — get a timeline a new specialist can read in 60 seconds. Every diagnosis, hospitalization, and procedure in order.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>AI extracts from uploaded records</div>
+          <div class="tc-feat"><div class="fd"></div>Chronological view</div>
+          <div class="tc-feat"><div class="fd"></div>Shareable with any provider</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Build my timeline →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('flare')">
+      <div class="tc-body">
+        <div class="tc-icon i4">🔥</div>
+        <div class="tc-name">Flare Tracker</div>
+        <div class="tc-tag tg-red">Find the pattern. Stop the cycle.</div>
+        <div class="tc-desc">Log every flare with severity, triggers, and duration. AI finds patterns and helps you predict and prevent the next one.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>DoD/VA pain scale</div>
+          <div class="tc-feat"><div class="fd"></div>Trigger pattern analysis</div>
+          <div class="tc-feat"><div class="fd"></div>Doctor-ready flare report</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Track my flares →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('documents')" style="border-color:var(--blue)">
       <div class="tc-body">
         <div class="tc-icon i3">📁</div>
         <div class="tc-name">Document Library <span style="font-size:11px;background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border);padding:1px 7px;border-radius:100px;font-weight:600;vertical-align:middle">Add-on</span></div>
@@ -392,11 +438,11 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">Upload my documents →</div><div class="tc-arr">→</div></div>
     </div>
 
-    <div class="tc" onclick="openTool('recorder')">
+    <div class="tc" onclick="openTool('recorder')" style="border-color:#7b68ee">
       <div class="tc-body">
         <div class="tc-icon i5">🎙️</div>
-        <div class="tc-name">Appointment Recorder <span style="font-size:11px;background:var(--violet-pale,#f3f0ff);color:#7b68ee;border:1px solid #d4d0ff;padding:1px 7px;border-radius:100px;font-weight:600;vertical-align:middle">Add-on</span></div>
-        <div class="tc-tag tg-red">Never forget what the doctor said</div>
+        <div class="tc-name">Appointment Recorder <span style="font-size:11px;background:#f3f0ff;color:#7b68ee;border:1px solid #d4d0ff;padding:1px 7px;border-radius:100px;font-weight:600;vertical-align:middle">Add-on</span></div>
+        <div class="tc-tag tg-violet">Never forget what the doctor said</div>
         <div class="tc-desc">Live transcription during your appointment. AI summary with every decision, medication change, follow-up, and question you forgot to ask.</div>
         <div class="tc-feats">
           <div class="tc-feat"><div class="fd"></div>Live speech-to-text transcription</div>
@@ -407,7 +453,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">Record my appointment →</div><div class="tc-arr">→</div></div>
     </div>
 
-    <div class="tc" onclick="openTool('scripts')" style="border-color:var(--amber);box-shadow:0 0 0 2px var(--amber-pale)">
+    <div class="tc" onclick="openTool('scripts')" style="border-color:var(--amber)">
       <div class="tc-body">
         <div class="tc-icon i7">✦</div>
         <div class="tc-name">Doctor Scripts <span style="font-size:11px;background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber-light);padding:1px 7px;border-radius:100px;font-weight:600;vertical-align:middle">Add-on</span></div>
@@ -424,6 +470,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 
   </div>
 </section>
+
 
 <!-- MISSION -->
 <div class="mission" id="mission">
@@ -501,7 +548,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 </div>
 
 <!-- PWA -->
-<div class="offline-bar" id="offlineBar">📵 You're offline — your saved tools still work</div>
+
 <div class="ib" id="installBanner">
   <div class="ib-ic">🌿</div>
   <div style="flex:1"><div class="ib-t">Add MedAdvocate to your home screen</div><div class="ib-s">Works like an app — no App Store needed</div></div>
@@ -537,92 +584,7 @@ const PREMIUM_TOOLS = {
   scripts:   'advocate-locked.html?tool=scripts',
 };
 
-function openTool(key) {
-  const t = TOOLS[key]; if (!t) return;
-  // Check if premium and not yet unlocked
-  const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
-  if (PREMIUM_TOOLS[key] && !unlocked[key]) {
-    window.location.href = PREMIUM_TOOLS[key];
-    return;
-  }
-  document.getElementById('frameTitle').textContent = t.title;
-  document.getElementById('toolFrame').src = t.src;
-  document.getElementById('overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
 
-function closeTool() {
-  document.getElementById('overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(() => { document.getElementById('toolFrame').src = ''; }, 400);
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('overlay')) closeTool();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
-
-let swReg = null, deferredPrompt = null;
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isStandalone = window.matchMedia('(display-mode:standalone)').matches || navigator.standalone;
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      swReg = await navigator.serviceWorker.register('./sw.js');
-
-    } catch(e) {}
-  });
-}
-
-if (!isStandalone) {
-  if (isIOS) {
-    setTimeout(() => {
-      if (!sessionStorage.getItem('ib_done')) {
-        const b = document.getElementById('installBanner');
-        b.querySelector('.ib-t').textContent = 'Add to your home screen';
-        b.querySelector('.ib-s').textContent = 'Tap Share ⬆️ then "Add to Home Screen"';
-        b.querySelector('.ib-add').textContent = 'How?';
-        b.querySelector('.ib-add').onclick = () => showToast('Tap Share ⬆️ in Safari, then "Add to Home Screen"');
-        b.classList.add('show');
-      }
-    }, 4000);
-  } else {
-    window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault(); deferredPrompt = e;
-      setTimeout(() => { if (!sessionStorage.getItem('ib_done')) document.getElementById('installBanner').classList.add('show'); }, 3000);
-    });
-    window.addEventListener('appinstalled', () => {
-      document.getElementById('installBanner').classList.remove('show');
-      showToast('🌿 MedAdvocate added to your home screen!');
-    });
-  }
-}
-
-async function triggerInstall() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  if (outcome === 'accepted') showToast('🌿 Added to home screen!');
-  deferredPrompt = null;
-  document.getElementById('installBanner').classList.remove('show');
-}
-
-function dismissInstall() {
-  document.getElementById('installBanner').classList.remove('show');
-  sessionStorage.setItem('ib_done', '1');
-}
-
-window.addEventListener('online',  () => document.getElementById('offlineBar').classList.remove('show'));
-window.addEventListener('offline', () => document.getElementById('offlineBar').classList.add('show'));
-if (!navigator.onLine) document.getElementById('offlineBar').classList.add('show');
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
 </script>
 </body>
 </html>
