@@ -1,97 +1,75 @@
-// Advocate PWA Service Worker
-// Caches all app files for offline use
+// MedAdvocate Service Worker — v3
 
-const CACHE_NAME = 'medadvocate-v1';
+const CACHE_NAME = 'medadvocate-v3';
 const ASSETS = [
-  '/advocate-home.html',
+  '/index.html',
   '/advocate-app.html',
   '/advocate-symptoms.html',
   '/advocate-labs.html',
   '/advocate-credibility.html',
   '/advocate-iep.html',
-  '/advocate-tools3.html',
+  '/advocate-er.html',
+  '/advocate-insurance.html',
+  '/advocate-explain.html',
   '/advocate-myadvocate.html',
   '/advocate-privacy.html',
+  '/advocate-summary.html',
+  '/advocate-scripts.html',
+  '/advocate-documents.html',
+  '/advocate-recorder.html',
+  '/advocate-locked.html',
+  '/advocate-checkout.html',
   '/manifest.json'
 ];
 
-// Install — cache all core files
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS).catch(err => {
-        // If some assets fail (e.g. in local dev), continue anyway
-        console.warn('Some assets could not be cached:', err);
-      });
-    })
+    caches.open(CACHE_NAME).then(cache =>
+      cache.addAll(ASSETS).catch(err => console.warn('Cache error:', err))
+    )
   );
   self.skipWaiting();
 });
 
-// Activate — clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch — serve from cache, fall back to network
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('anthropic.com') || event.request.url.includes('replit.app')) return;
 
-  // For API calls to Anthropic — always use network (never cache)
-  if (event.request.url.includes('anthropic.com')) {
-    return; // let it pass through normally
-  }
-
-  // For Google Fonts and CDN resources — network first, cache fallback
-  if (
-    event.request.url.includes('fonts.googleapis.com') ||
-    event.request.url.includes('fonts.gstatic.com') ||
-    event.request.url.includes('cdnjs.cloudflare.com')
-  ) {
+  // HTML — network first so updates always land
+  if (event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
-        })
+        .then(res => { const c=res.clone(); caches.open(CACHE_NAME).then(cache=>cache.put(event.request,c)); return res; })
         .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // For app files — cache first, then network
+  // Fonts — network first
+  if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => { const c=res.clone(); caches.open(CACHE_NAME).then(cache=>cache.put(event.request,c)); return res; })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Everything else — cache first
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Cache successful responses
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Offline fallback for HTML pages
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('/advocate-home.html');
-        }
-      });
-    })
+    caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
 
-// Background sync — post message when back online
 self.addEventListener('message', event => {
   if (event.data === 'skipWaiting') self.skipWaiting();
 });
