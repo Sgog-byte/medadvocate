@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Appointment Recorder</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;--border:#b7d9c4;--white:#ffffff;--amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;--red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;--shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow:0 4px 24px rgba(28,43,34,.10);--shadow-lg:0 12px 48px rgba(28,43,34,.15)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;cursor:pointer;background:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.shell{max-width:820px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--red)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:500px;margin:0 auto}
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300}
+.field{margin-bottom:11px}.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.finput,.ftextarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none}
+.finput:focus,.ftextarea:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+/* Recorder UI */
+.recorder-stage{background:var(--sage-deep);border-radius:20px;padding:36px 28px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+.recorder-stage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(149,213,178,.08),transparent);pointer-events:none}
+.rec-status{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:14px}
+.rec-status.recording{color:var(--sage-light)}
+.rec-timer{font-family:'Fraunces',serif;font-size:52px;font-weight:300;color:white;margin-bottom:6px;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+.rec-label{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px}
+.rec-btn{width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all .25s;position:relative}
+.rec-btn-start{background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.4)}
+.rec-btn-start.pulse{animation:pulse 1.5s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.4)}70%{box-shadow:0 0 0 20px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.rec-btn-stop{background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3)}
+.rec-btn-stop:hover{background:rgba(255,255,255,.25)}
+.rec-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:28px;margin-top:20px}
+.rec-bar{width:3px;border-radius:2px;background:var(--sage-light);animation:wave .8s ease-in-out infinite;opacity:0}
+.rec-bar.active{opacity:1}
+.rec-bar:nth-child(1){animation-delay:0s;height:8px}
+.rec-bar:nth-child(2){animation-delay:.1s;height:16px}
+.rec-bar:nth-child(3){animation-delay:.2s;height:24px}
+.rec-bar:nth-child(4){animation-delay:.3s;height:18px}
+.rec-bar:nth-child(5){animation-delay:.4s;height:12px}
+.rec-bar:nth-child(6){animation-delay:.3s;height:20px}
+.rec-bar:nth-child(7){animation-delay:.2s;height:14px}
+.rec-bar:nth-child(8){animation-delay:.1s;height:8px}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.transcript-area{min-height:140px;background:var(--warm);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--ink-soft);line-height:1.8;font-weight:300;white-space:pre-wrap;word-break:break-word;cursor:text;outline:none}
+.transcript-area:focus{border-color:var(--sage)}
+.transcript-area[contenteditable]:empty::before{content:attr(data-placeholder);color:var(--ink-muted)}
+.btn-primary{padding:12px 22px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary:hover{background:var(--ink)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{padding:10px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.summary-out{background:var(--white);border:2px solid var(--sage-deep);border-radius:16px;overflow:hidden;margin-top:6px;box-shadow:var(--shadow-lg)}
+.summary-top{background:var(--sage-deep);padding:18px 24px;color:white}
+.summary-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;margin-bottom:3px}
+.summary-meta{font-size:12px;color:rgba(255,255,255,.55)}
+.summary-body{padding:22px 24px}
+.sum-sec{margin-bottom:18px}
+.sum-sec-title{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.sum-item{padding:8px 12px;background:var(--sage-pale);border-radius:8px;margin-bottom:6px;font-size:14px;color:var(--ink-soft);line-height:1.6}
+.sum-item.action{background:var(--amber-pale);border-left:3px solid var(--amber)}
+.sum-item.urgent{background:var(--red-pale);border-left:3px solid var(--red)}
+.sum-prose{font-size:14px;color:var(--ink-soft);line-height:1.8;font-weight:300}
+.past-rec{background:var(--white);border:1.5px solid var(--border);border-radius:13px;padding:15px 18px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.past-rec:hover{border-color:var(--sage-light)}
+.past-rec-title{font-size:15px;font-weight:500;color:var(--ink);margin-bottom:3px}
+.past-rec-meta{font-size:12px;color:var(--ink-muted)}
+.notice-box{background:var(--amber-pale);border:1.5px solid var(--amber-light);border-radius:12px;padding:14px 18px;font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px}
+.load-wrap{text-align:center;padding:36px 24px}
+.load-ring{width:44px;height:44px;margin:0 auto 14px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:22px}
+.tab{padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:var(--red);font-weight:600;border-bottom-color:var(--red)}
+.panel{display:none}.panel.active{display:block}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){.two-col{grid-template-columns:1fr}.rec-timer{font-size:40px}}
+</style>
+</head>
+<body>
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div></div>
+</nav>
+
+<div class="shell">
+  <div class="page-header">
+    <div class="page-icon">🎙️</div>
+    <h1 class="page-title">Appointment <em>Recorder</em></h1>
+    <p class="page-sub">Record your appointment or type notes during the visit. AI turns it into a structured summary with action items, next steps, and questions you need to follow up on.</p>
+  </div>
+
+  <div class="notice-box">
+    ⚠️ <strong>Always get consent before recording.</strong> Laws on recording conversations vary by state. In many states you need only your own consent; in others you need all parties' consent. When in doubt, tell the doctor you're taking notes for your own records — that's always allowed.
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('record',this)">🎙️ Record / Type</button>
+    <button class="tab" onclick="switchTab('past',this)">📋 Past Appointments</button>
+  </div>
+
+  <!-- RECORD PANEL -->
+  <div class="panel active" id="panel-record">
+    <!-- Setup -->
+    <div class="fcard" id="setup_card">
+      <div class="fcard-title">Appointment Details</div>
+      <div class="fcard-sub">Optional — helps Claude write a more specific summary.</div>
+      <div class="two-col">
+        <div class="field"><label class="flabel">Doctor / Specialist</label><input type="text" class="finput" id="rec_doctor" placeholder="e.g. Dr. Webb, Cardiology"></div>
+        <div class="field"><label class="flabel">Patient</label><input type="text" class="finput" id="rec_patient" placeholder="e.g. Emma or myself"></div>
+      </div>
+      <div class="field"><label class="flabel">Purpose of visit</label><input type="text" class="finput" id="rec_purpose" placeholder="e.g. POTS follow-up, new symptom review, medication adjustment"></div>
+    </div>
+
+    <!-- Recorder -->
+    <div class="recorder-stage">
+      <div class="rec-status" id="rec_status">Ready to record</div>
+      <div class="rec-timer" id="rec_timer">0:00</div>
+      <div class="rec-label" id="rec_label">Tap to start recording</div>
+      <button class="rec-btn rec-btn-start" id="rec_btn" onclick="toggleRecording()">🎙️</button>
+      <div class="rec-wave" id="rec_wave">
+        <div class="rec-bar"></div><div class="rec-bar"></div><div class="rec-bar"></div>
+        <div class="rec-bar"></div><div class="rec-bar"></div><div class="rec-bar"></div>
+        <div class="rec-bar"></div><div class="rec-bar"></div>
+      </div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="fcard">
+      <div class="fcard-title">Notes & Transcript</div>
+      <div class="fcard-sub">Speech is transcribed in real time below. You can also type notes directly — before, during, or after the appointment.</div>
+      <div class="transcript-area" id="transcript" contenteditable="true" data-placeholder="Your transcript and notes will appear here as you speak. You can also type directly…" spellcheck="true"></div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="generateSummary()" id="summary_btn">🧠 Generate Summary</button>
+        <button class="btn-outline" onclick="clearTranscript()">🗑 Clear</button>
+        <button class="btn-outline" onclick="copyTranscript()">📋 Copy</button>
+      </div>
+    </div>
+
+    <div id="summary_out"></div>
+  </div>
+
+  <!-- PAST APPOINTMENTS PANEL -->
+  <div class="panel" id="panel-past">
+    <div id="past_list"></div>
+    <div id="past_empty" class="hidden" style="text-align:center;padding:48px 24px;color:var(--ink-muted)">
+      <div style="font-size:36px;margin-bottom:12px">🎙️</div>
+      <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">No past appointments yet</div>
+      <div style="font-size:13px;font-weight:300;line-height:1.6">Record or type notes from your next appointment and save them here.</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function fmtTime(sec){const m=Math.floor(sec/60);const s=sec%60;return`${m}:${s.toString().padStart(2,'0')}`}
+
+const REC_KEY='advocate_recordings';
+function getRecs(){return JSON.parse(localStorage.getItem(REC_KEY)||'[]')}
+function saveRecs(r){localStorage.setItem(REC_KEY,JSON.stringify(r))}
+
+// ── TABS ──
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='past')renderPast();
+}
+
+// ── RECORDER ──
+let recognition=null;
+let isRecording=false;
+let timerInterval=null;
+let elapsedSeconds=0;
+let fullTranscript='';
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const speechSupported=!!SpeechRecognition;
+
+function toggleRecording(){
+  if(isRecording) stopRecording();
+  else startRecording();
+}
+
+function startRecording(){
+  if(!speechSupported){
+    showToast('Speech recognition not supported in this browser. Use Chrome or Edge, or type notes manually.');
+    return;
+  }
+
+  recognition=new SpeechRecognition();
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.lang='en-US';
+  recognition.maxAlternatives=1;
+
+  let interimText='';
+
+  recognition.onresult=e=>{
+    interimText='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const transcript=e.results[i][0].transcript;
+      if(e.results[i].isFinal){
+        fullTranscript+=transcript+' ';
+        updateTranscriptDisplay();
+      }else{
+        interimText+=transcript;
+      }
+    }
+    if(interimText){
+      const el=document.getElementById('transcript');
+      el.innerHTML=escH(fullTranscript)+'<span style="color:var(--ink-muted);font-style:italic">'+escH(interimText)+'</span>';
+    }
+  };
+
+  recognition.onerror=e=>{
+    if(e.error==='not-allowed'){
+      showToast('Microphone access denied. Please allow microphone access and try again.');
+      stopRecording();
+    }else if(e.error==='no-speech'){
+      // ignore
+    }else{
+      console.error('Recognition error:',e.error);
+    }
+  };
+
+  recognition.onend=()=>{
+    if(isRecording) recognition.start(); // auto-restart
+  };
+
+  try{
+    recognition.start();
+    isRecording=true;
+    elapsedSeconds=0;
+    timerInterval=setInterval(()=>{
+      elapsedSeconds++;
+      document.getElementById('rec_timer').textContent=fmtTime(elapsedSeconds);
+    },1000);
+    document.getElementById('rec_status').textContent='Recording…';
+    document.getElementById('rec_status').classList.add('recording');
+    document.getElementById('rec_label').textContent='Tap to stop';
+    document.getElementById('rec_btn').className='rec-btn rec-btn-stop';
+    document.getElementById('rec_btn').textContent='⏹';
+    document.querySelectorAll('.rec-bar').forEach(b=>b.classList.add('active'));
+  }catch(e){
+    showToast('Could not start recording. Please try again.');
+  }
+}
+
+function stopRecording(){
+  if(recognition){recognition.stop();recognition=null;}
+  isRecording=false;
+  clearInterval(timerInterval);
+  document.getElementById('rec_status').textContent='Recording stopped';
+  document.getElementById('rec_status').classList.remove('recording');
+  document.getElementById('rec_label').textContent='Tap to record again';
+  document.getElementById('rec_btn').className='rec-btn rec-btn-start';
+  document.getElementById('rec_btn').textContent='🎙️';
+  document.querySelectorAll('.rec-bar').forEach(b=>b.classList.remove('active'));
+  updateTranscriptDisplay();
+  showToast('Recording stopped ✓');
+}
+
+function updateTranscriptDisplay(){
+  const el=document.getElementById('transcript');
+  el.textContent=fullTranscript;
+}
+
+function clearTranscript(){
+  if(!confirm('Clear all transcript text?'))return;
+  fullTranscript='';
+  document.getElementById('transcript').textContent='';
+  document.getElementById('rec_timer').textContent='0:00';
+  elapsedSeconds=0;
+  document.getElementById('summary_out').innerHTML='';
+}
+
+function copyTranscript(){
+  const text=document.getElementById('transcript').textContent||fullTranscript;
+  navigator.clipboard.writeText(text).then(()=>showToast('Copied ✓'));
+}
+
+// ── GENERATE SUMMARY ──
+async function generateSummary(){
+  const transcript=document.getElementById('transcript').textContent||fullTranscript;
+  if(!transcript.trim()||transcript.trim().length<20){
+    showToast('Please add some notes or record something first');
+    return;
+  }
+
+  const doctor=document.getElementById('rec_doctor').value.trim();
+  const patient=document.getElementById('rec_patient').value.trim()||'Patient';
+  const purpose=document.getElementById('rec_purpose').value.trim();
+
+  const out=document.getElementById('summary_out');
+  document.getElementById('summary_btn').disabled=true;
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Analyzing your appointment notes…</p></div>`;
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
+        system:`You summarize medical appointment notes for patients and caregivers. Return ONLY valid JSON no markdown:
+{"headline":"One sentence capturing the key outcome of this appointment","doctorSaid":["3-5 key things the doctor said, explained clearly"],"diagnoses":["Any new or confirmed diagnoses mentioned"],"medicationChanges":["Any medication changes — new, stopped, adjusted — or empty array"],"testsOrdered":["Any tests, labs, or imaging ordered — or empty array"],"actionItems":["Numbered list of what the PATIENT needs to do after this appointment"],"followUp":"When and why to follow up — or null","questionsUnanswered":["Any questions that weren't answered or need following up"],"concerns":"Any red flags or concerning things mentioned — or null"}`,
+        messages:[{role:'user',content:`Doctor: ${doctor||'Not specified'}\nPatient: ${patient}\nPurpose: ${purpose||'General visit'}\nDate: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}\n\nAppointment notes/transcript:\n${transcript}`}]})
+    });
+    const d=await r.json();
+    const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+    // Save to past recordings
+    const recs=getRecs();
+    recs.unshift({
+      id:Date.now(),
+      doctor,patient,purpose,
+      date:new Date().toISOString(),
+      duration:fmtTime(elapsedSeconds),
+      transcript:transcript.substring(0,5000),
+      summary:result
+    });
+    saveRecs(recs.slice(0,20)); // keep last 20
+
+    const summaryHTML=`
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
+        <button class="btn-outline" onclick="copyResults(${JSON.stringify(result).replace(/'/g,'&#39;')})">📋 Copy</button>
+        <button class="btn-outline" onclick="emailResults()">✉️ Email</button>
+      </div>
+      <div class="summary-out">
+        <div class="summary-top">
+          <div class="summary-title">Appointment Summary — ${escH(patient)}</div>
+          <div class="summary-meta">${doctor?escH(doctor)+' · ':''}${today}${purpose?' · '+escH(purpose):''}</div>
+        </div>
+        <div class="summary-body">
+          <div style="font-family:'Fraunces',serif;font-size:16px;font-style:italic;color:var(--sage-deep);padding:12px 16px;background:var(--sage-pale);border-radius:10px;margin-bottom:20px;line-height:1.6">"${escH(result.headline)}"</div>
+          ${result.doctorSaid?.length?`<div class="sum-sec"><div class="sum-sec-title">What the Doctor Said</div>${result.doctorSaid.map(s=>`<div class="sum-item">💬 ${escH(s)}</div>`).join('')}</div>`:''}
+          ${result.diagnoses?.length?`<div class="sum-sec"><div class="sum-sec-title">Diagnoses Mentioned</div>${result.diagnoses.map(d=>`<div class="sum-item">🔴 ${escH(d)}</div>`).join('')}</div>`:''}
+          ${result.medicationChanges?.length?`<div class="sum-sec"><div class="sum-sec-title">Medication Changes</div>${result.medicationChanges.map(m=>`<div class="sum-item">💊 ${escH(m)}</div>`).join('')}</div>`:''}
+          ${result.testsOrdered?.length?`<div class="sum-sec"><div class="sum-sec-title">Tests / Labs Ordered</div>${result.testsOrdered.map(t=>`<div class="sum-item">🧪 ${escH(t)}</div>`).join('')}</div>`:''}
+          ${result.actionItems?.length?`<div class="sum-sec"><div class="sum-sec-title">Your Action Items</div>${result.actionItems.map(a=>`<div class="sum-item action">→ ${escH(a)}</div>`).join('')}</div>`:''}
+          ${result.followUp?`<div class="sum-sec"><div class="sum-sec-title">Follow Up</div><div class="sum-item">📅 ${escH(result.followUp)}</div></div>`:''}
+          ${result.questionsUnanswered?.length?`<div class="sum-sec"><div class="sum-sec-title">Questions Still Unanswered</div>${result.questionsUnanswered.map(q=>`<div class="sum-item urgent">? ${escH(q)}</div>`).join('')}</div>`:''}
+          ${result.concerns?`<div class="sum-sec"><div class="sum-sec-title">🚨 Concerns to Watch</div><div class="sum-item urgent">⚠️ ${escH(result.concerns)}</div></div>`:''}
+        </div>
+      </div>`;
+
+    out.innerHTML=summaryHTML;
+    window._lastSummaryResult=result;
+    window._lastSummaryMeta={doctor,patient,purpose,date:today};
+
+  }catch(e){
+    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:10px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>`;
+    console.error(e);
+  }finally{document.getElementById('summary_btn').disabled=false;}
+}
+
+function emailResults(){
+  const r=window._lastSummaryResult;
+  const m=window._lastSummaryMeta;
+  if(!r||!m)return;
+  const body=[
+    `Appointment Summary — ${m.patient}`,
+    `${m.doctor?m.doctor+' · ':''}${m.date}${m.purpose?' · '+m.purpose:''}`,
+    '',r.headline,'',
+    r.doctorSaid?.length?'WHAT THE DOCTOR SAID:\n'+r.doctorSaid.join('\n'):'',
+    r.actionItems?.length?'\nACTION ITEMS:\n'+r.actionItems.join('\n'):'',
+    r.followUp?'\nFOLLOW UP:\n'+r.followUp:'',
+    r.questionsUnanswered?.length?'\nUNANSWERED QUESTIONS:\n'+r.questionsUnanswered.join('\n'):'',
+    '\nGenerated by MedAdvocate — medadvocate.org'
+  ].filter(Boolean).join('\n');
+  window.location.href=`mailto:?subject=${encodeURIComponent('Appointment Summary — '+m.patient)}&body=${encodeURIComponent(body)}`;
+}
+
+// ── PAST RECORDINGS ──
+function renderPast(){
+  const recs=getRecs();
+  const list=document.getElementById('past_list');
+  const empty=document.getElementById('past_empty');
+  if(!recs.length){list.innerHTML='';empty.classList.remove('hidden');return;}
+  empty.classList.add('hidden');
+  list.innerHTML=recs.map(r=>`
+    <div class="past-rec" onclick="loadPastRec(${r.id})">
+      <div class="past-rec-title">${r.doctor?escH(r.doctor)+' — ':''} ${escH(r.purpose||'Appointment')}</div>
+      <div class="past-rec-meta">${escH(r.patient||'Patient')} · ${new Date(r.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}${r.duration?' · '+r.duration:''}</div>
+      ${r.summary?.headline?`<div style="font-size:12px;color:var(--sage-deep);margin-top:5px;font-style:italic">"${escH(r.summary.headline)}"</div>`:''}
+    </div>`).join('');
+}
+
+function loadPastRec(id){
+  const recs=getRecs();
+  const rec=recs.find(r=>r.id===id);
+  if(!rec)return;
+  switchTab('record',document.querySelector('[onclick*="record"]'));
+  document.getElementById('rec_doctor').value=rec.doctor||'';
+  document.getElementById('rec_patient').value=rec.patient||'';
+  document.getElementById('rec_purpose').value=rec.purpose||'';
+  if(rec.transcript){fullTranscript=rec.transcript;updateTranscriptDisplay();}
+  if(rec.summary){
+    window._lastSummaryResult=rec.summary;
+    window._lastSummaryMeta={doctor:rec.doctor,patient:rec.patient,purpose:rec.purpose,date:new Date(rec.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})};
+  }
+  showToast('Loaded past appointment ✓');
+}
+
+// Pre-fill patient name
+const profile=JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}');
+if(profile.name) document.getElementById('rec_patient').value=profile.name;
+
+if(!speechSupported){
+  document.getElementById('rec_label').textContent='Type your notes below — speech not available in this browser';
+  document.getElementById('rec_btn').style.opacity='.4';
+  document.getElementById('rec_btn').style.cursor='not-allowed';
+  document.getElementById('rec_btn').onclick=()=>showToast('Speech recognition requires Chrome or Edge. Type notes manually.');
+}
+</script>
+</body>
+</html>

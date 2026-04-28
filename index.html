@@ -340,7 +340,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 <section class="tools-section" id="tools">
   <div class="sec-hdr">
     <div class="sec-eyebrow">Your Complete Toolkit</div>
-    <h2 class="sec-title">Fourteen tools. <em>One mission.</em></h2>
+    <h2 class="sec-title">Eighteen tools. <em>One mission.</em></h2>
     <p class="sec-sub">Everything you need to advocate effectively — for every appointment, every meeting, every moment.</p>
   </div>
 
@@ -449,6 +449,51 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
         </div>
       </div>
       <div class="tc-foot"><div class="tc-cta">Build my document →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('summary')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#1b4332,#2d6a4f)">📋</div>
+        <div class="tc-name">Medical Summary</div>
+        <div class="tc-tag tg-sage">One page. Every provider. Always ready.</div>
+        <div class="tc-desc">Pulls everything from your MedAdvocate tools — diagnoses, medications, symptoms, labs, care team — into one complete clinical snapshot. Hand it to any new provider in 60 seconds.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Auto-pulls from all your tools</div>
+          <div class="tc-feat"><div class="fd"></div>AI-written clinical language</div>
+          <div class="tc-feat"><div class="fd"></div>Print, email, or share instantly</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Generate my summary →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('recorder')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#c0392b,#e74c3c)">🎙️</div>
+        <div class="tc-name">Appointment Recorder</div>
+        <div class="tc-tag tg-red">Never forget what the doctor said again</div>
+        <div class="tc-desc">Record or type notes during your appointment. AI turns it into a structured summary with action items, medication changes, tests ordered, and unanswered questions.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Live speech-to-text transcription</div>
+          <div class="tc-feat"><div class="fd"></div>AI-structured appointment summary</div>
+          <div class="tc-feat"><div class="fd"></div>Action items & follow-up list</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Record my appointment →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('documents')">
+      <div class="tc-body">
+        <div class="tc-icon" style="background:linear-gradient(135deg,#3a7bc8,#5b9bd5)">📁</div>
+        <div class="tc-name">Document Library</div>
+        <div class="tc-tag tg-blue">Every document. Organized. Always with you.</div>
+        <div class="tc-desc">Upload discharge summaries, test results, insurance letters, IEP documents, and more. AI extracts key information from any document automatically.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>PDF, image, and text support</div>
+          <div class="tc-feat"><div class="fd"></div>AI key info extraction</div>
+          <div class="tc-feat"><div class="fd"></div>Categorized and searchable</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Manage my documents →</div><div class="tc-arr">→</div></div>
     </div>
 
     <div class="tc" onclick="openTool('explain')">
@@ -599,7 +644,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <p class="sec-sub">Built from real experiences. Requested by real moms.</p>
   </div>
   <div class="coming-grid">
-    <div class="cc"><div class="cc-icon">🎙️</div><div class="cc-name">Appointment Recorder</div><div class="cc-desc">Record your visit, get an AI summary with action items and next steps. Requires microphone access.</div></div>
+    <div class="cc"><div class="cc-icon">👤</div><div class="cc-name">Multiple Patient Profiles</div><div class="cc-desc">Separate profiles for each person — coming with account login this weekend.</div></div>
     <div class="cc"><div class="cc-icon">💊</div><div class="cc-name">Drug Interaction Checker</div><div class="cc-desc">Paste your full medication list and flag potential interactions in plain English.</div></div>
     <div class="cc"><div class="cc-icon">🔬</div><div class="cc-name">Second Opinion Prep</div><div class="cc-desc">Know exactly what to ask, what records to bring, and how to frame your case for a second opinion.</div></div>
     <div class="cc"><div class="cc-icon">👥</div><div class="cc-name">Multi-Profile Support</div><div class="cc-desc">Separate profiles for each person — each with their own complete history.</div></div>
@@ -717,6 +762,9 @@ const TOOLS = {
   er:          { title:'ER Prep Card',                src:'advocate-er.html' },
   insurance:   { title:'Insurance Appeal Letter',     src:'advocate-insurance.html' },
   explain:     { title:'Explain My Diagnosis',        src:'advocate-explain.html' },
+  summary:     { title:'Medical Summary',              src:'advocate-summary.html' },
+  documents:   { title:'Document Library',             src:'advocate-documents.html' },
+  recorder:    { title:'Appointment Recorder',         src:'advocate-recorder.html' },
   careteam:    { title:'Care Team & Specialists',      src:'advocate-careteam.html' },
   concierge:   { title:'Care Concierge',               src:'advocate-concierge.html' },
   research:    { title:'Research Library',             src:'advocate-research.html' },
@@ -725,6 +773,12 @@ const TOOLS = {
   flare:       { title:'Flare Tracker',               src:'advocate-flare.html' },
   saved:       { title:'My Saved Items & Care Team',  src:'advocate-myadvocate.html' },
 };
+
+// ── ONBOARDING CHECK ──
+if(!localStorage.getItem('advocate_onboarded')){
+  // First time visitor — redirect to onboarding
+  window.location.href='advocate-onboarding.html';
+}
 
 // ── INSTALL TO HOME SCREEN ──
 let deferredInstallPrompt = null;
