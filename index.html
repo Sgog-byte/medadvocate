@@ -584,6 +584,50 @@ const PREMIUM_TOOLS = {
   scripts:   'advocate-locked.html?tool=scripts',
 };
 
+function openTool(key) {
+  const t = TOOLS[key]; if (!t) return;
+  const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
+  if (PREMIUM_TOOLS[key] && !unlocked[key]) {
+    window.location.href = PREMIUM_TOOLS[key];
+    return;
+  }
+  document.getElementById('frameTitle').textContent = t.title;
+  document.getElementById('toolFrame').src = t.src;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTool() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('toolFrame').src = '';
+  document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeTool();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Animate tool cards on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.style.animationDelay = (i * 0.05) + 's', 0);
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.tc').forEach(tc => observer.observe(tc));
+
+// Keyboard close
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
 
 </script>
 </body>
