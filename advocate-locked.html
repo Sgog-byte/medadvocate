@@ -142,6 +142,23 @@ const TOOLS = {
     bundle: { price: '$37', was: '$54', label: 'Records & Recorder Bundle', desc: 'Document Library + Appointment Recorder — save $17' },
     checkoutParam: 'docs',
   },
+  scripts: {
+    name: 'Doctor <em>Scripts</em>',
+    sub: 'The exact words to say when doctors dismiss you — personalized to your condition, your situation, your style. Walk in prepared. Walk out heard.',
+    icon: '✦',
+    accentColor: '#c9923a',
+    accentPale: '#fdf3e7',
+    badgeText: '✦ Premium Add-on',
+    features: [
+      { ico: '🧠', title: '12 dismissal scenarios', desc: '"It\'s anxiety," labs are normal, won\'t refer you, ER dismissal, IEP denied, insurance refusal — scripts for every situation you\'ve faced.' },
+      { ico: '💬', title: 'Pushback responses included', desc: 'Every script comes with what to say when they push back or dismiss you again. You\'re never caught off guard.' },
+      { ico: '🎯', title: 'Personalized to you', desc: 'Tailored to your condition, your doctor, and your natural communication style — firm, warm, direct, or clinical.' },
+      { ico: '🖨️', title: 'Printable pocket card', desc: 'Print your scripts as a card you can fold and keep in your bag. Your words, ready when you need them.' },
+    ],
+    solo: { price: '$17', was: '$27', label: 'Doctor Scripts only', desc: 'One-time unlock, yours forever' },
+    bundle: { price: '$37', was: '$54', label: 'Records & Recorder Bundle', desc: 'Document Library + Appointment Recorder — save $17' },
+    checkoutParam: 'scripts',
+  },
   recorder: {
     name: 'Appointment <em>Recorder</em>',
     sub: 'Record your appointment and get an AI summary with every decision, medication change, follow-up, and the questions you forgot to ask.',
@@ -181,30 +198,50 @@ document.getElementById('what-items').innerHTML = cfg.features.map(f => `
   </div>`).join('');
 
 // Pricing options
-document.getElementById('price-options').innerHTML = `
-  <div class="price-opt featured" onclick="selectOption('bundle')" id="opt-bundle">
-    <div class="featured-badge">BEST VALUE</div>
-    <div class="price-opt-ico">📦</div>
-    <div class="price-opt-text">
-      <div class="price-opt-label">${cfg.bundle.label}</div>
-      <div class="price-opt-desc">${cfg.bundle.desc}</div>
+// For scripts: just show solo option (bundle is docs+recorder, separate offer)
+// For docs/recorder: show both solo and bundle
+if (tool === 'scripts') {
+  document.getElementById('price-options').innerHTML = `
+    <div class="price-opt featured" id="opt-solo" onclick="selectOption('solo')">
+      <div class="featured-badge">ONE-TIME</div>
+      <div class="price-opt-ico">${cfg.icon}</div>
+      <div class="price-opt-text">
+        <div class="price-opt-label">${cfg.solo.label}</div>
+        <div class="price-opt-desc">${cfg.solo.desc}</div>
+      </div>
+      <div class="price-opt-amount">
+        <div class="price-amount">${cfg.solo.price}</div>
+        <div class="price-was">${cfg.solo.was}</div>
+      </div>
+    </div>`;
+  // hide bundle option — not relevant for scripts
+  document.getElementById('opt-bundle') && (document.getElementById('opt-bundle').style.display = 'none');
+} else {
+  document.getElementById('price-options').innerHTML = `
+    <div class="price-opt featured" onclick="selectOption('bundle')" id="opt-bundle">
+      <div class="featured-badge">BEST VALUE</div>
+      <div class="price-opt-ico">📦</div>
+      <div class="price-opt-text">
+        <div class="price-opt-label">${cfg.bundle.label}</div>
+        <div class="price-opt-desc">${cfg.bundle.desc}</div>
+      </div>
+      <div class="price-opt-amount">
+        <div class="price-amount">${cfg.bundle.price}</div>
+        <div class="price-was">${cfg.bundle.was}</div>
+      </div>
     </div>
-    <div class="price-opt-amount">
-      <div class="price-amount">${cfg.bundle.price}</div>
-      <div class="price-was">${cfg.bundle.was}</div>
-    </div>
-  </div>
-  <div class="price-opt" onclick="selectOption('solo')" id="opt-solo">
-    <div class="price-opt-ico">${cfg.icon}</div>
-    <div class="price-opt-text">
-      <div class="price-opt-label">${cfg.solo.label}</div>
-      <div class="price-opt-desc">${cfg.solo.desc}</div>
-    </div>
-    <div class="price-opt-amount">
-      <div class="price-amount">${cfg.solo.price}</div>
-      <div class="price-was">${cfg.solo.was}</div>
-    </div>
-  </div>`;
+    <div class="price-opt" onclick="selectOption('solo')" id="opt-solo">
+      <div class="price-opt-ico">${cfg.icon}</div>
+      <div class="price-opt-text">
+        <div class="price-opt-label">${cfg.solo.label}</div>
+        <div class="price-opt-desc">${cfg.solo.desc}</div>
+      </div>
+      <div class="price-opt-amount">
+        <div class="price-amount">${cfg.solo.price}</div>
+        <div class="price-was">${cfg.solo.was}</div>
+      </div>
+    </div>`;
+}
 
 let selectedOption = 'bundle';
 
@@ -230,8 +267,8 @@ if (unlocked[tool]) {
   window.location.href = tool==='documents' ? 'advocate-documents.html' : 'advocate-recorder.html';
 }
 
-// Pre-select bundle by default — update CTA text
-selectOption('bundle');
+// For scripts, solo is the better default (bundle is docs+recorder, not scripts)
+selectOption(tool === 'scripts' ? 'solo' : 'bundle');
 </script>
 </body>
 </html>

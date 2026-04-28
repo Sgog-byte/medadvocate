@@ -410,7 +410,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
     <div class="tc" onclick="openTool('scripts')" style="border-color:var(--amber);box-shadow:0 0 0 2px var(--amber-pale)">
       <div class="tc-body">
         <div class="tc-icon i7">✦</div>
-        <div class="tc-name">Doctor Scripts</div>
+        <div class="tc-name">Doctor Scripts <span style="font-size:11px;background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber-light);padding:1px 7px;border-radius:100px;font-weight:600;vertical-align:middle">Add-on</span></div>
         <div class="tc-tag tg-amber">The exact words when they don't listen</div>
         <div class="tc-desc">Personalized scripts for every dismissal — "it's anxiety," "labs are normal," ER visits, IEP denials. Printable. Works in 30 seconds.</div>
         <div class="tc-feats">
@@ -538,7 +538,7 @@ const TOOLS = {
   summary:     { title:'Medical Summary',             src:'advocate-summary.html' },
   documents:   { title:'Document Library',            src:'advocate-documents.html' },
   recorder:    { title:'Appointment Recorder',        src:'advocate-recorder.html' },
-  scripts:     { title:'Doctor Scripts',              src:'advocate-scripts.html' },
+  scripts:     { title:'Doctor Scripts',              src:'advocate-scripts.html' },  // premium
   timeline:    { title:'Medical Timeline',            src:'advocate-timeline.html' },
   medications: { title:'Medication Tracker',          src:'advocate-medications.html' },
 };
@@ -547,6 +547,7 @@ const TOOLS = {
 const PREMIUM_TOOLS = {
   documents: 'advocate-locked.html?tool=documents',
   recorder:  'advocate-locked.html?tool=recorder',
+  scripts:   'advocate-locked.html?tool=scripts',
 };
 
 function openTool(key) {
