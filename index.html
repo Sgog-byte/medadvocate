@@ -602,6 +602,25 @@ const PREMIUM_TOOLS = {
   testing:   'advocate-locked.html?tool=testing',
 };
 
+// Developer backdoor — visit ?unlock=all to unlock everything
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('unlock') === 'all') {
+    const unlocked = { subscribed:true, documents:true, recorder:true, scripts:true, testing:true };
+    localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
+    localStorage.setItem('advocate_onboarded', '1');
+    // Clean URL so param doesn't show
+    history.replaceState({}, '', window.location.pathname);
+    showToast('🔓 All tools unlocked — developer mode');
+  }
+  // ?lock=all to reset (test the lock screens)
+  if (p.get('lock') === 'all') {
+    localStorage.removeItem('advocate_unlocked');
+    history.replaceState({}, '', window.location.pathname);
+    showToast('🔒 All tools locked — testing lock screens');
+  }
+})();
+
 function openTool(key) {
   const t = TOOLS[key]; if (!t) return;
   const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
