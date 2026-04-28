@@ -70,6 +70,15 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media(max-width:620px){.two{grid-template-columns:1fr}.docs-grid{grid-template-columns:1fr}}
 </style>
+<script>
+// LOCK GATE — redirect to unlock screen if not purchased
+(function() {
+  var unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
+  if (!unlocked.documents) {
+    window.location.replace('advocate-locked.html?tool=documents');
+  }
+})();
+</script>
 </head>
 <body>
 <nav>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Subscribe</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#3a6b54;
+  --border:#b7d9c4;--white:#fff;
+  --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+  --blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;
+  --violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;
+  --red:#c0392b;
+  --shadow-lg:0 16px 60px rgba(28,43,34,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px 60px}
+.page{width:100%;max-width:560px}
+
+/* LOGO */
+.logo-bar{text-align:center;margin-bottom:26px}
+.logo{font-family:'Fraunces',serif;font-size:24px;font-weight:400;color:white}
+.logo-dot{display:inline-block;width:8px;height:8px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.logo-adv{color:var(--sage-light);font-weight:300}
+.logo-tag{font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,.4);margin-top:4px}
+
+/* PLAN TOGGLE */
+.plan-toggle{display:flex;background:rgba(255,255,255,.08);border-radius:14px;padding:4px;margin-bottom:18px;position:relative}
+.plan-opt{flex:1;padding:11px;text-align:center;border-radius:11px;cursor:pointer;transition:all .25s;position:relative}
+.plan-opt.active{background:var(--white);box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.plan-opt-label{font-size:14px;font-weight:600;color:rgba(255,255,255,.8);transition:color .25s}
+.plan-opt.active .plan-opt-label{color:var(--ink)}
+.plan-opt-price{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;transition:color .25s}
+.plan-opt.active .plan-opt-price{color:var(--ink-muted)}
+.save-badge{position:absolute;top:-10px;right:8px;background:var(--amber);color:white;font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px}
+
+/* CARD */
+.card{background:var(--warm);border-radius:22px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.card-top{background:var(--sage-deep);padding:24px 28px 22px}
+.card-eyebrow{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-light);margin-bottom:8px}
+.card-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:white;margin-bottom:4px}
+.card-sub{font-size:13px;color:rgba(255,255,255,.55);font-weight:300;line-height:1.6}
+.price-row{display:flex;align-items:baseline;gap:6px;margin-top:14px}
+.price-main{font-family:'Fraunces',serif;font-size:40px;font-weight:300;color:white;line-height:1}
+.price-period{font-size:14px;color:rgba(255,255,255,.5)}
+.price-note{font-size:12px;color:rgba(255,255,255,.4);margin-top:5px}
+
+/* FEATURES */
+.features{padding:18px 28px 4px}
+.feat{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.feat:last-child{border-bottom:none}
+.feat-dot{width:18px;height:18px;background:var(--sage-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:2px;color:var(--sage-deep)}
+.feat-text{font-size:13px;color:var(--ink-soft);line-height:1.5;font-weight:300}
+.feat-text strong{font-weight:600;color:var(--ink)}
+
+/* BUMPS SECTION HEADER */
+.bumps-label{padding:20px 28px 10px;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted)}
+
+/* INDIVIDUAL BUMP */
+.bump-wrap{padding:0 28px 10px}
+.bump{border:2px dashed var(--border);border-radius:16px;padding:15px 17px;background:var(--white);cursor:pointer;transition:all .2s}
+.bump:hover{border-color:var(--amber-light)}
+.bump.amber-bump{border-color:rgba(201,146,58,.4);background:var(--amber-pale)}
+.bump.amber-bump:hover{border-color:var(--amber)}
+.bump.checked{border-style:solid!important;box-shadow:0 0 0 3px rgba(201,146,58,.2)}
+.bump.amber-bump.checked{border-color:var(--amber)!important}
+.bump.blue-bump{border-color:rgba(58,123,200,.3);background:var(--blue-pale)}
+.bump.blue-bump:hover{border-color:var(--blue)}
+.bump.blue-bump.checked{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(58,123,200,.15)}
+.bump.violet-bump{border-color:rgba(123,104,238,.3);background:var(--violet-pale)}
+.bump.violet-bump:hover{border-color:var(--violet)}
+.bump.violet-bump.checked{border-color:var(--violet)!important;box-shadow:0 0 0 3px rgba(123,104,238,.15)}
+.bump-row{display:flex;align-items:flex-start;gap:12px}
+.bump-cb{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .2s;background:white;font-size:12px;color:white}
+.bump.amber-bump .bump-cb{border-color:var(--amber-light)}
+.bump.amber-bump.checked .bump-cb{background:var(--amber);border-color:var(--amber)}
+.bump.blue-bump .bump-cb{border-color:var(--blue-border)}
+.bump.blue-bump.checked .bump-cb{background:var(--blue);border-color:var(--blue)}
+.bump.violet-bump .bump-cb{border-color:var(--violet-border)}
+.bump.violet-bump.checked .bump-cb{background:var(--violet);border-color:var(--violet)}
+.bump-content{flex:1}
+.bump-eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.amber-bump .bump-eyebrow{color:var(--amber)}
+.blue-bump .bump-eyebrow{color:var(--blue)}
+.violet-bump .bump-eyebrow{color:var(--violet)}
+.bump-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.35}
+.bump-desc{font-size:12px;color:var(--ink-muted);line-height:1.6;font-weight:300}
+.bump-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.bchip{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:500}
+.amber-bump .bchip{background:rgba(201,146,58,.12);border:1px solid rgba(201,146,58,.25);color:var(--amber)}
+.blue-bump .bchip{background:rgba(58,123,200,.1);border:1px solid rgba(58,123,200,.2);color:var(--blue)}
+.violet-bump .bchip{background:rgba(123,104,238,.1);border:1px solid rgba(123,104,238,.2);color:var(--violet)}
+.bump-price-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.bump-price{padding:5px 14px;border-radius:100px;font-size:13px;font-weight:700;color:white}
+.amber-bump .bump-price{background:var(--amber)}
+.blue-bump .bump-price{background:var(--blue)}
+.violet-bump .bump-price{background:var(--violet)}
+.bump-was{font-size:12px;color:var(--ink-muted);text-decoration:line-through}
+
+/* BUNDLE OFFER */
+.bundle-wrap{padding:0 28px 16px}
+.bundle{background:var(--sage-deep);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.bundle::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(149,213,178,.06)}
+.bundle-badge{position:absolute;top:12px;right:14px;background:var(--sage-light);color:var(--sage-deep);font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;letter-spacing:.05em}
+.bundle-row{display:flex;align-items:flex-start;gap:12px}
+.bundle-cb{width:22px;height:22px;border:2px solid rgba(149,213,178,.4);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .2s;font-size:12px;color:white}
+.bundle.checked .bundle-cb{background:var(--sage-light);border-color:var(--sage-light);color:var(--sage-deep)}
+.bundle-content{flex:1}
+.bundle-eyebrow{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sage-light);margin-bottom:3px}
+.bundle-title{font-size:14px;font-weight:600;color:white;margin-bottom:4px;line-height:1.35}
+.bundle-desc{font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;font-weight:300}
+.bundle-price-row{display:flex;align-items:center;gap:9px;margin-top:10px}
+.bundle-price{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:white}
+.bundle-was{font-size:13px;color:rgba(255,255,255,.4);text-decoration:line-through}
+.bundle-save{padding:4px 10px;background:rgba(149,213,178,.15);border:1px solid rgba(149,213,178,.25);border-radius:100px;font-size:11px;font-weight:700;color:var(--sage-light)}
+
+/* OR DIVIDER */
+.or-div{display:flex;align-items:center;gap:10px;padding:0 28px 14px}
+.or-line{flex:1;height:1px;background:var(--border)}
+.or-text{font-size:11px;font-weight:600;color:var(--ink-muted);letter-spacing:.08em}
+
+/* FAMILY */
+.family-wrap{padding:0 28px 20px}
+.family{border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;background:var(--white);display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s}
+.family:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+.family.on{border-color:var(--sage-deep);background:var(--sage-pale);box-shadow:0 0 0 2px var(--sage-deep)}
+.family-ico{font-size:26px;flex-shrink:0}
+.family-text{flex:1}
+.family-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.family-desc{font-size:12px;color:var(--ink-muted);font-weight:300;line-height:1.4}
+.family-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.family-cb{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:11px;color:white}
+.family.on .family-cb{background:var(--sage-deep);border-color:var(--sage-deep)}
+.family-badge{font-size:12px;font-weight:600;color:var(--sage-deep);white-space:nowrap}
+
+/* ORDER SUMMARY */
+.summary-wrap{padding:0 28px 28px}
+.order-summary{background:var(--sage-pale);border:1px solid var(--border);border-radius:14px;padding:14px 17px;margin-bottom:16px}
+.sum-line{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--ink-soft);padding:5px 0}
+.sum-line.total{padding-top:10px;margin-top:4px;border-top:1.5px solid var(--border);font-size:15px;font-weight:600;color:var(--ink)}
+.sum-label{font-weight:300}
+.sum-price{font-weight:500}
+.cta-btn{width:100%;padding:16px;background:var(--sage-deep);color:white;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:0 6px 24px rgba(27,67,50,.3);display:flex;align-items:center;justify-content:center;gap:9px}
+.cta-btn:hover{background:var(--ink);transform:translateY(-1px)}
+.trust-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:13px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-muted)}
+
+/* TESTIMONIAL */
+.testimonial{padding:18px 28px;border-top:1px solid var(--border)}
+.test-q{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.75;margin-bottom:9px}
+.test-attr{font-size:12px;color:var(--ink-muted);font-weight:300}
+
+.back-link{text-align:center;margin-top:18px}
+.back-link a{font-size:13px;color:rgba(255,255,255,.35);text-decoration:none}
+.back-link a:hover{color:rgba(255,255,255,.6)}
+
+@media(max-width:480px){
+  .card-top,.features,.features,.bumps-label,.bump-wrap,.bundle-wrap,.or-div,.family-wrap,.summary-wrap,.testimonial{padding-left:18px;padding-right:18px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="logo-bar">
+    <div class="logo">Med<span class="logo-dot"></span><span class="logo-adv">Advocate</span></div>
+    <div class="logo-tag">Beside you, always.</div>
+  </div>
+
+  <!-- PLAN TOGGLE -->
+  <div class="plan-toggle">
+    <div class="plan-opt active" id="opt-monthly" onclick="setPlan('monthly')">
+      <div class="plan-opt-label">Monthly</div>
+      <div class="plan-opt-price">$12.99 / month</div>
+    </div>
+    <div class="plan-opt" id="opt-annual" onclick="setPlan('annual')">
+      <div class="save-badge">SAVE $66</div>
+      <div class="plan-opt-label">Annual</div>
+      <div class="plan-opt-price">$89.99 / year</div>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- TOP -->
+    <div class="card-top">
+      <div class="card-eyebrow">✦ MedAdvocate — Full Access</div>
+      <div class="card-title" id="plan-title">Monthly Plan</div>
+      <div class="card-sub">Thirteen core tools. All your data on your device. Cancel anytime.</div>
+      <div class="price-row">
+        <div class="price-main" id="price-main">$12.99</div>
+        <div class="price-period" id="price-period">/ month</div>
+      </div>
+      <div class="price-note" id="price-note">Billed monthly · Cancel anytime</div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>13 core tools</strong> — Visit Script, Symptom Tracker, Labs, Medical Summary, Credibility Doc, Care Team, IEP, ER Card, Insurance Appeal, Timeline, Medications, Flare Tracker, Explain My Diagnosis</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>AI-powered</strong> — Claude generates clinical-quality documents, summaries, and prep materials for every appointment</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Private by design</strong> — Everything stays on your device. Never on our servers. Never shared.</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Works offline</strong> — Install as an app. Your data is always there, even without internet.</div></div>
+    </div>
+
+    <!-- ADD-ONS LABEL -->
+    <div class="bumps-label">✦ Enhance Your Plan — Add-ons</div>
+
+    <!-- BUMP 1: Doctor Scripts -->
+    <div class="bump-wrap">
+      <div class="bump amber-bump" id="bump-scripts" onclick="toggleBump('scripts')">
+        <div class="bump-row">
+          <div class="bump-cb" id="cb-scripts"></div>
+          <div class="bump-content">
+            <div class="bump-eyebrow">✦ One-time add-on</div>
+            <div class="bump-title">Add Doctor Scripts — the exact words when they don't listen</div>
+            <div class="bump-desc">Personalized scripts for 12 dismissal scenarios — "it's anxiety," labs are normal, ER won't listen, IEP denied. Pushback responses included. Printable card.</div>
+            <div class="bump-chips">
+              <span class="bchip">"It's anxiety"</span>
+              <span class="bchip">Labs normal</span>
+              <span class="bchip">Won't refer</span>
+              <span class="bchip">ER dismissal</span>
+              <span class="bchip">IEP denied</span>
+              <span class="bchip">+ 7 more</span>
+            </div>
+            <div class="bump-price-row">
+              <span class="bump-price" id="scripts-price-badge">Add for $17</span>
+              <span class="bump-was">$27</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OR: Buy individually OR bundle -->
+    <div class="bumps-label" style="padding-top:10px">📁 Premium Tools — Choose below</div>
+
+    <!-- BUMP 2: Document Library -->
+    <div class="bump-wrap">
+      <div class="bump blue-bump" id="bump-docs" onclick="toggleBump('docs')">
+        <div class="bump-row">
+          <div class="bump-cb" id="cb-docs"></div>
+          <div class="bump-content">
+            <div class="bump-eyebrow">📁 Premium tool — one-time</div>
+            <div class="bump-title">Add Document Library — AI reads your medical documents</div>
+            <div class="bump-desc">Upload discharge summaries, test results, referrals, EOBs. AI extracts the key information from every document automatically. Organized, searchable, always there.</div>
+            <div class="bump-chips">
+              <span class="bchip">PDFs & images</span>
+              <span class="bchip">AI extraction</span>
+              <span class="bchip">10 categories</span>
+              <span class="bchip">Instant search</span>
+            </div>
+            <div class="bump-price-row">
+              <span class="bump-price" id="docs-price-badge">Add for $27</span>
+              <span class="bump-was">$47</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUMP 3: Appointment Recorder -->
+    <div class="bump-wrap" style="padding-bottom:14px">
+      <div class="bump violet-bump" id="bump-recorder" onclick="toggleBump('recorder')">
+        <div class="bump-row">
+          <div class="bump-cb" id="cb-recorder"></div>
+          <div class="bump-content">
+            <div class="bump-eyebrow">🎙️ Premium tool — one-time</div>
+            <div class="bump-title">Add Appointment Recorder — never forget what the doctor said</div>
+            <div class="bump-desc">Live transcription during your appointment. AI summary with every decision, medication change, follow-up, and the questions you forgot to ask.</div>
+            <div class="bump-chips">
+              <span class="bchip">Live transcription</span>
+              <span class="bchip">AI action items</span>
+              <span class="bchip">Medication changes</span>
+              <span class="bchip">Follow-up list</span>
+            </div>
+            <div class="bump-price-row">
+              <span class="bump-price" id="recorder-price-badge">Add for $27</span>
+              <span class="bump-was">$47</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OR DIVIDER -->
+    <div class="or-div"><div class="or-line"></div><div class="or-text">OR SAVE MORE WITH THE BUNDLE</div><div class="or-line"></div></div>
+
+    <!-- BUNDLE -->
+    <div class="bundle-wrap">
+      <div class="bundle" id="bundle-box" onclick="toggleBundle()">
+        <div class="bundle-badge">BEST VALUE</div>
+        <div class="bundle-row">
+          <div class="bundle-cb" id="bundle-cb"></div>
+          <div class="bundle-content">
+            <div class="bundle-eyebrow">✦ Records & Recorder Bundle</div>
+            <div class="bundle-title">Document Library + Appointment Recorder together</div>
+            <div class="bundle-desc">Both premium tools at one price. Upload and organize every document. Record every appointment. The complete paper trail, automatically organized.</div>
+            <div class="bundle-price-row">
+              <div class="bundle-price">$37</div>
+              <div class="bundle-was">$54 separately</div>
+              <div class="bundle-save">SAVE $17</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAMILY PLAN -->
+    <div class="family-wrap">
+      <div class="family" id="family-box" onclick="toggleFamily()">
+        <div class="family-ico">👨‍👩‍👧</div>
+        <div class="family-text">
+          <div class="family-title">Upgrade to Family Plan — up to 5 profiles</div>
+          <div class="family-desc">Managing more than one child? Add profiles for each for just $2 more per month.</div>
+        </div>
+        <div class="family-right">
+          <div class="family-cb" id="family-cb"></div>
+          <div class="family-badge" id="family-badge">+$2/mo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDER SUMMARY -->
+    <div class="summary-wrap">
+      <div class="order-summary" id="order-summary">
+        <div class="sum-line">
+          <span class="sum-label" id="sum-plan-label">MedAdvocate Monthly</span>
+          <span class="sum-price" id="sum-plan-price">$12.99/mo</span>
+        </div>
+        <div class="sum-line" id="sum-scripts-row" style="display:none">
+          <span class="sum-label">Doctor Scripts</span>
+          <span class="sum-price">$17 one-time</span>
+        </div>
+        <div class="sum-line" id="sum-docs-row" style="display:none">
+          <span class="sum-label">Document Library</span>
+          <span class="sum-price" id="sum-docs-price">$27 one-time</span>
+        </div>
+        <div class="sum-line" id="sum-recorder-row" style="display:none">
+          <span class="sum-label">Appointment Recorder</span>
+          <span class="sum-price" id="sum-recorder-price">$27 one-time</span>
+        </div>
+        <div class="sum-line" id="sum-bundle-row" style="display:none">
+          <span class="sum-label">Records &amp; Recorder Bundle</span>
+          <span class="sum-price">$37 one-time</span>
+        </div>
+        <div class="sum-line" id="sum-family-row" style="display:none">
+          <span class="sum-label">Family Plan upgrade</span>
+          <span class="sum-price" id="sum-family-price">+$2.00/mo</span>
+        </div>
+        <div class="sum-line total">
+          <span>Due today</span>
+          <span id="sum-total">$12.99</span>
+        </div>
+      </div>
+
+      <button class="cta-btn" onclick="handleCheckout()">
+        <span>🔒</span>
+        <span id="cta-text">Subscribe — $12.99/month</span>
+      </button>
+
+      <div class="trust-row">
+        <div class="trust-item">🔒 Secure checkout</div>
+        <div class="trust-item">↩️ Cancel anytime</div>
+        <div class="trust-item">🌿 Instant access</div>
+      </div>
+    </div>
+
+    <!-- TESTIMONIAL -->
+    <div class="testimonial">
+      <div class="test-q">"I walked into my daughter's cardiology appointment with a printed summary and a script for when he tried to dismiss her symptoms. For the first time in four years, he listened. He actually listened."</div>
+      <div class="test-attr">— Beta tester, mom of a child with POTS &amp; hEDS</div>
+    </div>
+
+  </div>
+  <div class="back-link"><a href="index.html">← Back to MedAdvocate</a></div>
+</div>
+
+<script>
+let plan = 'monthly';
+let bumps = { scripts: false, docs: false, recorder: false };
+let bundleOn = false;
+let familyOn = false;
+
+const PLANS = {
+  monthly: { base:12.99, family:14.99, label:'Monthly Plan', period:'/month', note:'Billed monthly · Cancel anytime', sumLabel:'MedAdvocate Monthly', sumPrice:'$12.99/mo' },
+  annual:  { base:89.99, family:107.99, label:'Annual Plan', period:'/year', note:'Billed once a year · Saves $66 vs monthly', sumLabel:'MedAdvocate Annual', sumPrice:'$89.99/yr' },
+};
+
+function setPlan(p) {
+  plan = p;
+  ['monthly','annual'].forEach(o => document.getElementById('opt-'+o).classList.toggle('active', o===p));
+  const cfg = PLANS[p];
+  document.getElementById('plan-title').textContent = cfg.label;
+  document.getElementById('price-main').textContent = '$' + cfg.base.toFixed(2);
+  document.getElementById('price-period').textContent = cfg.period;
+  document.getElementById('price-note').textContent = cfg.note;
+  document.getElementById('sum-plan-label').textContent = cfg.sumLabel;
+  document.getElementById('sum-plan-price').textContent = cfg.sumPrice;
+  document.getElementById('family-badge').textContent = p==='annual' ? '+$18/yr' : '+$2/mo';
+  document.getElementById('sum-family-price').textContent = p==='annual' ? '+$18.00/yr' : '+$2.00/mo';
+  updateTotal();
+}
+
+function toggleBump(key) {
+  // If bundle is on and we're toggling docs or recorder, turn bundle off
+  if (bundleOn && (key==='docs' || key==='recorder')) {
+    bundleOn = false;
+    document.getElementById('bundle-box').classList.remove('checked');
+    document.getElementById('bundle-cb').textContent = '';
+    document.getElementById('sum-bundle-row').style.display = 'none';
+    // Re-show individual rows if they were hidden by bundle
+    document.getElementById('sum-docs-row').style.display = 'none';
+    document.getElementById('sum-recorder-row').style.display = 'none';
+    bumps.docs = false;
+    bumps.recorder = false;
+    document.getElementById('bump-docs').classList.remove('checked');
+    document.getElementById('bump-recorder').classList.remove('checked');
+    document.getElementById('cb-docs').textContent = '';
+    document.getElementById('cb-recorder').textContent = '';
+  }
+
+  bumps[key] = !bumps[key];
+  const bumpEl = document.getElementById('bump-'+key);
+  const cbEl = document.getElementById('cb-'+key);
+  bumpEl.classList.toggle('checked', bumps[key]);
+  cbEl.textContent = bumps[key] ? '✓' : '';
+
+  // Show/hide summary rows
+  document.getElementById('sum-scripts-row').style.display = bumps.scripts ? 'flex' : 'none';
+  if (!bundleOn) {
+    document.getElementById('sum-docs-row').style.display = bumps.docs ? 'flex' : 'none';
+    document.getElementById('sum-recorder-row').style.display = bumps.recorder ? 'flex' : 'none';
+  }
+  updateTotal();
+}
+
+function toggleBundle() {
+  bundleOn = !bundleOn;
+  document.getElementById('bundle-box').classList.toggle('checked', bundleOn);
+  document.getElementById('bundle-cb').textContent = bundleOn ? '✓' : '';
+
+  if (bundleOn) {
+    // Turn off individual docs/recorder bumps
+    bumps.docs = false; bumps.recorder = false;
+    ['docs','recorder'].forEach(k => {
+      document.getElementById('bump-'+k).classList.remove('checked');
+      document.getElementById('cb-'+k).textContent = '';
+    });
+    document.getElementById('sum-docs-row').style.display = 'none';
+    document.getElementById('sum-recorder-row').style.display = 'none';
+    document.getElementById('sum-bundle-row').style.display = 'flex';
+  } else {
+    document.getElementById('sum-bundle-row').style.display = 'none';
+  }
+  updateTotal();
+}
+
+function toggleFamily() {
+  familyOn = !familyOn;
+  document.getElementById('family-box').classList.toggle('on', familyOn);
+  document.getElementById('family-cb').textContent = familyOn ? '✓' : '';
+  document.getElementById('sum-family-row').style.display = familyOn ? 'flex' : 'none';
+  updateTotal();
+}
+
+function updateTotal() {
+  const cfg = PLANS[plan];
+  const baseRecurring = familyOn ? cfg.family : cfg.base;
+  let oneTime = 0;
+  if (bumps.scripts) oneTime += 17;
+  if (bundleOn) { oneTime += 37; }
+  else { if (bumps.docs) oneTime += 27; if (bumps.recorder) oneTime += 27; }
+
+  const recurringLabel = plan==='annual' ? '/yr' : '/mo';
+  let totalStr = '$' + baseRecurring.toFixed(2) + recurringLabel;
+  if (oneTime > 0) totalStr += ' + $' + oneTime + ' one-time';
+
+  document.getElementById('sum-total').textContent = totalStr;
+  document.getElementById('cta-text').textContent =
+    'Subscribe — $' + baseRecurring.toFixed(2) + recurringLabel +
+    (oneTime > 0 ? ' + $' + oneTime : '');
+}
+
+function handleCheckout() {
+  // TODO: Wire to Stripe — build line items from state below
+  // const lineItems = buildStripeLineItems();
+  // window.location.href = stripeCheckoutURL + '?...' + lineItems;
+
+  // TEMPORARY: Simulate purchase by setting unlock flags, then redirect to app
+  const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
+  unlocked.subscribed = true;
+  if (bumps.docs || bundleOn) unlocked.documents = true;
+  if (bumps.recorder || bundleOn) unlocked.recorder = true;
+  if (bumps.scripts) unlocked.scripts = true;
+  localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
+  localStorage.setItem('advocate_onboarded', '1');
+  // Redirect to app after "purchase"
+  window.location.href = 'index.html';
+}
+
+// Pre-check bumps from URL param (coming from lock screen)
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const addon = p.get('addon');
+  if (addon === 'bundle') { setTimeout(() => toggleBundle(), 100); }
+  else if (addon === 'docs') { setTimeout(() => toggleBump('docs'), 100); }
+  else if (addon === 'recorder') { setTimeout(() => toggleBump('recorder'), 100); }
+  else if (addon === 'scripts') { setTimeout(() => toggleBump('scripts'), 100); }
+})();
+
+updateTotal();
+</script>
+</body>
+</html>

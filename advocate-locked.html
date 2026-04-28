@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Unlock This Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#3a6b54;
+  --border:#b7d9c4;--white:#fff;
+  --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+  --blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;
+  --violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;
+  --shadow-lg:0 16px 60px rgba(28,43,34,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;position:relative;overflow:hidden}
+
+/* Blurred background suggestion */
+body::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(149,213,178,.07),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(149,213,178,.05),transparent 50%)}
+
+.card{background:var(--warm);border-radius:24px;width:100%;max-width:480px;overflow:hidden;box-shadow:var(--shadow-lg);position:relative;z-index:1}
+
+/* Tool preview header — blurred */
+.preview-header{padding:28px 28px 24px;position:relative;overflow:hidden}
+.preview-header::after{content:'';position:absolute;inset:0;backdrop-filter:blur(4px);background:rgba(253,252,248,.6)}
+.preview-bg{position:absolute;inset:0;opacity:.15}
+.preview-content{position:relative;z-index:1;text-align:center}
+.lock-ring{width:70px;height:70px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative}
+.lock-ring::before{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid currentColor;opacity:.2}
+.lock-icon{font-size:28px}
+.preview-tool-name{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:6px;line-height:1.3}
+.preview-tool-name em{font-style:italic}
+.preview-tool-sub{font-size:13px;color:var(--ink-muted);font-weight:300;line-height:1.6;max-width:360px;margin:0 auto}
+
+/* Lock badge */
+.lock-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:12px}
+
+/* What you get */
+.what-section{padding:20px 28px}
+.what-title{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px}
+.what-items{display:flex;flex-direction:column;gap:9px}
+.what-item{display:flex;align-items:flex-start;gap:10px}
+.what-ico{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+.what-text{font-size:13px;color:var(--ink-soft);line-height:1.5;font-weight:300}
+.what-text strong{font-weight:600;color:var(--ink)}
+
+/* Pricing options */
+.price-section{padding:0 28px 20px}
+.price-title{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px}
+
+.price-opt{border:2px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .2s;background:var(--white);display:flex;align-items:center;gap:13px}
+.price-opt:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+.price-opt.featured{border-color:var(--sage-deep);background:var(--sage-pale);position:relative}
+.featured-badge{position:absolute;top:-10px;right:14px;background:var(--sage-deep);color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:100px;letter-spacing:.06em}
+.price-opt-ico{font-size:24px;flex-shrink:0}
+.price-opt-text{flex:1}
+.price-opt-label{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.price-opt-desc{font-size:12px;color:var(--ink-muted);font-weight:300}
+.price-opt-amount{text-align:right;flex-shrink:0}
+.price-amount{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--ink)}
+.price-was{font-size:11px;color:var(--ink-muted);text-decoration:line-through;margin-top:1px}
+
+/* CTA */
+.cta-section{padding:0 28px 24px}
+.cta-btn{width:100%;padding:15px;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 6px 20px rgba(27,67,50,.25)}
+.cta-btn:hover{transform:translateY(-1px)}
+.cta-btn-primary{background:var(--sage-deep);color:white}
+.cta-btn-primary:hover{background:var(--ink)}
+.cta-back{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-muted);cursor:pointer;background:transparent;margin-top:9px;transition:all .2s}
+.cta-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.trust-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+.trust-item{font-size:11px;color:var(--ink-muted)}
+
+/* Tool-specific accent colors via JS */
+</style>
+</head>
+<body>
+
+<div class="card" id="lock-card">
+
+  <!-- PREVIEW HEADER -->
+  <div class="preview-header" id="preview-header">
+    <div class="preview-content">
+      <div class="lock-ring" id="lock-ring">
+        <div class="lock-icon" id="lock-icon">📁</div>
+      </div>
+      <div class="preview-tool-name" id="tool-name">Document <em>Library</em></div>
+      <div class="preview-tool-sub" id="tool-sub">Upload and organize every medical document — AI reads each one and extracts the key information automatically.</div>
+      <div class="lock-badge" id="lock-badge">🔒 Premium Add-on</div>
+    </div>
+  </div>
+
+  <!-- WHAT YOU GET -->
+  <div class="what-section">
+    <div class="what-title" id="what-title">What's included</div>
+    <div class="what-items" id="what-items"></div>
+  </div>
+
+  <!-- PRICING OPTIONS -->
+  <div class="price-section">
+    <div class="price-title">How to unlock</div>
+    <div id="price-options"></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <button class="cta-btn cta-btn-primary" onclick="goToCheckout()" id="main-cta">Unlock for $27 →</button>
+    <button class="cta-back" onclick="window.location.href='index.html'">← Back to MedAdvocate</button>
+    <div class="trust-row">
+      <span class="trust-item">🔒 Secure checkout</span>
+      <span class="trust-item">✦ Instant access</span>
+      <span class="trust-item">↩️ Cancel anytime</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Detect which tool we're locking based on URL param
+// Usage: advocate-locked.html?tool=documents OR ?tool=recorder
+const params = new URLSearchParams(window.location.search);
+const tool = params.get('tool') || 'documents';
+
+const TOOLS = {
+  documents: {
+    name: 'Document <em>Library</em>',
+    sub: 'Upload discharge summaries, test results, referral letters, and EOBs. AI reads each document and extracts the key information automatically.',
+    icon: '📁',
+    accentColor: '#3a7bc8',
+    accentPale: '#eef4fc',
+    badgeText: '📁 Premium Add-on',
+    features: [
+      { ico: '📄', title: 'AI reads your documents', desc: 'Upload a PDF or photo of any medical document — AI extracts diagnoses, medications, follow-up instructions, and action items automatically.' },
+      { ico: '🗂️', title: '10 categories', desc: 'Discharge summaries, test results, imaging reports, referrals, EOBs, prescriptions, school documents, and more — all organized.' },
+      { ico: '🔍', title: 'Find anything instantly', desc: 'Every document searchable and summarized. No more digging through folders or email.' },
+      { ico: '📋', title: 'Feeds your Medical Summary', desc: 'Documents you upload appear automatically in your Medical Summary for any new specialist.' },
+    ],
+    solo: { price: '$27', was: '$47', label: 'Document Library only', desc: 'One-time unlock, yours forever' },
+    bundle: { price: '$37', was: '$54', label: 'Records & Recorder Bundle', desc: 'Document Library + Appointment Recorder — save $17' },
+    checkoutParam: 'docs',
+  },
+  recorder: {
+    name: 'Appointment <em>Recorder</em>',
+    sub: 'Record your appointment and get an AI summary with every decision, medication change, follow-up, and the questions you forgot to ask.',
+    icon: '🎙️',
+    accentColor: '#7b68ee',
+    accentPale: '#f3f0ff',
+    badgeText: '🎙️ Premium Add-on',
+    features: [
+      { ico: '🔴', title: 'Live transcription', desc: 'Words appear on screen as they\'re spoken. Works on Chrome and Android. Manual notes alongside for anything the mic misses.' },
+      { ico: '🧠', title: 'AI appointment summary', desc: 'Stop the recording and get a complete summary — what was discussed, every medication change, tests ordered, and follow-up instructions.' },
+      { ico: '✅', title: 'Your action items', desc: 'Everything you need to do after the appointment — organized and printable before you leave the parking lot.' },
+      { ico: '❓', title: 'Questions you didn\'t ask', desc: 'AI notices what wasn\'t addressed based on your diagnoses and flags the questions you still need answered.' },
+    ],
+    solo: { price: '$27', was: '$47', label: 'Appointment Recorder only', desc: 'One-time unlock, yours forever' },
+    bundle: { price: '$37', was: '$54', label: 'Records & Recorder Bundle', desc: 'Document Library + Appointment Recorder — save $17' },
+    checkoutParam: 'recorder',
+  },
+};
+
+const cfg = TOOLS[tool] || TOOLS.documents;
+
+// Apply tool config
+document.getElementById('tool-name').innerHTML = cfg.name;
+document.getElementById('tool-sub').textContent = cfg.sub;
+document.getElementById('lock-icon').textContent = cfg.icon;
+document.getElementById('lock-badge').textContent = cfg.badgeText;
+
+// Accent color on lock ring
+document.getElementById('lock-ring').style.color = cfg.accentColor;
+document.getElementById('lock-ring').style.background = cfg.accentPale;
+
+// Features
+document.getElementById('what-items').innerHTML = cfg.features.map(f => `
+  <div class="what-item">
+    <div class="what-ico">${f.ico}</div>
+    <div class="what-text"><strong>${f.title}</strong> — ${f.desc}</div>
+  </div>`).join('');
+
+// Pricing options
+document.getElementById('price-options').innerHTML = `
+  <div class="price-opt featured" onclick="selectOption('bundle')" id="opt-bundle">
+    <div class="featured-badge">BEST VALUE</div>
+    <div class="price-opt-ico">📦</div>
+    <div class="price-opt-text">
+      <div class="price-opt-label">${cfg.bundle.label}</div>
+      <div class="price-opt-desc">${cfg.bundle.desc}</div>
+    </div>
+    <div class="price-opt-amount">
+      <div class="price-amount">${cfg.bundle.price}</div>
+      <div class="price-was">${cfg.bundle.was}</div>
+    </div>
+  </div>
+  <div class="price-opt" onclick="selectOption('solo')" id="opt-solo">
+    <div class="price-opt-ico">${cfg.icon}</div>
+    <div class="price-opt-text">
+      <div class="price-opt-label">${cfg.solo.label}</div>
+      <div class="price-opt-desc">${cfg.solo.desc}</div>
+    </div>
+    <div class="price-opt-amount">
+      <div class="price-amount">${cfg.solo.price}</div>
+      <div class="price-was">${cfg.solo.was}</div>
+    </div>
+  </div>`;
+
+let selectedOption = 'bundle';
+
+function selectOption(opt) {
+  selectedOption = opt;
+  document.getElementById('opt-bundle').classList.toggle('featured', opt==='bundle');
+  document.getElementById('opt-solo').classList.toggle('featured', opt==='solo');
+  const price = opt==='bundle' ? cfg.bundle.price : cfg.solo.price;
+  const label = opt==='bundle' ? 'Unlock Bundle' : `Unlock for ${cfg.solo.price}`;
+  document.getElementById('main-cta').textContent = label + ' →';
+}
+
+function goToCheckout() {
+  // Pass selected add-on to checkout so the right bump is pre-checked
+  const param = selectedOption==='bundle' ? 'bundle' : cfg.checkoutParam;
+  window.location.href = `advocate-checkout.html?addon=${param}`;
+}
+
+// Check if already unlocked
+const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
+if (unlocked[tool]) {
+  // Already purchased — redirect to the actual tool
+  window.location.href = tool==='documents' ? 'advocate-documents.html' : 'advocate-recorder.html';
+}
+
+// Pre-select bundle by default — update CTA text
+selectOption('bundle');
+</script>
+</body>
+</html>
