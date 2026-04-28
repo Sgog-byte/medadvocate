@@ -502,7 +502,6 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 
 <!-- PWA -->
 <div class="offline-bar" id="offlineBar">📵 You're offline — your saved tools still work</div>
-<div class="update-bar" id="updateBar" onclick="applyUpdate()">✨ New version available — tap to update</div>
 <div class="ib" id="installBanner">
   <div class="ib-ic">🌿</div>
   <div style="flex:1"><div class="ib-t">Add MedAdvocate to your home screen</div><div class="ib-s">Works like an app — no App Store needed</div></div>
@@ -513,18 +512,6 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 <div id="toast"></div>
 
 <script>
-// Redirect new users to onboarding
-if (!localStorage.getItem('advocate_onboarded')) {
-  window.location.href = 'advocate-onboarding.html';
-}
-
-// Handle deep link from onboarding
-const urlHash = window.location.hash;
-if (urlHash && urlHash.startsWith('#open=')) {
-  const toolKey = urlHash.replace('#open=', '');
-  setTimeout(() => openTool(toolKey), 300);
-}
-
 const TOOLS = {
   visit:       { title:'Visit Script Generator',      src:'advocate-app.html' },
   symptoms:    { title:'Symptom Tracker',             src:'advocate-symptoms.html' },
@@ -584,18 +571,10 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       swReg = await navigator.serviceWorker.register('./sw.js');
-      swReg.addEventListener('updatefound', () => {
-        const w = swReg.installing;
-        w.addEventListener('statechange', () => {
-          if (w.state === 'installed' && navigator.serviceWorker.controller)
-            document.getElementById('updateBar').classList.add('show');
-        });
-      });
+
     } catch(e) {}
   });
 }
-
-function applyUpdate() { swReg?.waiting?.postMessage('skipWaiting'); location.reload(); }
 
 if (!isStandalone) {
   if (isIOS) {
