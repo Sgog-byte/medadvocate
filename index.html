@@ -201,6 +201,24 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   .tools-grid,.for-grid,.coming-grid{grid-template-columns:1fr}
   .hero{padding:48px 18px 32px}
 }
+
+/* PRICING */
+.pricing-sec{padding:64px 28px;background:var(--sage-deep);text-align:center}
+.pricing-sec .sec-eyebrow{color:var(--sage-light)}
+.pricing-sec .sec-title{color:white}
+.pricing-sec .sec-title em{color:var(--sage-light)}
+.pricing-sec .sec-sub{color:rgba(255,255,255,.55)}
+.pricing-cards{display:flex;justify-content:center;margin-top:32px}
+.pricing-card-main{background:var(--warm);border-radius:22px;padding:32px;max-width:420px;width:100%;text-align:left;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.pricing-card-label{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px}
+.pricing-card-price{font-family:'Fraunces',serif;font-size:48px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:4px}
+.pricing-card-price span{font-size:18px;color:var(--ink-muted);font-family:'DM Sans',sans-serif}
+.pricing-card-annual{font-size:13px;color:var(--ink-muted);margin-bottom:24px;font-weight:300}
+.pricing-card-features{margin-bottom:24px;display:flex;flex-direction:column;gap:10px}
+.pf{font-size:14px;color:var(--ink-soft);font-weight:300;display:flex;align-items:center;gap:8px}
+.pricing-cta{width:100%;padding:15px;background:var(--sage-deep);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .25s;margin-bottom:14px;box-shadow:0 6px 20px rgba(27,67,50,.3)}
+.pricing-cta:hover{background:var(--ink);transform:translateY(-1px)}
+.pricing-note{font-size:11px;color:var(--ink-muted);line-height:1.6;font-weight:300}
 </style>
 </head>
 <body>
@@ -214,7 +232,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   <a href="#tools" class="nav-link">Tools</a>
   <a href="#mission" class="nav-link">Mission</a>
   <button class="nav-btn nav-btn-outline" onclick="openTool('saved')">💾 My Saved Items</button>
-  <button class="nav-btn nav-btn-solid" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">Open a Tool →</button>
+  <button class="nav-btn nav-btn-solid" onclick="window.location.href='advocate-checkout.html'">Get Started →</button>
 </nav>
 
 <!-- HERO -->
@@ -521,6 +539,32 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   </div>
 </section>
 
+<!-- PRICING CTA -->
+<section class="pricing-sec" id="pricing">
+  <div class="sec-hdr">
+    <div class="sec-eyebrow">Simple Pricing</div>
+    <h2 class="sec-title">Everything you need.<br><em>One clear price.</em></h2>
+    <p class="sec-sub">No ads. No upsells hidden in the app. Cancel anytime.</p>
+  </div>
+  <div class="pricing-cards">
+    <div class="pricing-card pricing-card-main">
+      <div class="pricing-card-label">Full Access</div>
+      <div class="pricing-card-price">$12.99<span>/month</span></div>
+      <div class="pricing-card-annual">or $89.99/year — save $66</div>
+      <div class="pricing-card-features">
+        <div class="pf">✓ All 13 core tools</div>
+        <div class="pf">✓ AI-powered — every tool</div>
+        <div class="pf">✓ Your data stays on your device</div>
+        <div class="pf">✓ Works offline as an app</div>
+        <div class="pf">✓ Every new tool included</div>
+        <div class="pf">✓ Cancel anytime</div>
+      </div>
+      <button class="pricing-cta" onclick="window.location.href='advocate-checkout.html'">Get Started →</button>
+      <div class="pricing-note">Add-ons available at checkout — Doctor Scripts $17, Document Library $27, Appointment Recorder $27, Diagnostic Testing $15</div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div>
@@ -618,6 +662,36 @@ const PREMIUM_TOOLS = {
     localStorage.removeItem('advocate_unlocked');
     history.replaceState({}, '', window.location.pathname);
     showToast('🔒 All tools locked — testing lock screens');
+  }
+
+  // ?free=beta — free access for 90 days (share with testers)
+  if (p.get('free') === 'beta') {
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 90);
+    const unlocked = {
+      subscribed: true, documents: true, recorder: true,
+      scripts: true, testing: true,
+      freeAccess: true,
+      expiresAt: expiry.toISOString(),
+      grantedAt: new Date().toISOString()
+    };
+    localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
+    localStorage.setItem('advocate_onboarded', '1');
+    history.replaceState({}, '', window.location.pathname);
+    showToast('🌿 Welcome! You have 90 days of free access.');
+  }
+
+  // Check free access expiry on every load
+  const ul = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
+  if (ul.freeAccess && ul.expiresAt) {
+    const daysLeft = Math.ceil((new Date(ul.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+    if (daysLeft <= 0) {
+      // Expired — remove free access but keep data
+      localStorage.removeItem('advocate_unlocked');
+    } else if (daysLeft <= 7) {
+      // Warn when week out
+      setTimeout(() => showToast('⏳ Your free access expires in ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + '.'), 2000);
+    }
   }
 })();
 
