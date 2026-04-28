@@ -237,7 +237,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 <section class="tools-section" id="tools">
   <div class="sec-hdr">
     <div class="sec-eyebrow">Your Complete Toolkit</div>
-    <h2 class="sec-title">Fifteen tools. <em>One mission.</em></h2>
+    <h2 class="sec-title">Sixteen tools. <em>One mission.</em></h2>
     <p class="sec-sub">Everything you need to advocate effectively — for every appointment, every meeting, every moment.</p>
   </div>
 
@@ -468,6 +468,21 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">Write my scripts →</div><div class="tc-arr">→</div></div>
     </div>
 
+    <div class="tc" onclick="openTool('testing')" style="border-color:var(--blue)">
+      <div class="tc-body">
+        <div class="tc-icon i3">🔬</div>
+        <div class="tc-name">Diagnostic Testing <span style="font-size:11px;background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border);padding:1px 7px;border-radius:100px;font-weight:600;vertical-align:middle">Add-on</span></div>
+        <div class="tc-tag tg-blue">Compare years of tests side by side</div>
+        <div class="tc-desc">Upload EEGs, EKGs, MRIs, tilt table results. AI explains every finding and shows exactly what changed across years of testing.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>16 test types — EEG, EKG, MRI, tilt table + more</div>
+          <div class="tc-feat"><div class="fd"></div>Year-over-year comparison chart</div>
+          <div class="tc-feat"><div class="fd"></div>AI explains findings in plain English</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">View my testing history →</div><div class="tc-arr">→</div></div>
+    </div>
+
   </div>
 </section>
 
@@ -575,6 +590,8 @@ const TOOLS = {
   scripts:     { title:'Doctor Scripts',              src:'advocate-scripts.html' },  // premium
   timeline:    { title:'Medical Timeline',            src:'advocate-timeline.html' },
   medications: { title:'Medication Tracker',          src:'advocate-medications.html' },
+  flare:       { title:'Flare Tracker',                src:'advocate-flare.html' },
+  testing:     { title:'Diagnostic Testing',             src:'advocate-testing.html' },
 };
 
 // Premium tools that require separate purchase
@@ -582,6 +599,7 @@ const PREMIUM_TOOLS = {
   documents: 'advocate-locked.html?tool=documents',
   recorder:  'advocate-locked.html?tool=recorder',
   scripts:   'advocate-locked.html?tool=scripts',
+  testing:   'advocate-locked.html?tool=testing',
 };
 
 function openTool(key) {

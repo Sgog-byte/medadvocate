@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Diagnostic Testing</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#3a6b54;
+  --border:#b7d9c4;--white:#fff;
+  --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+  --red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;
+  --blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;
+  --violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;
+  --green:#27ae60;--green-pale:#eafaf1;--green-border:#a9dfbf;
+  --shadow-sm:0 2px 12px rgba(28,43,34,.06);
+  --shadow:0 4px 24px rgba(28,43,34,.10);
+  --shadow-lg:0 16px 60px rgba(28,43,34,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;cursor:pointer;background:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wm{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-adv{color:var(--sage);font-weight:300}
+.shell{max-width:960px;margin:0 auto;padding:0 22px 80px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--blue)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:520px;margin:0 auto}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:24px}
+.tab{padding:11px 20px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:var(--blue);font-weight:600;border-bottom-color:var(--blue)}
+.panel{display:none}.panel.active{display:block}
+
+/* CARDS */
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300;line-height:1.6}
+
+/* FORM */
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.fi:focus{border-color:var(--sage);background:var(--white)}
+.fta{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;resize:none;transition:border-color .2s;line-height:1.65}
+.fta:focus{border-color:var(--sage);background:var(--white)}
+.fta::placeholder,.fi::placeholder{color:var(--ink-muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.field{margin-bottom:12px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:14px;padding:32px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--white);margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-pale)}
+.upload-zone-ico{font-size:36px;margin-bottom:8px}
+.upload-zone-title{font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.upload-zone-sub{font-size:12px;color:var(--ink-muted);margin-bottom:12px}
+
+/* BUTTONS */
+.btn-p{padding:11px 22px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-p:hover{background:var(--ink)}
+.btn-p:disabled{opacity:.5;cursor:not-allowed}
+.btn-b{padding:11px 22px;background:var(--blue);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-b:hover{background:#2d6ab5}
+.btn-o{padding:9px 16px;background:transparent;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-o:hover{border-color:var(--sage);color:var(--sage-deep)}
+
+/* TEST TYPE CHIPS */
+.test-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}
+.tt-chip{padding:10px 12px;border:1.5px solid var(--border);border-radius:11px;font-size:12px;font-weight:500;cursor:pointer;background:var(--white);font-family:'DM Sans',sans-serif;color:var(--ink-soft);transition:all .2s;text-align:center}
+.tt-chip:hover{border-color:var(--blue-border);background:var(--blue-pale)}
+.tt-chip.sel{background:var(--blue-pale);border-color:var(--blue);color:var(--blue)}
+.tt-chip-ico{font-size:18px;margin-bottom:3px}
+.tt-chip-name{font-size:11px}
+
+/* RESULT STATUS BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700}
+.badge-normal{background:var(--green-pale);border:1px solid var(--green-border);color:var(--green)}
+.badge-abnormal{background:var(--red-pale);border:1px solid var(--red-border);color:var(--red)}
+.badge-borderline{background:var(--amber-pale);border:1px solid var(--amber-light);color:var(--amber)}
+.badge-pending{background:#f5f5f5;border:1px solid #ddd;color:#888}
+
+/* TIMELINE VIEW */
+.test-group{margin-bottom:32px}
+.test-group-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+.test-group-icon{font-size:28px}
+.test-group-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--ink)}
+.test-group-count{font-size:12px;color:var(--ink-muted);background:var(--sage-pale);padding:3px 10px;border-radius:100px}
+.test-group-actions{margin-left:auto;display:flex;gap:8px}
+
+/* TIMELINE TRACK */
+.timeline-track{position:relative;padding-left:28px;margin-bottom:16px}
+.timeline-track::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-node{position:relative;margin-bottom:16px}
+.timeline-node::before{content:'';position:absolute;left:-22px;top:16px;width:12px;height:12px;border-radius:50%;border:2px solid var(--white);box-shadow:0 0 0 2px var(--border)}
+.timeline-node.status-normal::before{background:var(--green);box-shadow:0 0 0 2px var(--green)}
+.timeline-node.status-abnormal::before{background:var(--red);box-shadow:0 0 0 2px var(--red)}
+.timeline-node.status-borderline::before{background:var(--amber);box-shadow:0 0 0 2px var(--amber)}
+.timeline-node.status-pending::before{background:#ccc;box-shadow:0 0 0 2px #ccc}
+.test-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s}
+.test-card:hover{border-color:var(--sage-light)}
+.test-card-top{padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.test-card-date{font-size:12px;font-weight:700;color:var(--ink-muted);min-width:72px;margin-top:2px}
+.test-card-content{flex:1}
+.test-card-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.test-card-facility{font-size:12px;color:var(--ink-muted);margin-bottom:6px}
+.test-card-summary{font-size:13px;color:var(--ink-soft);line-height:1.6;font-weight:300;font-style:italic}
+.test-card-body{padding:0 16px 14px;border-top:1px solid var(--border);margin-top:10px}
+.test-card-findings{margin-top:10px}
+.finding-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+.finding-row:last-child{border-bottom:none}
+.finding-key{font-weight:600;color:var(--ink);min-width:140px;flex-shrink:0}
+.finding-val{color:var(--ink-soft);font-weight:300;line-height:1.5}
+.finding-val.flag{color:var(--red);font-weight:500}
+.test-card-actions{display:flex;gap:7px;margin-top:10px}
+.tc-btn{padding:5px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;background:transparent;color:var(--ink-soft);transition:all .2s}
+.tc-btn:hover{border-color:var(--sage)}
+.tc-btn.danger{border-color:var(--red-border);color:var(--red)}
+
+/* COMPARISON TABLE */
+.comparison-wrap{overflow-x:auto;margin-top:16px}
+.comparison-table{width:100%;border-collapse:collapse;font-size:13px}
+.comparison-table th{padding:10px 14px;background:var(--sage-deep);color:white;text-align:left;font-weight:600;white-space:nowrap;font-size:12px}
+.comparison-table th:first-child{position:sticky;left:0;z-index:2;background:var(--sage-deep)}
+.comparison-table td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--ink-soft);line-height:1.5;vertical-align:top}
+.comparison-table td:first-child{font-weight:600;color:var(--ink);background:var(--warm);position:sticky;left:0;z-index:1;white-space:nowrap}
+.comparison-table tr:hover td{background:var(--sage-pale)}
+.comparison-table tr:hover td:first-child{background:var(--sage-pale)}
+.ct-normal{color:var(--green);font-weight:500}
+.ct-abnormal{color:var(--red);font-weight:600}
+.ct-borderline{color:var(--amber);font-weight:500}
+.ct-none{color:#ccc;font-style:italic}
+
+/* CHANGE INDICATOR */
+.change-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700}
+.change-better{background:var(--green-pale);color:var(--green)}
+.change-worse{background:var(--red-pale);color:var(--red)}
+.change-stable{background:#f5f5f5;color:#888}
+
+/* AI SUMMARY SECTION */
+.ai-summary{background:var(--white);border:2px solid var(--sage-deep);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);margin-top:8px}
+.ai-sum-header{background:var(--sage-deep);padding:18px 22px;color:white}
+.ai-sum-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;margin-bottom:3px}
+.ai-sum-meta{font-size:12px;color:rgba(255,255,255,.55)}
+.ai-sum-body{padding:20px 22px}
+.ai-sec{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.ai-sec:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.ai-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px}
+.ai-item{padding:8px 12px;background:var(--sage-pale);border-radius:8px;margin-bottom:6px;font-size:13px;color:var(--ink-soft);line-height:1.6}
+.ai-item.red{background:var(--red-pale);border-left:3px solid var(--red)}
+.ai-item.amb{background:var(--amber-pale);border-left:3px solid var(--amber)}
+
+/* LOAD */
+.load-wrap{text-align:center;padding:32px}
+.load-ring{width:40px;height:40px;margin:0 auto 12px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--blue);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink-muted)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.empty-sub{font-size:13px;font-weight:300;line-height:1.6;max-width:380px;margin:0 auto}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(13,31,21,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--warm);border-radius:20px;padding:24px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+
+@media print{
+  nav,.tabs,.fcard,.btn-p,.btn-b,.btn-o,.test-card-actions{display:none!important}
+  .shell{max-width:100%;padding:0}
+  .ai-sum-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{margin:12mm}
+}
+@media(max-width:640px){.two,.three{grid-template-columns:1fr}.test-type-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- Lock gate -->
+<script>
+(function(){
+  var u=JSON.parse(localStorage.getItem('advocate_unlocked')||'{}');
+  if(!u.testing){window.location.replace('advocate-locked.html?tool=testing');}
+})();
+</script>
+
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo"><div class="nav-gem">🌿</div><div class="nav-wm">Med<span class="nav-dot"></span><span class="nav-adv">Advocate</span></div></div>
+</nav>
+
+<div class="shell">
+  <div class="page-header">
+    <div class="page-icon">🔬</div>
+    <h1 class="page-title">Diagnostic <em>Testing</em></h1>
+    <p class="page-sub">Upload any test result — EEG, EKG, MRI, tilt table, echo, sleep study. AI explains what it means, flags what changed, and compares years of testing side by side.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('upload',this)">📤 Add Test Result</button>
+    <button class="tab" onclick="switchTab('history',this)">📊 History & Comparison</button>
+    <button class="tab" onclick="switchTab('summary',this)">📋 Testing Summary</button>
+  </div>
+
+  <!-- UPLOAD PANEL -->
+  <div class="panel active" id="panel-upload">
+    <div class="fcard">
+      <div class="fcard-title">What type of test?</div>
+      <div class="fcard-sub">Select the test type first — this helps AI know what to look for.</div>
+      <div class="test-type-grid" id="test_type_grid">
+        <div class="tt-chip" onclick="selectType(this,'eeg')"><div class="tt-chip-ico">🧠</div><div class="tt-chip-name">EEG</div></div>
+        <div class="tt-chip" onclick="selectType(this,'ekg')"><div class="tt-chip-ico">❤️</div><div class="tt-chip-name">EKG / ECG</div></div>
+        <div class="tt-chip" onclick="selectType(this,'echo')"><div class="tt-chip-ico">🫀</div><div class="tt-chip-name">Echocardiogram</div></div>
+        <div class="tt-chip" onclick="selectType(this,'mri')"><div class="tt-chip-ico">🧲</div><div class="tt-chip-name">MRI</div></div>
+        <div class="tt-chip" onclick="selectType(this,'ct')"><div class="tt-chip-ico">🔍</div><div class="tt-chip-name">CT Scan</div></div>
+        <div class="tt-chip" onclick="selectType(this,'xray')"><div class="tt-chip-ico">📷</div><div class="tt-chip-name">X-Ray</div></div>
+        <div class="tt-chip" onclick="selectType(this,'tilt')"><div class="tt-chip-ico">📐</div><div class="tt-chip-name">Tilt Table</div></div>
+        <div class="tt-chip" onclick="selectType(this,'holter')"><div class="tt-chip-ico">📟</div><div class="tt-chip-name">Holter Monitor</div></div>
+        <div class="tt-chip" onclick="selectType(this,'sleep')"><div class="tt-chip-ico">😴</div><div class="tt-chip-name">Sleep Study</div></div>
+        <div class="tt-chip" onclick="selectType(this,'nerve')"><div class="tt-chip-ico">⚡</div><div class="tt-chip-name">Nerve Conduction</div></div>
+        <div class="tt-chip" onclick="selectType(this,'dexa')"><div class="tt-chip-ico">🦴</div><div class="tt-chip-name">DEXA Scan</div></div>
+        <div class="tt-chip" onclick="selectType(this,'pulmonary')"><div class="tt-chip-ico">🫁</div><div class="tt-chip-name">Pulmonary Function</div></div>
+        <div class="tt-chip" onclick="selectType(this,'gastric')"><div class="tt-chip-ico">🔄</div><div class="tt-chip-name">Gastric Emptying</div></div>
+        <div class="tt-chip" onclick="selectType(this,'ultrasound')"><div class="tt-chip-ico">〰️</div><div class="tt-chip-name">Ultrasound</div></div>
+        <div class="tt-chip" onclick="selectType(this,'autonomic')"><div class="tt-chip-ico">🧬</div><div class="tt-chip-name">Autonomic Testing</div></div>
+        <div class="tt-chip" onclick="selectType(this,'other')"><div class="tt-chip-ico">📋</div><div class="tt-chip-name">Other</div></div>
+      </div>
+    </div>
+
+    <div class="fcard" id="upload_detail" style="display:none">
+      <div class="fcard-title" id="upload_detail_title">Test Details</div>
+      <div class="fcard-sub">Fill in what you know — AI will extract the rest from the report.</div>
+
+      <div class="upload-zone" id="drop_zone"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="onDrop(event)">
+        <input type="file" id="file_in" accept=".pdf,.png,.jpg,.jpeg,.txt" onchange="onFile(event)" style="display:none">
+        <div class="upload-zone-ico">📄</div>
+        <div class="upload-zone-title">Drop the report here</div>
+        <div class="upload-zone-sub">PDF, image, or text — AI will read the full report</div>
+        <button class="btn-b" onclick="document.getElementById('file_in').click()">Choose File</button>
+      </div>
+
+      <div class="field" style="margin-bottom:8px">
+        <label class="flabel">Or paste report text</label>
+        <textarea class="fta" id="paste_text" placeholder="Paste the report findings, impression, or results here…" style="min-height:100px"></textarea>
+      </div>
+
+      <div class="two">
+        <div class="field"><label class="flabel">Date of Test</label><input type="date" class="fi" id="test_date"></div>
+        <div class="field"><label class="flabel">Result Status</label>
+          <select class="fi" id="test_status">
+            <option value="normal">Normal</option>
+            <option value="abnormal">Abnormal</option>
+            <option value="borderline">Borderline</option>
+            <option value="pending">Pending review</option>
+          </select>
+        </div>
+      </div>
+      <div class="two">
+        <div class="field"><label class="flabel">Ordering Doctor</label><input type="text" class="fi" id="test_doctor" placeholder="e.g. Dr. Webb, Cardiology"></div>
+        <div class="field"><label class="flabel">Facility</label><input type="text" class="fi" id="test_facility" placeholder="e.g. CHOA, Emory"></div>
+      </div>
+      <div class="field">
+        <label class="flabel">Notes (optional)</label>
+        <input type="text" class="fi" id="test_notes" placeholder="e.g. Done during flare, sedated, fasting">
+      </div>
+
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn-p" onclick="saveTest()">💾 Save</button>
+        <button class="btn-b" id="extract_btn" onclick="extractAndSave()" style="display:none">🧠 Save & Extract with AI</button>
+        <button class="btn-o" onclick="clearUpload()">✕ Clear</button>
+      </div>
+      <div id="extract_out" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY PANEL -->
+  <div class="panel" id="panel-history">
+    <div id="history_empty" class="empty-state">
+      <div class="empty-icon">🔬</div>
+      <div class="empty-title">No tests logged yet</div>
+      <div class="empty-sub">Add your first test result and it will appear here, organized by type with a comparison view across years.</div>
+    </div>
+    <div id="history_content" style="display:none">
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px">
+        <button class="btn-o" id="view-timeline-btn" onclick="setView('timeline',this)">📅 Timeline</button>
+        <button class="btn-b" id="view-compare-btn" onclick="setView('compare',this)">📊 Comparison Table</button>
+      </div>
+      <div id="timeline_view"></div>
+      <div id="compare_view" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY PANEL -->
+  <div class="panel" id="panel-summary">
+    <div class="fcard">
+      <div class="fcard-title">Testing Summary for Appointment</div>
+      <div class="fcard-sub">Generate a clinical summary of all diagnostic testing — organized by type, with what changed over time. Hand it to any new specialist.</div>
+      <div class="field">
+        <label class="flabel">Appointment / Doctor (optional)</label>
+        <input type="text" class="fi" id="sum_appt" placeholder="e.g. New patient — Neurology, Dr. Chen · Emory">
+      </div>
+      <button class="btn-p" onclick="genSummary()" id="sum_btn">📋 Generate Testing Summary</button>
+    </div>
+    <div id="sum_out" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-ov" id="mod_ov" onclick="if(event.target===this)document.getElementById('mod_ov').classList.remove('open')">
+  <div class="modal">
+    <div id="mod_body"></div>
+    <div style="margin-top:14px"><button class="btn-o" onclick="document.getElementById('mod_ov').classList.remove('open')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return d}}
+function fmtY(d){if(!d)return'';try{return new Date(d+'T12:00:00').getFullYear();}catch(e){return d}}
+
+const KEY='advocate_testing';
+function getTests(){return JSON.parse(localStorage.getItem(KEY)||'[]')}
+function saveTests(d){localStorage.setItem(KEY,JSON.stringify(d))}
+
+const TYPE_META={
+  eeg:{label:'EEG',icon:'🧠',color:'var(--violet)',pale:'var(--violet-pale)',border:'var(--violet-border)'},
+  ekg:{label:'EKG / ECG',icon:'❤️',color:'var(--red)',pale:'var(--red-pale)',border:'var(--red-border)'},
+  echo:{label:'Echocardiogram',icon:'🫀',color:'var(--red)',pale:'var(--red-pale)',border:'var(--red-border)'},
+  mri:{label:'MRI',icon:'🧲',color:'var(--blue)',pale:'var(--blue-pale)',border:'var(--blue-border)'},
+  ct:{label:'CT Scan',icon:'🔍',color:'var(--blue)',pale:'var(--blue-pale)',border:'var(--blue-border)'},
+  xray:{label:'X-Ray',icon:'📷',color:'var(--ink-muted)',pale:'#f5f5f5',border:'#ddd'},
+  tilt:{label:'Tilt Table',icon:'📐',color:'var(--amber)',pale:'var(--amber-pale)',border:'var(--amber-light)'},
+  holter:{label:'Holter Monitor',icon:'📟',color:'var(--red)',pale:'var(--red-pale)',border:'var(--red-border)'},
+  sleep:{label:'Sleep Study',icon:'😴',color:'var(--violet)',pale:'var(--violet-pale)',border:'var(--violet-border)'},
+  nerve:{label:'Nerve Conduction',icon:'⚡',color:'var(--amber)',pale:'var(--amber-pale)',border:'var(--amber-light)'},
+  dexa:{label:'DEXA Scan',icon:'🦴',color:'var(--sage)',pale:'var(--sage-pale)',border:'var(--sage-light)'},
+  pulmonary:{label:'Pulmonary Function',icon:'🫁',color:'var(--blue)',pale:'var(--blue-pale)',border:'var(--blue-border)'},
+  gastric:{label:'Gastric Emptying',icon:'🔄',color:'var(--amber)',pale:'var(--amber-pale)',border:'var(--amber-light)'},
+  ultrasound:{label:'Ultrasound',icon:'〰️',color:'var(--blue)',pale:'var(--blue-pale)',border:'var(--blue-border)'},
+  autonomic:{label:'Autonomic Testing',icon:'🧬',color:'var(--violet)',pale:'var(--violet-pale)',border:'var(--violet-border)'},
+  other:{label:'Other',icon:'📋',color:'var(--ink-muted)',pale:'#f5f5f5',border:'#ddd'},
+};
+
+// ── TABS ──
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='history')renderHistory();
+}
+
+// ── TEST TYPE SELECTION ──
+let selectedType='';
+let curFileData=null,curFileType=null;
+
+function selectType(el,type){
+  document.querySelectorAll('.tt-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedType=type;
+  const meta=TYPE_META[type]||TYPE_META.other;
+  document.getElementById('upload_detail').style.display='block';
+  document.getElementById('upload_detail_title').textContent=meta.icon+' '+meta.label+' — Test Details';
+  document.getElementById('upload_detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── FILE HANDLING ──
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('drop_zone').classList.remove('drag');
+  if(e.dataTransfer.files.length)processFile(e.dataTransfer.files[0]);
+}
+function onFile(e){if(e.target.files.length)processFile(e.target.files[0]);}
+
+function processFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    curFileData=ev.target.result.split(',')[1];
+    curFileType=file.type;
+    const canExtract=file.type==='application/pdf'||file.type.startsWith('image/')||file.type==='text/plain';
+    document.getElementById('extract_btn').style.display=canExtract?'inline-flex':'none';
+    document.getElementById('drop_zone').style.borderColor='var(--blue)';
+    document.getElementById('drop_zone').querySelector('.upload-zone-title').textContent='✓ '+file.name;
+    toast('File ready — click Save & Extract with AI');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearUpload(){
+  curFileData=null;curFileType=null;selectedType='';
+  document.querySelectorAll('.tt-chip').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('upload_detail').style.display='none';
+  document.getElementById('file_in').value='';
+  document.getElementById('paste_text').value='';
+  document.getElementById('extract_out').innerHTML='';
+  document.getElementById('drop_zone').querySelector('.upload-zone-title').textContent='Drop the report here';
+  document.getElementById('drop_zone').style.borderColor='';
+}
+
+// ── SAVE TEST ──
+function buildTestObj(extracted){
+  return{
+    id:Date.now(),
+    type:selectedType||'other',
+    date:document.getElementById('test_date').value||new Date().toISOString().split('T')[0],
+    status:document.getElementById('test_status').value,
+    doctor:document.getElementById('test_doctor').value.trim(),
+    facility:document.getElementById('test_facility').value.trim(),
+    notes:document.getElementById('test_notes').value.trim(),
+    extracted:extracted||null,
+    savedAt:new Date().toISOString()
+  };
+}
+
+function saveTest(extracted){
+  if(!selectedType){toast('Please select a test type first');return;}
+  const tests=getTests();
+  tests.unshift(buildTestObj(extracted));
+  saveTests(tests);
+  toast('Test saved ✓');
+  clearUpload();
+}
+
+// ── AI EXTRACTION ──
+async function extractAndSave(){
+  if(!selectedType){toast('Please select a test type first');return;}
+  const pasteText=document.getElementById('paste_text').value.trim();
+  if(!curFileData&&!pasteText){toast('Please upload a file or paste the report text');return;}
+
+  const btn=document.getElementById('extract_btn');
+  const out=document.getElementById('extract_out');
+  btn.disabled=true;
+  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Analyzing report...</p></div>';
+
+  const meta=TYPE_META[selectedType]||TYPE_META.other;
+  const prof=JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}');
+  const ctx=prof.diagnoses?'Patient context: '+(prof.name||'Patient')+', diagnoses: '+prof.diagnoses:'';
+
+  try{
+    let msgs;
+    if(pasteText){
+      msgs=[{role:'user',content:'Analyze this '+meta.label+' report and extract findings.\n\n'+pasteText+'\n\n'+ctx}];
+    } else if(curFileType==='application/pdf'){
+      msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:curFileData}},{type:'text',text:'Analyze this '+meta.label+' report. '+ctx}]}];
+    } else if(curFileType&&curFileType.startsWith('image/')){
+      msgs=[{role:'user',content:[{type:'image',source:{type:'base64',media_type:curFileType,data:curFileData}},{type:'text',text:'Analyze this '+meta.label+' report or image. '+ctx}]}];
+    } else {
+      msgs=[{role:'user',content:'Analyze this '+meta.label+' report: '+atob(curFileData)+'\n\n'+ctx}];
+    }
+
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:1500,
+        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. Return ONLY valid JSON no markdown:\n{"summary":"2-3 sentence plain-English summary of the key findings","status":"normal|abnormal|borderline","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean","redFlags":["Any urgent findings that need immediate attention — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
+        messages:msgs
+      })
+    });
+    const d=await r.json();
+    const res=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+
+    // Save with extracted data
+    const tests=getTests();
+    const testObj=buildTestObj(res);
+    // Auto-update status from AI if not manually set
+    if(res.status&&document.getElementById('test_status').value==='normal'&&res.status!=='normal'){
+      testObj.status=res.status;
+    }
+    tests.unshift(testObj);
+    saveTests(tests);
+
+    out.innerHTML='<div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink-soft);line-height:1.7">'
+      +'<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px">🧠 AI Analysis</div>'
+      +(res.summary?'<div style="font-family:Fraunces,serif;font-style:italic;margin-bottom:10px">'+esc(res.summary)+'</div>':'')
+      +(res.redFlags&&res.redFlags.length?'<div style="background:var(--red-pale);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;color:var(--red)"><strong>⚠️ Red flags:</strong> '+res.redFlags.map(f=>esc(f)).join(' · ')+'</div>':'')
+      +(res.whatItMeans?'<div>'+esc(res.whatItMeans)+'</div>':'')
+      +'</div>';
+
+    toast('Saved with AI analysis ✓');
+    setTimeout(()=>{clearUpload();},1500);
+
+  }catch(e){
+    out.innerHTML='<div style="color:var(--red);font-size:13px">Extraction failed. Saving without analysis.</div>';
+    saveTest();
+    console.error(e);
+  }finally{btn.disabled=false;}
+}
+
+// ── RENDER HISTORY ──
+let currentView='timeline';
+
+function setView(view,btn){
+  currentView=view;
+  document.querySelectorAll('#panel-history .btn-b,#panel-history .btn-o').forEach(b=>{
+    b.className=b.className.replace('btn-b','btn-o');
+  });
+  btn.className=btn.className.replace('btn-o','btn-b');
+  document.getElementById('timeline_view').style.display=view==='timeline'?'block':'none';
+  document.getElementById('compare_view').style.display=view==='compare'?'block':'none';
+}
+
+function renderHistory(){
+  const tests=getTests();
+  const empty=document.getElementById('history_empty');
+  const content=document.getElementById('history_content');
+  if(!tests.length){empty.style.display='block';content.style.display='none';return;}
+  empty.style.display='none';content.style.display='block';
+
+  // Group by type
+  const groups={};
+  tests.forEach(t=>{
+    if(!groups[t.type])groups[t.type]=[];
+    groups[t.type].push(t);
+  });
+
+  // Sort each group by date desc
+  Object.values(groups).forEach(g=>g.sort((a,b)=>new Date(b.date)-new Date(a.date)));
+
+  // TIMELINE VIEW
+  document.getElementById('timeline_view').innerHTML=Object.entries(groups).map(([type,tests])=>{
+    const meta=TYPE_META[type]||TYPE_META.other;
+    return`<div class="test-group">
+      <div class="test-group-header">
+        <div class="test-group-icon">${meta.icon}</div>
+        <div class="test-group-title">${meta.label}</div>
+        <div class="test-group-count">${tests.length} test${tests.length>1?'s':''}</div>
+        <div class="test-group-actions">
+          <button class="btn-o" style="font-size:11px;padding:5px 11px" onclick="showComparison('${type}')">📊 Compare</button>
+        </div>
+      </div>
+      <div class="timeline-track">
+        ${tests.map(t=>renderTestCard(t)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // COMPARISON VIEW
+  renderCompareView(groups);
+}
+
+function renderTestCard(t){
+  const status=t.status||'pending';
+  const badges={normal:'badge-normal',abnormal:'badge-abnormal',borderline:'badge-borderline',pending:'badge-pending'};
+  const labels={normal:'Normal',abnormal:'Abnormal',borderline:'Borderline',pending:'Pending'};
+  const ex=t.extracted;
+  return`<div class="timeline-node status-${status}">
+    <div class="test-card">
+      <div class="test-card-top">
+        <div class="test-card-date">${fmtD(t.date)}</div>
+        <div class="test-card-content">
+          <div class="test-card-title" style="display:flex;align-items:center;gap:8px">
+            ${TYPE_META[t.type]?.label||t.type}
+            <span class="badge ${badges[status]}">${labels[status]}</span>
+          </div>
+          ${t.facility||t.doctor?`<div class="test-card-facility">${[t.doctor,t.facility].filter(Boolean).join(' · ')}</div>`:''}
+          ${ex&&ex.summary?`<div class="test-card-summary">${esc(ex.summary)}</div>`:''}
+          ${t.notes?`<div style="font-size:12px;color:var(--ink-muted);margin-top:4px;font-style:italic">${esc(t.notes)}</div>`:''}
+        </div>
+      </div>
+      ${ex&&ex.findings&&ex.findings.length?`<div class="test-card-body">
+        <div class="test-card-findings">
+          ${ex.findings.slice(0,6).map(f=>`<div class="finding-row">
+            <div class="finding-key">${esc(f.key)}</div>
+            <div class="finding-val${f.flagged?' flag':''}">${f.flagged?'⚠️ ':''}${esc(f.value)}</div>
+          </div>`).join('')}
+        </div>
+        ${ex.questionsToAsk&&ex.questionsToAsk.length?`<div style="margin-top:10px;padding:10px 12px;background:var(--amber-pale);border-radius:8px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:5px">Questions to ask</div>
+          ${ex.questionsToAsk.map(q=>`<div style="font-size:12px;color:var(--ink-soft);margin-bottom:3px">? ${esc(q)}</div>`).join('')}
+        </div>`:''}
+      </div>`:''}
+      <div class="test-card-actions" style="padding:0 16px 12px">
+        <button class="tc-btn danger" onclick="deleteTest(${t.id})">🗑 Remove</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCompareView(groups){
+  const html=Object.entries(groups).map(([type,tests])=>{
+    if(tests.length<2)return`<div style="margin-bottom:20px"><div class="test-group-header"><div class="test-group-icon">${TYPE_META[type]?.icon||'📋'}</div><div class="test-group-title">${TYPE_META[type]?.label||type}</div></div><p style="font-size:13px;color:var(--ink-muted);padding-left:40px">Add at least 2 tests to see a comparison.</p></div>`;
+
+    // Get all unique finding keys across all tests
+    const allKeys=new Set();
+    tests.forEach(t=>{if(t.extracted&&t.extracted.findings)t.extracted.findings.forEach(f=>allKeys.add(f.key))});
+    const keys=[...allKeys];
+
+    const statusColors={normal:'ct-normal',abnormal:'ct-abnormal',borderline:'ct-borderline',pending:'ct-none'};
+    const statusLabels={normal:'Normal',abnormal:'Abnormal',borderline:'Borderline',pending:'Pending'};
+
+    // Sort tests oldest to newest for comparison
+    const sorted=[...tests].sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+    return`<div class="test-group" style="margin-bottom:32px">
+      <div class="test-group-header">
+        <div class="test-group-icon">${TYPE_META[type]?.icon||'📋'}</div>
+        <div class="test-group-title">${TYPE_META[type]?.label||type} — ${sorted.length} tests compared</div>
+      </div>
+      <!-- Visual status timeline -->
+      <div style="display:flex;gap:0;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+        ${sorted.map((t,i)=>{
+          const col={normal:'var(--green)',abnormal:'var(--red)',borderline:'var(--amber)',pending:'#ccc'}[t.status]||'#ccc';
+          return`<div style="flex:1;min-width:80px;text-align:center;position:relative">
+            ${i>0?`<div style="position:absolute;top:16px;left:0;right:50%;height:3px;background:${col};opacity:.3"></div>`:''}
+            ${i<sorted.length-1?`<div style="position:absolute;top:16px;left:50%;right:0;height:3px;background:${col};opacity:.3"></div>`:''}
+            <div style="width:32px;height:32px;border-radius:50%;background:${col};margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;position:relative;z-index:1;font-weight:700">${t.status==='normal'?'✓':t.status==='abnormal'?'!':t.status==='borderline'?'~':'?'}</div>
+            <div style="font-size:11px;font-weight:600;color:var(--ink)">${fmtY(t.date)}</div>
+            <div style="font-size:10px;color:var(--ink-muted)">${fmtD(t.date)}</div>
+            <div style="font-size:10px;color:${col};font-weight:600;margin-top:2px">${statusLabels[t.status]||''}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${keys.length?`<div class="comparison-wrap">
+        <table class="comparison-table">
+          <thead><tr>
+            <th>Finding</th>
+            ${sorted.map(t=>`<th>${fmtD(t.date)}<br><span style="font-weight:300;opacity:.7">${t.facility||''}</span></th>`).join('')}
+          </thead>
+          <tbody>
+            <tr>
+              <td>Overall Status</td>
+              ${sorted.map(t=>`<td class="${statusColors[t.status]||''}">${statusLabels[t.status]||'—'}</td>`).join('')}
+            </tr>
+            ${keys.map(key=>`<tr>
+              <td>${esc(key)}</td>
+              ${sorted.map(t=>{
+                const f=t.extracted&&t.extracted.findings?t.extracted.findings.find(f=>f.key===key):null;
+                return f?`<td class="${f.flagged?'ct-abnormal':''}">${f.flagged?'⚠️ ':''}${esc(f.value)}</td>`:`<td class="ct-none">—</td>`;
+              }).join('')}
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`:'<p style="font-size:13px;color:var(--ink-muted);padding:0 0 8px">No detailed findings extracted yet — use AI extraction to populate the comparison table.</p>'}
+    </div>`;
+  }).join('');
+
+  document.getElementById('compare_view').innerHTML=html;
+}
+
+function showComparison(type){
+  setView('compare',document.getElementById('view-compare-btn'));
+  setTimeout(()=>{
+    const el=document.querySelector(`[data-type="${type}"]`);
+    if(el)el.scrollIntoView({behavior:'smooth'});
+  },100);
+}
+
+function deleteTest(id){
+  if(!confirm('Remove this test?'))return;
+  saveTests(getTests().filter(t=>t.id!==id));
+  renderHistory();
+  toast('Removed');
+}
+
+// ── GENERATE APPOINTMENT SUMMARY ──
+async function genSummary(){
+  const tests=getTests();
+  if(!tests.length){toast('No tests logged yet');return;}
+
+  const appt=document.getElementById('sum_appt').value.trim();
+  const btn=document.getElementById('sum_btn');
+  const out=document.getElementById('sum_out');
+  btn.disabled=true;
+  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Building your testing summary...</p></div>';
+
+  // Build data string
+  const groups={};
+  tests.forEach(t=>{if(!groups[t.type])groups[t.type]=[];groups[t.type].push(t);});
+  const dataStr=Object.entries(groups).map(([type,tests])=>{
+    const meta=TYPE_META[type]||TYPE_META.other;
+    const sorted=[...tests].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    return`${meta.label} (${sorted.length} tests):\n${sorted.map(t=>`  ${fmtD(t.date)}: ${t.status}${t.extracted&&t.extracted.summary?' — '+t.extracted.summary:''}`).join('\n')}`;
+  }).join('\n\n');
+
+  const prof=JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}');
+
+  try{
+    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:2000,
+        system:'You create diagnostic testing summaries for medical advocates. Return ONLY valid JSON no markdown:\n{"overview":"2-3 sentence clinical overview of the full testing history","byType":[{"type":"Test type","testCount":0,"trend":"improving|worsening|stable|mixed","summary":"1-2 sentences on what the tests show over time","keyFindings":["Notable finding"]}],"redFlags":["Urgent findings needing attention — empty if none"],"questionsForDoctor":["3-4 specific questions based on this testing history"],"closingNote":"One sentence context for the receiving doctor"}',
+        messages:[{role:'user',content:'Create a diagnostic testing summary.\nPatient: '+(prof.name||'Patient')+(prof.diagnoses?'\nDiagnoses: '+prof.diagnoses:'')+'\n'+(appt?'Appointment: '+appt+'\n':'')+'\nTesting history:\n'+dataStr}]
+      })
+    });
+    const d=await r.json();
+    const res=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+    out.innerHTML=`
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn-o" onclick="window.print()">🖨️ Print</button>
+        <button class="btn-o" onclick="navigator.clipboard.writeText(document.querySelector('.ai-summary').innerText).then(()=>toast('Copied ✓'))">📋 Copy</button>
+      </div>
+      <div class="ai-summary">
+        <div class="ai-sum-header">
+          <div class="ai-sum-title">Diagnostic Testing Summary — ${esc(prof.name||'Patient')}</div>
+          <div class="ai-sum-meta">${appt?esc(appt)+' · ':''}${today} · ${tests.length} test${tests.length!==1?'s':''} across ${Object.keys(groups).length} type${Object.keys(groups).length!==1?'s':''}</div>
+        </div>
+        <div class="ai-sum-body">
+          ${res.overview?`<div class="ai-sec"><div class="ai-sec-title">🔬 Clinical Overview</div><div style="font-family:Fraunces,serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.7;padding:12px 16px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 10px 10px 0">${esc(res.overview)}</div></div>`:''}
+          ${res.redFlags&&res.redFlags.length?`<div class="ai-sec"><div class="ai-sec-title" style="color:var(--red)">🚨 Red Flags</div>${res.redFlags.map(f=>`<div class="ai-item red">⚠️ ${esc(f)}</div>`).join('')}</div>`:''}
+          ${res.byType&&res.byType.length?`<div class="ai-sec"><div class="ai-sec-title">📊 By Test Type</div>${res.byType.map(t=>{
+            const trendIco={improving:'📈',worsening:'📉',stable:'➡️',mixed:'↕️'}[t.trend]||'';
+            return`<div class="ai-item" style="margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                <strong>${esc(t.type)}</strong>
+                <span style="font-size:11px;background:var(--sage-pale);padding:2px 8px;border-radius:100px;color:var(--sage-deep)">${t.testCount} test${t.testCount!==1?'s':''}</span>
+                ${trendIco?`<span title="${t.trend}">${trendIco}</span>`:''}
+              </div>
+              <div style="font-size:13px;font-weight:300;margin-bottom:5px">${esc(t.summary)}</div>
+              ${t.keyFindings&&t.keyFindings.length?t.keyFindings.map(f=>`<div style="font-size:12px;color:var(--ink-muted);padding-left:10px">→ ${esc(f)}</div>`).join(''):''}
+            </div>`;
+          }).join('')}</div>`:''}
+          ${res.questionsForDoctor&&res.questionsForDoctor.length?`<div class="ai-sec"><div class="ai-sec-title">❓ Questions for This Appointment</div>${res.questionsForDoctor.map(q=>`<div class="ai-item">? ${esc(q)}</div>`).join('')}</div>`:''}
+          ${res.closingNote?`<div style="font-family:Fraunces,serif;font-style:italic;font-size:14px;color:var(--ink-muted);padding:14px 16px;border-top:1px solid var(--border);line-height:1.6">${esc(res.closingNote)}</div>`:''}
+        </div>
+      </div>`;
+
+  }catch(e){
+    out.innerHTML='<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>';
+    console.error(e);
+  }finally{btn.disabled=false;}
+}
+
+// Init date
+document.getElementById('test_date').value=new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>

@@ -142,6 +142,23 @@ const TOOLS = {
     bundle: { price: '$37', was: '$54', label: 'Records & Recorder Bundle', desc: 'Document Library + Appointment Recorder — save $17' },
     checkoutParam: 'docs',
   },
+  testing: {
+    name: 'Diagnostic <em>Testing</em>',
+    sub: 'Upload EEGs, EKGs, MRIs, tilt table results and more. AI explains every finding in plain English and compares years of the same test side by side.',
+    icon: '🔬',
+    accentColor: '#3a7bc8',
+    accentPale: '#eef4fc',
+    badgeText: '🔬 Premium Add-on',
+    features: [
+      { ico: '🧠', title: '16 test types supported', desc: 'EEG, EKG, Echocardiogram, MRI, CT, Tilt Table, Holter, Sleep Study, Nerve Conduction, DEXA, Pulmonary Function, and more.' },
+      { ico: '📊', title: 'Side-by-side comparison', desc: 'Five years of EEGs on one screen. Color-coded timeline shows what changed — better, worse, or stable — at a glance.' },
+      { ico: '🧬', title: 'AI reads every report', desc: 'Upload a PDF or image of any report. AI extracts findings, flags abnormals, and explains what it means for your specific diagnoses.' },
+      { ico: '📋', title: 'Appointment testing summary', desc: 'One-page summary of all diagnostic testing to hand any new specialist — with trend analysis and questions to ask.' },
+    ],
+    solo: { price: '$15', was: '$27', label: 'Diagnostic Testing only', desc: 'One-time unlock, yours forever' },
+    bundle: { price: '$59.99', was: '$94', label: 'Full Records Bundle', desc: 'Document Library + Appointment Recorder + Diagnostic Testing' },
+    checkoutParam: 'testing',
+  },
   scripts: {
     name: 'Doctor <em>Scripts</em>',
     sub: 'The exact words to say when doctors dismiss you — personalized to your condition, your situation, your style. Walk in prepared. Walk out heard.',
@@ -200,7 +217,7 @@ document.getElementById('what-items').innerHTML = cfg.features.map(f => `
 // Pricing options
 // For scripts: just show solo option (bundle is docs+recorder, separate offer)
 // For docs/recorder: show both solo and bundle
-if (tool === 'scripts') {
+if (tool === 'scripts' || tool === 'testing') {
   document.getElementById('price-options').innerHTML = `
     <div class="price-opt featured" id="opt-solo" onclick="selectOption('solo')">
       <div class="featured-badge">ONE-TIME</div>
@@ -268,7 +285,7 @@ if (unlocked[tool]) {
 }
 
 // For scripts, solo is the better default (bundle is docs+recorder, not scripts)
-selectOption(tool === 'scripts' ? 'solo' : 'bundle');
+selectOption((tool === 'scripts' || tool === 'testing') ? 'solo' : 'bundle');
 </script>
 </body>
 </html>

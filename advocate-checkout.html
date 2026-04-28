@@ -285,6 +285,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
       </div>
     </div>
 
+    <!-- BUMP 4: Diagnostic Testing -->
+    <div class="bump-wrap" style="padding-bottom:14px">
+      <div class="bump blue-bump" id="bump-testing" onclick="toggleBump('testing')">
+        <div class="bump-row">
+          <div class="bump-cb" id="cb-testing"></div>
+          <div class="bump-content">
+            <div class="bump-eyebrow">🔬 Premium tool — one-time</div>
+            <div class="bump-title">Add Diagnostic Testing — compare years of EEGs, EKGs, MRIs side by side</div>
+            <div class="bump-desc">Upload any test report. AI extracts findings, explains results in plain English, and shows you exactly what changed across years of the same test.</div>
+            <div class="bump-chips">
+              <span class="bchip">EEG · EKG · MRI</span>
+              <span class="bchip">Tilt Table</span>
+              <span class="bchip">Year-over-year comparison</span>
+              <span class="bchip">16 test types</span>
+            </div>
+            <div class="bump-price-row">
+              <span class="bump-price" id="testing-price-badge">Add for $15</span>
+              <span class="bump-was">$27</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- OR DIVIDER -->
     <div class="or-div"><div class="or-line"></div><div class="or-text">OR SAVE MORE WITH THE BUNDLE</div><div class="or-line"></div></div>
 
@@ -295,13 +319,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
         <div class="bundle-row">
           <div class="bundle-cb" id="bundle-cb"></div>
           <div class="bundle-content">
-            <div class="bundle-eyebrow">✦ Records & Recorder Bundle</div>
-            <div class="bundle-title">Document Library + Appointment Recorder together</div>
+            <div class="bundle-eyebrow">✦ Full Records Bundle</div>
+            <div class="bundle-title">Document Library + Appointment Recorder + Diagnostic Testing</div>
             <div class="bundle-desc">Both premium tools at one price. Upload and organize every document. Record every appointment. The complete paper trail, automatically organized.</div>
             <div class="bundle-price-row">
-              <div class="bundle-price">$37</div>
-              <div class="bundle-was">$54 separately</div>
-              <div class="bundle-save">SAVE $17</div>
+              <div class="bundle-price">$59.99</div>
+              <div class="bundle-was">$94 separately</div>
+              <div class="bundle-save">SAVE $34</div>
             </div>
           </div>
         </div>
@@ -342,6 +366,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
           <span class="sum-label">Appointment Recorder</span>
           <span class="sum-price" id="sum-recorder-price">$27 one-time</span>
         </div>
+        <div class="sum-line" id="sum-testing-row" style="display:none"><span class="sum-label">Diagnostic Testing</span><span class="sum-price">$15 one-time</span></div>
         <div class="sum-line" id="sum-bundle-row" style="display:none">
           <span class="sum-label">Records &amp; Recorder Bundle</span>
           <span class="sum-price">$37 one-time</span>
@@ -380,7 +405,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
 
 <script>
 let plan = 'monthly';
-let bumps = { scripts: false, docs: false, recorder: false };
+let bumps = { scripts: false, docs: false, recorder: false, testing: false };
 let bundleOn = false;
 let familyOn = false;
 
@@ -406,7 +431,7 @@ function setPlan(p) {
 
 function toggleBump(key) {
   // If bundle is on and we're toggling docs or recorder, turn bundle off
-  if (bundleOn && (key==='docs' || key==='recorder')) {
+  if (bundleOn && (key==='docs' || key==='recorder' || key==='testing')) {
     bundleOn = false;
     document.getElementById('bundle-box').classList.remove('checked');
     document.getElementById('bundle-cb').textContent = '';
@@ -433,6 +458,7 @@ function toggleBump(key) {
   if (!bundleOn) {
     document.getElementById('sum-docs-row').style.display = bumps.docs ? 'flex' : 'none';
     document.getElementById('sum-recorder-row').style.display = bumps.recorder ? 'flex' : 'none';
+    document.getElementById('sum-testing-row') && (document.getElementById('sum-testing-row').style.display = bumps.testing ? 'flex' : 'none');
   }
   updateTotal();
 }
@@ -444,8 +470,8 @@ function toggleBundle() {
 
   if (bundleOn) {
     // Turn off individual docs/recorder bumps
-    bumps.docs = false; bumps.recorder = false;
-    ['docs','recorder'].forEach(k => {
+    bumps.docs = false; bumps.recorder = false; bumps.testing = false;
+    ['docs','recorder','testing'].forEach(k => {
       document.getElementById('bump-'+k).classList.remove('checked');
       document.getElementById('cb-'+k).textContent = '';
     });
@@ -471,8 +497,8 @@ function updateTotal() {
   const baseRecurring = familyOn ? cfg.family : cfg.base;
   let oneTime = 0;
   if (bumps.scripts) oneTime += 17;
-  if (bundleOn) { oneTime += 37; }
-  else { if (bumps.docs) oneTime += 27; if (bumps.recorder) oneTime += 27; }
+  if (bundleOn) { oneTime += 59.99; }
+  else { if (bumps.docs) oneTime += 27; if (bumps.recorder) oneTime += 27; if (bumps.testing) oneTime += 15; }
 
   const recurringLabel = plan==='annual' ? '/yr' : '/mo';
   let totalStr = '$' + baseRecurring.toFixed(2) + recurringLabel;
@@ -494,6 +520,7 @@ function handleCheckout() {
   unlocked.subscribed = true;
   if (bumps.docs || bundleOn) unlocked.documents = true;
   if (bumps.recorder || bundleOn) unlocked.recorder = true;
+  if (bumps.testing || bundleOn) unlocked.testing = true;
   if (bumps.scripts) unlocked.scripts = true;
   localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
   localStorage.setItem('advocate_onboarded', '1');
@@ -508,6 +535,7 @@ function handleCheckout() {
   if (addon === 'bundle') { setTimeout(() => toggleBundle(), 100); }
   else if (addon === 'docs') { setTimeout(() => toggleBump('docs'), 100); }
   else if (addon === 'recorder') { setTimeout(() => toggleBump('recorder'), 100); }
+  else if (addon === 'testing') { setTimeout(() => toggleBump('testing'), 100); }
   else if (addon === 'scripts') { setTimeout(() => toggleBump('scripts'), 100); }
 })();
 
