@@ -174,12 +174,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
   <div class="plan-toggle">
     <div class="plan-opt active" id="opt-monthly" onclick="setPlan('monthly')">
       <div class="plan-opt-label">Monthly</div>
-      <div class="plan-opt-price">$12.99 / month</div>
+      <div class="plan-opt-price">$27 / month</div>
     </div>
     <div class="plan-opt" id="opt-annual" onclick="setPlan('annual')">
-      <div class="save-badge">SAVE $66</div>
+      <div class="save-badge">SAVE $127</div>
       <div class="plan-opt-label">Annual</div>
-      <div class="plan-opt-price">$89.99 / year</div>
+      <div class="plan-opt-price">$197 / year</div>
     </div>
   </div>
 
@@ -189,9 +189,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
     <div class="card-top">
       <div class="card-eyebrow">✦ MedAdvocate — Full Access</div>
       <div class="card-title" id="plan-title">Monthly Plan</div>
-      <div class="card-sub">Thirteen core tools. All your data on your device. Cancel anytime.</div>
+      <div class="card-sub">Sixteen core tools. AI-powered throughout. Cancel anytime.</div>
       <div class="price-row">
-        <div class="price-main" id="price-main">$12.99</div>
+        <div class="price-main" id="price-main">$27</div>
         <div class="price-period" id="price-period">/ month</div>
       </div>
       <div class="price-note" id="price-note">Billed monthly · Cancel anytime</div>
@@ -199,10 +199,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
 
     <!-- FEATURES -->
     <div class="features">
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>13 core tools</strong> — Visit Script, Symptom Tracker, Labs, Medical Summary, Credibility Doc, Care Team, IEP, ER Card, Insurance Appeal, Timeline, Medications, Flare Tracker, Explain My Diagnosis</div></div>
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>AI-powered</strong> — Claude generates clinical-quality documents, summaries, and prep materials for every appointment</div></div>
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Private by design</strong> — Everything stays on your device. Never on our servers. Never shared.</div></div>
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Works offline</strong> — Install as an app. Your data is always there, even without internet.</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>16 tools included</strong> — Visit Script, Symptom Tracker, Lab Tracker, Medical Summary, Credibility Doc, Care Team, IEP, ER Card, Insurance Appeal, Timeline, Medications, Flare Tracker, Explain My Diagnosis, Research Library, Care Concierge, Doctor Scripts (core)</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>AI-powered throughout</strong> — Every tool generates clinical-quality documents, summaries, and scripts automatically</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Private and secure</strong> — Your data is encrypted and never shared with insurers, employers, or third parties. Ever.</div></div>
+      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Your data syncs everywhere</strong> — Log on your phone at the appointment, review on your laptop at home. Your health history is always with you.</div></div>
     </div>
 
     <!-- ADD-ONS LABEL -->
@@ -338,11 +338,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
         <div class="family-ico">👨‍👩‍👧</div>
         <div class="family-text">
           <div class="family-title">Upgrade to Family Plan — up to 5 profiles</div>
-          <div class="family-desc">Managing more than one child? Add profiles for each for just $2 more per month.</div>
+          <div class="family-desc">Managing more than one child? Add up to 5 profiles for just $5 more per month.</div>
         </div>
         <div class="family-right">
           <div class="family-cb" id="family-cb"></div>
-          <div class="family-badge" id="family-badge">+$2/mo</div>
+          <div class="family-badge" id="family-badge">+$5/mo</div>
         </div>
       </div>
     </div>
@@ -352,7 +352,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
       <div class="order-summary" id="order-summary">
         <div class="sum-line">
           <span class="sum-label" id="sum-plan-label">MedAdvocate Monthly</span>
-          <span class="sum-price" id="sum-plan-price">$12.99/mo</span>
+          <span class="sum-price" id="sum-plan-price">$27/mo</span>
         </div>
         <div class="sum-line" id="sum-scripts-row" style="display:none">
           <span class="sum-label">Doctor Scripts</span>
@@ -369,21 +369,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
         <div class="sum-line" id="sum-testing-row" style="display:none"><span class="sum-label">Diagnostic Testing</span><span class="sum-price">$15 one-time</span></div>
         <div class="sum-line" id="sum-bundle-row" style="display:none">
           <span class="sum-label">Records &amp; Recorder Bundle</span>
-          <span class="sum-price">$37 one-time</span>
+          <span class="sum-price">$59.99 one-time</span>
         </div>
         <div class="sum-line" id="sum-family-row" style="display:none">
           <span class="sum-label">Family Plan upgrade</span>
-          <span class="sum-price" id="sum-family-price">+$2.00/mo</span>
+          <span class="sum-price" id="sum-family-price">+$5.00/mo</span>
         </div>
         <div class="sum-line total">
           <span>Due today</span>
-          <span id="sum-total">$12.99</span>
+          <span id="sum-total">$27.00</span>
         </div>
       </div>
 
       <button class="cta-btn" onclick="handleCheckout()">
         <span>🔒</span>
-        <span id="cta-text">Subscribe — $12.99/month</span>
+        <span id="cta-text">Subscribe — $27/month</span>
       </button>
 
       <div class="trust-row">
@@ -396,7 +396,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
     <!-- TESTIMONIAL -->
     <div class="testimonial">
       <div class="test-q">"I walked into my daughter's cardiology appointment with a printed summary and a script for when he tried to dismiss her symptoms. For the first time in four years, he listened. He actually listened."</div>
-      <div class="test-attr">— Beta tester, mom of a child with POTS &amp; hEDS</div>
+      <div class="test-attr">— Early member, mom of a child with POTS &amp; hEDS</div>
     </div>
 
   </div>
@@ -410,8 +410,8 @@ let bundleOn = false;
 let familyOn = false;
 
 const PLANS = {
-  monthly: { base:12.99, family:14.99, label:'Monthly Plan', period:'/month', note:'Billed monthly · Cancel anytime', sumLabel:'MedAdvocate Monthly', sumPrice:'$12.99/mo' },
-  annual:  { base:89.99, family:107.99, label:'Annual Plan', period:'/year', note:'Billed once a year · Saves $66 vs monthly', sumLabel:'MedAdvocate Annual', sumPrice:'$89.99/yr' },
+  monthly: { base:27.00, family:32.00, label:'Monthly Plan', period:'/month', note:'Billed monthly · Cancel anytime', sumLabel:'MedAdvocate Monthly', sumPrice:'$27.00/mo' },
+  annual:  { base:197.00, family:227.00, label:'Annual Plan', period:'/year', note:'Billed once a year · Saves $127 vs monthly', sumLabel:'MedAdvocate Annual', sumPrice:'$197/yr' },
 };
 
 function setPlan(p) {
@@ -424,8 +424,8 @@ function setPlan(p) {
   document.getElementById('price-note').textContent = cfg.note;
   document.getElementById('sum-plan-label').textContent = cfg.sumLabel;
   document.getElementById('sum-plan-price').textContent = cfg.sumPrice;
-  document.getElementById('family-badge').textContent = p==='annual' ? '+$18/yr' : '+$2/mo';
-  document.getElementById('sum-family-price').textContent = p==='annual' ? '+$18.00/yr' : '+$2.00/mo';
+  document.getElementById('family-badge').textContent = p==='annual' ? '+$30/yr' : '+$5/mo';
+  document.getElementById('sum-family-price').textContent = p==='annual' ? '+$30.00/yr' : '+$5.00/mo';
   updateTotal();
 }
 
