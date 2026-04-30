@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — Welcome!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;--warm:#fdfcf8;--ink:#0d1f15;--ink-muted:#3a6b54;--border:#b7d9c4;--white:#fff;--shadow-lg:0 16px 60px rgba(28,43,34,.2)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--warm);border-radius:24px;max-width:480px;width:100%;padding:40px 36px;text-align:center;box-shadow:var(--shadow-lg)}
+.icon{font-size:64px;margin-bottom:16px}
+.title{font-family:'Fraunces',serif;font-size:28px;font-weight:300;color:var(--ink);margin-bottom:8px}
+.title em{font-style:italic;color:var(--sage)}
+.sub{font-size:15px;color:var(--ink-muted);font-weight:300;line-height:1.7;margin-bottom:28px}
+.unlocked-list{background:var(--sage-pale);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:24px;text-align:left}
+.unlocked-title{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px}
+.unlocked-item{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:14px;color:var(--ink);border-bottom:1px solid var(--border)}
+.unlocked-item:last-child{border-bottom:none}
+.check{width:20px;height:20px;background:var(--sage-deep);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;flex-shrink:0}
+.cta{display:block;width:100%;padding:15px;background:var(--sage-deep);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:12px;box-shadow:0 6px 20px rgba(27,67,50,.3);transition:all .2s}
+.cta:hover{background:var(--ink)}
+.note{font-size:12px;color:var(--ink-muted);font-weight:300;line-height:1.6}
+.spinner{width:40px;height:40px;margin:0 auto 16px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="spinner" id="spinner"></div>
+  <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink)">Setting up your account...</div>
+</div>
+
+<script>
+async function setup() {
+  const params = new URLSearchParams(window.location.search);
+  const addons = params.get('addons') || '';
+  const sessionId = params.get('session_id') || '';
+
+  // Set unlock flags based on what was purchased
+  const unlocked = {
+    subscribed: true,
+    documents: addons.includes('documents'),
+    recorder: addons.includes('recorder'),
+    testing: addons.includes('testing'),
+    scripts: addons.includes('scripts'),
+    purchasedAt: new Date().toISOString(),
+    sessionId: sessionId,
+  };
+  localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
+  localStorage.setItem('advocate_onboarded', '1');
+
+  // Build list of what they got
+  const items = [{ ico: '🌿', name: 'MedAdvocate — All 16 core tools' }];
+  if (unlocked.documents) items.push({ ico: '📁', name: 'Document Library' });
+  if (unlocked.recorder)  items.push({ ico: '🎙️', name: 'Appointment Recorder' });
+  if (unlocked.testing)   items.push({ ico: '🔬', name: 'Diagnostic Testing' });
+  if (unlocked.scripts)   items.push({ ico: '✦', name: 'Doctor Scripts' });
+
+  document.getElementById('card').innerHTML = `
+    <div class="icon">🎉</div>
+    <div class="title">Welcome to <em>MedAdvocate</em></div>
+    <div class="sub">Your account is ready. Everything you purchased is unlocked and waiting for you.</div>
+    <div class="unlocked-list">
+      <div class="unlocked-title">✓ Unlocked for you</div>
+      ${items.map(i => `<div class="unlocked-item"><div class="check">✓</div>${i.ico} ${i.name}</div>`).join('')}
+    </div>
+    <a href="index.html" class="cta">Go to MedAdvocate →</a>
+    <div class="note">Bookmark medadvocate.org to access your tools anytime.<br>Your data is saved on this device.</div>`;
+}
+
+setup();
+</script>
+</body>
+</html>

@@ -510,22 +510,100 @@ function updateTotal() {
     (oneTime > 0 ? ' + $' + oneTime : '');
 }
 
-function handleCheckout() {
-  // TODO: Wire to Stripe — build line items from state below
-  // const lineItems = buildStripeLineItems();
-  // window.location.href = stripeCheckoutURL + '?...' + lineItems;
+// ── STRIPE PRICE IDS ──
+const PRICES = {
+  monthly:        'price_1TS2I35jVY07VRUx6fjbi0CJ',
+  annual:         'price_1TS2MC5jVY07VRUxGkfI4j5l',
+  familyMonthly:  'price_1TS2OY5jVY07VRUxQrR0Sh2V',
+  familyAnnual:   'price_1TS2Pz5jVY07VRUxfjvFhgu6',
+  scripts:        'price_1TS2T55jVY07VRUxQAM1rdpE',
+  documents:      'price_1TS2UE5jVY07VRUx3219m9b3',
+  recorder:       'price_1TS2VI5jVY07VRUxcngo2EF0',
+  testing:        'price_1TS2WI5jVY07VRUx44pEJCeY',
+  bundle:         'price_1TS2XQ5jVY07VRUxgi1Zx0NX',
+};
 
-  // TEMPORARY: Simulate purchase by setting unlock flags, then redirect to app
-  const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
-  unlocked.subscribed = true;
-  if (bumps.docs || bundleOn) unlocked.documents = true;
-  if (bumps.recorder || bundleOn) unlocked.recorder = true;
-  if (bumps.testing || bundleOn) unlocked.testing = true;
-  if (bumps.scripts) unlocked.scripts = true;
-  localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
-  localStorage.setItem('advocate_onboarded', '1');
-  // Redirect to app after "purchase"
-  window.location.href = 'index.html';
+const STRIPE_PK = 'pk_test_51TRIEp5jVY07VRUxA2bIv8vAmOEEagP2B3xCpmpfze5WZrLBnRmjLqkOn7NCWo8jMfN6GYuEaCWQR6bTLHe6IX5U007kLD9ryr';
+
+async function handleCheckout() {
+  const btn = document.getElementById('main-cta') || document.querySelector('.cta-btn');
+  const originalText = document.getElementById('cta-text').textContent;
+  document.getElementById('cta-text').textContent = 'Redirecting to secure checkout...';
+  if (btn) btn.disabled = true;
+
+  // Build line items
+  const lineItems = [];
+
+  // Subscription — base or family
+  const subPriceKey = plan === 'annual'
+    ? (familyOn ? 'familyAnnual' : 'annual')
+    : (familyOn ? 'familyMonthly' : 'monthly');
+  lineItems.push({ price: PRICES[subPriceKey], quantity: 1 });
+
+  // One-time add-ons
+  if (bundleOn) {
+    lineItems.push({ price: PRICES.bundle, quantity: 1 });
+  } else {
+    if (bumps.docs)     lineItems.push({ price: PRICES.documents, quantity: 1 });
+    if (bumps.recorder) lineItems.push({ price: PRICES.recorder, quantity: 1 });
+    if (bumps.testing)  lineItems.push({ price: PRICES.testing, quantity: 1 });
+  }
+  if (bumps.scripts) lineItems.push({ price: PRICES.scripts, quantity: 1 });
+
+  try {
+    // Load Stripe.js
+    if (!window.Stripe) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://js.stripe.com/v3/';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    const stripe = Stripe(STRIPE_PK);
+
+    // Call your Netlify function to create a checkout session
+    const response = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lineItems,
+        successUrl: window.location.origin + '/index.html?payment=success&addons=' + buildAddonString(),
+        cancelUrl: window.location.origin + '/advocate-checkout.html',
+        addons: buildAddonString(),
+      })
+    });
+
+    const session = await response.json();
+
+    if (session.error) {
+      throw new Error(session.error);
+    }
+
+    // Redirect to Stripe Checkout
+    const result = await stripe.redirectToCheckout({ sessionId: session.id });
+    if (result.error) throw new Error(result.error.message);
+
+  } catch (err) {
+    console.error('Checkout error:', err);
+    document.getElementById('cta-text').textContent = originalText;
+    if (btn) btn.disabled = false;
+    alert('Something went wrong. Please try again. Error: ' + err.message);
+  }
+}
+
+function buildAddonString() {
+  const addons = [];
+  if (bundleOn) { addons.push('documents', 'recorder', 'testing'); }
+  else {
+    if (bumps.docs) addons.push('documents');
+    if (bumps.recorder) addons.push('recorder');
+    if (bumps.testing) addons.push('testing');
+  }
+  if (bumps.scripts) addons.push('scripts');
+  return addons.join(',');
 }
 
 // Pre-check bumps from URL param (coming from lock screen)
