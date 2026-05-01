@@ -550,6 +550,71 @@
   }
 
   /* Calm reminder */
+  /* ── READ ALOUD PLAYER ── */
+  .read-aloud-bar {
+    background: var(--sage-deep);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .ra-btn {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.12);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+  .ra-btn:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.5); }
+  .ra-btn.playing { background: rgba(149,213,178,.25); border-color: var(--sage-light); }
+  .ra-info { flex: 1; min-width: 0; }
+  .ra-title { font-size: 13px; font-weight: 500; color: white; margin-bottom: 3px; }
+  .ra-status { font-size: 12px; color: rgba(255,255,255,.6); font-weight: 300; }
+  .ra-controls { display: flex; gap: 8px; align-items: center; }
+  .ra-speed {
+    padding: 5px 10px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 8px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+  }
+  .ra-speed option { color: var(--ink); background: white; }
+  .ra-stop {
+    padding: 5px 12px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 8px;
+    color: rgba(255,255,255,.7);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .ra-stop:hover { border-color: rgba(255,255,255,.5); color: white; }
+
+  /* Highlight sections being read */
+  .reading-active {
+    background: rgba(149,213,178,.15) !important;
+    border-radius: 10px;
+    transition: background .4s;
+  }
+  .opener-box.reading-active {
+    border-color: var(--sage-light) !important;
+    box-shadow: 0 0 0 3px rgba(149,213,178,.2);
+  }
+
   .calm-banner {
     text-align: center;
     padding: 20px;
@@ -1005,15 +1070,218 @@ Please create a focused visit script for this appointment.`;
         </button>
       </div>
 
+      <div class="read-aloud-bar" id="raBar">
+        <button class="ra-btn" id="raPlayBtn" onclick="toggleReadAloud()" title="Read script aloud">
+          🔊
+        </button>
+        <div class="ra-info">
+          <div class="ra-title">Read it to me</div>
+          <div class="ra-status" id="raStatus">Tap to hear your visit script read aloud — helpful when you're overwhelmed or not feeling well</div>
+        </div>
+        <div class="ra-controls">
+          <select class="ra-speed" id="raSpeed" onchange="updateSpeed()">
+            <option value="0.75">Slow</option>
+            <option value="0.9" selected>Calm</option>
+            <option value="1.1">Normal</option>
+            <option value="1.3">Fast</option>
+          </select>
+          <button class="ra-stop" onclick="stopReadAloud()" id="raStopBtn" style="display:none">■ Stop</button>
+        </div>
+      </div>
+
       <div class="calm-banner" style="margin-top:8px;">
         You are their best advocate. You've got this. 🌿
       </div>
     `;
 
+    // Store result for read-aloud
+    window._raResult = result;
+    window._raPatient = patientName;
+    window._raSpecialist = specialist;
     document.getElementById('resultSection').innerHTML = html;
     document.getElementById('resultSection').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // ── READ ALOUD ────────────────────────────────────────────────
+  let raSynth = window.speechSynthesis;
+  let raUtterance = null;
+  let raPlaying = false;
+  let raSegments = [];
+  let raCurrentIdx = 0;
+
+  function buildSegments(result, patient, specialist) {
+    const segs = [];
+    // Intro
+    segs.push({
+      text: `Here is your visit script for ${patient}'s ${specialist} appointment.`,
+      highlight: null,
+      label: 'Introduction'
+    });
+    // Opener
+    segs.push({
+      text: `Start by saying: ${result.openerLine}`,
+      highlight: '.opener-box',
+      label: 'Opening line'
+    });
+    // Priorities
+    result.priorities.forEach((p, i) => {
+      segs.push({
+        text: `Priority ${i + 1}: ${p.title}. Say: ${p.script}`,
+        highlight: `.priority-item:nth-child(${i + 1})`,
+        label: `Priority ${i + 1}`
+      });
+    });
+    // Questions
+    if (result.questionsToAsk?.length) {
+      segs.push({
+        text: `Questions to ask your ${specialist}: ` + result.questionsToAsk.join('. '),
+        highlight: '.question-list',
+        label: 'Questions'
+      });
+    }
+    // Timing tip
+    if (result.timingTip) {
+      segs.push({
+        text: `Timing tip: ${result.timingTip}`,
+        highlight: null,
+        label: 'Timing tip'
+      });
+    }
+    // Emotional note
+    if (result.emotionalNote) {
+      segs.push({
+        text: `And remember: ${result.emotionalNote}`,
+        highlight: null,
+        label: 'Remember'
+      });
+    }
+    segs.push({ text: `That is the end of your visit script. You are prepared. You've got this.`, highlight: null, label: 'Done' });
+    return segs;
+  }
+
+  function getBestVoice() {
+    const voices = raSynth.getVoices();
+    // Prefer calm, clear English voices
+    const preferred = ['Samantha', 'Karen', 'Moira', 'Fiona', 'Microsoft Aria', 'Google US English', 'Microsoft Zira'];
+    for (const name of preferred) {
+      const v = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
+      if (v) return v;
+    }
+    return voices.find(v => v.lang.startsWith('en-US') && v.name.toLowerCase().includes('female'))
+      || voices.find(v => v.lang.startsWith('en'))
+      || voices[0];
+  }
+
+  function clearHighlights() {
+    document.querySelectorAll('.reading-active').forEach(el => el.classList.remove('reading-active'));
+  }
+
+  function highlightSegment(selector) {
+    clearHighlights();
+    if (!selector) return;
+    const el = document.querySelector(selector);
+    if (el) {
+      el.classList.add('reading-active');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function speakSegment(idx) {
+    if (idx >= raSegments.length) {
+      stopReadAloud();
+      return;
+    }
+    raCurrentIdx = idx;
+    const seg = raSegments[idx];
+
+    // Update status
+    const total = raSegments.length;
+    document.getElementById('raStatus').textContent = `${seg.label} (${idx + 1} of ${total})`;
+    highlightSegment(seg.highlight);
+
+    const utt = new SpeechSynthesisUtterance(seg.text);
+    utt.voice = getBestVoice();
+    utt.rate = parseFloat(document.getElementById('raSpeed')?.value || '0.9');
+    utt.pitch = 1.0;
+    utt.volume = 1.0;
+
+    utt.onend = () => {
+      if (raPlaying) {
+        setTimeout(() => speakSegment(idx + 1), 600); // natural pause between sections
+      }
+    };
+    utt.onerror = () => {
+      if (raPlaying) speakSegment(idx + 1);
+    };
+
+    raUtterance = utt;
+    raSynth.speak(utt);
+  }
+
+  function toggleReadAloud() {
+    if (raPlaying) {
+      pauseReadAloud();
+    } else {
+      startReadAloud();
+    }
+  }
+
+  function startReadAloud() {
+    if (!window._raResult) return;
+
+    // Request wake lock so screen stays on during reading
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').catch(() => {});
+    }
+
+    raPlaying = true;
+    raSegments = buildSegments(window._raResult, window._raPatient, window._raSpecialist);
+
+    const playBtn = document.getElementById('raPlayBtn');
+    playBtn.textContent = '⏸';
+    playBtn.classList.add('playing');
+    document.getElementById('raStopBtn').style.display = 'inline-block';
+
+    // Cancel any existing speech
+    raSynth.cancel();
+    speakSegment(raCurrentIdx);
+  }
+
+  function pauseReadAloud() {
+    raPlaying = false;
+    raSynth.pause();
+    const playBtn = document.getElementById('raPlayBtn');
+    playBtn.textContent = '▶';
+    playBtn.classList.remove('playing');
+    document.getElementById('raStatus').textContent = 'Paused — tap to resume';
+  }
+
+  function stopReadAloud() {
+    raPlaying = false;
+    raCurrentIdx = 0;
+    raSynth.cancel();
+    clearHighlights();
+    const playBtn = document.getElementById('raPlayBtn');
+    playBtn.textContent = '🔊';
+    playBtn.classList.remove('playing');
+    document.getElementById('raStopBtn').style.display = 'none';
+    document.getElementById('raStatus').textContent = 'Tap to hear your visit script read aloud';
+  }
+
+  function updateSpeed() {
+    // If currently speaking, restart current segment at new speed
+    if (raPlaying) {
+      raSynth.cancel();
+      setTimeout(() => speakSegment(raCurrentIdx), 100);
+    }
+  }
+
+  // Load voices (Chrome requires waiting for voiceschanged)
+  if (raSynth.onvoiceschanged !== undefined) {
+    raSynth.onvoiceschanged = () => {}; // trigger load
+  }
+  // ── END READ ALOUD ─────────────────────────────────────────────
 
   function copyScript(text) {
     navigator.clipboard.writeText(text).then(() => {
