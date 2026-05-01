@@ -950,7 +950,7 @@
       <div class="two-col">
         <div class="field-group">
           <label class="field-label">Prepared by (your name)</label>
-          <input type="text" class="input" id="parentName" placeholder="e.g. Sarah Johnson, Mother">
+          <input type="text" class="input" id="advocateName" placeholder="e.g. Sarah Johnson, Mother">
         </div>
         <div class="field-group">
           <label class="field-label">Today's Specialist / Context</label>
@@ -1213,7 +1213,7 @@ async function generate() {
   const data = {
     patientName,
     patientAge: document.getElementById('patientAge').value.trim(),
-    parentName: document.getElementById('parentName').value.trim(),
+    parentName: document.getElementById('advocateName').value.trim(),
     visitContext: document.getElementById('visitContext').value.trim(),
     diagnoses,
     suspected: getTags('suspectContainer'),
@@ -1237,7 +1237,7 @@ async function generate() {
 
   const systemPrompt = `You are a medical writer helping parents of medically complex children create a professional clinical summary document.
 
-Your job: transform the parent-provided information into a document that reads as if written by a knowledgeable medical professional — clear, clinical, authoritative, and impossible to dismiss.
+Your job: transform the provided information into a document that reads as if written by a knowledgeable medical professional — clear, clinical, authoritative, and impossible to dismiss.
 
 Return ONLY valid JSON (no markdown, no backticks) in this exact format:
 {
@@ -1245,7 +1245,7 @@ Return ONLY valid JSON (no markdown, no backticks) in this exact format:
   "clinicalSummary": "2-3 sentences summarizing the overall clinical picture — diagnostic complexity, duration, trajectory (stable/worsening/unknown).",
   "functionalImpactSummary": "2-3 sentences translating the functional impact into clinical terms. Quantify: school days missed, activities no longer possible, assistance required.",
   "treatmentNarrativeNote": "1-2 sentences clinically framing why the failed treatments matter — e.g. 'The lack of response to X and Y suggests Z warrants consideration.'",
-  "keyAsk": "1 sentence — a direct, confident clinical ask for this visit. Should sound like one colleague asking another, not a parent pleading.",
+  "keyAsk": "1 sentence — a direct, confident clinical ask for this visit. Should sound like one colleague asking another, not someone pleading.",
   "redFlags": ["Any symptom or pattern worth flagging as clinically significant — keep to 2-4 items, phrased clinically"],
   "suggestedWorkup": ["2-4 reasonable next steps or tests worth considering given this picture — phrased as suggestions, not demands"]
 }
@@ -1258,7 +1258,7 @@ Tone rules:
 - This document is handed to a specialist — it must command respect immediately`;
 
   const userContent = `Patient: ${data.patientName}, ${data.patientAge}
-Prepared by: ${data.parentName}
+Prepared by: ${data.advocateName || data.advocateName || ""}
 Visit context: ${data.visitContext}
 
 Confirmed diagnoses: ${data.diagnoses.join(', ') || 'none listed'}
@@ -1369,7 +1369,7 @@ function renderDocument(data, doc) {
         ${data.patientAge ? `<div class="doc-meta-item"><div class="doc-meta-label">Age</div><div class="doc-meta-value">${data.patientAge}</div></div>` : ''}
         ${data.visitContext ? `<div class="doc-meta-item"><div class="doc-meta-label">This Visit</div><div class="doc-meta-value">${data.visitContext}</div></div>` : ''}
         <div class="doc-meta-item"><div class="doc-meta-label">Prepared</div><div class="doc-meta-value">${today}</div></div>
-        ${data.parentName ? `<div class="doc-meta-item"><div class="doc-meta-label">By</div><div class="doc-meta-value">${data.parentName}</div></div>` : ''}
+        ${data.advocateName ? `<div class="doc-meta-item"><div class="doc-meta-label">By</div><div class="doc-meta-value">${data.advocateName}</div></div>` : ''}
       </div>
     </div>
 

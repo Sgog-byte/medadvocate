@@ -263,7 +263,7 @@ async function generateDiag(){
 
   try{
     const result=await callClaude(
-      'You help parents explain a medical diagnosis to others. Return ONLY valid JSON no markdown: {"tagline":"One powerful human sentence","whatItIs":"2-3 sentences for this audience","whatItFeelsLike":"2-3 sentences with relatable analogies","symptoms":["plain human descriptions"],"whatHelps":["3-4 specific things the audience can do"],"myths":[{"wrong":"misconception","right":"truth"}],"whatNotToSay":["2-3 unhelpful things this audience says"],"shareableExplanation":"3-4 sentence plain explanation ready to say or send"} Tailor everything to the specified audience.',
+      'You help people with chronic illness, caregivers, and medical advocates explain a medical diagnosis to others. Return ONLY valid JSON no markdown: {"tagline":"One powerful human sentence","whatItIs":"2-3 sentences for this audience","whatItFeelsLike":"2-3 sentences with relatable analogies","symptoms":["plain human descriptions"],"whatHelps":["3-4 specific things the audience can do"],"myths":[{"wrong":"misconception","right":"truth"}],"whatNotToSay":["2-3 unhelpful things this audience says"],"shareableExplanation":"3-4 sentence plain explanation ready to say or send"} Tailor everything to the specified audience.',
       JSON.stringify(data)
     );
     const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
