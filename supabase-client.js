@@ -5,7 +5,7 @@
 // <script src="supabase-client.js"></script>
 // ============================================================
 
-const SUPA_URL  = 'https://ytzkpqzvaxfrkozspzoa.supabase.co';
+const SUPA_URL  = 'https://ytzlpqzvaxfrkozspzoa.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0emxwcXp2YXhmcmtvenNwem9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODg1NDUsImV4cCI6MjA5MzE2NDU0NX0.JxHeLaaEsQbo_aRh8WJ2JFYrwNCa2WpQq_-usWORBnw'; // ← paste rotated key here
 
 const _supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
