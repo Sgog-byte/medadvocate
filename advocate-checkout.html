@@ -545,21 +545,40 @@ async function handleCheckout() {
   // Build line items
   const lineItems = [];
 
-  // Subscription — base or family
-  const subPriceKey = plan === 'annual'
-    ? (familyOn ? 'familyAnnual' : 'annual')
-    : (familyOn ? 'familyMonthly' : 'monthly');
-  lineItems.push({ price: PRICES[subPriceKey], quantity: 1 });
+  if (window._existingSubscriber) {
+    // Existing subscriber — only charge for add-ons, NO subscription line item
+    if (bundleOn) {
+      lineItems.push({ price: PRICES.bundle, quantity: 1 });
+    } else {
+      if (bumps.docs)     lineItems.push({ price: PRICES.documents, quantity: 1 });
+      if (bumps.recorder) lineItems.push({ price: PRICES.recorder, quantity: 1 });
+      if (bumps.testing)  lineItems.push({ price: PRICES.testing, quantity: 1 });
+    }
+    if (bumps.scripts) lineItems.push({ price: PRICES.scripts, quantity: 1 });
 
-  // One-time add-ons
-  if (bundleOn) {
-    lineItems.push({ price: PRICES.bundle, quantity: 1 });
+    // Safety check — must have at least one add-on
+    if (lineItems.length === 0) {
+      toast('Please select an add-on to purchase.');
+      if (btn) btn.disabled = false;
+      document.getElementById('cta-text').textContent = originalText;
+      return;
+    }
   } else {
-    if (bumps.docs)     lineItems.push({ price: PRICES.documents, quantity: 1 });
-    if (bumps.recorder) lineItems.push({ price: PRICES.recorder, quantity: 1 });
-    if (bumps.testing)  lineItems.push({ price: PRICES.testing, quantity: 1 });
+    // New user — subscription + optional add-ons
+    const subPriceKey = plan === 'annual'
+      ? (familyOn ? 'familyAnnual' : 'annual')
+      : (familyOn ? 'familyMonthly' : 'monthly');
+    lineItems.push({ price: PRICES[subPriceKey], quantity: 1 });
+
+    if (bundleOn) {
+      lineItems.push({ price: PRICES.bundle, quantity: 1 });
+    } else {
+      if (bumps.docs)     lineItems.push({ price: PRICES.documents, quantity: 1 });
+      if (bumps.recorder) lineItems.push({ price: PRICES.recorder, quantity: 1 });
+      if (bumps.testing)  lineItems.push({ price: PRICES.testing, quantity: 1 });
+    }
+    if (bumps.scripts) lineItems.push({ price: PRICES.scripts, quantity: 1 });
   }
-  if (bumps.scripts) lineItems.push({ price: PRICES.scripts, quantity: 1 });
 
   try {
     // Load Stripe.js
@@ -631,11 +650,29 @@ function buildAddonString() {
     if (document.readyState !== 'loading') applyExistingSubscriberMode();
   }
 
+  // Auto-select the add-on they came from
   if (addon === 'bundle') { setTimeout(() => toggleBundle(), 100); }
   else if (addon === 'docs') { setTimeout(() => toggleBump('docs'), 100); }
   else if (addon === 'recorder') { setTimeout(() => toggleBump('recorder'), 100); }
   else if (addon === 'testing') { setTimeout(() => toggleBump('testing'), 100); }
   else if (addon === 'scripts') { setTimeout(() => toggleBump('scripts'), 100); }
+
+  // Show a context banner for new users coming from a specific add-on
+  if (addon && addon !== 'bundle' && !existingSubscriber) {
+    const addonNames = { scripts: 'Doctor Scripts ($17)', docs: 'Document Library ($27)', recorder: 'Appointment Recorder ($27)', testing: 'Diagnostic Testing ($15)' };
+    const addonName = addonNames[addon] || 'an add-on';
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:#fdf3e7;border:1.5px solid #f0d4a8;border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#5a3e1b;line-height:1.6';
+    banner.innerHTML = `<strong>You selected ${addonName}</strong><br>MedAdvocate works on a subscription ($27/mo) that includes 16 core tools. ${addonName.split(' ')[0] + ' ' + addonName.split(' ')[1]} is pre-selected as an optional one-time add-on below. You can remove it if you just want the base subscription.`;
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.querySelector('.plan-toggle');
+      if (toggle) toggle.parentNode.insertBefore(banner, toggle);
+    });
+    if (document.readyState !== 'loading') {
+      const toggle = document.querySelector('.plan-toggle');
+      if (toggle) toggle.parentNode.insertBefore(banner, toggle);
+    }
+  }
 })();
 
 updateTotal();
