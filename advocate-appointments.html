@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — Appointments</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#4a7c59;
+  --border:#b7d9c4;--white:#fff;
+  --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+  --red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;
+  --blue:#2563eb;--blue-pale:#eff6ff;--blue-border:#bfdbfe;
+  --shadow-sm:0 2px 12px rgba(28,43,34,.06);--shadow-lg:0 12px 48px rgba(28,43,34,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.95);backdrop-filter:blur(16px);border-bottom:1.5px solid var(--border);padding:0 24px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;cursor:pointer;background:none;font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wm{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-adv{color:var(--sage);font-weight:300}
+
+.shell{max-width:720px;margin:0 auto;padding:32px 20px 80px}
+.page-header{margin-bottom:28px}
+.page-title{font-family:'Fraunces',serif;font-size:34px;font-weight:300;color:var(--ink);line-height:1.2;margin-bottom:6px}
+.page-title em{font-style:italic;color:var(--sage)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;line-height:1.7}
+
+/* ADD APPOINTMENT BUTTON */
+.add-btn{display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--sage-deep);color:white;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:28px}
+.add-btn:hover{background:var(--ink);transform:translateY(-1px)}
+
+/* SECTION HEADERS */
+.section-label{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* APPOINTMENT CARD */
+.appt-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;margin-bottom:14px;box-shadow:var(--shadow-sm);overflow:hidden;transition:box-shadow .2s}
+.appt-card:hover{box-shadow:var(--shadow-lg)}
+.appt-card.today{border-color:var(--sage);border-width:2px}
+.appt-card.upcoming{}
+.appt-card.past{opacity:.7}
+
+.appt-top{padding:18px 20px;display:flex;align-items:flex-start;gap:14px}
+.appt-date-badge{flex-shrink:0;width:52px;text-align:center;background:var(--sage-pale);border-radius:12px;padding:8px 6px}
+.appt-date-badge.today-badge{background:var(--sage-deep);color:white}
+.appt-date-month{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sage-deep)}
+.today-badge .appt-date-month{color:rgba(255,255,255,.7)}
+.appt-date-day{font-family:'Fraunces',serif;font-size:24px;font-weight:300;color:var(--sage-deep);line-height:1}
+.today-badge .appt-date-day{color:white}
+.appt-date-dow{font-size:10px;color:var(--ink-muted);margin-top:2px;font-weight:500}
+.today-badge .appt-date-dow{color:rgba(255,255,255,.6)}
+
+.appt-info{flex:1;min-width:0}
+.appt-doctor{font-size:16px;font-weight:500;color:var(--ink);margin-bottom:2px}
+.appt-specialty{font-size:13px;color:var(--ink-muted);font-weight:300;margin-bottom:6px}
+.appt-time{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-muted);background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-weight:500}
+.today-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;background:var(--sage);color:white;border-radius:6px;padding:3px 9px;margin-left:6px}
+
+.appt-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.appt-btn{padding:7px 13px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);white-space:nowrap}
+.appt-btn:hover{border-color:var(--sage);color:var(--sage-deep);background:var(--sage-pale)}
+.appt-btn.primary{background:var(--sage-deep);color:white;border-color:var(--sage-deep)}
+.appt-btn.primary:hover{background:var(--ink)}
+.appt-btn.red{border-color:var(--red-border);color:var(--red)}
+.appt-btn.red:hover{background:var(--red-pale)}
+
+/* NOTES SECTION */
+.appt-notes{border-top:1px solid var(--border);padding:14px 20px;background:var(--warm)}
+.notes-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px}
+.notes-text{font-size:13px;color:var(--ink-soft);line-height:1.7;font-weight:300;white-space:pre-wrap}
+.notes-empty{font-size:13px;color:var(--ink-muted);font-style:italic}
+.notes-add-row{display:flex;gap:8px;margin-top:10px}
+.notes-input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .2s;resize:none;line-height:1.5}
+.notes-input:focus{border-color:var(--sage)}
+.notes-mic-btn{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;flex-shrink:0}
+.notes-mic-btn:hover{border-color:var(--sage);background:var(--sage-pale)}
+.notes-mic-btn.listening{background:var(--sage);border-color:var(--sage);animation:pulse 1.5s infinite}
+.notes-save-btn{padding:8px 16px;background:var(--sage-deep);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;flex-shrink:0}
+.notes-save-btn:hover{background:var(--ink)}
+
+/* VOICE INDICATOR */
+.voice-indicator{font-size:12px;color:var(--sage);font-style:italic;margin-top:5px;min-height:18px}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:48px 24px;color:var(--ink-muted)}
+.empty-icon{font-size:48px;margin-bottom:14px}
+.empty-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.empty-sub{font-size:14px;font-weight:300;line-height:1.6}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(13,31,21,.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(4px)}
+@media(min-width:600px){.modal-bg{align-items:center;padding:24px}}
+.modal{background:var(--white);border-radius:20px 20px 0 0;padding:28px 24px 40px;width:100%;max-width:520px;box-shadow:0 -8px 40px rgba(13,31,21,.15);max-height:90vh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:20px;padding:32px}}
+.modal-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--ink-muted);font-weight:300;margin-bottom:22px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--sage)}
+.field textarea{resize:none;min-height:80px;line-height:1.6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-primary{flex:1;padding:13px;background:var(--sage-deep);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--ink)}
+.btn-cancel{padding:13px 18px;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;background:transparent;color:var(--ink-soft);transition:all .2s}
+.btn-cancel:hover{border-color:var(--sage)}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.hidden{display:none!important}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,106,79,.4)}50%{box-shadow:0 0 0 8px rgba(45,106,79,0)}}
+</style>
+</head>
+<body>
+
+<script>
+(async function authGuard() {
+  if (typeof Auth === 'undefined') return;
+  const user = await Auth.user();
+  if (!user) window.location.href = 'advocate-login.html?next=/advocate-appointments.html';
+})();
+</script>
+
+<nav>
+  <a href="index.html" class="nav-back">← Home</a>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wm">Med<span class="nav-dot"></span><span class="nav-adv">Advocate</span></div>
+  </div>
+</nav>
+
+<div class="shell">
+  <div class="page-header">
+    <h1 class="page-title">Upcoming <em>Appointments</em></h1>
+    <p class="page-sub">Add appointments and prep notes ahead of time. On the day, launch directly into your Visit Script or Recorder.</p>
+  </div>
+
+  <button class="add-btn" onclick="openModal()">
+    + Add appointment
+  </button>
+
+  <div id="todaySection" class="hidden">
+    <div class="section-label">Today</div>
+    <div id="todayList"></div>
+  </div>
+
+  <div id="upcomingSection" class="hidden">
+    <div class="section-label" style="margin-top:20px">Upcoming</div>
+    <div id="upcomingList"></div>
+  </div>
+
+  <div id="pastSection" class="hidden">
+    <div class="section-label" style="margin-top:20px;opacity:.6">Past</div>
+    <div id="pastList"></div>
+  </div>
+
+  <div id="emptyState">
+    <div class="empty">
+      <div class="empty-icon">📅</div>
+      <div class="empty-title">No appointments yet</div>
+      <div class="empty-sub">Add your next doctor's visit and start building prep notes.<br>On appointment day, launch your Visit Script with one tap.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-bg hidden" id="modalBg" onclick="closeModalBg(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Add appointment</div>
+    <div class="modal-sub">Fill in what you know — you can always add more later.</div>
+    <div class="two">
+      <div class="field"><label>Date *</label><input type="date" id="f_date"></div>
+      <div class="field"><label>Time</label><input type="time" id="f_time"></div>
+    </div>
+    <div class="field"><label>Doctor / Provider *</label><input type="text" id="f_doctor" placeholder="e.g. Dr. Webb"></div>
+    <div class="field"><label>Specialty / Clinic</label><input type="text" id="f_specialty" placeholder="e.g. Cardiology, CHOA"></div>
+    <div class="field"><label>Location (optional)</label><input type="text" id="f_location" placeholder="e.g. 1405 Clifton Rd, Atlanta"></div>
+    <div class="field"><label>Prep notes</label><textarea id="f_notes" placeholder="What do you want to remember to tell them? What questions do you have?"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="modalSaveBtn" onclick="saveAppt()">Save appointment</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+let appointments = [];
+let editingId = null;
+let activeListeners = {}; // speech recognition per card
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  await loadAppts();
+}
+
+// ── Load & Render ─────────────────────────────────────────────
+async function loadAppts() {
+  try {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    const { data } = await _supa
+      .from('appointments')
+      .select('*')
+      .eq('patient_id', pid)
+      .order('appt_date', { ascending: true })
+      .order('appt_time', { ascending: true });
+    appointments = data || [];
+    render();
+  } catch(e) {
+    console.warn('Could not load appointments:', e.message);
+    // Fallback to localStorage
+    appointments = JSON.parse(localStorage.getItem('advocate_appointments') || '[]');
+    render();
+  }
+}
+
+function render() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayAppts = appointments.filter(a => a.appt_date === today);
+  const upcoming = appointments.filter(a => a.appt_date > today);
+  const past = appointments.filter(a => a.appt_date < today).reverse();
+
+  const empty = document.getElementById('emptyState');
+  empty.style.display = appointments.length ? 'none' : 'block';
+
+  renderSection('todaySection', 'todayList', todayAppts, 'today');
+  renderSection('upcomingSection', 'upcomingList', upcoming, 'upcoming');
+  renderSection('pastSection', 'pastList', past.slice(0, 5), 'past');
+}
+
+function renderSection(sectionId, listId, appts, type) {
+  const section = document.getElementById(sectionId);
+  const list = document.getElementById(listId);
+  section.classList.toggle('hidden', appts.length === 0);
+  list.innerHTML = appts.map(a => renderCard(a, type)).join('');
+}
+
+function renderCard(a, type) {
+  const date = new Date(a.appt_date + 'T12:00:00');
+  const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  const day = date.getDate();
+  const dow = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const isToday = type === 'today';
+
+  const timeStr = a.appt_time
+    ? new Date('2000-01-01T' + a.appt_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : '';
+
+  const visitUrl = `advocate-app.html?appt_id=${a.id}&doctor=${encodeURIComponent(a.doctor)}&specialty=${encodeURIComponent(a.specialty||'')}&notes=${encodeURIComponent(a.notes||'')}`;
+  const recorderUrl = `advocate-recorder.html?appt_id=${a.id}&doctor=${encodeURIComponent(a.doctor)}&patient=${encodeURIComponent(a.patient_name||'')}`;
+
+  return `<div class="appt-card ${type}" id="card_${a.id}">
+    <div class="appt-top">
+      <div class="appt-date-badge ${isToday ? 'today-badge' : ''}">
+        <div class="appt-date-month">${month}</div>
+        <div class="appt-date-day">${day}</div>
+        <div class="appt-date-dow">${dow}</div>
+      </div>
+      <div class="appt-info">
+        <div class="appt-doctor">${esc(a.doctor)}${isToday ? '<span class="today-chip">Today</span>' : ''}</div>
+        <div class="appt-specialty">${esc(a.specialty || '')}</div>
+        ${timeStr ? `<span class="appt-time">⏰ ${timeStr}</span>` : ''}
+        ${a.location ? `<span class="appt-time" style="margin-left:6px">📍 ${esc(a.location)}</span>` : ''}
+      </div>
+      <div class="appt-actions">
+        ${type !== 'past' ? `
+          <button class="appt-btn primary" onclick="window.location.href='${visitUrl}'">📋 Prep script</button>
+          <button class="appt-btn" onclick="window.location.href='${recorderUrl}'">🎙️ Record</button>
+        ` : `
+          <button class="appt-btn" onclick="window.location.href='${recorderUrl}'">🎙️ Recording</button>
+        `}
+        <button class="appt-btn" onclick="openModal('${a.id}')">Edit</button>
+        <button class="appt-btn red" onclick="deleteAppt('${a.id}')">✕</button>
+      </div>
+    </div>
+    <div class="appt-notes">
+      <div class="notes-label">Prep notes</div>
+      <div class="notes-text ${!a.notes ? 'notes-empty'  : ''}" id="notes_text_${a.id}">${a.notes ? esc(a.notes) : 'No notes yet — add what you want to remember to tell them'}</div>
+      <div class="notes-add-row">
+        <textarea class="notes-input" id="notes_input_${a.id}" placeholder="e.g. Tell him about the fainting spells, ask about tilt table..." rows="2"></textarea>
+        ${SR ? `<button class="notes-mic-btn" id="mic_${a.id}" onclick="toggleVoiceNote('${a.id}')" title="Voice note">🎤</button>` : ''}
+        <button class="notes-save-btn" onclick="saveNote('${a.id}')">Save note</button>
+      </div>
+      <div class="voice-indicator" id="voice_status_${a.id}"></div>
+    </div>
+  </div>`;
+}
+
+// ── Save / Delete ─────────────────────────────────────────────
+async function saveAppt() {
+  const date = document.getElementById('f_date').value;
+  const doctor = document.getElementById('f_doctor').value.trim();
+  if (!date || !doctor) { toast('Date and doctor name are required'); return; }
+
+  const btn = document.getElementById('modalSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  const profile = await DB.getProfile();
+  const record = {
+    appt_date: date,
+    appt_time: document.getElementById('f_time').value || null,
+    doctor: doctor,
+    specialty: document.getElementById('f_specialty').value.trim() || null,
+    location: document.getElementById('f_location').value.trim() || null,
+    notes: document.getElementById('f_notes').value.trim() || null,
+    patient_name: profile.name || null
+  };
+
+  try {
+    const pid = await DB.patientId();
+    if (editingId) {
+      await _supa.from('appointments').update(record).eq('id', editingId);
+    } else {
+      await _supa.from('appointments').insert({ patient_id: pid, ...record });
+    }
+    closeModal();
+    await loadAppts();
+    toast(editingId ? 'Appointment updated ✓' : 'Appointment added ✓');
+  } catch(e) {
+    // Fallback to localStorage
+    if (editingId) {
+      appointments = appointments.map(a => a.id === editingId ? { ...a, ...record } : a);
+    } else {
+      appointments.push({ id: 'local_' + Date.now(), ...record });
+    }
+    localStorage.setItem('advocate_appointments', JSON.stringify(appointments));
+    closeModal();
+    render();
+    toast('Saved locally ✓');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save appointment';
+  }
+}
+
+async function saveNote(id) {
+  const input = document.getElementById('notes_input_' + id);
+  const newNote = input.value.trim();
+  if (!newNote) return;
+
+  const appt = appointments.find(a => a.id === id);
+  if (!appt) return;
+
+  const now = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const timestamp = `[${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${now}]`;
+  const updated = appt.notes
+    ? appt.notes + '\n' + timestamp + ' ' + newNote
+    : timestamp + ' ' + newNote;
+
+  try {
+    await _supa.from('appointments').update({ notes: updated }).eq('id', id);
+  } catch(e) {
+    // localStorage fallback
+  }
+
+  appt.notes = updated;
+  localStorage.setItem('advocate_appointments', JSON.stringify(appointments));
+
+  const textEl = document.getElementById('notes_text_' + id);
+  textEl.className = 'notes-text';
+  textEl.textContent = updated;
+  input.value = '';
+  document.getElementById('voice_status_' + id).textContent = '';
+  toast('Note saved ✓');
+}
+
+async function deleteAppt(id) {
+  if (!confirm('Delete this appointment?')) return;
+  try {
+    await _supa.from('appointments').delete().eq('id', id);
+  } catch(e) {}
+  appointments = appointments.filter(a => a.id !== id);
+  localStorage.setItem('advocate_appointments', JSON.stringify(appointments));
+  render();
+  toast('Deleted');
+}
+
+// ── Voice Notes ───────────────────────────────────────────────
+function toggleVoiceNote(id) {
+  if (activeListeners[id]) {
+    stopVoiceNote(id);
+  } else {
+    startVoiceNote(id);
+  }
+}
+
+async function startVoiceNote(id) {
+  if (!SR) return;
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) { toast('Microphone access required'); return; }
+
+  const recog = new SR();
+  recog.continuous = false;
+  recog.interimResults = true;
+  recog.lang = 'en-US';
+
+  const micBtn = document.getElementById('mic_' + id);
+  const status = document.getElementById('voice_status_' + id);
+  const input = document.getElementById('notes_input_' + id);
+
+  micBtn.classList.add('listening');
+  micBtn.textContent = '⏹';
+  status.textContent = 'Listening...';
+
+  recog.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim = e.results[i][0].transcript;
+    }
+    if (final) input.value = (input.value + ' ' + final).trim();
+    status.textContent = interim ? '🎤 ' + interim : 'Tap save when done';
+  };
+
+  recog.onend = () => stopVoiceNote(id);
+  recog.onerror = () => stopVoiceNote(id);
+
+  activeListeners[id] = recog;
+  try { recog.start(); } catch(e) {}
+}
+
+function stopVoiceNote(id) {
+  const recog = activeListeners[id];
+  if (recog) { try { recog.stop(); } catch(e) {} delete activeListeners[id]; }
+  const micBtn = document.getElementById('mic_' + id);
+  const status = document.getElementById('voice_status_' + id);
+  if (micBtn) { micBtn.classList.remove('listening'); micBtn.textContent = '🎤'; }
+  if (status && status.textContent === 'Listening...') status.textContent = '';
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function openModal(id) {
+  editingId = id || null;
+  const appt = id ? appointments.find(a => a.id === id) : null;
+
+  document.getElementById('modalTitle').textContent = appt ? 'Edit appointment' : 'Add appointment';
+  document.getElementById('f_date').value = appt?.appt_date || '';
+  document.getElementById('f_time').value = appt?.appt_time || '';
+  document.getElementById('f_doctor').value = appt?.doctor || '';
+  document.getElementById('f_specialty').value = appt?.specialty || '';
+  document.getElementById('f_location').value = appt?.location || '';
+  document.getElementById('f_notes').value = appt?.notes || '';
+
+  // Default date to today if adding new
+  if (!appt) {
+    document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+  }
+
+  document.getElementById('modalBg').classList.remove('hidden');
+  setTimeout(() => document.getElementById('f_doctor').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modalBg').classList.add('hidden'); editingId = null; }
+function closeModalBg(e) { if (e.target === document.getElementById('modalBg')) closeModal(); }
+
+// ── Helpers ───────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+init();
+</script>
+</body>
+</html>

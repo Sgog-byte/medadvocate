@@ -340,6 +340,21 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">Track my medications →</div><div class="tc-arr">→</div></div>
     </div>
 
+    <div class="tc" onclick="openTool('appointments')">
+      <div class="tc-body">
+        <div class="tc-icon i2">📅</div>
+        <div class="tc-name">Appointments</div>
+        <div class="tc-tag tg-green">New — Smart scheduling</div>
+        <div class="tc-desc">Add upcoming appointments, voice-record prep notes anytime, then launch your Visit Script or Recorder with one tap on appointment day.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Voice or type prep notes ahead of time</div>
+          <div class="tc-feat"><div class="fd"></div>One tap to Visit Script or Recorder</div>
+          <div class="tc-feat"><div class="fd"></div>Notes carry into your prep automatically</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Add an appointment →</div><div class="tc-arr">→</div></div>
+    </div>
+
     <div class="tc" onclick="openTool('labs')">
       <div class="tc-body">
         <div class="tc-icon i3">🧪</div>
@@ -687,6 +702,7 @@ const TOOLS = {
   flare:       { title:'Flare Tracker',                src:'advocate-flare.html' },
   testing:     { title:'Diagnostic Testing',             src:'advocate-testing.html' },
   concierge:   { title:'Care Concierge',               src:'advocate-concierge.html' },
+  appointments:{ title:'Appointments',                 src:'advocate-appointments.html' },
   research:    { title:'Research Library',             src:'advocate-research.html' },
 };
 

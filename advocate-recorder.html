@@ -153,6 +153,47 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 var recog=null,isRec=false,isPaused=false,timerInt=null,secs=0,fullTx='',interimTx='';
 
+// ── Audio recording (saves actual audio file) ──────────────────
+var mediaRecorder=null, audioChunks=[], audioBlob=null, audioUrl=null;
+
+function setupMediaRecorder(stream) {
+  audioChunks = [];
+  audioBlob = null;
+  audioUrl = null;
+  try {
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+  } catch(e) {
+    try { mediaRecorder = new MediaRecorder(stream); } catch(e2) { mediaRecorder = null; return; }
+  }
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+    audioUrl = URL.createObjectURL(audioBlob);
+    showAudioPlayer();
+  };
+}
+
+function showAudioPlayer() {
+  var existing = document.getElementById('audio_player_wrap');
+  if (existing) existing.remove();
+  if (!audioUrl) return;
+
+  var wrap = document.createElement('div');
+  wrap.id = 'audio_player_wrap';
+  wrap.style.cssText = 'background:#fff;border:1.5px solid #b7d9c4;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(28,43,34,.06)';
+  wrap.innerHTML = '<div style="font-family:Fraunces,serif;font-size:16px;color:#0d1f15;margin-bottom:4px">🎙️ Recording saved</div>'
+    + '<div style="font-size:12px;color:#4a7c59;font-weight:300;margin-bottom:12px">Your full appointment audio is saved below. Download to keep permanently.</div>'
+    + '<audio controls style="width:100%;border-radius:8px;margin-bottom:10px" src="' + audioUrl + '"></audio>'
+    + '<div style="display:flex;gap:8px">'
+    + '<a href="' + audioUrl + '" download="appointment-recording-' + new Date().toISOString().split("T")[0] + '.webm" '
+    + 'style="padding:8px 16px;background:#1b4332;color:white;border-radius:9px;font-size:13px;font-weight:500;text-decoration:none">⬇ Download recording</a>'
+    + '</div>';
+
+  var sumSection = document.getElementById('sum_section');
+  sumSection.parentNode.insertBefore(wrap, sumSection);
+}
+// ──────────────────────────────────────────────────────────────
+
 if(!SR){
   document.getElementById('compat_warn').style.display='block';
   document.getElementById('compat_warn').innerHTML='<strong>Live transcription requires Chrome or Edge.</strong> You can still use this page to take manual notes and get an AI summary from your notes.';
@@ -186,9 +227,13 @@ function updateTx(){
 function toggleRec(){if(!isRec)startRec();else stopRec();}
 
 async function startRec(){
-  try{await navigator.mediaDevices.getUserMedia({audio:true});}
+  var stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
   catch(e){toast('Microphone access required');return;}
   isRec=true;isPaused=false;secs=0;fullTx='';interimTx='';
+  // Start actual audio recording
+  setupMediaRecorder(stream);
+  if(mediaRecorder) mediaRecorder.start();
   var btn=document.getElementById('rec_btn');
   btn.className='rec-btn recording';
   document.getElementById('rec_ico').textContent='\u23FA';
@@ -212,6 +257,7 @@ function togglePause(){
     document.getElementById('rec_status').textContent='\u23F8 Paused - tap to resume';
     pb.textContent='\u25B6 Resume';
     if(recog)try{recog.stop();}catch(e){}
+    if(mediaRecorder && mediaRecorder.state==='recording') try{mediaRecorder.pause();}catch(e){}
     clearInterval(timerInt);
   } else {
     btn.className='rec-btn recording';
@@ -220,6 +266,7 @@ function togglePause(){
     document.getElementById('rec_status').textContent='\uD83D\uDD34 Recording in progress';
     pb.textContent='\u23F8 Pause';
     if(recog)try{recog.start();}catch(e){}
+    if(mediaRecorder && mediaRecorder.state==='paused') try{mediaRecorder.resume();}catch(e){}
     timerInt=setInterval(function(){secs++;var m=Math.floor(secs/60),s=secs%60;document.getElementById('rec_timer').textContent=m+':'+(s<10?'0'+s:s);},1000);
   }
 }
@@ -227,6 +274,7 @@ function togglePause(){
 function stopRec(){
   isRec=false;isPaused=false;clearInterval(timerInt);
   if(recog)try{recog.stop();}catch(e){}
+  if(mediaRecorder && mediaRecorder.state !== 'inactive') try{mediaRecorder.stop();}catch(e){}
   var btn=document.getElementById('rec_btn');
   btn.className='rec-btn idle';
   document.getElementById('rec_ico').textContent='\uD83C\uDF99\uFE0F';
