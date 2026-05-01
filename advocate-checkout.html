@@ -610,6 +610,21 @@ function buildAddonString() {
 (function() {
   const p = new URLSearchParams(window.location.search);
   const addon = p.get('addon');
+  const existingSubscriber = p.get('existing') === 'true';
+
+  // If already subscribed, hide the subscription section and show add-on only mode
+  if (existingSubscriber) {
+    // Hide plan toggle and base subscription
+    const planSection = document.querySelector('.plan-toggle');
+    if (planSection) planSection.closest('section, div')?.style && (planSection.style.display = 'none');
+
+    // Show a banner explaining they're adding to existing plan
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:#f0f7f2;border:1px solid #b8d4c0;border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:14px;color:#2d4a35;line-height:1.5';
+    banner.innerHTML = '✅ <strong>You already have a MedAdvocate subscription.</strong><br>You're just adding this feature — you won't be charged for the subscription again.';
+    document.querySelector('.plan-toggle')?.parentNode?.insertBefore(banner, document.querySelector('.plan-toggle'));
+  }
+
   if (addon === 'bundle') { setTimeout(() => toggleBundle(), 100); }
   else if (addon === 'docs') { setTimeout(() => toggleBump('docs'), 100); }
   else if (addon === 'recorder') { setTimeout(() => toggleBump('recorder'), 100); }

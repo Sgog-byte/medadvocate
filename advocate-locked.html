@@ -271,10 +271,30 @@ function selectOption(opt) {
   document.getElementById('main-cta').textContent = label + ' →';
 }
 
-function goToCheckout() {
-  // Pass selected add-on to checkout so the right bump is pre-checked
+async function goToCheckout() {
   const param = selectedOption==='bundle' ? 'bundle' : cfg.checkoutParam;
-  window.location.href = `advocate-checkout.html?addon=${param}`;
+
+  // Check if user already has a subscription — if so, go to add-on only checkout
+  let isSubscribed = false;
+  if (typeof Auth !== 'undefined') {
+    const user = await Auth.user();
+    if (user) {
+      // Check user_settings for existing plan
+      const { data } = await _supa.from('user_settings').select('plan').single();
+      isSubscribed = data?.plan === 'pro';
+    }
+  }
+  // Also check localStorage as fallback
+  const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
+  if (unlocked.subscribed) isSubscribed = true;
+
+  if (isSubscribed) {
+    // Already subscribed — go straight to add-on only checkout (skip subscription)
+    window.location.href = `advocate-checkout.html?addon=${cfg.checkoutParam}&existing=true`;
+  } else {
+    // New user — go to full checkout with subscription + optional add-on
+    window.location.href = `advocate-checkout.html?addon=${param}`;
+  }
 }
 
 // Check if already unlocked
