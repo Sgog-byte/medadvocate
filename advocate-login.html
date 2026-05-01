@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<style>
+:root {
+  --sage:#7a9e87;--sage-light:#b8d4c0;--sage-pale:#f0f7f2;
+  --warm:#fdfcf8;--ink:#1e2a22;--ink-soft:#4a5e50;--ink-muted:#8a9e90;
+  --blush:#e8c4b0;--blush-deep:#c9906e;--border:#dde8e0;
+  --shadow:0 4px 24px rgba(30,42,34,.08);--shadow-lg:0 12px 48px rgba(30,42,34,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 20%,rgba(122,158,135,.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 80%,rgba(232,196,176,.10) 0%,transparent 50%);pointer-events:none;z-index:0}
+.card{background:#fff;border:1px solid var(--border);border-radius:24px;padding:40px 36px;box-shadow:var(--shadow);width:100%;max-width:420px;position:relative;z-index:1}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;justify-content:center}
+.logo-icon{width:38px;height:38px;background:var(--sage);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-family:'Fraunces',serif;font-size:22px;font-weight:400;color:var(--ink)}
+.logo-text span{color:var(--sage)}
+h2{font-family:'Fraunces',serif;font-size:26px;font-weight:300;color:var(--ink);text-align:center;margin-bottom:6px;line-height:1.3}
+h2 em{font-style:italic;color:var(--sage)}
+.sub{font-size:14px;color:var(--ink-muted);text-align:center;margin-bottom:28px;font-weight:300;line-height:1.6}
+.tabs{display:flex;background:var(--sage-pale);border-radius:12px;padding:4px;margin-bottom:24px;gap:4px}
+.tab{flex:1;padding:9px;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;cursor:pointer;transition:all .2s;background:transparent;color:var(--ink-muted)}
+.tab.active{background:#fff;color:var(--ink);font-weight:500;box-shadow:0 1px 4px rgba(30,42,34,.08)}
+.field{margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:500;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+input{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);background:transparent;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--sage)}
+input::placeholder{color:var(--ink-muted)}
+.btn-primary{width:100%;padding:16px;background:var(--sage);color:#fff;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{background:#6a8e77;transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--ink-muted);font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.error{background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;color:#dc2626;font-size:13px;margin-bottom:16px;display:none}
+.success{background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:10px;padding:12px 16px;color:var(--sage);font-size:13px;margin-bottom:16px;display:none}
+.link-btn{background:none;border:none;color:var(--sage);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-decoration:underline;padding:0}
+.footer-note{text-align:center;margin-top:20px;font-size:13px;color:var(--ink-muted);line-height:1.6}
+.panel{display:none}
+.panel.active{display:block}
+.name-note{font-size:12px;color:var(--ink-muted);margin-top:4px;font-weight:300}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <div class="logo-text">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="tabs" id="authTabs">
+    <button class="tab active" onclick="switchMode('signin')">Sign in</button>
+    <button class="tab" onclick="switchMode('signup')">Create account</button>
+  </div>
+
+  <!-- Error / success banners -->
+  <div class="error" id="errBox"></div>
+  <div class="success" id="successBox"></div>
+
+  <!-- ── SIGN IN ── -->
+  <div class="panel active" id="panel-signin">
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="si_email" placeholder="you@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="si_pass" placeholder="Your password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')signIn()">
+    </div>
+    <button class="btn-primary" id="si_btn" onclick="signIn()">Sign in →</button>
+    <div class="footer-note">
+      <button class="link-btn" onclick="switchMode('reset')">Forgot password?</button>
+    </div>
+  </div>
+
+  <!-- ── SIGN UP ── -->
+  <div class="panel" id="panel-signup">
+    <div class="field">
+      <label>Your name (or patient name)</label>
+      <input type="text" id="su_name" placeholder="e.g. Emma or Sarah">
+      <div class="name-note">This creates the first patient profile. You can add more later.</div>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="su_email" placeholder="you@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="su_pass" placeholder="8+ characters" autocomplete="new-password"
+        onkeydown="if(event.key==='Enter')signUp()">
+    </div>
+    <button class="btn-primary" id="su_btn" onclick="signUp()">Create account →</button>
+    <div class="footer-note" style="margin-top:16px;font-size:12px">
+      By signing up you agree to our <a href="advocate-privacy.html" style="color:var(--sage)">privacy policy</a>.<br>
+      Your medical data is encrypted and never sold.
+    </div>
+  </div>
+
+  <!-- ── FORGOT PASSWORD ── -->
+  <div class="panel" id="panel-reset">
+    <h2>Reset <em>password</em></h2>
+    <p class="sub">We'll send a reset link to your inbox.</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="re_email" placeholder="you@email.com"
+        onkeydown="if(event.key==='Enter')sendReset()">
+    </div>
+    <button class="btn-primary" id="re_btn" onclick="sendReset()">Send reset link</button>
+    <div class="footer-note">
+      <button class="link-btn" onclick="switchMode('signin')">← Back to sign in</button>
+    </div>
+  </div>
+
+  <!-- ── UPDATE PASSWORD (after reset link) ── -->
+  <div class="panel" id="panel-newpass">
+    <h2>Choose a new <em>password</em></h2>
+    <p class="sub">Enter your new password below.</p>
+    <div class="field">
+      <label>New password</label>
+      <input type="password" id="np_pass" placeholder="8+ characters"
+        onkeydown="if(event.key==='Enter')updatePassword()">
+    </div>
+    <button class="btn-primary" id="np_btn" onclick="updatePassword()">Update password →</button>
+  </div>
+</div>
+
+<script>
+// Determine mode from URL
+const params = new URLSearchParams(window.location.search);
+const nextUrl = params.get('next') || 'index.html';
+const initMode = params.get('mode') || 'signin';
+
+// Check if this is a password reset redirect (Supabase appends #access_token=...)
+if (window.location.hash.includes('access_token')) {
+  switchMode('newpass');
+} else {
+  switchMode(initMode);
+}
+
+// If already logged in, redirect
+Auth.user().then(u => {
+  if (u) window.location.href = nextUrl;
+});
+
+function switchMode(mode) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + mode)?.classList.add('active');
+
+  // Update tab highlights (only for signin/signup)
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active',
+      (mode === 'signin' && i === 0) || (mode === 'signup' && i === 1));
+  });
+
+  // Show/hide tab bar
+  document.getElementById('authTabs').style.display =
+    (mode === 'reset' || mode === 'newpass') ? 'none' : 'flex';
+
+  clearMessages();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('successBox').style.display = 'none';
+}
+function showSuccess(msg) {
+  const el = document.getElementById('successBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('errBox').style.display = 'none';
+}
+function clearMessages() {
+  document.getElementById('errBox').style.display = 'none';
+  document.getElementById('successBox').style.display = 'none';
+}
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Please wait…' : btn.dataset.label || btn.textContent;
+}
+
+async function signIn() {
+  const email = document.getElementById('si_email').value.trim();
+  const pass  = document.getElementById('si_pass').value;
+  if (!email || !pass) { showError('Please enter your email and password.'); return; }
+  setLoading('si_btn', true);
+  try {
+    await Auth.signIn(email, pass);
+    // Check if migration needed
+    if (!localStorage.getItem('advocate_migrated_to_supabase') &&
+        localStorage.getItem('advocate_lab_profile')) {
+      showSuccess('Signed in! Migrating your existing data…');
+      await DB.migrateFromLocalStorage();
+    }
+    window.location.href = nextUrl;
+  } catch(e) {
+    showError(e.message || 'Sign in failed. Check your email and password.');
+    setLoading('si_btn', false);
+  }
+}
+
+async function signUp() {
+  const name  = document.getElementById('su_name').value.trim();
+  const email = document.getElementById('su_email').value.trim();
+  const pass  = document.getElementById('su_pass').value;
+  if (!name)  { showError('Please enter a name for the patient profile.'); return; }
+  if (!email) { showError('Please enter your email address.'); return; }
+  if (pass.length < 8) { showError('Password must be at least 8 characters.'); return; }
+  setLoading('su_btn', true);
+  try {
+    await Auth.signUp(email, pass, name);
+    showSuccess('Account created! Check your email to confirm, then sign in.');
+    setTimeout(() => switchMode('signin'), 2000);
+  } catch(e) {
+    showError(e.message || 'Sign up failed. Try a different email.');
+  } finally {
+    setLoading('su_btn', false);
+  }
+}
+
+async function sendReset() {
+  const email = document.getElementById('re_email').value.trim();
+  if (!email) { showError('Please enter your email.'); return; }
+  setLoading('re_btn', true);
+  try {
+    await Auth.resetPassword(email);
+    showSuccess('Reset link sent! Check your inbox (and spam folder).');
+  } catch(e) {
+    showError(e.message || 'Could not send reset email.');
+  } finally {
+    setLoading('re_btn', false);
+  }
+}
+
+async function updatePassword() {
+  const pass = document.getElementById('np_pass').value;
+  if (pass.length < 8) { showError('Password must be at least 8 characters.'); return; }
+  setLoading('np_btn', true);
+  try {
+    await Auth.updatePassword(pass);
+    showSuccess('Password updated! Redirecting…');
+    setTimeout(() => window.location.href = nextUrl, 1500);
+  } catch(e) {
+    showError(e.message || 'Could not update password.');
+    setLoading('np_btn', false);
+  }
+}
+</script>
+</body>
+</html>

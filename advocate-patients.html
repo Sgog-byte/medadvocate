@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — Manage Patients</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<style>
+:root{--sage:#7a9e87;--sage-light:#b8d4c0;--sage-pale:#f0f7f2;--warm:#fdfcf8;--ink:#1e2a22;--ink-soft:#4a5e50;--ink-muted:#8a9e90;--blush:#e8c4b0;--blush-deep:#c9906e;--border:#dde8e0;--shadow:0 4px 24px rgba(30,42,34,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 20%,rgba(122,158,135,.08) 0%,transparent 60%);pointer-events:none;z-index:0}
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:60px;gap:12px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1px solid var(--border);border-radius:100px;cursor:pointer;background:none;text-decoration:none;transition:all .2s}
+.nav-back:hover{border-color:var(--sage);color:var(--sage)}
+.nav-title{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink);margin-right:auto}
+#authBar{}
+.shell{max-width:640px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+h1{font-family:'Fraunces',serif;font-size:32px;font-weight:300;color:var(--ink);margin-bottom:6px}
+h1 em{font-style:italic;color:var(--sage)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;margin-bottom:32px}
+.patient-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;transition:all .2s;cursor:pointer;position:relative}
+.patient-card:hover{box-shadow:0 8px 32px rgba(30,42,34,.12);border-color:var(--sage-light)}
+.patient-card.active{border-color:var(--sage);background:var(--sage-pale)}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--sage-light);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:20px;font-weight:400;color:var(--sage);flex-shrink:0}
+.patient-info{flex:1;min-width:0}
+.patient-name{font-size:16px;font-weight:500;color:var(--ink);margin-bottom:3px}
+.patient-meta{font-size:13px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.active-badge{font-size:11px;font-weight:500;padding:3px 10px;background:var(--sage);color:#fff;border-radius:100px;white-space:nowrap}
+.card-actions{display:flex;gap:8px}
+.btn-sm{padding:7px 14px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:transparent;color:var(--ink-soft)}
+.btn-sm:hover{border-color:var(--sage);color:var(--sage);background:var(--sage-pale)}
+.btn-sm.danger:hover{border-color:#fca5a5;color:#dc2626;background:#fff5f5}
+.add-card{background:transparent;border:1.5px dashed var(--border);border-radius:18px;padding:22px 24px;margin-bottom:14px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;color:var(--ink-muted)}
+.add-card:hover{border-color:var(--sage);color:var(--sage);background:var(--sage-pale)}
+.add-icon{width:48px;height:48px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:background .2s}
+.add-card:hover .add-icon{background:var(--sage-light)}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(30,42,34,.3);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+.modal{background:#fff;border-radius:20px;padding:32px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(30,42,34,.15)}
+.modal h3{font-family:'Fraunces',serif;font-size:22px;font-weight:300;margin-bottom:6px;color:var(--ink)}
+.modal .sub{font-size:13px;color:var(--ink-muted);margin-bottom:24px;font-weight:300}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:transparent;outline:none;transition:border-color .2s;resize:vertical}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--sage)}
+.field textarea{min-height:72px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-primary{flex:1;padding:13px;background:var(--sage);color:#fff;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:#6a8e77}
+.btn-cancel{padding:13px 20px;border:1px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;background:transparent;color:var(--ink-soft);transition:all .2s}
+.btn-cancel:hover{border-color:var(--sage);color:var(--sage)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-back" href="index.html">← Home</a>
+  <div class="nav-title">Patient profiles</div>
+  <div id="authBar"></div>
+</nav>
+
+<div class="shell">
+  <h1>Who are you <em>advocating</em> for?</h1>
+  <p class="page-sub">Manage all your patient profiles. Switch between them at any time — data is kept separate for each person.</p>
+
+  <div id="patientList">
+    <div style="text-align:center;padding:48px;color:var(--ink-muted)">Loading profiles…</div>
+  </div>
+
+  <div class="add-card" onclick="openModal()">
+    <div class="add-icon">+</div>
+    <div>
+      <div style="font-size:15px;font-weight:500">Add a patient profile</div>
+      <div style="font-size:13px;margin-top:2px">For a child, spouse, parent, or yourself</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-bg hidden" id="modalBg" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modalTitle">Add a patient</h3>
+    <p class="sub" id="modalSub">Create a new profile. Data is stored separately for each patient.</p>
+    <div class="field"><label>Name *</label><input type="text" id="f_name" placeholder="e.g. Emma or Myself"></div>
+    <div class="field"><label>Age</label><input type="text" id="f_age" placeholder="e.g. 14"></div>
+    <div class="field"><label>Diagnoses (optional)</label><textarea id="f_dx" placeholder="e.g. hEDS, POTS, MCAS…"></textarea></div>
+    <div class="field"><label>Current medications (optional)</label><textarea id="f_meds" placeholder="e.g. Florinef 0.1mg, Vitamin D…"></textarea></div>
+    <div class="field"><label>Notes</label><input type="text" id="f_notes" placeholder="e.g. Advocating for my daughter"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="modalSave" onclick="savePatient()">Save profile</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let patients = [];
+let editingId = null;
+let activePid = null;
+
+async function init() {
+  await Auth.requireAuth();
+  await renderAuthBar('authBar');
+  activePid = await DB.patientId();
+  await loadPatients();
+}
+
+async function loadPatients() {
+  patients = await DB.getPatients();
+  activePid = await DB.patientId();
+  renderList();
+}
+
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+}
+
+function renderList() {
+  const el = document.getElementById('patientList');
+  if (!patients.length) {
+    el.innerHTML = `<div style="text-align:center;padding:48px;color:var(--ink-muted)">No profiles yet — add one below.</div>`;
+    return;
+  }
+  el.innerHTML = patients.map(p => `
+    <div class="patient-card ${p.id === activePid ? 'active' : ''}" onclick="switchTo('${p.id}')">
+      <div class="avatar">${initials(p.name)}</div>
+      <div class="patient-info">
+        <div class="patient-name">${esc(p.name)}</div>
+        <div class="patient-meta">${[p.age ? 'Age ' + p.age : '', p.diagnoses].filter(Boolean).join(' · ') || 'No details added'}</div>
+      </div>
+      ${p.id === activePid ? `<span class="active-badge">Active</span>` : ''}
+      <div class="card-actions" onclick="event.stopPropagation()">
+        <button class="btn-sm" onclick="openModal('${p.id}')">Edit</button>
+        ${patients.length > 1 ? `<button class="btn-sm danger" onclick="deletePatient('${p.id}')">Delete</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function switchTo(id) {
+  if (id === activePid) return;
+  await DB.switchPatient(id);
+  activePid = id;
+  renderList();
+  showToast('Switched profile ✓');
+}
+
+function openModal(patientId) {
+  editingId = patientId || null;
+  const p = patientId ? patients.find(x => x.id === patientId) : null;
+  document.getElementById('modalTitle').textContent = p ? 'Edit profile' : 'Add a patient';
+  document.getElementById('modalSub').textContent = p ? 'Update this patient\'s details.' : 'Create a new profile. Data is stored separately.';
+  document.getElementById('f_name').value  = p?.name || '';
+  document.getElementById('f_age').value   = p?.age || '';
+  document.getElementById('f_dx').value    = p?.diagnoses || '';
+  document.getElementById('f_meds').value  = p?.meds || '';
+  document.getElementById('f_notes').value = p?.notes || '';
+  document.getElementById('modalBg').classList.remove('hidden');
+  document.getElementById('f_name').focus();
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalBg')) return;
+  document.getElementById('modalBg').classList.add('hidden');
+  editingId = null;
+}
+
+async function savePatient() {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { alert('Name is required.'); return; }
+  const btn = document.getElementById('modalSave');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const fields = {
+    name,
+    age: document.getElementById('f_age').value.trim() || null,
+    diagnoses: document.getElementById('f_dx').value.trim() || null,
+    meds: document.getElementById('f_meds').value.trim() || null,
+    notes: document.getElementById('f_notes').value.trim() || null
+  };
+
+  try {
+    if (editingId) {
+      // Update existing
+      const { error } = await _supa.from('patients').update(fields).eq('id', editingId);
+      if (error) throw error;
+    } else {
+      // Create new
+      const user = await Auth.user();
+      const { data, error } = await _supa.from('patients')
+        .insert({ user_id: user.id, ...fields, is_default: patients.length === 0 })
+        .select().single();
+      if (error) throw error;
+      // Auto-switch to new profile
+      await DB.switchPatient(data.id);
+    }
+    document.getElementById('modalBg').classList.add('hidden');
+    await loadPatients();
+    showToast('Saved ✓');
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save profile';
+  }
+}
+
+async function deletePatient(id) {
+  const p = patients.find(x => x.id === id);
+  if (!confirm(`Delete "${p?.name}"? This will permanently delete all their data.`)) return;
+  const { error } = await _supa.from('patients').delete().eq('id', id);
+  if (error) { alert('Delete failed: ' + error.message); return; }
+  // If we deleted the active one, switch to first remaining
+  if (id === activePid) {
+    const remaining = patients.filter(x => x.id !== id);
+    if (remaining.length) await DB.switchPatient(remaining[0].id);
+  }
+  await loadPatients();
+  showToast('Profile deleted');
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let toastTimer;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:#fff;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(60px)'; }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>
