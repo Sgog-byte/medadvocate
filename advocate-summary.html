@@ -64,6 +64,20 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 @media print{nav,.fcard,.action-row{display:none!important}.shell{max-width:100%;padding:0}.sum-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}}
 @media(max-width:640px){.two-col{grid-template-columns:1fr}.sum-body,.sum-header{padding:16px}}
 </style>
+  <!-- Supabase auth + data layer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+<script>
+  // ── Auth guard: redirect to login if not signed in ──────────
+  (async function authGuard() {
+    if (typeof Auth === 'undefined') return; // supabase not loaded yet
+    const user = await Auth.user();
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────
+</script>
 </head>
 <body>
 <nav>
@@ -110,16 +124,16 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
 const SOURCES=[
-  {key:'profile',icon:'👤',label:'Patient Profile',check:()=>Object.keys(JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}')).filter(k=>JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}')[k]).length>0},
-  {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:()=>JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}').diagnoses?.length>0},
-  {key:'medications',icon:'💊',label:'Medications',check:()=>JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0},
-  {key:'symptoms',icon:'📊',label:'Symptoms',check:()=>JSON.parse(localStorage.getItem('advocate_entries')||'[]').length>0},
-  {key:'labs',icon:'🧪',label:'Lab Results',check:()=>JSON.parse(localStorage.getItem('advocate_lab_entries')||'[]').length>0},
-  {key:'tests',icon:'🔬',label:'Tests & Imaging',check:()=>JSON.parse(localStorage.getItem('advocate_tests')||'[]').length>0},
-  {key:'timeline',icon:'📅',label:'Medical History',check:()=>JSON.parse(localStorage.getItem('advocate_timeline')||'[]').length>0},
-  {key:'flares',icon:'🔥',label:'Flare History',check:()=>JSON.parse(localStorage.getItem('advocate_flares')||'[]').length>0},
-  {key:'careteam',icon:'👥',label:'Care Team',check:()=>JSON.parse(localStorage.getItem('advocate_contacts')||'[]').length>0},
-  {key:'documents',icon:'📄',label:'Documents',check:()=>JSON.parse(localStorage.getItem('advocate_documents')||'[]').length>0},
+  {key:'profile',icon:'👤',label:'Patient Profile',check:()=>Object.keys((await DB.getProfile())).filter(k=>(await DB.getProfile())[k]).length>0},
+  {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:()=>(await DB.getProfile()).diagnoses?.length>0},
+  {key:'medications',icon:'💊',label:'Medications',check:()=>(await DB.getMedications()).length>0},
+  {key:'symptoms',icon:'📊',label:'Symptoms',check:()=>(await DB.getSymptomEntries()).length>0},
+  {key:'labs',icon:'🧪',label:'Lab Results',check:()=>(await DB.getLabResults()).length>0},
+  {key:'tests',icon:'🔬',label:'Tests & Imaging',check:()=>(await DB.getDiagnosticTests()).length>0},
+  {key:'timeline',icon:'📅',label:'Medical History',check:()=>(await DB.getTimelineEvents()).length>0},
+  {key:'flares',icon:'🔥',label:'Flare History',check:()=>(await DB.getFlares()).length>0},
+  {key:'careteam',icon:'👥',label:'Care Team',check:()=>(await DB.getCareTeam()).length>0},
+  {key:'documents',icon:'📄',label:'Documents',check:()=>(await DB.getDocuments()).length>0},
 ];
 
 let sel=new Set();
@@ -144,16 +158,16 @@ function toggleSrc(key){
 }
 
 function buildData(){
-  const p=JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}');
-  const meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');
-  const timeline=JSON.parse(localStorage.getItem('advocate_timeline')||'[]');
-  const flares=JSON.parse(localStorage.getItem('advocate_flares')||'[]');
+  const p=(await DB.getProfile());
+  const meds=(await DB.getMedications());
+  const timeline=(await DB.getTimelineEvents());
+  const flares=(await DB.getFlares());
   const symState=JSON.parse(localStorage.getItem('advocate_symptoms')||'{"trackedSymptoms":[]}');
-  const symEntries=JSON.parse(localStorage.getItem('advocate_entries')||'[]');
-  const labs=JSON.parse(localStorage.getItem('advocate_lab_entries')||'[]');
-  const tests=JSON.parse(localStorage.getItem('advocate_tests')||'[]');
-  const contacts=JSON.parse(localStorage.getItem('advocate_contacts')||'[]');
-  const docs=JSON.parse(localStorage.getItem('advocate_documents')||'[]');
+  const symEntries=(await DB.getSymptomEntries());
+  const labs=(await DB.getLabResults());
+  const tests=(await DB.getDiagnosticTests());
+  const contacts=(await DB.getCareTeam());
+  const docs=(await DB.getDocuments());
   const parts=[];
 
   if(sel.has('profile')&&p.name) parts.push(`PATIENT: ${p.name}${p.age?', age '+p.age:''}`);
@@ -209,7 +223,7 @@ async function generateSummary(){
   const purpose=document.getElementById('sum_purpose').value.trim();
   const notes=document.getElementById('sum_notes').value.trim();
   const goals=document.getElementById('sum_goals').value.trim();
-  const profile=JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}');
+  const profile=(await DB.getProfile());
   const out=document.getElementById('sum_out');
   document.getElementById('gen_btn').disabled=true;
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)">Synthesizing data from ${sel.size} sources</p></div>`;
@@ -270,7 +284,7 @@ async function generateSummary(){
 }
 
 function emailSum(){
-  const p=JSON.parse(localStorage.getItem('advocate_lab_profile')||'{}');
+  const p=(await DB.getProfile());
   window.location.href=`mailto:?subject=${encodeURIComponent('Medical Summary — '+(p.name||'Patient'))}&body=${encodeURIComponent(window._sumText||'')}`;
 }
 function copySum(){navigator.clipboard.writeText(window._sumText||'').then(()=>showToast('Copied ✓'));}

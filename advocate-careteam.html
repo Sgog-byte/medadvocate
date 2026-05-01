@@ -98,6 +98,20 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 @media print{nav,.tabs,.fcard,.modal-overlay,.contact-actions,.spec-actions{display:none!important}.contacts-grid{grid-template-columns:repeat(2,1fr)}.contact-card{box-shadow:none;border:1px solid #ccc}}
 @media(max-width:640px){.two-col,.three-col{grid-template-columns:1fr}.contacts-grid{grid-template-columns:1fr}}
 </style>
+  <!-- Supabase auth + data layer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+<script>
+  // ── Auth guard: redirect to login if not signed in ──────────
+  (async function authGuard() {
+    if (typeof Auth === 'undefined') return; // supabase not loaded yet
+    const user = await Auth.user();
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────
+</script>
 </head>
 <body>
 <nav>

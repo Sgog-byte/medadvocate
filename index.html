@@ -220,6 +220,9 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 .pricing-cta:hover{background:var(--ink);transform:translateY(-1px)}
 .pricing-note{font-size:11px;color:var(--ink-muted);line-height:1.6;font-weight:300}
 </style>
+  <!-- Supabase auth + data layer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
 </head>
 <body>
 
@@ -231,8 +234,9 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   <div class="nav-spacer"></div>
   <a href="#tools" class="nav-link">Tools</a>
   <a href="#mission" class="nav-link">Mission</a>
-  <button class="nav-btn nav-btn-outline" onclick="openTool('saved')">💾 My Saved Items</button>
-  <button class="nav-btn nav-btn-solid" onclick="window.location.href='advocate-checkout.html'">Get Started →</button>
+  <div id="navAuthArea" style="display:flex;align-items:center;gap:8px">
+    <!-- filled by initAuth() -->
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -753,6 +757,59 @@ const observer = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.1 });
 document.querySelectorAll('.tc').forEach(tc => observer.observe(tc));
+
+// ── AUTH GUARD & NAV ────────────────────────────────────────
+async function initAuth() {
+  const user = await Auth.user();
+  const area = document.getElementById('navAuthArea');
+  if (!area) return;
+
+  if (!user) {
+    // Not logged in — show sign in button, tools still visible but clicking requires auth
+    area.innerHTML = `
+      <a href="advocate-login.html" class="nav-btn nav-btn-outline" style="text-decoration:none">Sign in</a>
+      <a href="advocate-login.html?mode=signup" class="nav-btn nav-btn-solid" style="text-decoration:none">Get started →</a>`;
+  } else {
+    // Logged in — show patient name + manage profiles + sign out
+    const patients = await DB.getPatients();
+    const activePid = await DB.patientId();
+    const active = patients.find(p => p.id === activePid);
+    const name = active?.name || user.email;
+
+    // Build patient dropdown if multiple
+    const patientSelect = patients.length > 1
+      ? `<select onchange="DB.switchPatient(this.value).then(()=>window.location.reload())"
+           style="font-size:12px;padding:5px 10px;border:1px solid var(--sage);border-radius:8px;background:transparent;color:var(--ink);cursor:pointer">
+           ${patients.map(p => `<option value="${p.id}" ${p.id===activePid?'selected':''}>${p.name}</option>`).join('')}
+         </select>`
+      : `<span style="font-size:12px;color:var(--ink-muted);font-weight:500">👤 ${name}</span>`;
+
+    area.innerHTML = `
+      ${patientSelect}
+      <a href="advocate-patients.html" class="nav-btn nav-btn-outline" style="text-decoration:none;font-size:12px;padding:7px 14px">Manage profiles</a>
+      <button class="nav-btn nav-btn-outline" style="font-size:12px;padding:7px 14px" onclick="Auth.signOut()">Sign out</button>`;
+
+    // Migrate localStorage data once
+    if (!localStorage.getItem('advocate_migrated_to_supabase') && localStorage.getItem('advocate_lab_profile')) {
+      await DB.migrateFromLocalStorage();
+    }
+  }
+}
+
+// Override openTool to require auth
+const _origOpenTool = openTool;
+function openTool(key) {
+  Auth.user().then(user => {
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=index.html';
+      return;
+    }
+    _origOpenTool(key);
+  });
+}
+
+initAuth();
+// ────────────────────────────────────────────────────────────
 
 // Keyboard close
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });

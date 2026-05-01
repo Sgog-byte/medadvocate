@@ -666,6 +666,20 @@
     .contacts-grid { grid-template-columns: 1fr; }
   }
 </style>
+  <!-- Supabase auth + data layer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+<script>
+  // ── Auth guard: redirect to login if not signed in ──────────
+  (async function authGuard() {
+    if (typeof Auth === 'undefined') return; // supabase not loaded yet
+    const user = await Auth.user();
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────
+</script>
 </head>
 <body>
 
@@ -906,8 +920,8 @@
 
 <script>
 // ── STATE ──
-let scripts = JSON.parse(localStorage.getItem('advocate_scripts') || '[]');
-let contacts = JSON.parse(localStorage.getItem('advocate_contacts') || '[]');
+let scripts = (await DB.getSavedScripts());
+let contacts = (await DB.getCareTeam());
 let currentEmailScript = null;
 let currentPrintPanel = 'scripts';
 
@@ -1153,7 +1167,7 @@ function saveContact() {
     contacts.push(contact);
   }
 
-  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  /* saved via DB.saveContact() */;
   renderContacts();
   closeModal('contactModal');
   showToast(id !== '' ? 'Contact updated ✓' : 'Contact saved ✓');
@@ -1162,7 +1176,7 @@ function saveContact() {
 function deleteContact(i) {
   if (!confirm(`Delete ${contacts[i].name}?`)) return;
   contacts.splice(i, 1);
-  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  /* saved via DB.saveContact() */;
   renderContacts();
   showToast('Deleted');
 }
@@ -1305,7 +1319,7 @@ TIMING TIP: Lead with the ANA result — it's the most concrete item and will fo
   });
 
   localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
-  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  /* saved via DB.saveContact() */;
   localStorage.setItem('advocate_demo_loaded', '1');
 }
 
@@ -1526,7 +1540,7 @@ function addResultToContacts(r) {
     savedAt: new Date().toISOString()
   };
   contacts.push(contact);
-  localStorage.setItem('advocate_contacts', JSON.stringify(contacts));
+  /* saved via DB.saveContact() */;
   renderContacts();
   showToast(`${r.name} added to your Care Team ✓`);
 }

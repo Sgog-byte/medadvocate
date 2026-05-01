@@ -596,6 +596,20 @@
   /* Hidden */
   .hidden { display: none !important; }
 </style>
+  <!-- Supabase auth + data layer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+<script>
+  // ── Auth guard: redirect to login if not signed in ──────────
+  (async function authGuard() {
+    if (typeof Auth === 'undefined') return; // supabase not loaded yet
+    const user = await Auth.user();
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────
+</script>
 </head>
 <body>
 
@@ -768,12 +782,12 @@
 
   // ── PRE-FILL FROM SHARED PROFILE & SYMPTOM TRACKER ──
   (function prefillFromProfile() {
-    const profile = JSON.parse(localStorage.getItem('advocate_lab_profile') || '{}');
+    const profile = (await DB.getProfile());
     if (profile.name) {
       const nameField = document.getElementById('patientName');
       if (nameField && !nameField.value) nameField.value = profile.name;
     }
-    const entries = JSON.parse(localStorage.getItem('advocate_entries') || '[]');
+    const entries = (await DB.getSymptomEntries());
     const state = JSON.parse(localStorage.getItem('advocate_symptoms') || '{"trackedSymptoms":[]}');
     const symptomsField = document.getElementById('symptoms');
     if (entries.length && state.trackedSymptoms?.length && symptomsField && !symptomsField.value) {

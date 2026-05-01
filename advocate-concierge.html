@@ -117,6 +117,20 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;backdrop-filter:blur(16
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media(max-width:640px){.two-col,.three-col{grid-template-columns:1fr}.tabs{gap:0}}
 </style>
+  <!-- Supabase auth + data layer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+<script>
+  // ── Auth guard: redirect to login if not signed in ──────────
+  (async function authGuard() {
+    if (typeof Auth === 'undefined') return; // supabase not loaded yet
+    const user = await Auth.user();
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────
+</script>
 </head>
 <body>
 <nav>
@@ -736,7 +750,7 @@ document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).t
 
 // Load care team contacts into dropdowns
 function loadCareTeamContacts(){
-  const contacts=JSON.parse(localStorage.getItem('advocate_contacts')||'[]');
+  const contacts=(await DB.getCareTeam());
   if(!contacts.length) return;
   const options=contacts.map(c=>`<option value="${c.name}${c.specialty?' ('+c.specialty+')':''}">${c.name}${c.specialty?' — '+c.specialty:''}${c.practice?' · '+c.practice:''}</option>`).join('');
   const groupedOption=`<optgroup label="From My Care Team">${options}</optgroup>`;
