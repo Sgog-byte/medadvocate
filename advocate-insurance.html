@@ -289,34 +289,23 @@ async function generateIns(){
 }
 
 // ── Auto-populate from profile ──────────────────────────────────
-(async function prefill() {
+async function runPrefillInsurance() {
   try {
-    const [profile, meds, labs] = await Promise.all([
-      DB.getProfile(), DB.getMedications(), DB.getLabResults()
-    ]);
+    const profile = await DB.getProfile();
+    if (!profile || !profile.name) return;
 
-    // Patient name
     const nameEl = document.getElementById('ins_patient');
-    if (nameEl && !nameEl.value && profile.name) nameEl.value = profile.name;
+    if (nameEl && !nameEl.value) nameEl.value = profile.name;
 
-    // Pre-fill diagnoses as tags if tag system exists
-    if (profile.diagnoses && typeof createTag === 'function') {
-      const dxList = profile.diagnoses.split(/[,;
-]+/).map(s => s.trim()).filter(Boolean);
-      dxList.forEach(dx => {
-        const inp = document.getElementById('ins_diag_in') || document.getElementById('ins_dx_in');
-        if (inp) { inp.value = dx; inp.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})); }
-      });
-    }
-
-    // Show a "pre-filled from profile" notice
+    // Show green notice
     const notice = document.createElement('div');
-    notice.style.cssText = 'background:#f0f7f2;border:1px solid #b8d4c0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2d4a35;display:flex;align-items:center;gap:8px';
-    notice.innerHTML = '✓ <strong>Auto-filled from your profile.</strong> Review and add missing details before generating.';
-    const firstField = document.querySelector('.field, .fcard');
-    if (firstField) firstField.parentNode.insertBefore(notice, firstField);
-  } catch(e) { console.log('Prefill skipped:', e.message); }
-})();
+    notice.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:13px;color:#1b4332;line-height:1.5';
+    notice.innerHTML = '✅ <strong>Auto-filled from your profile.</strong> Add denial details and what was denied to generate your appeal.';
+    const shell = document.querySelector('.shell');
+    if (shell && shell.children[1]) shell.insertBefore(notice, shell.children[1]);
+  } catch(e) { console.warn('Prefill error:', e.message); }
+}
+setTimeout(runPrefillInsurance, 800);
 // ───────────────────────────────────────────────────────────────
 </script>
 </body>

@@ -751,17 +751,16 @@ document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).t
 // Load care team contacts into dropdowns
 function loadCareTeamContacts(){
   // Auto-populate patient name in draft fields
-(async function prefillConcierge() {
+async function runPrefillConcierge() {
   try {
     const profile = await DB.getProfile();
-    if (profile.name) {
-      ['draft_patient'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el && !el.value) el.value = profile.name;
-      });
+    if (profile && profile.name) {
+      const el = document.getElementById('draft_patient');
+      if (el && !el.value) el.value = profile.name;
     }
   } catch(e) {}
-})(); // draft_patient_prefill
+} // draft_patient_prefill
+setTimeout(runPrefillConcierge, 800);
 const contacts=(await DB.getCareTeam());
   if(!contacts.length) return;
   const options=contacts.map(c=>`<option value="${c.name}${c.specialty?' ('+c.specialty+')':''}">${c.name}${c.specialty?' — '+c.specialty:''}${c.practice?' · '+c.practice:''}</option>`).join('');
