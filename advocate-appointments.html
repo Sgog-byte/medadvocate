@@ -49,7 +49,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.95);backdrop-
 .appt-card.upcoming{}
 .appt-card.past{opacity:.7}
 
-.appt-top{padding:18px 20px;display:flex;align-items:flex-start;gap:14px}
+.appt-top{padding:18px 20px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
 .appt-date-badge{flex-shrink:0;width:52px;text-align:center;background:var(--sage-pale);border-radius:12px;padding:8px 6px}
 .appt-date-badge.today-badge{background:var(--sage-deep);color:white}
 .appt-date-month{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sage-deep)}
@@ -62,10 +62,22 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.95);backdrop-
 .appt-info{flex:1;min-width:0}
 .appt-doctor{font-size:16px;font-weight:500;color:var(--ink);margin-bottom:2px}
 .appt-specialty{font-size:13px;color:var(--ink-muted);font-weight:300;margin-bottom:6px}
-.appt-time{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-muted);background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-weight:500}
+.appt-time{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-muted);background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-weight:500;margin-bottom:4px;margin-right:4px}
+.appt-meta-row{display:flex;flex-wrap:wrap;gap:0;margin-top:6px}
 .today-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;background:var(--sage);color:white;border-radius:6px;padding:3px 9px;margin-left:6px}
 
 .appt-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+@media(max-width:580px){
+  .appt-top{flex-direction:column;gap:10px}
+  .appt-actions{width:100%;flex-wrap:wrap}
+  .appt-btn{flex:1;text-align:center;font-size:13px;padding:9px 10px}
+  .appt-time{display:inline-flex!important}
+  .appt-date-badge{display:flex;align-items:center;gap:10px;width:auto;padding:8px 14px;border-radius:10px}
+  .appt-date-badge{flex-direction:row}
+  .appt-date-day{font-size:20px}
+  .appt-date-month{font-size:11px}
+  .appt-date-dow{font-size:11px;margin-top:0;margin-left:4px}
+}
 .appt-btn{padding:7px 13px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);white-space:nowrap}
 .appt-btn:hover{border-color:var(--sage);color:var(--sage-deep);background:var(--sage-pale)}
 .appt-btn.primary{background:var(--sage-deep);color:white;border-color:var(--sage-deep)}
@@ -276,8 +288,10 @@ function renderCard(a, type) {
       <div class="appt-info">
         <div class="appt-doctor">${esc(a.doctor)}${isToday ? '<span class="today-chip">Today</span>' : ''}</div>
         <div class="appt-specialty">${esc(a.specialty || '')}</div>
-        ${timeStr ? `<span class="appt-time">⏰ ${timeStr}</span>` : ''}
-        ${a.location ? `<span class="appt-time" style="margin-left:6px">📍 ${esc(a.location)}</span>` : ''}
+        <div class="appt-meta-row">
+          ${timeStr ? `<span class="appt-time">⏰ ${timeStr}</span>` : ''}
+          ${a.location ? `<span class="appt-time">📍 ${esc(a.location)}</span>` : ''}
+        </div>
       </div>
       <div class="appt-actions">
         ${type !== 'past' ? `
