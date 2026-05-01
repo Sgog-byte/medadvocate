@@ -6,7 +6,7 @@
 // ============================================================
 
 const SUPA_URL  = 'https://ytzkpqzvaxfrkozspzoa.supabase.co';
-const SUPA_KEY  = 'YOUR_NEW_ANON_KEY'; // ← paste rotated key here
+const SUPA_KEY  = 'sb_publishable_-fhPCAxAS_VlOTHP-Gtbog_aKCjdI8N'; // ← paste rotated key here
 
 const _supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
   auth: {
