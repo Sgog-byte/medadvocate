@@ -161,6 +161,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
   .card-top,.features,.features,.bumps-label,.bump-wrap,.bundle-wrap,.or-div,.family-wrap,.summary-wrap,.testimonial{padding-left:18px;padding-right:18px}
 }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
 </head>
 <body>
 <div class="page">
@@ -655,7 +657,7 @@ function applyExistingSubscriberMode() {
   // Insert banner at very top of page body
   const banner = document.createElement('div');
   banner.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:14px;padding:18px 22px;margin:20px auto;max-width:480px;font-size:14px;color:#2d4a35;line-height:1.6;text-align:center';
-  banner.innerHTML = '✅ <strong>You're already a MedAdvocate subscriber.</strong><br>You're just adding this one-time feature — you will <u>not</u> be charged for the subscription again.';
+  banner.innerHTML = `✅ <strong>You are already a MedAdvocate subscriber.</strong><br>You are just adding this one-time feature — you will <u>not</u> be charged for the subscription again.`;
   document.body.insertBefore(banner, document.body.firstChild);
 
   // Update total to only show add-on price (zero out base plan)
