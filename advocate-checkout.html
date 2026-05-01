@@ -641,11 +641,22 @@ function buildAddonString() {
 updateTotal();
 
 function applyExistingSubscriberMode() {
-  // Hide subscription plan toggle and main plan card
+  // Hide ONLY the plan toggle (monthly/annual switcher)
   const planToggle = document.querySelector('.plan-toggle');
-  const planCard = document.querySelector('.card');
   if (planToggle) planToggle.style.display = 'none';
-  if (planCard) planCard.style.display = 'none';
+
+  // Hide ONLY the card-top section (plan name, price, description)
+  // NOT the whole card — we still need the add-ons section
+  const cardTop = document.querySelector('.card-top');
+  if (cardTop) cardTop.style.display = 'none';
+
+  // Hide the features list (also part of base plan)
+  const features = document.querySelector('.features');
+  if (features) features.style.display = 'none';
+
+  // Hide family add-on (existing subscribers already have base)
+  const familyWrap = document.querySelector('.family-wrap');
+  if (familyWrap) familyWrap.style.display = 'none';
 
   // Hide subscription line in order summary
   const sumPlanRow = document.getElementById('sum-plan-label');
@@ -654,13 +665,14 @@ function applyExistingSubscriberMode() {
     if (row) row.style.display = 'none';
   }
 
-  // Insert banner at very top of page body
+  // Insert banner above the card
+  const card = document.querySelector('.card');
   const banner = document.createElement('div');
-  banner.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:14px;padding:18px 22px;margin:20px auto;max-width:480px;font-size:14px;color:#2d4a35;line-height:1.6;text-align:center';
-  banner.innerHTML = `✅ <strong>You are already a MedAdvocate subscriber.</strong><br>You are just adding this one-time feature — you will <u>not</u> be charged for the subscription again.`;
-  document.body.insertBefore(banner, document.body.firstChild);
+  banner.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:14px;padding:16px 20px;margin-bottom:16px;font-size:14px;color:#2d4a35;line-height:1.6;text-align:center';
+  banner.innerHTML = `<strong>✅ You are already subscribed to MedAdvocate.</strong><br>You are just unlocking this add-on — you will <u>not</u> be charged for the subscription again.`;
+  if (card) card.parentNode.insertBefore(banner, card);
 
-  // Update total to only show add-on price (zero out base plan)
+  // Update total to only show add-on price
   window._basePlanPrice = 0;
   updateTotal();
 }
