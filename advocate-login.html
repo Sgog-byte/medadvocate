@@ -205,7 +205,7 @@ async function signIn() {
     }
     window.location.href = nextUrl;
   } catch(e) {
-    showError(e.message || 'Sign in failed. Check your email and password.');
+    const msg = e.message || ''; if (msg.toLowerCase().includes('email not confirmed')) { showError('Please confirm your email first — check your inbox for the confirmation link we sent you.'); } else { showError(msg || 'Sign in failed. Check your email and password.'); }
     setLoading('si_btn', false);
   }
 }
@@ -220,8 +220,8 @@ async function signUp() {
   setLoading('su_btn', true);
   try {
     await Auth.signUp(email, pass, name);
-    showSuccess('Account created! Check your email to confirm, then sign in.');
-    setTimeout(() => switchMode('signin'), 2000);
+    showSuccess('Almost there! Check your email inbox (and spam folder) for a confirmation link. Click it first, then come back here to sign in.');
+    setTimeout(() => switchMode('signin'), 5000);
   } catch(e) {
     showError(e.message || 'Sign up failed. Try a different email.');
   } finally {
