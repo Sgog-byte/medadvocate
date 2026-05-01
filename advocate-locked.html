@@ -76,6 +76,8 @@ body::before{content:'';position:absolute;inset:0;background:radial-gradient(ell
 
 /* Tool-specific accent colors via JS */
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
 </head>
 <body>
 
@@ -277,22 +279,30 @@ async function goToCheckout() {
   // Check localStorage first (fast)
   const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
   let isSubscribed = !!unlocked.subscribed;
+  console.log('[MA] localStorage subscribed:', isSubscribed);
+  console.log('[MA] _supa defined:', typeof _supa !== 'undefined');
 
   // Also check Supabase (works across devices)
-  if (!isSubscribed && typeof _supa !== 'undefined') {
+  if (typeof _supa !== 'undefined') {
     try {
-      const { data: { user } } = await _supa.auth.getUser();
+      const { data: { user }, error: userError } = await _supa.auth.getUser();
+      console.log('[MA] Supabase user:', user?.email, 'error:', userError?.message);
       if (user) {
-        const { data } = await _supa.from('user_settings').select('plan').eq('user_id', user.id).single();
+        const { data, error: dbError } = await _supa.from('user_settings').select('plan').eq('user_id', user.id).single();
+        console.log('[MA] user_settings plan:', data?.plan, 'error:', dbError?.message);
         if (data?.plan === 'pro') {
           isSubscribed = true;
-          // Sync back to localStorage
           unlocked.subscribed = true;
           localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
         }
       }
-    } catch(e) { console.log('Supabase check skipped:', e.message); }
+    } catch(e) { console.log('[MA] Supabase error:', e.message); }
   }
+
+  console.log('[MA] isSubscribed final:', isSubscribed);
+  console.log('[MA] redirecting to:', isSubscribed 
+    ? 'advocate-checkout.html?addon=' + cfg.checkoutParam + '&existing=true'
+    : 'advocate-checkout.html?addon=' + param);
 
   if (isSubscribed) {
     window.location.href = 'advocate-checkout.html?addon=' + cfg.checkoutParam + '&existing=true';
@@ -305,7 +315,13 @@ async function goToCheckout() {
 const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
 if (unlocked[tool]) {
   // Already purchased — redirect to the actual tool
-  window.location.href = tool==='documents' ? 'advocate-documents.html' : 'advocate-recorder.html';
+  const toolRedirects = {
+    documents: 'advocate-documents.html',
+    recorder:  'advocate-recorder.html',
+    scripts:   'advocate-scripts.html',
+    testing:   'advocate-testing.html'
+  };
+  window.location.href = toolRedirects[tool] || 'index.html';
 }
 
 // For scripts, solo is the better default (bundle is docs+recorder, not scripts)
