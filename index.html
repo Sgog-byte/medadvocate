@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -519,6 +520,36 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">View my testing history →</div><div class="tc-arr">→</div></div>
     </div>
 
+    <div class="tc" onclick="openTool('concierge')">
+      <div class="tc-body">
+        <div class="tc-icon i2">✉️</div>
+        <div class="tc-name">Care Concierge</div>
+        <div class="tc-tag tg-green">Message drafts &amp; follow-ups</div>
+        <div class="tc-desc">AI writes the perfect message for any situation — follow-ups, complaints, prescription requests, referral chases, and more. Never stare at a blank page again.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Draft emails &amp; letters to doctors</div>
+          <div class="tc-feat"><div class="fd"></div>Phone scripts for hard calls</div>
+          <div class="tc-feat"><div class="fd"></div>Escalation plans when ignored</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Draft a message →</div><div class="tc-arr">→</div></div>
+    </div>
+
+    <div class="tc" onclick="openTool('research')">
+      <div class="tc-body">
+        <div class="tc-icon i3">🔍</div>
+        <div class="tc-name">Research Library</div>
+        <div class="tc-tag tg-blue">Find &amp; save what matters</div>
+        <div class="tc-desc">Search medical literature, save relevant studies, and get plain-English explanations. Build a library of evidence to bring to appointments.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Search condition-specific studies</div>
+          <div class="tc-feat"><div class="fd"></div>Save and organize findings</div>
+          <div class="tc-feat"><div class="fd"></div>Plain-English summaries</div>
+        </div>
+      </div>
+      <div class="tc-foot"><div class="tc-cta">Start researching →</div><div class="tc-arr">→</div></div>
+    </div>
+
   </div>
 </section>
 
@@ -655,6 +686,8 @@ const TOOLS = {
   medications: { title:'Medication Tracker',          src:'advocate-medications.html' },
   flare:       { title:'Flare Tracker',                src:'advocate-flare.html' },
   testing:     { title:'Diagnostic Testing',             src:'advocate-testing.html' },
+  concierge:   { title:'Care Concierge',               src:'advocate-concierge.html' },
+  research:    { title:'Research Library',             src:'advocate-research.html' },
 };
 
 // Premium tools that require separate purchase
