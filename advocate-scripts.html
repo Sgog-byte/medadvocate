@@ -498,10 +498,31 @@ function copyScripts(){
   navigator.clipboard.writeText(window._scriptText||'').then(()=>showToast('Scripts copied ✓'));
 }
 
-// Pre-fill from profile
-const prof = (await DB.getProfile());
-if(prof.name) document.getElementById('s_name').value = prof.name;
-if(prof.diagnoses) document.getElementById('s_dx').value = prof.diagnoses;
+// Pre-fill from profile + medications
+(async function prefill() {
+  try {
+    const [prof, meds] = await Promise.all([DB.getProfile(), DB.getMedications()]);
+    const fill = (id, val) => { const el = document.getElementById(id); if (el && !el.value && val) el.value = val; };
+    fill('s_name', prof.name);
+    fill('s_dx', prof.diagnoses);
+
+    // Add current meds as context if field exists
+    if (meds.length) {
+      const activeMeds = meds.filter(m => m.status === 'active' || !m.status).map(m => m.name + (m.dose ? ' ' + m.dose : '')).join(', ');
+      const medEl = document.getElementById('s_meds');
+      if (medEl && !medEl.value) medEl.value = activeMeds;
+    }
+
+    // Show notice if we filled anything
+    if (prof.name || prof.diagnoses) {
+      const notice = document.createElement('div');
+      notice.style.cssText = 'background:#f0f7f2;border:1px solid #b8d4c0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2d4a35';
+      notice.innerHTML = '✓ <strong>Auto-filled from your profile.</strong> Add your appointment type and specific situation below.';
+      const firstCard = document.querySelector('.step-card, .fcard');
+      if (firstCard) firstCard.insertBefore(notice, firstCard.firstChild);
+    }
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
