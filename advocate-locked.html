@@ -107,7 +107,7 @@ body::before{content:'';position:absolute;inset:0;background:radial-gradient(ell
 
   <!-- CTA -->
   <div class="cta-section">
-    <button class="cta-btn cta-btn-primary" onclick="goToCheckout()" id="main-cta">Unlock for $27 →</button>
+    <button class="cta-btn cta-btn-primary" onclick="goToCheckout()" id="main-cta">Unlock →</button>
     <button class="cta-back" onclick="window.location.href='index.html'">← Back to MedAdvocate</button>
     <div class="trust-row">
       <span class="trust-item">🔒 Secure checkout</span>
@@ -274,26 +274,30 @@ function selectOption(opt) {
 async function goToCheckout() {
   const param = selectedOption==='bundle' ? 'bundle' : cfg.checkoutParam;
 
-  // Check if user already has a subscription — if so, go to add-on only checkout
-  let isSubscribed = false;
-  if (typeof Auth !== 'undefined') {
-    const user = await Auth.user();
-    if (user) {
-      // Check user_settings for existing plan
-      const { data } = await _supa.from('user_settings').select('plan').single();
-      isSubscribed = data?.plan === 'pro';
-    }
-  }
-  // Also check localStorage as fallback
+  // Check localStorage first (fast)
   const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
-  if (unlocked.subscribed) isSubscribed = true;
+  let isSubscribed = !!unlocked.subscribed;
+
+  // Also check Supabase (works across devices)
+  if (!isSubscribed && typeof _supa !== 'undefined') {
+    try {
+      const { data: { user } } = await _supa.auth.getUser();
+      if (user) {
+        const { data } = await _supa.from('user_settings').select('plan').eq('user_id', user.id).single();
+        if (data?.plan === 'pro') {
+          isSubscribed = true;
+          // Sync back to localStorage
+          unlocked.subscribed = true;
+          localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
+        }
+      }
+    } catch(e) { console.log('Supabase check skipped:', e.message); }
+  }
 
   if (isSubscribed) {
-    // Already subscribed — go straight to add-on only checkout (skip subscription)
-    window.location.href = `advocate-checkout.html?addon=${cfg.checkoutParam}&existing=true`;
+    window.location.href = 'advocate-checkout.html?addon=' + cfg.checkoutParam + '&existing=true';
   } else {
-    // New user — go to full checkout with subscription + optional add-on
-    window.location.href = `advocate-checkout.html?addon=${param}`;
+    window.location.href = 'advocate-checkout.html?addon=' + param;
   }
 }
 

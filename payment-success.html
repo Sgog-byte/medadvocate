@@ -25,6 +25,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100
 .spinner{width:40px;height:40px;margin:0 auto 16px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
 </head>
 <body>
 <div class="card" id="card">
@@ -48,8 +50,31 @@ async function setup() {
     purchasedAt: new Date().toISOString(),
     sessionId: sessionId,
   };
+
+  // Save to localStorage (for this device)
   localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
   localStorage.setItem('advocate_onboarded', '1');
+
+  // Save to Supabase so it works across all devices/browsers
+  try {
+    if (typeof _supa !== 'undefined') {
+      const { data: { user } } = await _supa.auth.getUser();
+      if (user) {
+        await _supa.from('user_settings').upsert({
+          user_id: user.id,
+          plan: 'pro',
+          updated_at: new Date().toISOString()
+        });
+        // Store add-ons in a separate column if needed
+        // For now store as JSON in notes field or extend schema
+        await _supa.from('user_settings').update({
+          plan: 'pro'
+        }).eq('user_id', user.id);
+      }
+    }
+  } catch(e) {
+    console.log('Supabase sync skipped:', e.message);
+  }
 
   // Build list of what they got
   const items = [{ ico: '🌿', name: 'MedAdvocate — All 16 core tools' }];
