@@ -716,7 +716,7 @@ const PREMIUM_TOOLS = {
   }
 })();
 
-function openTool(key) {
+function _openToolCore(key) {
   const t = TOOLS[key]; if (!t) return;
   const unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
   if (PREMIUM_TOOLS[key] && !unlocked[key]) {
@@ -727,6 +727,16 @@ function openTool(key) {
   document.getElementById('toolFrame').src = t.src;
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function openTool(key) {
+  Auth.user().then(user => {
+    if (!user) {
+      window.location.href = 'advocate-login.html?next=index.html';
+      return;
+    }
+    _openToolCore(key);
+  });
 }
 
 function closeTool() {
@@ -796,17 +806,7 @@ async function initAuth() {
   }
 }
 
-// Override openTool to require auth
-const _origOpenTool = openTool;
-function openTool(key) {
-  Auth.user().then(user => {
-    if (!user) {
-      window.location.href = 'advocate-login.html?next=index.html';
-      return;
-    }
-    _origOpenTool(key);
-  });
-}
+// Auth check is built into openTool above
 
 initAuth();
 // ────────────────────────────────────────────────────────────
