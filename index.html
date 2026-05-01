@@ -664,6 +664,23 @@ const PREMIUM_TOOLS = {
     showToast('🔒 All tools locked — testing lock screens');
   }
 
+  // ?payment=success — handle Stripe redirect with add-ons
+  if (p.get('payment') === 'success') {
+    const addons = p.get('addons') || '';
+    const unlocked = {
+      subscribed: true,
+      documents: addons.includes('documents'),
+      recorder: addons.includes('recorder'),
+      testing: addons.includes('testing'),
+      scripts: addons.includes('scripts'),
+      purchasedAt: new Date().toISOString(),
+    };
+    localStorage.setItem('advocate_unlocked', JSON.stringify(unlocked));
+    localStorage.setItem('advocate_onboarded', '1');
+    history.replaceState({}, '', window.location.pathname);
+    setTimeout(() => showToast('🎉 Welcome! Your tools are unlocked.'), 500);
+  }
+
   // ?free=beta — free access for 90 days (share with testers)
   if (p.get('free') === 'beta') {
     const expiry = new Date();

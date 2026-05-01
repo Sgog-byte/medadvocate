@@ -570,7 +570,7 @@ async function handleCheckout() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         lineItems,
-        successUrl: window.location.origin + '/index.html?payment=success&addons=' + buildAddonString(),
+        successUrl: window.location.origin + '/payment-success.html?addons=' + buildAddonString(),
         cancelUrl: window.location.origin + '/advocate-checkout.html',
         addons: buildAddonString(),
       })
