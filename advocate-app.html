@@ -848,7 +848,7 @@
   }
 
   // ── PRE-FILL FROM SHARED PROFILE & SYMPTOM TRACKER ──
-  (function prefillFromProfile() {
+  (async function prefillFromProfile() {
     const profile = (await DB.getProfile());
     if (profile.name) {
       const nameField = document.getElementById('patientName');
