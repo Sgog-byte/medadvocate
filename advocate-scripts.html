@@ -158,17 +158,7 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   <!-- Supabase auth + data layer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
-<script>
-  // ── Auth guard: redirect to login if not signed in ──────────
-  (async function authGuard() {
-    if (typeof Auth === 'undefined') return; // supabase not loaded yet
-    const user = await Auth.user();
-    if (!user) {
-      window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
-    }
-  })();
-  // ─────────────────────────────────────────────────────────────
-</script>
+
 </head>
 <body>
 
