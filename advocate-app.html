@@ -562,10 +562,11 @@
   .tour-spotlight {
     position: fixed; z-index: 1002;
     border-radius: 14px;
-    box-shadow: 0 0 0 9999px rgba(13,31,21,.55);
+    outline: 9999px solid rgba(13,31,21,.55);
     pointer-events: none;
     transition: all .4s cubic-bezier(.4,0,.2,1);
   }
+  .tour-spotlight.hidden { display: none !important; }
   .tour-card {
     position: fixed; z-index: 1003;
     background: white;
@@ -574,6 +575,9 @@
     width: min(340px, 90vw);
     box-shadow: 0 20px 60px rgba(13,31,21,.25);
     transition: all .35s cubic-bezier(.4,0,.2,1);
+  }
+  .tour-card[style*="display:none"], .tour-card[style*="display: none"] {
+    pointer-events: none !important;
   }
   .tour-step-badge {
     font-size: 11px; font-weight: 600; letter-spacing: .1em;
@@ -1486,12 +1490,14 @@ function startTour() {
 function endTour(completed = false) {
   tourActive = false;
   tourSynth.cancel();
-  document.getElementById('tourSpotlight').style.display = 'none';
-  document.getElementById('tourCard').style.display = 'none';
+  const spotlight = document.getElementById('tourSpotlight');
+  const card = document.getElementById('tourCard');
+  spotlight.style.display = 'none';
+  spotlight.style.outline = 'none'; // remove outline so it can't block
+  card.style.display = 'none';
+  card.style.pointerEvents = 'none';
   document.removeEventListener('keydown', handleTourKey);
-  if (!localStorage.getItem(TOUR_KEY)) {
-    markTourSeen();
-  }
+  markTourSeen();
   clearTourHighlights();
 }
 
@@ -1527,6 +1533,9 @@ function renderTourStep() {
   document.getElementById('tourTitle').innerHTML = step.title;
   document.getElementById('tourBody').textContent = step.body;
   document.getElementById('tourNextBtn').textContent = tourStep === total - 1 ? 'Done ✓' : 'Next →';
+
+  // Reset card pointer events
+  document.getElementById('tourCard').style.pointerEvents = 'auto';
 
   // Spotlight target element
   const targetEl = document.getElementById(step.target) || document.querySelector(step.target);
@@ -1605,10 +1614,12 @@ function clearTourHighlights() {
 
 // Auto-start on first visit — wait for page + auth to settle
 setTimeout(() => {
-  if (shouldShowTour() && tourActive === false) {
+  // Clear old key to allow testing - remove this line in production
+  localStorage.removeItem(TOUR_KEY); // remove after testing
+  if (shouldShowTour() && !tourActive) {
     startTour();
   }
-}, 1500);
+}, 1800);
 // ── END GUIDED TOUR ──────────────────────────────────────────
 </script>
 
