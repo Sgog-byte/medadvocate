@@ -421,9 +421,9 @@ Tone preference: ${TONE_MAP[currentTone]}
 ${context?'Context: '+context:''}
 
 Situations to write scripts for:
-${situations.length ? situations.map((s,i)=>`${i+1}. ${s}`).join('\n') : 'General dismissal and advocacy scripts for these conditions'}
+${situations.length ? situations.slice(0,3).map((s,i)=>`${i+1}. ${s}`).join('\n') : 'General dismissal and advocacy scripts for these conditions'}
 
-Write one focused, powerful script per situation. Make them feel real — like something this specific person would actually say.`}]
+Write one focused script per situation (max 3). Keep each script concise — 2-3 sentences max. Make them feel real.`}]
       })
     });
     const d = await r.json();
