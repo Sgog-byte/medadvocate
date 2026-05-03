@@ -296,9 +296,9 @@ Extract everything that happened — diagnoses, medications started or stopped, 
       const contentBlock = extractIsImage
         ? { type: 'image', source: { type: 'base64', media_type: extractFileType, data: extractFileData } }
         : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: extractFileData } };
-      body = { model: 'claude-sonnet-4-6', max_tokens: 3000, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Please extract all medical timeline events from this document.' }] }] };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 1500, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Please extract all medical timeline events from this document.' }] }] };
     } else {
-      body = { model: 'claude-sonnet-4-6', max_tokens: 3000, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 1500, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
     }
 
     const r = await fetch('/.netlify/functions/claude-proxy', {

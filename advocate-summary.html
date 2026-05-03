@@ -221,7 +221,7 @@ async function generateSummary(){
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2500,
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
         system:`You create professional clinical summary documents for medical advocates. Write clearly and clinically — a specialist should respect this document immediately. Return ONLY valid JSON no markdown:
 {"clinicalSnapshot":"3-4 sentence professional clinical overview","primaryConcerns":["Top 3-5 current clinical concerns stated clinically"],"currentMedications":[{"name":"","dose":"","indication":""}],"recentFindings":["Notable lab, test, or imaging findings"],"medicalHistory":["Key historical events chronologically"],"currentSymptoms":[{"symptom":"","severity":"","impact":""}],"careTeam":[{"name":"","role":""}],"goalsForVisit":["Patient goals"],"redFlags":["Urgent items — empty array if none"],"questionsForDoctor":["3-4 specific clinical questions based on this data"]}`,
         messages:[{role:'user',content:`Patient data:\n\n${dataStr}${purpose?'\n\nAppointment: '+purpose:''}${notes?'\n\nAdditional context: '+notes:''}${goals?'\n\nPatient goals: '+goals:''}`}]})

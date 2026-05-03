@@ -897,7 +897,7 @@ async function extractLabsFromFile(base64, mediaType, isImage) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+      max_tokens: 1500,
       system: buildSystemPrompt(),
       messages: [{
         role: 'user',
@@ -920,7 +920,7 @@ async function extractLabsFromText(text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+      max_tokens: 1500,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: `Lab report text:\n\n${text}` }]
     })

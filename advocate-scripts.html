@@ -386,7 +386,7 @@ async function generateScripts(){
     const r = await fetch('/.netlify/functions/claude-proxy',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-6', max_tokens:3500,
+        model:'claude-sonnet-4-6', max_tokens:1500,
         system:`You write powerful, real-world advocacy scripts for medical advocates. These are the exact words someone says out loud in a doctor's office, IEP meeting, or ER. 
 
 CRITICAL RULES:

@@ -308,7 +308,7 @@ async function findSpecialist(){
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,
         system:`You generate realistic specialist search results for a medical advocacy app. Return ONLY valid JSON no markdown:
 {"results":[{"name":"Dr. Full Name","specialty":"Specialty","practice":"Practice name","address":"Full realistic address${location?' near '+location:''}","phone":"(xxx) xxx-xxxx","distance":"x.x miles","acceptingPatients":true,"telehealth":true or false,"insurances":["2-3 common insurances"],"waitTime":"Typical wait time e.g. 2-3 months","notes":"One helpful note"}],"tip":"One practical tip for finding this type of specialist","warning":"Any important caveat about this specialty's availability"}
 Generate 5 realistic results. Use real-sounding names. For rare disease specialists (POTS/EDS/MCAS), note long wait times and suggest academic centers. Vary distances.`,
