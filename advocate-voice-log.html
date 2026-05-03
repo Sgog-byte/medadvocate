@@ -391,7 +391,7 @@ async function parseWithAI(text) {
   const profileContext = patientName ? `The patient's name is ${patientName}.` : '';
 
   try {
-    const r = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+    const r = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

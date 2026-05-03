@@ -892,7 +892,7 @@ async function extractLabsFromFile(base64, mediaType, isImage) {
     ? { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } }
     : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } };
 
-  const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+  const resp = await fetch('/.netlify/functions/claude-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -915,7 +915,7 @@ async function extractLabsFromFile(base64, mediaType, isImage) {
 }
 
 async function extractLabsFromText(text) {
-  const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+  const resp = await fetch('/.netlify/functions/claude-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

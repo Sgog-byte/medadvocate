@@ -390,7 +390,7 @@ async function generateReport(){
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Generating your medication report…</p></div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
         system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary of the medication picture","activeMedsSummary":"One sentence describing the current active medications and their purpose","concerns":["2-4 notable concerns, interactions, or things to discuss with the doctor"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns, or empty array if none"]}',

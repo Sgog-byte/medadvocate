@@ -219,7 +219,7 @@ async function generateSummary(){
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)">Synthesizing data from ${sel.size} sources</p></div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2500,
         system:`You create professional clinical summary documents for medical advocates. Write clearly and clinically — a specialist should respect this document immediately. Return ONLY valid JSON no markdown:

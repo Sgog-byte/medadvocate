@@ -306,7 +306,7 @@ async function findSpecialist(){
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Finding ${query} specialists${location?' near '+location:''}…</p></div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
         system:`You generate realistic specialist search results for a medical advocacy app. Return ONLY valid JSON no markdown:

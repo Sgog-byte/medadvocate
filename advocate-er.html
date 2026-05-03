@@ -288,7 +288,7 @@ function getECs(){
 
 // ── API ──
 async function callClaude(system,user){
-  const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+  const r=await fetch('/.netlify/functions/claude-proxy',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system,messages:[{role:'user',content:user}]})
   });

@@ -472,7 +472,7 @@ async function extractAndSave(){
       msgs=[{role:'user',content:'Analyze this '+meta.label+' report: '+atob(curFileData)+'\n\n'+ctx}];
     }
 
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:1500,
@@ -699,7 +699,7 @@ async function genSummary(){
   const prof=(await DB.getProfile());
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:2000,

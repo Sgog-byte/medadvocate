@@ -441,7 +441,7 @@ async function generateAIPatterns(){
   aiEl.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Analyzing your flare patterns…</p></div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
         system:'You are a medical pattern analyst helping a caregiver understand flare patterns. Return ONLY valid JSON no markdown: {"headline":"One sentence summary of the flare pattern","patterns":["3-4 specific patterns you notice — triggers, timing, severity trends, symptom clusters"],"recommendations":["3-4 actionable recommendations based on the patterns — what to try, what to track, what to discuss with a doctor"],"questionsForDoctor":["3 questions to bring to the next appointment based on these patterns"]}',

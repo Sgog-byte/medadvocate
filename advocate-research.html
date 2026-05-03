@@ -376,7 +376,7 @@ async function summarizePaper(idx){
   summaryEl.innerHTML=`<div style="font-size:12px;color:var(--ink-muted);padding:8px 0">🧠 Summarizing in plain English…</div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
         system:'You summarize medical research papers for non-medical caregivers. Be clear, warm, and direct. No jargon without explanation.',
@@ -494,7 +494,7 @@ async function summarizeLibPaper(idx){
   if(!paper)return;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
         system:'Summarize medical research for non-medical caregivers. Clear, warm, no jargon.',
@@ -526,7 +526,7 @@ async function generateBrief(){
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><div class="load-title">Building your research brief…</div><div class="load-sub">Synthesizing ${lib.length} papers into a clear argument</div></div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
         system:'You help patients present medical research to their doctors. Return ONLY valid JSON no markdown: {"headline":"One powerful sentence summarizing what the research shows","keyFindings":["3-4 key findings from across the papers that support the patient\'s case"],"clinicalImplication":"2-3 sentences on what this research means clinically and what the patient should ask for","questionsToAsk":["3 specific evidence-based questions to ask the doctor"]}',

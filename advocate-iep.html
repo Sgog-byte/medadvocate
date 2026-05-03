@@ -1404,7 +1404,7 @@ Custom accommodations: ${data.customAccom || 'none'}
 Previous pushback from school: ${data.pushback || 'none noted'}`;
 
   try {
-    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+    const resp = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

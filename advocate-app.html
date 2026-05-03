@@ -953,7 +953,7 @@ ${goals ? `Goals for this visit: ${goals}` : ''}
 Please create a focused visit script for this appointment.`;
 
     try {
-      const response = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+      const response = await fetch('/.netlify/functions/claude-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

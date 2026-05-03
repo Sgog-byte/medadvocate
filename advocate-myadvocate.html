@@ -1390,7 +1390,7 @@ async function runSearch(lat = null, lng = null) {
     // In production this would call Google Places API — for now Claude generates structured results
     const locationDesc = lat ? `coordinates ${lat},${lng}` : address;
 
-    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+    const resp = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

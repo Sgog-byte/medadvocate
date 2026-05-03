@@ -301,7 +301,7 @@ Extract everything that happened — diagnoses, medications started or stopped, 
       body = { model: 'claude-sonnet-4-6', max_tokens: 3000, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
     }
 
-    const r = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+    const r = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
@@ -464,7 +464,7 @@ async function generateSummary(){
   summaryEl.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Analyzing your medical timeline…</p></div>`;
 
   try{
-    const r=await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy',{
+    const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
         system:'You are a medical advocate analyzing a patient timeline. Return ONLY valid JSON no markdown: {"headline":"One powerful sentence capturing the patient medical journey","summary":"3-4 sentences describing the full picture clinically — diagnoses, progression, key events, current status","patterns":["2-3 notable patterns or connections you see in the timeline"],"keyMoments":["3 most significant events in this medical history"],"questionsForDoctor":["3 questions this timeline raises that should be discussed with a doctor"]}',

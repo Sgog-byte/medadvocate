@@ -1276,7 +1276,7 @@ Current medications: ${data.currentMeds.join(', ') || 'none listed'}
 Visit goal: ${data.visitGoal || 'not specified'}`;
 
   try {
-    const resp = await fetch('https://anthropic-proxy-sarahgo.replit.app/api/anthropic/proxy', {
+    const resp = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
