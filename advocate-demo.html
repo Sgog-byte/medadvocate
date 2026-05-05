@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAdvocate — Free Demo: Visit Script Generator</title>
+<meta name="description" content="Try MedAdvocate free. Generate a personalized visit script for your next specialist appointment — no account needed.">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #7a9e87;
+    --sage-light: #b8d4c0;
+    --sage-pale: #f0f7f2;
+    --sage-deep: #1b4332;
+    --warm-white: #fdfcf8;
+    --ink: #1e2a22;
+    --ink-soft: #4a5e50;
+    --ink-muted: #8a9e90;
+    --blush: #e8c4b0;
+    --blush-deep: #c9906e;
+    --border: #dde8e0;
+    --shadow: 0 4px 24px rgba(30,42,34,0.08);
+    --shadow-lg: 0 12px 48px rgba(30,42,34,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(122,158,135,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 80%, rgba(232,196,176,0.10) 0%, transparent 50%);
+    z-index: 0;
+  }
+
+  /* Demo banner */
+  .demo-banner {
+    background: var(--sage-deep);
+    padding: 11px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 10;
+  }
+  .demo-banner-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 300;
+  }
+  .demo-banner-text strong { font-weight: 500; color: white; }
+  .demo-banner-btn {
+    padding: 6px 16px;
+    background: #95d5b2;
+    color: var(--sage-deep);
+    border: none;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .demo-banner-btn:hover { background: white; }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    padding: 48px 0 40px;
+    text-align: center;
+  }
+
+  .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--sage);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+
+  .logo-text span {
+    color: var(--sage);
+  }
+
+  .demo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sage);
+    padding: 4px 12px;
+    border: 1.5px solid var(--sage-light);
+    border-radius: 100px;
+    background: var(--sage-pale);
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 300;
+    line-height: 1.25;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  h1 em { font-style: italic; color: var(--sage); }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto 20px;
+    font-weight: 300;
+  }
+
+  /* Uses counter */
+  .uses-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+  .uses-dots { display: flex; gap: 4px; }
+  .uses-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--sage-light);
+    transition: background 0.3s;
+  }
+  .uses-dot.used { background: var(--sage); }
+
+  /* Progress */
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 28px 0 36px;
+  }
+  .progress-step {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ink-muted); transition: color 0.3s;
+  }
+  .progress-step.active { color: var(--sage); }
+  .progress-step.done { color: var(--sage-light); }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: background 0.3s; flex-shrink: 0;
+  }
+  .progress-step.active .step-dot { background: var(--sage); }
+  .progress-step.done .step-dot { background: var(--sage-light); }
+  .step-line { flex: 1; max-width: 40px; height: 1px; background: var(--border); }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+
+  .card-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px;
+  }
+
+  .specialist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .specialist-btn {
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    text-align: left;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .specialist-btn:hover { border-color: var(--sage-light); background: var(--sage-pale); color: var(--ink); }
+  .specialist-btn.selected { border-color: var(--sage); background: var(--sage-pale); color: var(--ink); font-weight: 500; }
+  .spec-icon { font-size: 16px; }
+
+  .input-field {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: transparent;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .input-field:focus { border-color: var(--sage); }
+  .input-field::placeholder { color: var(--ink-muted); }
+  .symptom-area { min-height: 140px; }
+  .char-count { text-align: right; font-size: 12px; color: var(--ink-muted); margin-top: 6px; }
+
+  .concern-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip-label { font-size: 12px; color: var(--ink-muted); margin-bottom: 8px; display: block; }
+  .chip {
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .chip:hover { border-color: var(--sage-light); background: var(--sage-pale); }
+  .chip.selected { border-color: var(--sage); background: var(--sage-pale); color: var(--ink); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 18px;
+    background: var(--sage);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .btn-primary:hover { background: #6a8e77; transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Loading */
+  .loading-card { text-align: center; padding: 48px 32px; }
+  .breathing-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--sage-pale); border: 2px solid var(--sage-light);
+    margin: 0 auto 24px; animation: breathe 2.5s ease-in-out infinite;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+  .loading-text { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 300; color: var(--ink); margin-bottom: 8px; }
+  .loading-sub { font-size: 14px; color: var(--ink-muted); }
+
+  /* Results */
+  .result-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    animation: slideUp 0.5s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-header {
+    background: var(--sage-pale);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .result-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 400; color: var(--ink); }
+  .result-meta { font-size: 12px; color: var(--ink-muted); }
+  .time-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--blush); color: var(--blush-deep);
+    padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 500;
+  }
+  .result-body { padding: 32px; }
+  .script-section { margin-bottom: 28px; }
+  .script-section:last-child { margin-bottom: 0; }
+  .section-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-muted); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .priority-item {
+    display: flex; gap: 14px; margin-bottom: 14px;
+    padding: 14px 16px; border-radius: 12px;
+    border: 1px solid transparent; transition: all 0.2s;
+  }
+  .priority-item:hover { background: var(--sage-pale); border-color: var(--border); }
+  .priority-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0; margin-top: 1px;
+  }
+  .p1 { background: var(--blush); color: var(--blush-deep); }
+  .p2 { background: #fef3e0; color: #b8860b; }
+  .p3 { background: var(--sage-pale); color: var(--sage); }
+  .p4, .p5, .p6 { background: #f5f5f5; color: var(--ink-muted); }
+  .priority-content h4 { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .priority-content p { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+
+  .opener-box {
+    background: linear-gradient(135deg, var(--sage-pale), #fff);
+    border: 1px solid var(--sage-light);
+    border-radius: 14px;
+    padding: 20px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1.7;
+  }
+  .opener-box::before {
+    content: '"';
+    font-size: 48px; color: var(--sage-light); line-height: 0;
+    vertical-align: -16px; margin-right: 4px; font-style: normal;
+  }
+
+  .question-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .question-list li {
+    padding: 12px 16px; background: var(--sage-pale);
+    border-radius: 10px; font-size: 14px; color: var(--ink-soft);
+    line-height: 1.5; display: flex; gap: 10px;
+  }
+  .question-list li::before { content: '?'; color: var(--sage); font-weight: 700; flex-shrink: 0; }
+
+  .action-row { display: flex; gap: 12px; margin-top: 20px; }
+  .btn-secondary {
+    flex: 1; padding: 14px; background: transparent;
+    border: 1.5px solid var(--border); border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    color: var(--ink-soft); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--sage); color: var(--sage); background: var(--sage-pale); }
+
+  /* Upgrade CTA after results */
+  .upgrade-cta {
+    background: var(--sage-deep);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 20px;
+    animation: slideUp 0.5s ease 0.2s both;
+  }
+  .upgrade-cta-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #95d5b2; margin-bottom: 12px;
+  }
+  .upgrade-cta-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(20px, 3vw, 26px);
+    font-weight: 300; color: white; line-height: 1.3; margin-bottom: 10px;
+  }
+  .upgrade-cta-title em { font-style: italic; color: #95d5b2; }
+  .upgrade-cta-sub { font-size: 14px; color: rgba(255,255,255,0.65); font-weight: 300; margin-bottom: 22px; line-height: 1.6; }
+  .upgrade-cta-tools {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 8px; margin-bottom: 24px;
+  }
+  .upgrade-tool-chip {
+    padding: 5px 13px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 100px;
+    font-size: 12px; color: rgba(255,255,255,0.8);
+  }
+  .upgrade-btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 15px 32px;
+    background: #95d5b2; color: var(--sage-deep);
+    border: none; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+  }
+  .upgrade-btn:hover { background: white; transform: translateY(-1px); }
+  .upgrade-note { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 12px; font-weight: 300; }
+
+  /* Limit modal */
+  .limit-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(13,31,21,0.7); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .limit-overlay.open { opacity: 1; pointer-events: all; }
+  .limit-card {
+    background: var(--warm-white); border-radius: 24px;
+    padding: 40px 36px; max-width: 440px; width: 100%;
+    text-align: center; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+    transform: translateY(20px); transition: transform 0.3s ease;
+  }
+  .limit-overlay.open .limit-card { transform: translateY(0); }
+  .limit-icon { font-size: 44px; margin-bottom: 16px; }
+  .limit-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 300; color: var(--ink); margin-bottom: 10px; line-height: 1.3; }
+  .limit-title em { font-style: italic; color: var(--sage); }
+  .limit-sub { font-size: 14px; color: var(--ink-soft); line-height: 1.7; font-weight: 300; margin-bottom: 24px; }
+  .limit-btn {
+    display: block; width: 100%; padding: 15px;
+    background: var(--sage-deep); color: white; border: none;
+    border-radius: 14px; font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    margin-bottom: 12px;
+  }
+  .limit-btn:hover { background: var(--ink); }
+  .limit-dismiss {
+    font-size: 13px; color: var(--ink-muted); cursor: pointer;
+    background: none; border: none; font-family: 'DM Sans', sans-serif;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+
+  .error-box {
+    background: #fff5f5; border: 1px solid #fecaca;
+    border-radius: 12px; padding: 16px 20px; color: #dc2626;
+    font-size: 14px; margin-top: 12px; display: none;
+  }
+
+  .calm-banner {
+    text-align: center; padding: 20px; color: var(--ink-muted);
+    font-size: 13px; font-family: 'Fraunces', serif;
+    font-style: italic; font-weight: 300;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+  .toast {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: white; padding: 12px 24px;
+    border-radius: 100px; font-size: 14px; font-weight: 500;
+    transition: transform 0.3s ease; z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Tour */
+  .tour-ring { outline: 3px solid #22c55e !important; outline-offset: 6px !important; box-shadow: 0 0 0 10px rgba(34,197,94,.10) !important; border-radius: 14px; position: relative; z-index: 10; }
+  #tourCard { position: fixed; width: 340px; max-width: calc(100vw - 28px); background: #fff; border: 1.5px solid #22c55e; border-radius: 18px; padding: 20px 22px 18px; box-shadow: 0 10px 40px rgba(0,0,0,.14); z-index: 9999; transition: opacity .2s ease; }
+  .tour-step-num { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #22c55e; margin-bottom: 6px; }
+  .tour-card-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 400; color: var(--ink); margin-bottom: 8px; line-height: 1.3; }
+  .tour-card-body { font-size: 13px; color: var(--ink-soft); line-height: 1.65; margin-bottom: 16px; }
+  .tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .tour-skip-btn { font-size: 12px; color: var(--ink-muted); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 2px 0; text-decoration: underline; text-underline-offset: 2px; }
+  .tour-next-btn { padding: 9px 20px; background: #22c55e; color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
+  .tour-next-btn:hover { background: #16a34a; }
+  #howToUseBtn { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 7px 18px; background: transparent; border: 1.5px solid var(--border); border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink-soft); cursor: pointer; transition: all .2s; }
+  #howToUseBtn:hover { border-color: #22c55e; color: #16a34a; background: rgba(34,197,94,.06); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 500px) {
+    .card { padding: 24px 20px; }
+    .result-body { padding: 24px 20px; }
+    .result-header { padding: 20px; }
+    .specialist-grid { grid-template-columns: repeat(2, 1fr); }
+    .upgrade-cta { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Demo banner -->
+<div class="demo-banner">
+  <div class="demo-banner-text"><strong>Free demo</strong> — Visit Script Generator · Try it now, no account needed</div>
+  <button class="demo-banner-btn" onclick="window.location.href='advocate-checkout.html'">Get all 16 tools →</button>
+</div>
+
+<!-- Tour card -->
+<div id="tourCard" class="hidden">
+  <div class="tour-step-num"></div>
+  <div class="tour-card-title"></div>
+  <div class="tour-card-body"></div>
+  <div class="tour-actions">
+    <button class="tour-skip-btn" onclick="tourSkip()">Skip tour</button>
+    <button class="tour-next-btn" onclick="tourNext()">Next →</button>
+  </div>
+</div>
+
+<!-- Limit modal -->
+<div class="limit-overlay" id="limitOverlay">
+  <div class="limit-card">
+    <div class="limit-icon">🌿</div>
+    <h2 class="limit-title">You've seen what <em>prepared</em> looks like.</h2>
+    <p class="limit-sub">You've used your 3 free demo scripts. Get full access to all 16 tools — symptom tracking, insurance appeals, IEP prep, lab tracking, and more — for $27/month.</p>
+    <button class="limit-btn" onclick="window.location.href='advocate-checkout.html'">Get full access → $27/month</button>
+    <button class="limit-dismiss" onclick="closeLimitModal()">I'll think about it</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <header>
+    <div class="logo-mark">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-text">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
+    </div>
+    <div class="demo-tag">✦ Free Demo</div>
+    <h1>Walk in <em>prepared.</em><br>Walk out with answers.</h1>
+    <p class="subtitle">Generate a personalized visit script for your next specialist appointment — free, no account needed.</p>
+    <div class="uses-counter" id="usesCounter">
+      <span>Free uses:</span>
+      <div class="uses-dots">
+        <div class="uses-dot" id="dot1"></div>
+        <div class="uses-dot" id="dot2"></div>
+        <div class="uses-dot" id="dot3"></div>
+      </div>
+      <span id="usesLabel">3 remaining</span>
+    </div>
+    <br>
+    <button id="howToUseBtn" onclick="tourStart()">▶ How to use</button>
+  </header>
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" id="step1"><div class="step-dot"></div> Specialist</div>
+    <div class="step-line"></div>
+    <div class="progress-step" id="step2"><div class="step-dot"></div> Symptoms</div>
+    <div class="step-line"></div>
+    <div class="progress-step" id="step3"><div class="step-dot"></div> Your Script</div>
+  </div>
+
+  <!-- Form -->
+  <div id="formSection">
+
+    <div class="card">
+      <div class="card-label">Who is this visit for?</div>
+      <input type="text" class="input-field" id="patientName" placeholder="e.g. Emma, or 'myself'" maxlength="60">
+    </div>
+
+    <div class="card">
+      <div class="card-label">Which specialist are you seeing?</div>
+      <div class="specialist-grid" id="specialistGrid">
+        <button class="specialist-btn" data-value="Cardiologist"><span class="spec-icon">❤️</span> Cardiologist</button>
+        <button class="specialist-btn" data-value="Neurologist"><span class="spec-icon">🧠</span> Neurologist</button>
+        <button class="specialist-btn" data-value="Immunologist"><span class="spec-icon">🛡️</span> Immunologist</button>
+        <button class="specialist-btn" data-value="Gastroenterologist"><span class="spec-icon">🫁</span> GI Specialist</button>
+        <button class="specialist-btn" data-value="Rheumatologist"><span class="spec-icon">🦴</span> Rheumatologist</button>
+        <button class="specialist-btn" data-value="Pulmonologist"><span class="spec-icon">💨</span> Pulmonologist</button>
+        <button class="specialist-btn" data-value="Endocrinologist"><span class="spec-icon">⚗️</span> Endocrinologist</button>
+        <button class="specialist-btn" data-value="Geneticist"><span class="spec-icon">🧬</span> Geneticist</button>
+        <button class="specialist-btn" data-value="Hematologist"><span class="spec-icon">🩸</span> Hematologist</button>
+        <button class="specialist-btn" data-value="Other"><span class="spec-icon">🔍</span> Other</button>
+      </div>
+      <div id="otherSpecialistWrap" style="margin-top:12px; display:none;">
+        <input type="text" class="input-field" id="otherSpecialist" placeholder="Type specialist name...">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Describe your symptoms or concerns</div>
+      <textarea class="input-field symptom-area" id="symptoms" placeholder="Write freely — don't worry about medical language. Include when symptoms started, what makes them better or worse, how they affect daily life..." maxlength="1500"></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 1500</div>
+
+      <div style="margin-top: 20px;">
+        <span class="chip-label">Quick adds — tap anything that applies:</span>
+        <div class="concern-chips" id="chipContainer">
+          <button class="chip" data-text="Fatigue that disrupts daily life">Fatigue</button>
+          <button class="chip" data-text="Chronic pain">Pain</button>
+          <button class="chip" data-text="Brain fog / cognitive issues">Brain fog</button>
+          <button class="chip" data-text="Sleep problems">Sleep issues</button>
+          <button class="chip" data-text="Joint pain and hypermobility">Joint pain</button>
+          <button class="chip" data-text="Joint subluxations — joints partially slipping out of place">Joint subluxations</button>
+          <button class="chip" data-text="Joint dislocations">Dislocations</button>
+          <button class="chip" data-text="Dizziness or lightheadedness especially when standing">Dizziness</button>
+          <button class="chip" data-text="Fainting or near-fainting episodes (syncope)">Fainting</button>
+          <button class="chip" data-text="Heart racing or pounding (palpitations)">Heart racing</button>
+          <button class="chip" data-text="Nausea">Nausea</button>
+          <button class="chip" data-text="Stomach pain and GI issues">Stomach pain</button>
+          <button class="chip" data-text="Headaches or migraines">Headaches</button>
+          <button class="chip" data-text="Anxiety that is severe or debilitating">Anxiety</button>
+          <button class="chip" data-text="Sensory processing issues — sensitivity to light, sound, touch, or texture">Sensory issues</button>
+          <button class="chip" data-text="Seizures or seizure-like episodes">Seizures</button>
+          <button class="chip" data-text="Shortness of breath">Breathing</button>
+          <button class="chip" data-text="Skin reactions — flushing, hives, or rashes">Skin reactions</button>
+          <button class="chip" data-text="Symptoms have worsened recently">Getting worse</button>
+          <button class="chip" data-text="Previous treatments haven't worked">No improvement</button>
+          <button class="chip" data-text="Symptoms affect school or daily functioning">Impacts school/life</button>
+          <button class="chip" data-text="Multiple diagnoses that may be connected">Multiple conditions</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">What do you most need from this visit? (optional)</div>
+      <input type="text" class="input-field" id="goals" placeholder="e.g. a diagnosis, new treatment options, referrals, test orders..." maxlength="200">
+    </div>
+
+    <div id="errorBox" class="error-box">Please select a specialist and describe at least a few symptoms.</div>
+
+    <button class="btn-primary" id="generateBtn" onclick="generateScript()">
+      <span>✨</span> Generate My Visit Script
+    </button>
+
+    <div class="calm-banner">You know this patient better than anyone. This is your moment — we'll help you use it well.</div>
+
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingSection" class="hidden">
+    <div class="card loading-card">
+      <div class="breathing-circle">🌿</div>
+      <div class="loading-text">Preparing your script…</div>
+      <div class="loading-sub">Thinking about what matters most for this specialist</div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultSection" class="hidden"></div>
+
+</div>
+
+<div class="toast" id="toast">Copied to clipboard ✓</div>
+
+<script>
+  const DEMO_KEY = 'medadvocate_demo_count';
+  const DEMO_LIMIT = 3;
+
+  let selectedSpecialist = '';
+  let demoCount = parseInt(localStorage.getItem(DEMO_KEY) || '0');
+
+  function updateUsesCounter() {
+    const remaining = Math.max(0, DEMO_LIMIT - demoCount);
+    document.getElementById('usesLabel').textContent = remaining + ' remaining';
+    for (let i = 1; i <= DEMO_LIMIT; i++) {
+      const dot = document.getElementById('dot' + i);
+      if (dot) dot.classList.toggle('used', i <= demoCount);
+    }
+  }
+  updateUsesCounter();
+
+  function showLimitModal() {
+    document.getElementById('limitOverlay').classList.add('open');
+  }
+
+  function closeLimitModal() {
+    document.getElementById('limitOverlay').classList.remove('open');
+  }
+
+  // Specialist selection
+  document.querySelectorAll('.specialist-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.specialist-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedSpecialist = btn.dataset.value;
+      document.getElementById('otherSpecialistWrap').style.display =
+        selectedSpecialist === 'Other' ? 'block' : 'none';
+      updateProgress(2);
+    });
+  });
+
+  // Symptom chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      const textarea = document.getElementById('symptoms');
+      const chipText = chip.dataset.text;
+      if (chip.classList.contains('selected')) {
+        textarea.value = textarea.value
+          ? textarea.value.trimEnd() + '\n• ' + chipText
+          : '• ' + chipText;
+      } else {
+        textarea.value = textarea.value
+          .replace('\n• ' + chipText, '')
+          .replace('• ' + chipText + '\n', '')
+          .replace('• ' + chipText, '');
+      }
+      updateCharCount();
+    });
+  });
+
+  document.getElementById('symptoms').addEventListener('input', updateCharCount);
+  function updateCharCount() {
+    document.getElementById('charCount').textContent = document.getElementById('symptoms').value.length;
+    if (document.getElementById('symptoms').value.length > 10) updateProgress(2);
+  }
+
+  function updateProgress(step) {
+    for (let i = 1; i <= 3; i++) {
+      const el = document.getElementById('step' + i);
+      el.classList.remove('active', 'done');
+      if (i < step) el.classList.add('done');
+      else if (i === step) el.classList.add('active');
+    }
+  }
+
+  async function generateScript() {
+    if (demoCount >= DEMO_LIMIT) {
+      showLimitModal();
+      return;
+    }
+
+    const patientName = document.getElementById('patientName').value.trim() || 'this person';
+    const symptoms = document.getElementById('symptoms').value.trim();
+    const goals = document.getElementById('goals').value.trim();
+    const specialist = selectedSpecialist === 'Other'
+      ? document.getElementById('otherSpecialist').value.trim() || 'specialist'
+      : selectedSpecialist;
+
+    document.getElementById('errorBox').style.display = 'none';
+
+    if (!specialist || !symptoms) {
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    document.getElementById('formSection').classList.add('hidden');
+    document.getElementById('loadingSection').classList.remove('hidden');
+    document.getElementById('resultSection').classList.add('hidden');
+    updateProgress(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const systemPrompt = `You are a compassionate medical visit coach helping people with chronic illness, caregivers, and parents who refuse to be dismissed make the most of a 15-minute specialist appointment.
+
+Return ONLY valid JSON (no markdown, no backticks) in this exact format:
+{
+  "openerLine": "A calm, confident 1-2 sentence opening statement they can say to the doctor at the start of the visit",
+  "priorities": [
+    {
+      "title": "Brief topic title",
+      "script": "Exact words they can say, in plain conversational language. 1-3 sentences.",
+      "why": "One sentence explaining why this matters to THIS specialist specifically"
+    }
+  ],
+  "questionsToAsk": ["Question 1?","Question 2?","Question 3?"],
+  "timingTip": "One sentence of practical advice about using the 15 minutes well",
+  "emotionalNote": "A warm 1-sentence reminder to help them stay calm and confident"
+}
+
+Rules: Prioritize 4-6 items maximum. Order by what is MOST RELEVANT to the specific specialist type. Use plain, warm language. Make the script feel natural to say out loud.`;
+
+    const userMessage = `Patient: ${patientName}
+Specialist: ${specialist}
+Symptoms and concerns: ${symptoms}
+${goals ? `Goals for this visit: ${goals}` : ''}
+
+Please create a focused visit script for this appointment.`;
+
+    try {
+      const response = await fetch('/.netlify/functions/claude-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }]
+        })
+      });
+
+      const data = await response.json();
+      const rawText = data.content?.[0]?.text || '';
+      let result;
+      try { result = JSON.parse(rawText.replace(/```json|```/g, '').trim()); }
+      catch { throw new Error('Could not parse response'); }
+
+      // Increment demo count
+      demoCount++;
+      localStorage.setItem(DEMO_KEY, demoCount.toString());
+      updateUsesCounter();
+
+      renderResult(result, specialist, patientName);
+
+    } catch (err) {
+      document.getElementById('loadingSection').classList.add('hidden');
+      document.getElementById('formSection').classList.remove('hidden');
+      document.getElementById('errorBox').textContent = 'Something went wrong generating your script. Please try again.';
+      document.getElementById('errorBox').style.display = 'block';
+      updateProgress(2);
+    }
+  }
+
+  function renderResult(result, specialist, patientName) {
+    document.getElementById('loadingSection').classList.add('hidden');
+
+    const priorityColors = ['p1','p2','p3','p4','p5','p6'];
+    const prioritiesHtml = result.priorities.map((p, i) => `
+      <div class="priority-item">
+        <div class="priority-num ${priorityColors[i] || 'p4'}">${i + 1}</div>
+        <div class="priority-content">
+          <h4>${p.title}</h4>
+          <p><strong>Say:</strong> "${p.script}"</p>
+          ${p.why ? `<p style="margin-top:4px;font-size:12px;color:var(--ink-muted)">Why this matters to a ${specialist}: ${p.why}</p>` : ''}
+        </div>
+      </div>`).join('');
+
+    const questionsHtml = result.questionsToAsk.map(q => `<li>${q}</li>`).join('');
+
+    const fullScriptText = [
+      `MEDADVOCATE — Visit Script for ${patientName}'s ${specialist} Appointment`,
+      '',
+      'OPENING LINE:',
+      `"${result.openerLine}"`,
+      '',
+      'PRIORITY TALKING POINTS:',
+      ...result.priorities.map((p, i) => `${i+1}. ${p.title}\n   Say: "${p.script}"`),
+      '',
+      'QUESTIONS TO ASK:',
+      ...result.questionsToAsk.map(q => `• ${q}`),
+      '',
+      `TIP: ${result.timingTip}`,
+      '',
+      result.emotionalNote
+    ].join('\n');
+
+    const remaining = DEMO_LIMIT - demoCount;
+    const isLastUse = demoCount >= DEMO_LIMIT;
+
+    const html = `
+      <div class="result-card">
+        <div class="result-header">
+          <div>
+            <div class="result-title">${patientName}'s ${specialist} Visit</div>
+            <div class="result-meta">Your personalized script is ready</div>
+          </div>
+          <div class="time-badge">⏱ 15 min visit</div>
+        </div>
+        <div class="result-body">
+          <div class="script-section">
+            <div class="section-label">Open with this</div>
+            <div class="opener-box">${result.openerLine}</div>
+          </div>
+          <div class="script-section">
+            <div class="section-label">Priority talking points — in order</div>
+            ${prioritiesHtml}
+          </div>
+          <div class="script-section">
+            <div class="section-label">Questions to ask</div>
+            <ul class="question-list">${questionsHtml}</ul>
+          </div>
+          <div class="divider"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div style="padding:16px;background:var(--sage-pale);border-radius:12px;">
+              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Timing tip</div>
+              <div style="font-size:13px;color:var(--ink-soft);line-height:1.6;">${result.timingTip}</div>
+            </div>
+            <div style="padding:16px;background:#fff8f4;border-radius:12px;border:1px solid var(--blush);">
+              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Remember</div>
+              <div style="font-size:13px;color:var(--ink-soft);line-height:1.6;font-style:italic;">${result.emotionalNote}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="copyScript(\`${fullScriptText.replace(/`/g,'\\`')}\`)">📋 Copy Script</button>
+        <button class="btn-secondary" onclick="startOver()">↩ New Visit</button>
+      </div>
+
+      <div class="upgrade-cta">
+        <div class="upgrade-cta-eyebrow">${isLastUse ? '✦ That was your last free demo' : `✦ ${remaining} free ${remaining === 1 ? 'demo' : 'demos'} left`}</div>
+        <h2 class="upgrade-cta-title">15 more tools <em>waiting for you.</em></h2>
+        <p class="upgrade-cta-sub">Visit Script is just one of 16 tools built for medical families. Symptom tracking, insurance appeals, IEP prep, lab trends, ER prep cards — everything you need in one place.</p>
+        <div class="upgrade-cta-tools">
+          <span class="upgrade-tool-chip">📊 Symptom Tracker</span>
+          <span class="upgrade-tool-chip">📨 Insurance Appeal</span>
+          <span class="upgrade-tool-chip">⚖️ IEP & 504 Prep</span>
+          <span class="upgrade-tool-chip">🚨 ER Prep Card</span>
+          <span class="upgrade-tool-chip">🧪 Lab Tracker</span>
+          <span class="upgrade-tool-chip">📋 Medical Summary</span>
+          <span class="upgrade-tool-chip">📅 Medical Timeline</span>
+          <span class="upgrade-tool-chip">+ 9 more</span>
+        </div>
+        <button class="upgrade-btn" onclick="window.location.href='advocate-checkout.html'">
+          Get all 16 tools → $27/month
+        </button>
+        <div class="upgrade-note">Cancel anytime · No ads · Your data stays on your device</div>
+      </div>
+    `;
+
+    document.getElementById('resultSection').innerHTML = html;
+    document.getElementById('resultSection').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function copyScript(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    });
+  }
+
+  function startOver() {
+    if (demoCount >= DEMO_LIMIT) { showLimitModal(); return; }
+    document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById('formSection').classList.remove('hidden');
+    document.getElementById('symptoms').value = '';
+    document.getElementById('goals').value = '';
+    document.getElementById('patientName').value = '';
+    document.querySelectorAll('.specialist-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    selectedSpecialist = '';
+    updateCharCount();
+    updateProgress(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── GUIDED TOUR ──────────────────────────────────────────────
+  (function () {
+    const TOUR_KEY = 'medadvocate_demo_tour_v1';
+    const STEPS = [
+      { target: 'header', title: 'Try MedAdvocate Free', body: 'Generate a real personalized visit script right now — no account needed. Let me show you how it works.', voice: 'Welcome. Generate a real personalized visit script right now — no account needed. Let me show you how it works.' },
+      { target: '#patientName', title: 'Who is this visit for?', body: 'Enter the patient\'s name — or just "myself".', voice: 'First, enter the patient\'s name — or just "myself".' },
+      { target: '#specialistGrid', title: 'Choose your specialist', body: 'Pick the type of specialist. The script is tailored to what each specialist needs to hear.', voice: 'Choose the type of specialist you\'re seeing. The script is tailored to what each one needs to hear.' },
+      { target: '#symptoms', title: 'Describe what\'s happening', body: 'Write freely — no medical jargon needed. The more detail you give, the better the script.', voice: 'Describe what\'s been happening. No medical jargon needed. The more detail, the better the script.' },
+      { target: '#chipContainer', title: 'Quick-add symptoms', body: 'Tap any chip to instantly add a common symptom. Select as many as apply.', voice: 'Tap these chips to quickly add common symptoms. Select as many as apply.' },
+      { target: '#generateBtn', title: 'Generate your script', body: 'Hit this and Claude will build your full visit script — opening line, talking points, and questions to ask. Takes about 10 seconds.', voice: 'Hit this button and Claude will build your full visit script in about 10 seconds. You\'re ready to go.' }
+    ];
+
+    let current = -1;
+
+    function getVoice() {
+      const voices = speechSynthesis.getVoices();
+      const prefs = ['Samantha','Karen','Moira','Fiona','Microsoft Aria','Google US English','Microsoft Zira'];
+      for (const name of prefs) { const v = voices.find(v => v.name.includes(name) && v.lang.startsWith('en')); if (v) return v; }
+      return voices.find(v => v.lang.startsWith('en-US')) || voices.find(v => v.lang.startsWith('en')) || null;
+    }
+    function speak(text) {
+      speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      const voice = getVoice(); if (voice) utt.voice = voice;
+      utt.rate = 0.95; utt.pitch = 1.0; utt.volume = 1.0;
+      speechSynthesis.speak(utt);
+    }
+    function clearRing() { document.querySelectorAll('.tour-ring').forEach(el => el.classList.remove('tour-ring')); }
+    function positionCard(el) {
+      const card = document.getElementById('tourCard');
+      if (!card || !el) return;
+      const rect = el.getBoundingClientRect();
+      const cw = 340, ch = card.offsetHeight || 170, margin = 14;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let left = Math.max(margin, Math.min(vw - cw - margin, rect.left + (rect.width - cw) / 2));
+      let top = (vh - rect.bottom >= ch + margin * 2) ? rect.bottom + margin : (rect.top >= ch + margin * 2) ? rect.top - ch - margin : Math.max(margin, (vh - ch) / 2);
+      card.style.left = left + 'px'; card.style.top = top + 'px';
+    }
+    function showStep(idx) {
+      const step = STEPS[idx]; if (!step) return;
+      current = idx; clearRing();
+      const el = document.querySelector(step.target);
+      if (el) { el.classList.add('tour-ring'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      const card = document.getElementById('tourCard');
+      card.querySelector('.tour-step-num').textContent = `Step ${idx + 1} of ${STEPS.length}`;
+      card.querySelector('.tour-card-title').textContent = step.title;
+      card.querySelector('.tour-card-body').textContent = step.body;
+      card.querySelector('.tour-next-btn').textContent = idx === STEPS.length - 1 ? 'Done ✓' : 'Next →';
+      card.classList.remove('hidden'); card.style.opacity = '0';
+      setTimeout(() => { if (el) positionCard(el); card.style.opacity = '1'; }, 450);
+      if (speechSynthesis.getVoices().length === 0) { speechSynthesis.onvoiceschanged = () => speak(step.voice); } else { speak(step.voice); }
+    }
+    window.tourNext = () => current >= STEPS.length - 1 ? endTour() : showStep(current + 1);
+    window.tourSkip = () => endTour();
+    function endTour() { clearRing(); speechSynthesis.cancel(); document.getElementById('tourCard').classList.add('hidden'); }
+    window.tourStart = () => { speechSynthesis.cancel(); localStorage.setItem(TOUR_KEY, '1'); current = -1; showStep(0); };
+    if (!localStorage.getItem(TOUR_KEY)) setTimeout(window.tourStart, 900);
+  })();
+</script>
+
+</body>
+</html>
