@@ -253,16 +253,20 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
         ondragover="event.preventDefault();this.classList.add('drag')"
         ondragleave="this.classList.remove('drag')"
         ondrop="onDrop(event)">
-        <input type="file" id="file_in" accept=".pdf,.png,.jpg,.jpeg,.txt" onchange="onFile(event)" style="display:none">
+        <input type="file" id="file_in" accept=".pdf,.png,.jpg,.jpeg,.heic,.heif,.tiff,.tif,.bmp,.txt" onchange="onFile(event)" style="display:none">
         <div class="upload-zone-ico">📄</div>
         <div class="upload-zone-title">Drop the report here</div>
-        <div class="upload-zone-sub">PDF, image, or text — AI will read the full report</div>
+        <div class="upload-zone-sub">PDF, photo, or scan — AI will read the full report</div>
         <button class="btn-b" onclick="document.getElementById('file_in').click()">Choose File</button>
       </div>
 
+      <div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:10px;padding:11px 14px;margin-bottom:12px;font-size:12px;color:#5a3e1b;line-height:1.6">
+        <strong>💡 Tip for EEG & waveform reports:</strong> The waveform graphs are hard for AI to read from a photo. For best results, also paste the <strong>Impression</strong> or <strong>Findings</strong> section from the bottom of the report in the text box below — that's the part the doctor wrote in plain text.
+      </div>
+
       <div class="field" style="margin-bottom:8px">
-        <label class="flabel">Or paste report text</label>
-        <textarea class="fta" id="paste_text" placeholder="Paste the report findings, impression, or results here…" style="min-height:100px"></textarea>
+        <label class="flabel">Paste report text <span style="font-weight:300;text-transform:none;letter-spacing:0">— Impression, Findings, or Summary section (recommended for EEG/waveform reports)</span></label>
+        <textarea class="fta" id="paste_text" placeholder="Paste the Impression or Findings section here for best results…" style="min-height:100px"></textarea>
       </div>
 
       <div class="two">
@@ -476,12 +480,19 @@ async function extractAndSave(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:1500,
-        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. Return ONLY valid JSON no markdown:\n{"summary":"2-3 sentence plain-English summary of the key findings","status":"normal|abnormal|borderline","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean","redFlags":["Any urgent findings that need immediate attention — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
+        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
         messages:msgs
       })
     });
     const d=await r.json();
-    const res=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const rawText=(d.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    let res;
+    try{
+      res=JSON.parse(rawText);
+    }catch(parseErr){
+      // AI returned text instead of JSON — wrap it as a summary
+      res={summary:rawText.slice(0,400)||'Could not extract structured data from this report.',status:'pending',findings:[],whatItMeans:'Please paste the Impression or Findings section from the report for better results.',redFlags:[],questionsToAsk:[]};
+    }
 
     // Save with extracted data
     const tests=getTests();
