@@ -605,6 +605,7 @@ function renderTestCard(t){
         </div>`:''}
       </div>`:''}
       <div class="test-card-actions" style="padding:0 16px 12px">
+        <button class="tc-btn" onclick="editTest(${t.id})">✏️ Edit</button>
         <button class="tc-btn danger" onclick="deleteTest(${t.id})">🗑 Remove</button>
       </div>
     </div>
@@ -678,6 +679,61 @@ function showComparison(type){
     const el=document.querySelector(`[data-type="${type}"]`);
     if(el)el.scrollIntoView({behavior:'smooth'});
   },100);
+}
+
+function editTest(id){
+  const tests=getTests();
+  const t=tests.find(t=>t.id===id);
+  if(!t)return;
+  const meta=TYPE_META[t.type]||TYPE_META.other;
+  document.getElementById('mod_body').innerHTML=`
+    <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:16px">
+      ${meta.icon} Edit ${meta.label} details
+    </div>
+    <div class="field"><label class="flabel">Date of Test</label>
+      <input type="date" class="fi" id="edit_date" value="${t.date||''}">
+    </div>
+    <div class="two">
+      <div class="field"><label class="flabel">Result Status</label>
+        <select class="fi" id="edit_status">
+          <option value="normal" ${t.status==='normal'?'selected':''}>Normal</option>
+          <option value="abnormal" ${t.status==='abnormal'?'selected':''}>Abnormal</option>
+          <option value="borderline" ${t.status==='borderline'?'selected':''}>Borderline</option>
+          <option value="pending" ${t.status==='pending'?'selected':''}>Pending review</option>
+        </select>
+      </div>
+    </div>
+    <div class="two">
+      <div class="field"><label class="flabel">Ordering Doctor</label>
+        <input type="text" class="fi" id="edit_doctor" value="${esc(t.doctor||'')}">
+      </div>
+      <div class="field"><label class="flabel">Facility</label>
+        <input type="text" class="fi" id="edit_facility" value="${esc(t.facility||'')}">
+      </div>
+    </div>
+    <div class="field"><label class="flabel">Notes</label>
+      <input type="text" class="fi" id="edit_notes" value="${esc(t.notes||'')}">
+    </div>
+    <div style="display:flex;gap:9px;margin-top:6px">
+      <button class="btn-p" onclick="saveEdit(${id})">💾 Save changes</button>
+      <button class="btn-o" onclick="document.getElementById('mod_ov').classList.remove('open')">Cancel</button>
+    </div>`;
+  document.getElementById('mod_ov').classList.add('open');
+}
+
+function saveEdit(id){
+  const tests=getTests();
+  const idx=tests.findIndex(t=>t.id===id);
+  if(idx===-1)return;
+  tests[idx].date=document.getElementById('edit_date').value;
+  tests[idx].status=document.getElementById('edit_status').value;
+  tests[idx].doctor=document.getElementById('edit_doctor').value.trim();
+  tests[idx].facility=document.getElementById('edit_facility').value.trim();
+  tests[idx].notes=document.getElementById('edit_notes').value.trim();
+  saveTests(tests);
+  document.getElementById('mod_ov').classList.remove('open');
+  renderHistory();
+  toast('Updated ✓');
 }
 
 function deleteTest(id){
