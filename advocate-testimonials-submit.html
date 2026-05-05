@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Your Story — MedAdvocate</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#4a7a5e;
+  --border:#b7d9c4;--white:#ffffff;
+  --shadow-sm:0 2px 12px rgba(13,31,21,.08);--shadow:0 4px 24px rgba(13,31,21,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 0% 0%,rgba(27,67,50,.05) 0%,transparent 55%),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(45,106,79,.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.95);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;cursor:pointer;background:none;font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+
+.shell{max-width:640px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1}
+
+.page-header{padding:48px 0 36px;text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-bottom:18px;padding:5px 14px;border:1.5px solid var(--sage-light);border-radius:100px;background:var(--sage-pale)}
+h1{font-family:'Fraunces',serif;font-size:clamp(28px,5vw,40px);font-weight:300;line-height:1.2;color:var(--ink);margin-bottom:14px}
+h1 em{font-style:italic;color:var(--sage)}
+.page-sub{font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;max-width:480px;margin:0 auto}
+
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:32px;box-shadow:var(--shadow-sm);margin-bottom:18px}
+.field{margin-bottom:20px}
+.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:7px}
+.flabel-hint{font-size:12px;font-weight:300;letter-spacing:0;text-transform:none;color:var(--ink-muted);margin-left:6px}
+.finput,.ftextarea,.fselect{width:100%;padding:12px 15px;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--ink-muted)}
+.ftextarea{min-height:160px;line-height:1.7}
+.char-hint{font-size:12px;color:var(--ink-muted);text-align:right;margin-top:5px}
+
+/* Tool chips */
+.chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{padding:7px 15px;border:1.5px solid var(--border);border-radius:100px;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s;background:transparent;font-family:'DM Sans',sans-serif}
+.chip:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+.chip.selected{border-color:var(--sage);background:var(--sage-pale);color:var(--ink);font-weight:500}
+
+/* Anon toggle */
+.toggle-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:transparent}
+.toggle-row:hover{border-color:var(--sage-light);background:var(--sage-pale)}
+.toggle-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--sage);cursor:pointer;flex-shrink:0}
+.toggle-label{font-size:14px;color:var(--ink-soft);line-height:1.5;font-weight:300}
+.toggle-label strong{font-weight:500;color:var(--ink)}
+
+/* Submit */
+.btn-submit{width:100%;padding:16px;background:var(--sage-deep);color:white;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;cursor:pointer;transition:all .22s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-submit:hover{background:var(--ink);transform:translateY(-1px);box-shadow:0 8px 24px rgba(27,67,50,.25)}
+.btn-submit:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Success state */
+#successState{display:none;text-align:center;padding:56px 24px}
+.success-icon{font-size:56px;margin-bottom:18px}
+.success-title{font-family:'Fraunces',serif;font-size:28px;font-weight:300;color:var(--ink);margin-bottom:12px}
+.success-title em{font-style:italic;color:var(--sage)}
+.success-sub{font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;max-width:420px;margin:0 auto 28px}
+.btn-home{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;background:var(--sage-deep);color:white;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;text-decoration:none;transition:all .2s}
+.btn-home:hover{background:var(--ink)}
+
+.error-msg{display:none;background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;color:#dc2626;font-size:14px;margin-top:10px}
+
+.calm-note{text-align:center;font-family:'Fraunces',serif;font-style:italic;font-size:14px;color:var(--ink-muted);font-weight:300;margin-top:20px;padding:0 12px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-back">← Home</a>
+  <div class="nav-logo" style="margin-left:auto">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <div class="page-header">
+    <div class="eyebrow">🌿 Community Stories</div>
+    <h1>Share your <em>moment.</em></h1>
+    <p class="page-sub">Did MedAdvocate help you walk in prepared, get a diagnosis, win an appeal, or finally feel heard? We'd love to share your story — with your permission — to help other families know they're not alone.</p>
+  </div>
+
+  <!-- Form state -->
+  <div id="formState">
+    <!-- Netlify form detection requires this hidden form in the HTML -->
+    <form name="testimonials" netlify netlify-honeypot="bot-field" hidden>
+      <input name="name"><input name="role"><input name="tools"><textarea name="testimonial"></textarea><input name="anonymous"><input name="permission">
+    </form>
+
+    <div class="fcard">
+      <div class="field">
+        <label class="flabel">Your name <span class="flabel-hint">— first name or first + last initial is fine</span></label>
+        <input type="text" class="finput" id="f_name" placeholder="e.g. Sarah M." maxlength="60">
+      </div>
+
+      <div class="field">
+        <label class="flabel">Your role <span class="flabel-hint">— how would you describe yourself?</span></label>
+        <input type="text" class="finput" id="f_role" placeholder="e.g. Mom of a child with POTS and EDS, Medical mom, Caregiver…" maxlength="100">
+      </div>
+
+      <div class="field">
+        <label class="flabel">Which tool(s) made the difference? <span class="flabel-hint">optional</span></label>
+        <div class="chip-group" id="toolChips">
+          <button type="button" class="chip" data-val="Visit Script">Visit Script</button>
+          <button type="button" class="chip" data-val="Symptom Tracker">Symptom Tracker</button>
+          <button type="button" class="chip" data-val="Medical Summary">Medical Summary</button>
+          <button type="button" class="chip" data-val="Insurance Appeal">Insurance Appeal</button>
+          <button type="button" class="chip" data-val="IEP & 504 Prep">IEP &amp; 504 Prep</button>
+          <button type="button" class="chip" data-val="ER Prep Card">ER Prep Card</button>
+          <button type="button" class="chip" data-val="Medical Timeline">Medical Timeline</button>
+          <button type="button" class="chip" data-val="Lab Tracker">Lab Tracker</button>
+          <button type="button" class="chip" data-val="Flare Tracker">Flare Tracker</button>
+          <button type="button" class="chip" data-val="Doctor Scripts">Doctor Scripts</button>
+          <button type="button" class="chip" data-val="Care Concierge">Care Concierge</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Your story <span class="flabel-hint">— in your own words</span></label>
+        <textarea class="ftextarea" id="f_testimonial" placeholder="What happened? What changed? What did it feel like to walk in prepared — or to finally be heard? Write as little or as much as you'd like." maxlength="1000" oninput="updateChar()"></textarea>
+        <div class="char-hint"><span id="charCount">0</span> / 1000</div>
+      </div>
+
+      <div class="field">
+        <label class="flabel" style="margin-bottom:10px">A couple of things</label>
+        <label class="toggle-row" style="margin-bottom:10px">
+          <input type="checkbox" id="f_permission" checked>
+          <span class="toggle-label"><strong>I give MedAdvocate permission to share this on the website</strong> — attributed to my name and role above.</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="f_anon">
+          <span class="toggle-label"><strong>Keep me anonymous</strong> — use initials only, no role shown.</span>
+        </label>
+      </div>
+
+      <div id="errorMsg" class="error-msg">Please fill in your name and share a little of your story before submitting.</div>
+
+      <button type="button" class="btn-submit" id="submitBtn" onclick="submitForm()">
+        <span>✦</span> Share my story
+      </button>
+    </div>
+
+    <p class="calm-note">Your story might be exactly what another mom needs to hear today.<br>Thank you for taking a moment to share it.</p>
+  </div>
+
+  <!-- Success state -->
+  <div id="successState">
+    <div class="success-icon">🌿</div>
+    <h2 class="success-title">Thank you for <em>sharing.</em></h2>
+    <p class="success-sub">Your story has been received. If you gave permission to share it, we'll add it to the site soon. You're helping other families feel less alone — and that matters more than you know.</p>
+    <a href="index.html" class="btn-home">← Back to MedAdvocate</a>
+  </div>
+
+</div>
+
+<script>
+  // Chip selection
+  const selectedTools = new Set();
+  document.querySelectorAll('#toolChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      const val = chip.dataset.val;
+      selectedTools.has(val) ? selectedTools.delete(val) : selectedTools.add(val);
+    });
+  });
+
+  function updateChar() {
+    document.getElementById('charCount').textContent = document.getElementById('f_testimonial').value.length;
+  }
+
+  async function submitForm() {
+    const name = document.getElementById('f_name').value.trim();
+    const testimonial = document.getElementById('f_testimonial').value.trim();
+    const errorMsg = document.getElementById('errorMsg');
+
+    if (!name || testimonial.length < 20) {
+      errorMsg.style.display = 'block';
+      errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    errorMsg.style.display = 'none';
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Sending…';
+
+    const formData = new URLSearchParams({
+      'form-name': 'testimonials',
+      'name': name,
+      'role': document.getElementById('f_role').value.trim(),
+      'tools': [...selectedTools].join(', '),
+      'testimonial': testimonial,
+      'permission': document.getElementById('f_permission').checked ? 'yes' : 'no',
+      'anonymous': document.getElementById('f_anon').checked ? 'yes' : 'no',
+    });
+
+    try {
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+      });
+
+      if (res.ok) {
+        document.getElementById('formState').style.display = 'none';
+        const s = document.getElementById('successState');
+        s.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        throw new Error('Non-OK response');
+      }
+    } catch {
+      btn.disabled = false;
+      btn.innerHTML = '<span>✦</span> Share my story';
+      errorMsg.textContent = 'Something went wrong — please try again in a moment.';
+      errorMsg.style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>
