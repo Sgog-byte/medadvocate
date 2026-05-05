@@ -400,7 +400,13 @@ function onDrop(e){
 }
 function onFile(e){if(e.target.files.length)processFile(e.target.files[0]);}
 
+let curFileName='';
+let curFileSize=0;
+const MAX_STORE_BYTES=1.2*1024*1024; // 1.2 MB — store original if under this
+
 function processFile(file){
+  curFileName=file.name;
+  curFileSize=file.size;
   const reader=new FileReader();
   reader.onload=ev=>{
     curFileData=ev.target.result.split(',')[1];
@@ -408,7 +414,12 @@ function processFile(file){
     const canExtract=file.type==='application/pdf'||file.type.startsWith('image/')||file.type==='text/plain';
     document.getElementById('extract_btn').style.display=canExtract?'inline-flex':'none';
     document.getElementById('drop_zone').style.borderColor='var(--blue)';
-    document.getElementById('drop_zone').querySelector('.upload-zone-title').textContent='✓ '+file.name;
+    document.getElementById('drop_zone').querySelector('.upload-zone-title').textContent='✓ '+file.name+' ('+(file.size>1024*1024?(file.size/1024/1024).toFixed(1)+'MB':(file.size/1024).toFixed(0)+'KB')+')';
+    if(file.size>MAX_STORE_BYTES){
+      document.getElementById('drop_zone').querySelector('.upload-zone-sub').textContent='⚠️ File is large — AI analysis will be saved but original file cannot be stored for printing. Paste the Impression section below for best results.';
+    } else {
+      document.getElementById('drop_zone').querySelector('.upload-zone-sub').textContent='✓ Original will be saved for viewing & printing';
+    }
     toast('File ready — click Save & Extract with AI');
   };
   reader.readAsDataURL(file);
@@ -427,6 +438,7 @@ function clearUpload(){
 
 // ── SAVE TEST ──
 function buildTestObj(extracted){
+  const storeFile=curFileData&&curFileSize<=MAX_STORE_BYTES;
   return{
     id:Date.now(),
     type:selectedType||'other',
@@ -436,6 +448,9 @@ function buildTestObj(extracted){
     facility:document.getElementById('test_facility').value.trim(),
     notes:document.getElementById('test_notes').value.trim(),
     extracted:extracted||null,
+    fileName:curFileName||null,
+    fileType:curFileType||null,
+    fileData:storeFile?curFileData:null,
     savedAt:new Date().toISOString()
   };
 }
@@ -606,6 +621,7 @@ function renderTestCard(t){
       </div>`:''}
       <div class="test-card-actions" style="padding:0 16px 12px">
         <button class="tc-btn" onclick="editTest(${t.id})">✏️ Edit</button>
+        ${t.fileData?`<button class="tc-btn" onclick="viewFile(${t.id})">🖨️ View & Print</button>`:''}
         <button class="tc-btn danger" onclick="deleteTest(${t.id})">🗑 Remove</button>
       </div>
     </div>
@@ -734,6 +750,19 @@ function saveEdit(id){
   document.getElementById('mod_ov').classList.remove('open');
   renderHistory();
   toast('Updated ✓');
+}
+
+function viewFile(id){
+  const t=getTests().find(t=>t.id===id);
+  if(!t||!t.fileData)return;
+  const dataUrl='data:'+t.fileType+';base64,'+t.fileData;
+  const w=window.open();
+  if(t.fileType==='application/pdf'){
+    w.document.write('<iframe src="'+dataUrl+'" style="width:100%;height:100vh;border:none"></iframe>');
+  } else {
+    w.document.write('<img src="'+dataUrl+'" style="max-width:100%;display:block;margin:0 auto">');
+  }
+  w.document.title=t.fileName||'Report';
 }
 
 function deleteTest(id){
