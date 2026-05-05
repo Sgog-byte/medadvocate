@@ -3,407 +3,597 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MedAdvocate — Subscribe</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<title>MedAdvocate — Get Started</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
 :root{
+  --ink:#22194D;
   --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
-  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#3a6b54;
-  --border:#b7d9c4;--white:#fff;
+  --warm:#fdfcf8;--white:#ffffff;
+  --border:#e0e0e8;--border-sage:#b7d9c4;
   --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
   --blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;
   --violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;
   --red:#c0392b;
-  --shadow-lg:0 16px 60px rgba(28,43,34,.2);
+  --shadow-sm:0 2px 12px rgba(0,0,0,.08);
+  --shadow:0 6px 24px rgba(0,0,0,.12);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.18);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--sage-deep);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px 60px}
-.page{width:100%;max-width:560px}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
 
-/* LOGO */
-.logo-bar{text-align:center;margin-bottom:26px}
-.logo{font-family:'Fraunces',serif;font-size:24px;font-weight:400;color:white}
-.logo-dot{display:inline-block;width:8px;height:8px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
-.logo-adv{color:var(--sage-light);font-weight:300}
-.logo-tag{font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,.4);margin-top:4px}
+/* NAV */
+.co-nav{background:var(--sage-deep);padding:14px 36px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.nav-logo{font-family:'Lora',serif;font-size:20px;font-weight:500;color:white}
+.nav-logo .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-logo .adv{color:var(--sage-light)}
+.nav-secure{font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px}
+
+/* TWO-COLUMN LAYOUT */
+.co-layout{display:grid;grid-template-columns:1fr 460px;max-width:1140px;margin:0 auto;align-items:start}
+
+/* LEFT — INFO COLUMN */
+.info-col{padding:48px 52px 72px;border-right:1px solid var(--border)}
+
+/* RIGHT — FORM COLUMN */
+.form-col{padding:36px 36px 60px;background:var(--white);min-height:calc(100vh - 52px);box-shadow:-4px 0 24px rgba(0,0,0,.06)}
+
+/* ── MOCKUP ── */
+.mockup-wrap{border-radius:18px;overflow:hidden;box-shadow:var(--shadow-lg);margin-bottom:40px;background:var(--sage-deep)}
+.mockup-bar{background:rgba(0,0,0,.25);padding:10px 16px;display:flex;align-items:center;gap:7px}
+.mockup-dot{width:10px;height:10px;border-radius:50%}
+.mockup-dot:nth-child(1){background:#ff5f57}.mockup-dot:nth-child(2){background:#ffbd2e}.mockup-dot:nth-child(3){background:#28c840}
+.mockup-bar-title{margin-left:8px;font-size:12px;color:rgba(255,255,255,.5);font-weight:400;font-family:'DM Sans',sans-serif}
+.mockup-body{padding:22px}
+.mock-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:rgba(149,213,178,.15);border:1px solid rgba(149,213,178,.3);color:var(--sage-light);padding:5px 14px;border-radius:100px;margin-bottom:18px}
+.mock-section{margin-bottom:16px}
+.mock-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:7px}
+.mock-quote{background:rgba(255,255,255,.08);border-left:3px solid var(--sage-light);border-radius:0 10px 10px 0;padding:11px 14px;font-size:13px;color:rgba(255,255,255,.9);line-height:1.65;font-style:italic}
+.mock-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.75);line-height:1.6;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.mock-item:last-child{border-bottom:none}
+.mock-bullet{color:var(--sage-light);flex-shrink:0;margin-top:1px;font-size:12px}
+
+/* ── HEADLINE ── */
+.co-eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin-bottom:12px}
+.co-headline{font-family:'Lora',serif;font-size:34px;font-weight:600;color:var(--ink);line-height:1.2;margin-bottom:14px}
+.co-sub{font-family:'Lora',serif;font-size:16px;font-weight:400;font-style:italic;color:var(--ink);line-height:1.8;margin-bottom:40px;opacity:.8}
+
+/* ── WHAT'S INCLUDED ── */
+.wi-section{margin-bottom:40px}
+.wi-label{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--sage-light)}
+.wi-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.wi-item{display:flex;align-items:flex-start;gap:10px;padding-left:15px;font-family:'Lora',serif;font-size:20px;font-weight:400;color:var(--ink);line-height:27px}
+.wi-bullet{font-size:16px;color:var(--sage);flex-shrink:0;margin-top:4px}
+
+/* ── VALUE PROP ── */
+.vp-box{background:var(--sage-pale);border:2px solid var(--sage-light);border-radius:16px;padding:26px 30px;margin-bottom:40px}
+.vp-text{font-family:'Lora',serif;font-size:17px;font-style:italic;color:var(--ink);line-height:1.8}
+.vp-text strong{font-style:normal;font-weight:600;color:var(--sage-deep)}
+
+/* ── TESTIMONIALS ── */
+.tests-label{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:16px}
+.tcard{background:var(--white);border:1.5px solid var(--border-sage);border-radius:14px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.tcard:last-child{margin-bottom:0}
+.tcard-q{font-family:'Lora',serif;font-style:italic;font-size:15px;color:var(--ink);line-height:1.8;margin-bottom:14px;position:relative;padding-left:20px}
+.tcard-q::before{content:'\201C';position:absolute;left:0;top:-6px;font-size:40px;color:var(--sage-light);line-height:1;font-style:normal}
+.tcard-attr{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border-sage);padding-top:12px}
+.tcard-avatar{width:36px;height:36px;border-radius:50%;background:var(--sage-pale);border:2px solid var(--sage-light);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tcard-name{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--ink)}
+.tcard-role{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--sage-deep);font-weight:300}
+
+/* ── RIGHT COLUMN: LOGO ── */
+.form-logo{font-family:'Lora',serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.form-logo .dot{display:inline-block;width:7px;height:7px;background:var(--sage);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.form-logo .adv{color:var(--sage)}
+.form-tagline{font-family:'Lora',serif;font-style:italic;font-size:13px;color:rgba(34,25,77,.4);margin-bottom:26px}
 
 /* PLAN TOGGLE */
-.plan-toggle{display:flex;background:rgba(255,255,255,.08);border-radius:14px;padding:4px;margin-bottom:18px;position:relative}
+.plan-toggle{display:flex;background:rgba(34,25,77,.07);border-radius:14px;padding:4px;margin-bottom:20px;position:relative}
 .plan-opt{flex:1;padding:11px;text-align:center;border-radius:11px;cursor:pointer;transition:all .25s;position:relative}
-.plan-opt.active{background:var(--white);box-shadow:0 2px 12px rgba(0,0,0,.15)}
-.plan-opt-label{font-size:14px;font-weight:600;color:rgba(255,255,255,.8);transition:color .25s}
+.plan-opt.active{background:var(--white);box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.plan-opt-label{font-size:14px;font-weight:600;color:rgba(34,25,77,.45);transition:color .25s}
 .plan-opt.active .plan-opt-label{color:var(--ink)}
-.plan-opt-price{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;transition:color .25s}
-.plan-opt.active .plan-opt-price{color:var(--ink-muted)}
-.save-badge{position:absolute;top:-10px;right:8px;background:var(--amber);color:white;font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px}
+.plan-opt-price{font-size:12px;color:rgba(34,25,77,.35);margin-top:2px;transition:color .25s}
+.plan-opt.active .plan-opt-price{color:var(--sage)}
+.save-badge{position:absolute;top:-10px;right:8px;background:var(--amber);color:white;font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px;letter-spacing:.04em}
 
-/* CARD */
-.card{background:var(--warm);border-radius:22px;overflow:hidden;box-shadow:var(--shadow-lg)}
-.card-top{background:var(--sage-deep);padding:24px 28px 22px}
-.card-eyebrow{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-light);margin-bottom:8px}
-.card-title{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:white;margin-bottom:4px}
-.card-sub{font-size:13px;color:rgba(255,255,255,.55);font-weight:300;line-height:1.6}
-.price-row{display:flex;align-items:baseline;gap:6px;margin-top:14px}
-.price-main{font-family:'Fraunces',serif;font-size:40px;font-weight:300;color:white;line-height:1}
-.price-period{font-size:14px;color:rgba(255,255,255,.5)}
-.price-note{font-size:12px;color:rgba(255,255,255,.4);margin-top:5px}
+/* PLAN HEADER CARD */
+.plan-hdr{background:var(--sage-deep);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+.plan-hdr-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-light);margin-bottom:6px}
+.plan-hdr-title{font-family:'Lora',serif;font-size:20px;font-weight:500;color:white;margin-bottom:2px}
+.plan-hdr-desc{font-size:12px;color:rgba(255,255,255,.5);font-weight:300}
+.plan-hdr-price-row{display:flex;align-items:baseline;gap:5px;margin-top:12px}
+.plan-price-main{font-family:'Lora',serif;font-size:36px;font-weight:400;color:white;line-height:1}
+.plan-price-period{font-size:14px;color:rgba(255,255,255,.5)}
+.plan-price-note{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px}
 
-/* FEATURES */
-.features{padding:18px 28px 4px}
-.feat{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.feat:last-child{border-bottom:none}
-.feat-dot{width:18px;height:18px;background:var(--sage-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:2px;color:var(--sage-deep)}
-.feat-text{font-size:13px;color:var(--ink-soft);line-height:1.5;font-weight:300}
-.feat-text strong{font-weight:600;color:var(--ink)}
+/* SECTION LABELS */
+.right-section-label{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin:18px 0 10px;padding-top:16px;border-top:1px solid var(--border-sage)}
+.right-section-label:first-of-type{border-top:none;padding-top:0}
 
-/* BUMPS SECTION HEADER */
-.bumps-label{padding:20px 28px 10px;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted)}
-
-/* INDIVIDUAL BUMP */
-.bump-wrap{padding:0 28px 10px}
-.bump{border:2px dashed var(--border);border-radius:16px;padding:15px 17px;background:var(--white);cursor:pointer;transition:all .2s}
-.bump:hover{border-color:var(--amber-light)}
+/* BUMP - ADD-ONS */
+.bump{border:2px dashed var(--border-sage);border-radius:13px;padding:12px 14px;background:var(--warm);cursor:pointer;transition:all .2s;margin-bottom:9px}
 .bump.amber-bump{border-color:rgba(201,146,58,.4);background:var(--amber-pale)}
 .bump.amber-bump:hover{border-color:var(--amber)}
-.bump.checked{border-style:solid!important;box-shadow:0 0 0 3px rgba(201,146,58,.2)}
-.bump.amber-bump.checked{border-color:var(--amber)!important}
 .bump.blue-bump{border-color:rgba(58,123,200,.3);background:var(--blue-pale)}
 .bump.blue-bump:hover{border-color:var(--blue)}
-.bump.blue-bump.checked{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(58,123,200,.15)}
 .bump.violet-bump{border-color:rgba(123,104,238,.3);background:var(--violet-pale)}
 .bump.violet-bump:hover{border-color:var(--violet)}
-.bump.violet-bump.checked{border-color:var(--violet)!important;box-shadow:0 0 0 3px rgba(123,104,238,.15)}
-.bump-row{display:flex;align-items:flex-start;gap:12px}
-.bump-cb{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .2s;background:white;font-size:12px;color:white}
-.bump.amber-bump .bump-cb{border-color:var(--amber-light)}
-.bump.amber-bump.checked .bump-cb{background:var(--amber);border-color:var(--amber)}
-.bump.blue-bump .bump-cb{border-color:var(--blue-border)}
-.bump.blue-bump.checked .bump-cb{background:var(--blue);border-color:var(--blue)}
-.bump.violet-bump .bump-cb{border-color:var(--violet-border)}
-.bump.violet-bump.checked .bump-cb{background:var(--violet);border-color:var(--violet)}
+.bump.checked{border-style:solid!important}
+.bump.amber-bump.checked{border-color:var(--amber)!important;box-shadow:0 0 0 3px rgba(201,146,58,.12)}
+.bump.blue-bump.checked{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(58,123,200,.10)}
+.bump.violet-bump.checked{border-color:var(--violet)!important;box-shadow:0 0 0 3px rgba(123,104,238,.10)}
+.bump-row{display:flex;align-items:flex-start;gap:10px}
+.bump-cb{width:19px;height:19px;border:2px solid var(--border-sage);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;background:white;font-size:11px;color:white}
+.amber-bump .bump-cb{border-color:var(--amber-light)}
+.amber-bump.checked .bump-cb{background:var(--amber);border-color:var(--amber)}
+.blue-bump .bump-cb{border-color:var(--blue-border)}
+.blue-bump.checked .bump-cb{background:var(--blue);border-color:var(--blue)}
+.violet-bump .bump-cb{border-color:var(--violet-border)}
+.violet-bump.checked .bump-cb{background:var(--violet);border-color:var(--violet)}
 .bump-content{flex:1}
-.bump-eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.bump-eyebrow{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
 .amber-bump .bump-eyebrow{color:var(--amber)}
 .blue-bump .bump-eyebrow{color:var(--blue)}
 .violet-bump .bump-eyebrow{color:var(--violet)}
-.bump-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.35}
-.bump-desc{font-size:12px;color:var(--ink-muted);line-height:1.6;font-weight:300}
-.bump-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.bchip{padding:3px 9px;border-radius:100px;font-size:11px;font-weight:500}
+.bump-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;line-height:1.3}
+.bump-desc{font-size:11px;color:#666;line-height:1.55;font-weight:300}
+.bump-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.bchip{padding:2px 7px;border-radius:100px;font-size:10px;font-weight:500}
 .amber-bump .bchip{background:rgba(201,146,58,.12);border:1px solid rgba(201,146,58,.25);color:var(--amber)}
 .blue-bump .bchip{background:rgba(58,123,200,.1);border:1px solid rgba(58,123,200,.2);color:var(--blue)}
 .violet-bump .bchip{background:rgba(123,104,238,.1);border:1px solid rgba(123,104,238,.2);color:var(--violet)}
-.bump-price-row{display:flex;align-items:center;gap:8px;margin-top:10px}
-.bump-price{padding:5px 14px;border-radius:100px;font-size:13px;font-weight:700;color:white}
+.bump-price-row{display:flex;align-items:center;gap:7px;margin-top:7px}
+.bump-price{padding:3px 11px;border-radius:100px;font-size:12px;font-weight:700;color:white}
 .amber-bump .bump-price{background:var(--amber)}
 .blue-bump .bump-price{background:var(--blue)}
 .violet-bump .bump-price{background:var(--violet)}
-.bump-was{font-size:12px;color:var(--ink-muted);text-decoration:line-through}
-
-/* BUNDLE OFFER */
-.bundle-wrap{padding:0 28px 16px}
-.bundle{background:var(--sage-deep);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.bundle::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(149,213,178,.06)}
-.bundle-badge{position:absolute;top:12px;right:14px;background:var(--sage-light);color:var(--sage-deep);font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;letter-spacing:.05em}
-.bundle-row{display:flex;align-items:flex-start;gap:12px}
-.bundle-cb{width:22px;height:22px;border:2px solid rgba(149,213,178,.4);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .2s;font-size:12px;color:white}
-.bundle.checked .bundle-cb{background:var(--sage-light);border-color:var(--sage-light);color:var(--sage-deep)}
-.bundle-content{flex:1}
-.bundle-eyebrow{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sage-light);margin-bottom:3px}
-.bundle-title{font-size:14px;font-weight:600;color:white;margin-bottom:4px;line-height:1.35}
-.bundle-desc{font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;font-weight:300}
-.bundle-price-row{display:flex;align-items:center;gap:9px;margin-top:10px}
-.bundle-price{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:white}
-.bundle-was{font-size:13px;color:rgba(255,255,255,.4);text-decoration:line-through}
-.bundle-save{padding:4px 10px;background:rgba(149,213,178,.15);border:1px solid rgba(149,213,178,.25);border-radius:100px;font-size:11px;font-weight:700;color:var(--sage-light)}
+.bump-was{font-size:11px;color:#aaa;text-decoration:line-through}
 
 /* OR DIVIDER */
-.or-div{display:flex;align-items:center;gap:10px;padding:0 28px 14px}
-.or-line{flex:1;height:1px;background:var(--border)}
-.or-text{font-size:11px;font-weight:600;color:var(--ink-muted);letter-spacing:.08em}
+.or-div{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+.or-line{flex:1;height:1px;background:var(--border-sage)}
+.or-text{font-size:10px;font-weight:600;color:#aaa;letter-spacing:.08em}
 
-/* FAMILY */
-.family-wrap{padding:0 28px 20px}
-.family{border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;background:var(--white);display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s}
+/* BUNDLE */
+.bundle{background:var(--sage-deep);border-radius:13px;padding:13px 15px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;margin-bottom:14px}
+.bundle::before{content:'';position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(149,213,178,.06)}
+.bundle-badge{position:absolute;top:10px;right:12px;background:var(--sage-light);color:var(--sage-deep);font-size:9px;font-weight:800;padding:2px 8px;border-radius:100px;letter-spacing:.05em}
+.bundle-row{display:flex;align-items:flex-start;gap:10px}
+.bundle-cb{width:19px;height:19px;border:2px solid rgba(149,213,178,.4);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;font-size:11px;color:white}
+.bundle.checked .bundle-cb{background:var(--sage-light);border-color:var(--sage-light);color:var(--sage-deep)}
+.bundle-content{flex:1}
+.bundle-eyebrow{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage-light);margin-bottom:2px}
+.bundle-title{font-size:13px;font-weight:600;color:white;margin-bottom:3px;line-height:1.3}
+.bundle-desc{font-size:11px;color:rgba(255,255,255,.5);line-height:1.55;font-weight:300}
+.bundle-price-row{display:flex;align-items:center;gap:8px;margin-top:7px}
+.bundle-price{font-family:'Lora',serif;font-size:19px;font-weight:400;color:white}
+.bundle-was{font-size:11px;color:rgba(255,255,255,.35);text-decoration:line-through}
+.bundle-save{padding:2px 7px;background:rgba(149,213,178,.15);border:1px solid rgba(149,213,178,.25);border-radius:100px;font-size:10px;font-weight:700;color:var(--sage-light)}
+
+/* FAMILY PLAN */
+.family{border:1.5px solid var(--border-sage);border-radius:12px;padding:12px 14px;background:var(--warm);display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s;margin-bottom:18px}
 .family:hover{border-color:var(--sage-light);background:var(--sage-pale)}
 .family.on{border-color:var(--sage-deep);background:var(--sage-pale);box-shadow:0 0 0 2px var(--sage-deep)}
-.family-ico{font-size:26px;flex-shrink:0}
+.family-ico{font-size:22px;flex-shrink:0}
 .family-text{flex:1}
-.family-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
-.family-desc{font-size:12px;color:var(--ink-muted);font-weight:300;line-height:1.4}
-.family-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
-.family-cb{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:11px;color:white}
+.family-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:1px}
+.family-desc{font-size:11px;color:#888;font-weight:300;line-height:1.4}
+.family-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.family-cb{width:18px;height:18px;border:2px solid var(--border-sage);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:10px;color:white}
 .family.on .family-cb{background:var(--sage-deep);border-color:var(--sage-deep)}
-.family-badge{font-size:12px;font-weight:600;color:var(--sage-deep);white-space:nowrap}
+.family-badge{font-size:11px;font-weight:600;color:var(--sage-deep);white-space:nowrap}
+
+/* CONTACT FORM */
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-group{margin-bottom:10px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--ink);margin-bottom:5px;letter-spacing:.03em}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--sage);background:var(--white)}
+.form-input::placeholder{color:#bbb;font-weight:300}
+.form-input.err{border-color:var(--red)}
+
+/* PAYMENT NOTE */
+.payment-note{background:var(--sage-pale);border:1.5px solid var(--border-sage);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.payment-note-top{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--sage-deep);margin-bottom:8px}
+.payment-note-sub{font-size:12px;color:#666;line-height:1.55;font-weight:300}
+.card-icons{display:flex;gap:5px;margin-top:8px}
+.card-ico{background:white;border:1px solid var(--border-sage);border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink)}
 
 /* ORDER SUMMARY */
-.summary-wrap{padding:0 28px 28px}
-.order-summary{background:var(--sage-pale);border:1px solid var(--border);border-radius:14px;padding:14px 17px;margin-bottom:16px}
-.sum-line{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--ink-soft);padding:5px 0}
-.sum-line.total{padding-top:10px;margin-top:4px;border-top:1.5px solid var(--border);font-size:15px;font-weight:600;color:var(--ink)}
-.sum-label{font-weight:300}
-.sum-price{font-weight:500}
-.cta-btn{width:100%;padding:16px;background:var(--sage-deep);color:white;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:0 6px 24px rgba(27,67,50,.3);display:flex;align-items:center;justify-content:center;gap:9px}
+.order-summary{background:var(--sage-pale);border:1px solid var(--border-sage);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.sum-line{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;padding:4px 0}
+.sum-line.total{padding-top:10px;margin-top:4px;border-top:1.5px solid var(--border-sage);font-size:15px;font-weight:700;color:var(--ink)}
+.sum-label{font-weight:300;color:#666}
+.sum-price{font-weight:500;color:var(--ink)}
+
+/* CTA */
+.cta-btn{width:100%;padding:16px;background:var(--sage-deep);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:0 6px 24px rgba(27,67,50,.25);display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:12px}
 .cta-btn:hover{background:var(--ink);transform:translateY(-1px)}
-.trust-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:13px;flex-wrap:wrap}
-.trust-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-muted)}
+.cta-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
 
-/* TESTIMONIAL */
-.testimonial{padding:18px 28px;border-top:1px solid var(--border)}
-.test-q{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.75;margin-bottom:9px}
-.test-attr{font-size:12px;color:var(--ink-muted);font-weight:300}
+/* TRUST */
+.trust-row{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.trust-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#999}
 
-.back-link{text-align:center;margin-top:18px}
-.back-link a{font-size:13px;color:rgba(255,255,255,.35);text-decoration:none}
-.back-link a:hover{color:rgba(255,255,255,.6)}
+/* COUPON */
+.coupon-toggle{font-size:12px;color:var(--sage);cursor:pointer;text-align:center;font-weight:500;text-decoration:underline;display:block;margin-bottom:4px}
+.coupon-wrap{display:none;flex-direction:row;gap:8px;margin-top:8px}
+.coupon-wrap.open{display:flex}
+.coupon-input{flex:1;padding:10px 13px;border:1.5px solid var(--border-sage);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;background:var(--warm)}
+.coupon-input:focus{border-color:var(--sage)}
+.coupon-btn{padding:10px 16px;background:var(--sage);color:white;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
 
-@media(max-width:480px){
-  .card-top,.features,.features,.bumps-label,.bump-wrap,.bundle-wrap,.or-div,.family-wrap,.summary-wrap,.testimonial{padding-left:18px;padding-right:18px}
+.error-msg{display:none;background:#fff5f5;border:1px solid #fecaca;border-radius:9px;padding:10px 14px;color:var(--red);font-size:13px;margin-bottom:12px}
+
+.back-link{text-align:center;margin-top:16px}
+.back-link a{font-size:12px;color:#bbb;text-decoration:none}
+.back-link a:hover{color:#888}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .co-layout{grid-template-columns:1fr}
+  .info-col{border-right:none;border-bottom:1px solid var(--border-sage);padding:32px 24px 40px}
+  .form-col{padding:28px 24px 52px;min-height:auto}
+}
+@media(max-width:540px){
+  .form-row-2{grid-template-columns:1fr}
+  .co-nav{padding:12px 20px}
+  .co-headline{font-size:26px}
+  .wi-item{font-size:17px}
 }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
 </head>
 <body>
-<div class="page">
 
-  <div class="logo-bar">
-    <div class="logo">Med<span class="logo-dot"></span><span class="logo-adv">Advocate</span></div>
-    <div class="logo-tag">Beside you, always.</div>
-  </div>
+<!-- NAV -->
+<nav class="co-nav">
+  <div class="nav-logo">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+  <div class="nav-secure">🔒 Secure checkout</div>
+</nav>
 
-  <!-- PLAN TOGGLE -->
-  <div class="plan-toggle">
-    <div class="plan-opt active" id="opt-monthly" onclick="setPlan('monthly')">
-      <div class="plan-opt-label">Monthly</div>
-      <div class="plan-opt-price">$27 / month</div>
-    </div>
-    <div class="plan-opt" id="opt-annual" onclick="setPlan('annual')">
-      <div class="save-badge">SAVE $127</div>
-      <div class="plan-opt-label">Annual</div>
-      <div class="plan-opt-price">$197 / year</div>
-    </div>
-  </div>
+<div class="co-layout">
 
-  <div class="card">
+  <!-- ═══════════════════════════════════════════
+       LEFT COLUMN — PRODUCT INFO
+       ═══════════════════════════════════════════ -->
+  <div class="info-col">
 
-    <!-- TOP -->
-    <div class="card-top">
-      <div class="card-eyebrow">✦ MedAdvocate — Full Access</div>
-      <div class="card-title" id="plan-title">Monthly Plan</div>
-      <div class="card-sub">Sixteen core tools. AI-powered throughout. Cancel anytime.</div>
-      <div class="price-row">
-        <div class="price-main" id="price-main">$27</div>
-        <div class="price-period" id="price-period">/ month</div>
+    <!-- MOCKUP -->
+    <div class="mockup-wrap">
+      <div class="mockup-bar">
+        <div class="mockup-dot"></div>
+        <div class="mockup-dot"></div>
+        <div class="mockup-dot"></div>
+        <span class="mockup-bar-title">MedAdvocate — Visit Script Generator</span>
       </div>
-      <div class="price-note" id="price-note">Billed monthly · Cancel anytime</div>
+      <div class="mockup-body">
+        <div class="mock-badge">✓ Script ready for Dr. Abramowitz — Cardiology</div>
+
+        <div class="mock-section">
+          <div class="mock-label">Your calm opening</div>
+          <div class="mock-quote">"Dr. Abramowitz, I'm here specifically to discuss Kira's POTS symptoms and get clear answers on her treatment plan. I've brought three months of data."</div>
+        </div>
+
+        <div class="mock-section">
+          <div class="mock-label">Priority topics to cover</div>
+          <div class="mock-item"><span class="mock-bullet">✦</span>POTS / Dysautonomia — standing HR 45+ bpm rise daily, documented</div>
+          <div class="mock-item"><span class="mock-bullet">✦</span>Fatigue & brain fog — affecting school attendance 3x/week</div>
+          <div class="mock-item"><span class="mock-bullet">✦</span>Joint hypermobility — possible hEDS connection to discuss</div>
+        </div>
+
+        <div class="mock-section">
+          <div class="mock-label">Questions to ask before you leave</div>
+          <div class="mock-item"><span class="mock-bullet">→</span>Should we do a tilt table test to confirm?</div>
+          <div class="mock-item"><span class="mock-bullet">→</span>Is compression therapy or beta blockers appropriate?</div>
+          <div class="mock-item"><span class="mock-bullet">→</span>What's our next step if this visit isn't conclusive?</div>
+        </div>
+      </div>
     </div>
 
-    <!-- FEATURES -->
-    <div class="features">
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>16 tools included</strong> — Visit Script, Symptom Tracker, Lab Tracker, Medical Summary, Credibility Doc, Care Team, IEP, ER Card, Insurance Appeal, Timeline, Medications, Flare Tracker, Explain My Diagnosis, Research Library, Care Concierge, Doctor Scripts (core)</div></div>
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>AI-powered throughout</strong> — Every tool generates clinical-quality documents, summaries, and scripts automatically</div></div>
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Private and secure</strong> — Your data is encrypted and never shared with insurers, employers, or third parties. Ever.</div></div>
-      <div class="feat"><div class="feat-dot">✓</div><div class="feat-text"><strong>Your data syncs everywhere</strong> — Log on your phone at the appointment, review on your laptop at home. Your health history is always with you.</div></div>
+    <!-- HEADLINE -->
+    <div class="co-eyebrow">🌿 MedAdvocate — Full Access</div>
+    <h1 class="co-headline">The tools that match<br>the complexity of your fight.</h1>
+    <p class="co-sub">Sixteen AI-powered tools built by a chronically ill mom of medically complex kids — for every appointment, IEP meeting, and insurance battle you face.</p>
+
+    <!-- WHAT'S INCLUDED -->
+    <div class="wi-section">
+      <div class="wi-label">What's Included</div>
+      <ul class="wi-list">
+        <li class="wi-item"><span class="wi-bullet">✦</span>16 AI-powered advocacy tools — all included from day one</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>Visit Script Generator — know exactly what to say at every appointment</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>Symptom Tracker with trend charts your doctor can't dismiss</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>Insurance Appeal Letter — fight denials with language that wins</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>Medical Timeline — your complete history a specialist can read in 60 seconds</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>IEP & 504 Prep — legally-grounded language for school meetings</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>ER Prep Card — be taken seriously from the moment you walk in</li>
+        <li class="wi-item"><span class="wi-bullet">✦</span>Medical Summary — pulls from all your data sources automatically</li>
+      </ul>
     </div>
 
-    <!-- ADD-ONS LABEL -->
-    <div class="bumps-label">✦ Enhance Your Plan — Add-ons</div>
+    <!-- VALUE PROP -->
+    <div class="vp-box">
+      <p class="vp-text">You've spent years managing a system that wasn't built for complexity. You know your body — or your child's health — better than anyone in that room. <strong>MedAdvocate gives you the tools, the language, and the confidence to walk in and never leave without answers.</strong></p>
+    </div>
 
-    <!-- BUMP 1: Doctor Scripts -->
-    <div class="bump-wrap">
-      <div class="bump amber-bump" id="bump-scripts" onclick="toggleBump('scripts')">
-        <div class="bump-row">
-          <div class="bump-cb" id="cb-scripts"></div>
-          <div class="bump-content">
-            <div class="bump-eyebrow">✦ One-time add-on</div>
-            <div class="bump-title">Add Doctor Scripts — the exact words when they don't listen</div>
-            <div class="bump-desc">Personalized scripts for 12 dismissal scenarios — "it's anxiety," labs are normal, ER won't listen, IEP denied. Pushback responses included. Printable card.</div>
-            <div class="bump-chips">
-              <span class="bchip">"It's anxiety"</span>
-              <span class="bchip">Labs normal</span>
-              <span class="bchip">Won't refer</span>
-              <span class="bchip">ER dismissal</span>
-              <span class="bchip">IEP denied</span>
-              <span class="bchip">+ 7 more</span>
-            </div>
-            <div class="bump-price-row">
-              <span class="bump-price" id="scripts-price-badge">Add for $17</span>
-              <span class="bump-was">$27</span>
-            </div>
+    <!-- TESTIMONIALS -->
+    <div class="tests-label">What other moms are saying</div>
+
+    <div class="tcard">
+      <div class="tcard-q">I walked into our cardiology appointment with a printed visit script and three months of symptom data. For the first time, the doctor listened for the full 20 minutes. We left with a diagnosis and a treatment plan.</div>
+      <div class="tcard-attr">
+        <div class="tcard-avatar">👩</div>
+        <div><div class="tcard-name">Sarah M.</div><div class="tcard-role">Mom of a child with POTS & hEDS</div></div>
+      </div>
+    </div>
+
+    <div class="tcard">
+      <div class="tcard-q">The insurance appeal letter got our denial overturned in 11 days. I copied it, added our specifics, and sent it. The language was exactly right — they couldn't dismiss it.</div>
+      <div class="tcard-attr">
+        <div class="tcard-avatar">👩‍💼</div>
+        <div><div class="tcard-name">Michelle K.</div><div class="tcard-role">Caregiver, rare disease community</div></div>
+      </div>
+    </div>
+
+    <div class="tcard">
+      <div class="tcard-q">I've been fighting for an IEP for two years. The prep tool gave me the exact language to request specific accommodations. The school approved three services they'd previously denied.</div>
+      <div class="tcard-attr">
+        <div class="tcard-avatar">🤱</div>
+        <div><div class="tcard-name">Danielle R.</div><div class="tcard-role">Mom advocating for school support</div></div>
+      </div>
+    </div>
+
+  </div><!-- /info-col -->
+
+
+  <!-- ═══════════════════════════════════════════
+       RIGHT COLUMN — CHECKOUT FORM
+       ═══════════════════════════════════════════ -->
+  <div class="form-col">
+
+    <div class="form-logo">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+    <div class="form-tagline">Beside you, always.</div>
+
+    <!-- PLAN TOGGLE -->
+    <div class="plan-toggle">
+      <div class="plan-opt active" id="opt-monthly" onclick="setPlan('monthly')">
+        <div class="plan-opt-label">Monthly</div>
+        <div class="plan-opt-price">$27 / month</div>
+      </div>
+      <div class="plan-opt" id="opt-annual" onclick="setPlan('annual')">
+        <div class="save-badge">SAVE $127</div>
+        <div class="plan-opt-label">Annual</div>
+        <div class="plan-opt-price">$197 / year</div>
+      </div>
+    </div>
+
+    <!-- PLAN CARD HEADER -->
+    <div class="plan-hdr">
+      <div class="plan-hdr-label">✦ MedAdvocate — Full Access</div>
+      <div class="plan-hdr-title" id="plan-title">Monthly Plan</div>
+      <div class="plan-hdr-desc">Sixteen core tools. AI-powered throughout. Cancel anytime.</div>
+      <div class="plan-hdr-price-row">
+        <div class="plan-price-main" id="price-main">$27</div>
+        <div class="plan-price-period" id="price-period">/ month</div>
+      </div>
+      <div class="plan-price-note" id="price-note">Billed monthly · Cancel anytime</div>
+    </div>
+
+    <!-- ADD-ONS -->
+    <div class="right-section-label">✦ Add-ons — optional</div>
+
+    <div class="bump amber-bump" id="bump-scripts" onclick="toggleBump('scripts')">
+      <div class="bump-row">
+        <div class="bump-cb" id="cb-scripts"></div>
+        <div class="bump-content">
+          <div class="bump-eyebrow">✦ One-time add-on</div>
+          <div class="bump-title">Doctor Scripts — exact words for when they don't listen</div>
+          <div class="bump-desc">12 dismissal scenarios with pushback responses. Printable pocket card.</div>
+          <div class="bump-chips">
+            <span class="bchip">"It's anxiety"</span><span class="bchip">Labs normal</span><span class="bchip">ER dismissal</span><span class="bchip">IEP denied</span>
+          </div>
+          <div class="bump-price-row">
+            <span class="bump-price" id="scripts-price-badge">Add for $17</span>
+            <span class="bump-was">$27</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- OR: Buy individually OR bundle -->
-    <div class="bumps-label" style="padding-top:10px">📁 Premium Tools — Choose below</div>
+    <div class="right-section-label">📁 Premium tools — one-time unlock</div>
 
-    <!-- BUMP 2: Document Library -->
-    <div class="bump-wrap">
-      <div class="bump blue-bump" id="bump-docs" onclick="toggleBump('docs')">
-        <div class="bump-row">
-          <div class="bump-cb" id="cb-docs"></div>
-          <div class="bump-content">
-            <div class="bump-eyebrow">📁 Premium tool — one-time</div>
-            <div class="bump-title">Add Document Library — AI reads your medical documents</div>
-            <div class="bump-desc">Upload discharge summaries, test results, referrals, EOBs. AI extracts the key information from every document automatically. Organized, searchable, always there.</div>
-            <div class="bump-chips">
-              <span class="bchip">PDFs & images</span>
-              <span class="bchip">AI extraction</span>
-              <span class="bchip">10 categories</span>
-              <span class="bchip">Instant search</span>
-            </div>
-            <div class="bump-price-row">
-              <span class="bump-price" id="docs-price-badge">Add for $27</span>
-              <span class="bump-was">$47</span>
-            </div>
+    <div class="bump blue-bump" id="bump-docs" onclick="toggleBump('docs')">
+      <div class="bump-row">
+        <div class="bump-cb" id="cb-docs"></div>
+        <div class="bump-content">
+          <div class="bump-eyebrow">📁 Premium — one-time</div>
+          <div class="bump-title">Document Library — AI reads your medical documents</div>
+          <div class="bump-desc">Upload discharge summaries, test results, EOBs. AI extracts key info automatically.</div>
+          <div class="bump-chips">
+            <span class="bchip">PDFs & images</span><span class="bchip">AI extraction</span><span class="bchip">Instant search</span>
+          </div>
+          <div class="bump-price-row">
+            <span class="bump-price" id="docs-price-badge">Add for $27</span>
+            <span class="bump-was">$47</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- BUMP 3: Appointment Recorder -->
-    <div class="bump-wrap" style="padding-bottom:14px">
-      <div class="bump violet-bump" id="bump-recorder" onclick="toggleBump('recorder')">
-        <div class="bump-row">
-          <div class="bump-cb" id="cb-recorder"></div>
-          <div class="bump-content">
-            <div class="bump-eyebrow">🎙️ Premium tool — one-time</div>
-            <div class="bump-title">Add Appointment Recorder — never forget what the doctor said</div>
-            <div class="bump-desc">Live transcription during your appointment. AI summary with every decision, medication change, follow-up, and the questions you forgot to ask.</div>
-            <div class="bump-chips">
-              <span class="bchip">Live transcription</span>
-              <span class="bchip">AI action items</span>
-              <span class="bchip">Medication changes</span>
-              <span class="bchip">Follow-up list</span>
-            </div>
-            <div class="bump-price-row">
-              <span class="bump-price" id="recorder-price-badge">Add for $27</span>
-              <span class="bump-was">$47</span>
-            </div>
+    <div class="bump violet-bump" id="bump-recorder" onclick="toggleBump('recorder')">
+      <div class="bump-row">
+        <div class="bump-cb" id="cb-recorder"></div>
+        <div class="bump-content">
+          <div class="bump-eyebrow">🎙️ Premium — one-time</div>
+          <div class="bump-title">Appointment Recorder — never forget what the doctor said</div>
+          <div class="bump-desc">Live transcription + AI summary with every decision, medication change, and follow-up.</div>
+          <div class="bump-chips">
+            <span class="bchip">Live transcription</span><span class="bchip">AI action items</span><span class="bchip">Follow-up list</span>
+          </div>
+          <div class="bump-price-row">
+            <span class="bump-price" id="recorder-price-badge">Add for $27</span>
+            <span class="bump-was">$47</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- BUMP 4: Diagnostic Testing -->
-    <div class="bump-wrap" style="padding-bottom:14px">
-      <div class="bump blue-bump" id="bump-testing" onclick="toggleBump('testing')">
-        <div class="bump-row">
-          <div class="bump-cb" id="cb-testing"></div>
-          <div class="bump-content">
-            <div class="bump-eyebrow">🔬 Premium tool — one-time</div>
-            <div class="bump-title">Add Diagnostic Testing — compare years of EEGs, EKGs, MRIs side by side</div>
-            <div class="bump-desc">Upload any test report. AI extracts findings, explains results in plain English, and shows you exactly what changed across years of the same test.</div>
-            <div class="bump-chips">
-              <span class="bchip">EEG · EKG · MRI</span>
-              <span class="bchip">Tilt Table</span>
-              <span class="bchip">Year-over-year comparison</span>
-              <span class="bchip">16 test types</span>
-            </div>
-            <div class="bump-price-row">
-              <span class="bump-price" id="testing-price-badge">Add for $15</span>
-              <span class="bump-was">$27</span>
-            </div>
+    <div class="bump blue-bump" id="bump-testing" onclick="toggleBump('testing')">
+      <div class="bump-row">
+        <div class="bump-cb" id="cb-testing"></div>
+        <div class="bump-content">
+          <div class="bump-eyebrow">🔬 Premium — one-time</div>
+          <div class="bump-title">Diagnostic Testing — compare EEGs, EKGs, MRIs side by side</div>
+          <div class="bump-desc">AI explains every finding in plain English and shows what changed across years of testing.</div>
+          <div class="bump-chips">
+            <span class="bchip">EEG · EKG · MRI</span><span class="bchip">Tilt Table</span><span class="bchip">16 test types</span>
+          </div>
+          <div class="bump-price-row">
+            <span class="bump-price" id="testing-price-badge">Add for $15</span>
+            <span class="bump-was">$27</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- OR DIVIDER -->
     <div class="or-div"><div class="or-line"></div><div class="or-text">OR SAVE MORE WITH THE BUNDLE</div><div class="or-line"></div></div>
 
-    <!-- BUNDLE -->
-    <div class="bundle-wrap">
-      <div class="bundle" id="bundle-box" onclick="toggleBundle()">
-        <div class="bundle-badge">BEST VALUE</div>
-        <div class="bundle-row">
-          <div class="bundle-cb" id="bundle-cb"></div>
-          <div class="bundle-content">
-            <div class="bundle-eyebrow">✦ Full Records Bundle</div>
-            <div class="bundle-title">Document Library + Appointment Recorder + Diagnostic Testing</div>
-            <div class="bundle-desc">Both premium tools at one price. Upload and organize every document. Record every appointment. The complete paper trail, automatically organized.</div>
-            <div class="bundle-price-row">
-              <div class="bundle-price">$59.99</div>
-              <div class="bundle-was">$94 separately</div>
-              <div class="bundle-save">SAVE $34</div>
-            </div>
+    <div class="bundle" id="bundle-box" onclick="toggleBundle()">
+      <div class="bundle-badge">BEST VALUE</div>
+      <div class="bundle-row">
+        <div class="bundle-cb" id="bundle-cb"></div>
+        <div class="bundle-content">
+          <div class="bundle-eyebrow">✦ Full Records Bundle</div>
+          <div class="bundle-title">Document Library + Appointment Recorder + Diagnostic Testing</div>
+          <div class="bundle-desc">All three premium tools at one price — the complete paper trail, automatically organized.</div>
+          <div class="bundle-price-row">
+            <div class="bundle-price">$59.99</div>
+            <div class="bundle-was">$94 separately</div>
+            <div class="bundle-save">SAVE $34</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- FAMILY PLAN -->
-    <div class="family-wrap">
-      <div class="family" id="family-box" onclick="toggleFamily()">
-        <div class="family-ico">👨‍👩‍👧</div>
-        <div class="family-text">
-          <div class="family-title">Upgrade to Family Plan — up to 5 profiles</div>
-          <div class="family-desc">Managing more than one child? Add up to 5 profiles for just $5 more per month.</div>
-        </div>
-        <div class="family-right">
-          <div class="family-cb" id="family-cb"></div>
-          <div class="family-badge" id="family-badge">+$5/mo</div>
-        </div>
+    <div class="family" id="family-box" onclick="toggleFamily()">
+      <div class="family-ico">👨‍👩‍👧</div>
+      <div class="family-text">
+        <div class="family-title">Upgrade to Family Plan — up to 5 profiles</div>
+        <div class="family-desc">Managing more than one child? Add up to 5 profiles for just $5 more per month.</div>
+      </div>
+      <div class="family-right">
+        <div class="family-cb" id="family-cb"></div>
+        <div class="family-badge" id="family-badge">+$5/mo</div>
+      </div>
+    </div>
+
+    <!-- CONTACT INFO -->
+    <div class="right-section-label">Your Information</div>
+
+    <div id="errorMsg" class="error-msg"></div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label" for="f_firstname">First Name</label>
+        <input type="text" class="form-input" id="f_firstname" placeholder="Sarah" autocomplete="given-name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f_lastname">Last Name</label>
+        <input type="text" class="form-input" id="f_lastname" placeholder="Miller" autocomplete="family-name">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="f_email">Email Address</label>
+      <input type="email" class="form-input" id="f_email" placeholder="you@example.com" autocomplete="email">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="f_email_confirm">Confirm Email</label>
+      <input type="email" class="form-input" id="f_email_confirm" placeholder="you@example.com">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="f_phone">Phone Number</label>
+      <input type="tel" class="form-input" id="f_phone" placeholder="(555) 000-0000" autocomplete="tel">
+    </div>
+
+    <!-- BILLING & PAYMENT NOTE -->
+    <div class="right-section-label">Billing & Payment</div>
+
+    <div class="payment-note">
+      <div class="payment-note-top">🔒 Secure payment via Stripe</div>
+      <div class="payment-note-sub">Your card details are collected on Stripe's PCI-compliant checkout page. MedAdvocate never sees or stores your payment information.</div>
+      <div class="card-icons">
+        <span class="card-ico">VISA</span>
+        <span class="card-ico">MC</span>
+        <span class="card-ico">AMEX</span>
+        <span class="card-ico">DISC</span>
       </div>
     </div>
 
     <!-- ORDER SUMMARY -->
-    <div class="summary-wrap">
-      <div class="order-summary" id="order-summary">
-        <div class="sum-line">
-          <span class="sum-label" id="sum-plan-label">MedAdvocate Monthly</span>
-          <span class="sum-price" id="sum-plan-price">$27/mo</span>
-        </div>
-        <div class="sum-line" id="sum-scripts-row" style="display:none">
-          <span class="sum-label">Doctor Scripts</span>
-          <span class="sum-price">$17 one-time</span>
-        </div>
-        <div class="sum-line" id="sum-docs-row" style="display:none">
-          <span class="sum-label">Document Library</span>
-          <span class="sum-price" id="sum-docs-price">$27 one-time</span>
-        </div>
-        <div class="sum-line" id="sum-recorder-row" style="display:none">
-          <span class="sum-label">Appointment Recorder</span>
-          <span class="sum-price" id="sum-recorder-price">$27 one-time</span>
-        </div>
-        <div class="sum-line" id="sum-testing-row" style="display:none"><span class="sum-label">Diagnostic Testing</span><span class="sum-price">$15 one-time</span></div>
-        <div class="sum-line" id="sum-bundle-row" style="display:none">
-          <span class="sum-label">Records &amp; Recorder Bundle</span>
-          <span class="sum-price">$59.99 one-time</span>
-        </div>
-        <div class="sum-line" id="sum-family-row" style="display:none">
-          <span class="sum-label">Family Plan upgrade</span>
-          <span class="sum-price" id="sum-family-price">+$5.00/mo</span>
-        </div>
-        <div class="sum-line total">
-          <span>Due today</span>
-          <span id="sum-total">$27.00</span>
-        </div>
+    <div class="order-summary" id="order-summary">
+      <div class="sum-line">
+        <span class="sum-label" id="sum-plan-label">MedAdvocate Monthly</span>
+        <span class="sum-price" id="sum-plan-price">$27/mo</span>
       </div>
-
-      <button class="cta-btn" onclick="handleCheckout()">
-        <span>🔒</span>
-        <span id="cta-text">Subscribe — $27/month</span>
-      </button>
-
-      <div class="trust-row">
-        <div class="trust-item">🔒 Secure checkout</div>
-        <div class="trust-item">↩️ Cancel anytime</div>
-        <div class="trust-item">🌿 Instant access</div>
+      <div class="sum-line" id="sum-scripts-row" style="display:none">
+        <span class="sum-label">Doctor Scripts</span>
+        <span class="sum-price">$17 one-time</span>
+      </div>
+      <div class="sum-line" id="sum-docs-row" style="display:none">
+        <span class="sum-label">Document Library</span>
+        <span class="sum-price" id="sum-docs-price">$27 one-time</span>
+      </div>
+      <div class="sum-line" id="sum-recorder-row" style="display:none">
+        <span class="sum-label">Appointment Recorder</span>
+        <span class="sum-price" id="sum-recorder-price">$27 one-time</span>
+      </div>
+      <div class="sum-line" id="sum-testing-row" style="display:none">
+        <span class="sum-label">Diagnostic Testing</span>
+        <span class="sum-price">$15 one-time</span>
+      </div>
+      <div class="sum-line" id="sum-bundle-row" style="display:none">
+        <span class="sum-label">Records & Recorder Bundle</span>
+        <span class="sum-price">$59.99 one-time</span>
+      </div>
+      <div class="sum-line" id="sum-family-row" style="display:none">
+        <span class="sum-label">Family Plan upgrade</span>
+        <span class="sum-price" id="sum-family-price">+$5.00/mo</span>
+      </div>
+      <div class="sum-line total">
+        <span>Due today</span>
+        <span id="sum-total">$27.00</span>
       </div>
     </div>
 
-    <!-- TESTIMONIAL -->
-    <div class="testimonial">
-      <div class="test-q">"I walked into my daughter's cardiology appointment with a printed summary and a script for when he tried to dismiss her symptoms. For the first time in four years, he listened. He actually listened."</div>
-      <div class="test-attr">— Early member, mom of a child with POTS &amp; hEDS</div>
+    <button class="cta-btn" id="main-cta" onclick="handleCheckout()">
+      <span>🔒</span>
+      <span id="cta-text">Subscribe — $27/month</span>
+    </button>
+
+    <div class="trust-row">
+      <div class="trust-item">🔒 Secure checkout</div>
+      <div class="trust-item">↩️ Cancel anytime</div>
+      <div class="trust-item">🌿 Instant access</div>
     </div>
 
-  </div>
-  <div class="back-link"><a href="index.html">← Back to MedAdvocate</a></div>
-</div>
+    <span class="coupon-toggle" onclick="toggleCoupon()">Have a coupon code?</span>
+    <div class="coupon-wrap" id="couponWrap">
+      <input type="text" class="coupon-input" id="couponInput" placeholder="Enter code">
+      <button class="coupon-btn" onclick="applyCoupon()">Apply</button>
+    </div>
+
+    <div class="back-link"><a href="index.html">← Back to MedAdvocate</a></div>
+
+  </div><!-- /form-col -->
+
+</div><!-- /co-layout -->
 
 <script>
 let plan = 'monthly';
@@ -432,35 +622,27 @@ function setPlan(p) {
 }
 
 function toggleBump(key) {
-  // If bundle is on and we're toggling docs or recorder, turn bundle off
   if (bundleOn && (key==='docs' || key==='recorder' || key==='testing')) {
     bundleOn = false;
     document.getElementById('bundle-box').classList.remove('checked');
     document.getElementById('bundle-cb').textContent = '';
     document.getElementById('sum-bundle-row').style.display = 'none';
-    // Re-show individual rows if they were hidden by bundle
     document.getElementById('sum-docs-row').style.display = 'none';
     document.getElementById('sum-recorder-row').style.display = 'none';
-    bumps.docs = false;
-    bumps.recorder = false;
-    document.getElementById('bump-docs').classList.remove('checked');
-    document.getElementById('bump-recorder').classList.remove('checked');
-    document.getElementById('cb-docs').textContent = '';
-    document.getElementById('cb-recorder').textContent = '';
+    bumps.docs = false; bumps.recorder = false;
+    ['docs','recorder'].forEach(k => {
+      document.getElementById('bump-'+k).classList.remove('checked');
+      document.getElementById('cb-'+k).textContent = '';
+    });
   }
-
   bumps[key] = !bumps[key];
-  const bumpEl = document.getElementById('bump-'+key);
-  const cbEl = document.getElementById('cb-'+key);
-  bumpEl.classList.toggle('checked', bumps[key]);
-  cbEl.textContent = bumps[key] ? '✓' : '';
-
-  // Show/hide summary rows
+  document.getElementById('bump-'+key).classList.toggle('checked', bumps[key]);
+  document.getElementById('cb-'+key).textContent = bumps[key] ? '✓' : '';
   document.getElementById('sum-scripts-row').style.display = bumps.scripts ? 'flex' : 'none';
   if (!bundleOn) {
     document.getElementById('sum-docs-row').style.display = bumps.docs ? 'flex' : 'none';
     document.getElementById('sum-recorder-row').style.display = bumps.recorder ? 'flex' : 'none';
-    document.getElementById('sum-testing-row') && (document.getElementById('sum-testing-row').style.display = bumps.testing ? 'flex' : 'none');
+    document.getElementById('sum-testing-row').style.display = bumps.testing ? 'flex' : 'none';
   }
   updateTotal();
 }
@@ -469,9 +651,7 @@ function toggleBundle() {
   bundleOn = !bundleOn;
   document.getElementById('bundle-box').classList.toggle('checked', bundleOn);
   document.getElementById('bundle-cb').textContent = bundleOn ? '✓' : '';
-
   if (bundleOn) {
-    // Turn off individual docs/recorder bumps
     bumps.docs = false; bumps.recorder = false; bumps.testing = false;
     ['docs','recorder','testing'].forEach(k => {
       document.getElementById('bump-'+k).classList.remove('checked');
@@ -479,6 +659,7 @@ function toggleBundle() {
     });
     document.getElementById('sum-docs-row').style.display = 'none';
     document.getElementById('sum-recorder-row').style.display = 'none';
+    document.getElementById('sum-testing-row').style.display = 'none';
     document.getElementById('sum-bundle-row').style.display = 'flex';
   } else {
     document.getElementById('sum-bundle-row').style.display = 'none';
@@ -496,7 +677,6 @@ function toggleFamily() {
 
 function updateTotal() {
   const cfg = PLANS[plan];
-  // For existing subscribers, base plan is $0 (already paying)
   const baseRecurring = window._existingSubscriber ? 0 : (familyOn ? cfg.family : cfg.base);
   let oneTime = 0;
   if (bumps.scripts) oneTime += 17;
@@ -504,7 +684,6 @@ function updateTotal() {
   else { if (bumps.docs) oneTime += 27; if (bumps.recorder) oneTime += 27; if (bumps.testing) oneTime += 15; }
 
   if (window._existingSubscriber) {
-    // Existing subscriber — show only add-on total
     const totalStr = oneTime > 0 ? '$' + oneTime + ' one-time' : '$0';
     document.getElementById('sum-total').textContent = totalStr;
     document.getElementById('cta-text').textContent = oneTime > 0
@@ -519,6 +698,46 @@ function updateTotal() {
       'Subscribe — $' + baseRecurring.toFixed(2) + recurringLabel +
       (oneTime > 0 ? ' + $' + oneTime : '');
   }
+}
+
+function validateForm() {
+  const errorMsg = document.getElementById('errorMsg');
+  const fields = {
+    f_firstname: 'First name is required.',
+    f_lastname:  'Last name is required.',
+    f_email:     'Email address is required.',
+    f_email_confirm: 'Please confirm your email.',
+    f_phone:     'Phone number is required.',
+  };
+  for (const [id, msg] of Object.entries(fields)) {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) {
+      el.classList.add('err');
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+      el.focus();
+      el.scrollIntoView({ behavior:'smooth', block:'center' });
+      return false;
+    }
+    el.classList.remove('err');
+  }
+  const email = document.getElementById('f_email').value.trim();
+  const emailConfirm = document.getElementById('f_email_confirm').value.trim();
+  if (email !== emailConfirm) {
+    document.getElementById('f_email_confirm').classList.add('err');
+    errorMsg.textContent = 'Email addresses do not match.';
+    errorMsg.style.display = 'block';
+    return false;
+  }
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)) {
+    document.getElementById('f_email').classList.add('err');
+    errorMsg.textContent = 'Please enter a valid email address.';
+    errorMsg.style.display = 'block';
+    return false;
+  }
+  errorMsg.style.display = 'none';
+  return true;
 }
 
 // ── STRIPE PRICE IDS ──
@@ -537,16 +756,16 @@ const PRICES = {
 const STRIPE_PK = 'pk_test_51TRIEp5jVY07VRUxA2bIv8vAmOEEagP2B3xCpmpfze5WZrLBnRmjLqkOn7NCWo8jMfN6GYuEaCWQR6bTLHe6IX5U007kLD9ryr';
 
 async function handleCheckout() {
-  const btn = document.getElementById('main-cta') || document.querySelector('.cta-btn');
+  if (!validateForm()) return;
+
+  const btn = document.getElementById('main-cta');
   const originalText = document.getElementById('cta-text').textContent;
-  document.getElementById('cta-text').textContent = 'Redirecting to secure checkout...';
+  document.getElementById('cta-text').textContent = 'Redirecting to secure checkout…';
   if (btn) btn.disabled = true;
 
-  // Build line items
   const lineItems = [];
 
   if (window._existingSubscriber) {
-    // Existing subscriber — only charge for add-ons, NO subscription line item
     if (bundleOn) {
       lineItems.push({ price: PRICES.bundle, quantity: 1 });
     } else {
@@ -555,21 +774,18 @@ async function handleCheckout() {
       if (bumps.testing)  lineItems.push({ price: PRICES.testing, quantity: 1 });
     }
     if (bumps.scripts) lineItems.push({ price: PRICES.scripts, quantity: 1 });
-
-    // Safety check — must have at least one add-on
     if (lineItems.length === 0) {
-      toast('Please select an add-on to purchase.');
+      document.getElementById('errorMsg').textContent = 'Please select an add-on to purchase.';
+      document.getElementById('errorMsg').style.display = 'block';
       if (btn) btn.disabled = false;
       document.getElementById('cta-text').textContent = originalText;
       return;
     }
   } else {
-    // New user — subscription + optional add-ons
     const subPriceKey = plan === 'annual'
       ? (familyOn ? 'familyAnnual' : 'annual')
       : (familyOn ? 'familyMonthly' : 'monthly');
     lineItems.push({ price: PRICES[subPriceKey], quantity: 1 });
-
     if (bundleOn) {
       lineItems.push({ price: PRICES.bundle, quantity: 1 });
     } else {
@@ -580,63 +796,68 @@ async function handleCheckout() {
     if (bumps.scripts) lineItems.push({ price: PRICES.scripts, quantity: 1 });
   }
 
+  const customerEmail = document.getElementById('f_email').value.trim();
+  const customerName  = document.getElementById('f_firstname').value.trim() + ' ' + document.getElementById('f_lastname').value.trim();
+
   try {
-    // Load Stripe.js
     if (!window.Stripe) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = 'https://js.stripe.com/v3/';
-        script.onload = resolve;
-        script.onerror = reject;
+        script.onload = resolve; script.onerror = reject;
         document.head.appendChild(script);
       });
     }
-
     const stripe = Stripe(STRIPE_PK);
-
-    // Call your Netlify function to create a checkout session
     const response = await fetch('/.netlify/functions/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         lineItems,
+        customerEmail,
+        customerName,
         successUrl: window.location.origin + '/payment-success.html?addons=' + buildAddonString(),
-        cancelUrl: window.location.origin + '/advocate-checkout.html',
+        cancelUrl:  window.location.origin + '/advocate-checkout.html',
         addons: buildAddonString(),
       })
     });
-
     const session = await response.json();
-
-    if (session.error) {
-      throw new Error(session.error);
-    }
-
-    // Redirect to Stripe Checkout
+    if (session.error) throw new Error(session.error);
     const result = await stripe.redirectToCheckout({ sessionId: session.id });
     if (result.error) throw new Error(result.error.message);
-
   } catch (err) {
     console.error('Checkout error:', err);
     document.getElementById('cta-text').textContent = originalText;
     if (btn) btn.disabled = false;
-    alert('Something went wrong. Please try again. Error: ' + err.message);
+    document.getElementById('errorMsg').textContent = 'Something went wrong — please try again. (' + err.message + ')';
+    document.getElementById('errorMsg').style.display = 'block';
   }
 }
 
 function buildAddonString() {
   const addons = [];
-  if (bundleOn) { addons.push('documents', 'recorder', 'testing'); }
+  if (bundleOn) { addons.push('documents','recorder','testing'); }
   else {
-    if (bumps.docs) addons.push('documents');
+    if (bumps.docs)     addons.push('documents');
     if (bumps.recorder) addons.push('recorder');
-    if (bumps.testing) addons.push('testing');
+    if (bumps.testing)  addons.push('testing');
   }
   if (bumps.scripts) addons.push('scripts');
   return addons.join(',');
 }
 
-// Pre-check bumps from URL param (coming from lock screen)
+function toggleCoupon() {
+  const w = document.getElementById('couponWrap');
+  w.classList.toggle('open');
+  if (w.classList.contains('open')) document.getElementById('couponInput').focus();
+}
+
+function applyCoupon() {
+  const code = document.getElementById('couponInput').value.trim();
+  if (code) alert('Coupon "' + code + '" will be applied at checkout.');
+}
+
+// Pre-select add-ons from URL param
 (function() {
   const p = new URLSearchParams(window.location.search);
   const addon = p.get('addon');
@@ -644,73 +865,34 @@ function buildAddonString() {
 
   if (existingSubscriber) {
     window._existingSubscriber = true;
-    // Wait for DOM then hide subscription elements
-    document.addEventListener('DOMContentLoaded', applyExistingSubscriberMode);
-    // Also run immediately in case DOM is already ready
     if (document.readyState !== 'loading') applyExistingSubscriberMode();
+    else document.addEventListener('DOMContentLoaded', applyExistingSubscriberMode);
   }
 
-  // Auto-select the add-on they came from
-  if (addon === 'bundle') { setTimeout(() => toggleBundle(), 100); }
-  else if (addon === 'docs') { setTimeout(() => toggleBump('docs'), 100); }
-  else if (addon === 'recorder') { setTimeout(() => toggleBump('recorder'), 100); }
-  else if (addon === 'testing') { setTimeout(() => toggleBump('testing'), 100); }
-  else if (addon === 'scripts') { setTimeout(() => toggleBump('scripts'), 100); }
-
-  // Show a context banner for new users coming from a specific add-on
-  if (addon && addon !== 'bundle' && !existingSubscriber) {
-    const addonNames = { scripts: 'Doctor Scripts ($17)', docs: 'Document Library ($27)', recorder: 'Appointment Recorder ($27)', testing: 'Diagnostic Testing ($15)' };
-    const addonName = addonNames[addon] || 'an add-on';
-    const banner = document.createElement('div');
-    banner.style.cssText = 'background:#fdf3e7;border:1.5px solid #f0d4a8;border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#5a3e1b;line-height:1.6';
-    banner.innerHTML = `<strong>You selected ${addonName}</strong><br>MedAdvocate works on a subscription ($27/mo) that includes 16 core tools. ${addonName.split(' ')[0] + ' ' + addonName.split(' ')[1]} is pre-selected as an optional one-time add-on below. You can remove it if you just want the base subscription.`;
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggle = document.querySelector('.plan-toggle');
-      if (toggle) toggle.parentNode.insertBefore(banner, toggle);
-    });
-    if (document.readyState !== 'loading') {
-      const toggle = document.querySelector('.plan-toggle');
-      if (toggle) toggle.parentNode.insertBefore(banner, toggle);
-    }
-  }
+  if (addon === 'bundle')    setTimeout(() => toggleBundle(), 100);
+  else if (addon === 'docs')     setTimeout(() => toggleBump('docs'), 100);
+  else if (addon === 'recorder') setTimeout(() => toggleBump('recorder'), 100);
+  else if (addon === 'testing')  setTimeout(() => toggleBump('testing'), 100);
+  else if (addon === 'scripts')  setTimeout(() => toggleBump('scripts'), 100);
 })();
 
 updateTotal();
 
 function applyExistingSubscriberMode() {
-  // Hide ONLY the plan toggle (monthly/annual switcher)
   const planToggle = document.querySelector('.plan-toggle');
   if (planToggle) planToggle.style.display = 'none';
-
-  // Hide ONLY the card-top section (plan name, price, description)
-  // NOT the whole card — we still need the add-ons section
-  const cardTop = document.querySelector('.card-top');
-  if (cardTop) cardTop.style.display = 'none';
-
-  // Hide the features list (also part of base plan)
-  const features = document.querySelector('.features');
-  if (features) features.style.display = 'none';
-
-  // Hide family add-on (existing subscribers already have base)
-  const familyWrap = document.querySelector('.family-wrap');
-  if (familyWrap) familyWrap.style.display = 'none';
-
-  // Hide subscription line in order summary
+  const planHdr = document.querySelector('.plan-hdr');
+  if (planHdr) planHdr.style.display = 'none';
+  const familyEl = document.getElementById('family-box');
+  if (familyEl) familyEl.style.display = 'none';
   const sumPlanRow = document.getElementById('sum-plan-label');
-  if (sumPlanRow) {
-    const row = sumPlanRow.closest('.sum-line') || sumPlanRow.parentElement;
-    if (row) row.style.display = 'none';
-  }
+  if (sumPlanRow) { const row = sumPlanRow.closest('.sum-line'); if (row) row.style.display = 'none'; }
 
-  // Insert banner above the card
-  const card = document.querySelector('.card');
+  const card = document.querySelector('.form-col');
   const banner = document.createElement('div');
-  banner.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:14px;padding:16px 20px;margin-bottom:16px;font-size:14px;color:#2d4a35;line-height:1.6;text-align:center';
-  banner.innerHTML = `<strong>✅ You are already subscribed to MedAdvocate.</strong><br>You are just unlocking this add-on — you will <u>not</u> be charged for the subscription again.`;
-  if (card) card.parentNode.insertBefore(banner, card);
-
-  // Update total to only show add-on price
-  window._basePlanPrice = 0;
+  banner.style.cssText = 'background:#e8f5ee;border:1.5px solid #95d5b2;border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#1b4332;line-height:1.6;text-align:center';
+  banner.innerHTML = '<strong>✅ You are already subscribed.</strong><br>You are just unlocking this add-on — you will <u>not</u> be charged for the subscription again.';
+  if (card) card.insertBefore(banner, card.firstChild);
   updateTotal();
 }
 </script>
