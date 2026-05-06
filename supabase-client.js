@@ -335,14 +335,33 @@ const DB = {
   // ── DIAGNOSTIC TESTS ────────────────────────────────────────
 
   async getDiagnosticTests() {
+    const normalize = t => ({
+      id: t.id,
+      type: t.type || t.test_type,
+      date: t.date || t.test_date,
+      status: t.status || 'pending',
+      results: t.results || t.result || t.extracted?.summary || '',
+      doctor: t.doctor || t.ordering_doctor,
+      facility: t.facility,
+      notes: t.notes,
+      extracted: t.extracted || null,
+      fileName: t.fileName || null,
+      fileData: t.fileData || null,
+    });
     const pid = await DB.patientId();
-    if (!pid) return [];
-    const { data } = await _supa
-      .from('diagnostic_tests')
-      .select('*')
-      .eq('patient_id', pid)
-      .order('test_date', { ascending: false });
-    return data || [];
+    if (pid) {
+      const { data } = await _supa
+        .from('diagnostic_tests')
+        .select('*')
+        .eq('patient_id', pid)
+        .order('test_date', { ascending: false });
+      if (data && data.length) return data.map(normalize);
+    }
+    // Fallback: read from localStorage (advocate-testing.html saves here)
+    try {
+      const local = JSON.parse(localStorage.getItem('advocate_testing') || '[]');
+      return local.map(normalize);
+    } catch { return []; }
   },
 
   async saveDiagnosticTest(test) {
@@ -656,7 +675,7 @@ const DB = {
     }
 
     // Diagnostic tests
-    const tests = get('advocate_tests') || [];
+    const tests = get('advocate_testing') || [];
     for (const t of tests) {
       const { id: _, ...fields } = t;
       await DB.saveDiagnosticTest(fields);
