@@ -180,9 +180,13 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .modal{background:var(--warm);border-radius:20px;padding:24px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 
 @media print{
-  nav,.tabs,.fcard,.btn-p,.btn-b,.btn-o,.test-card-actions{display:none!important}
+  nav,.tabs,.fcard,.btn-p,.btn-b,.btn-o,.test-card-actions,.test-group-actions,#panel-upload,#panel-summary{display:none!important}
+  #panel-history{display:block!important}
   .shell{max-width:100%;padding:0}
-  .ai-sum-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ai-sum-header,.comparison-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .test-card{break-inside:avoid}
+  .test-group{break-inside:avoid;margin-bottom:20px}
+  .comparison-table{font-size:11px}
   @page{margin:12mm}
 }
 @media(max-width:640px){.two,.three{grid-template-columns:1fr}.test-type-grid{grid-template-columns:repeat(3,1fr)}}
@@ -306,9 +310,11 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
       <div class="empty-sub">Add your first test result and it will appear here, organized by type with a comparison view across years.</div>
     </div>
     <div id="history_content" style="display:none">
-      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px">
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px;align-items:center">
         <button class="btn-o" id="view-timeline-btn" onclick="setView('timeline',this)">📅 Timeline</button>
         <button class="btn-b" id="view-compare-btn" onclick="setView('compare',this)">📊 Comparison Table</button>
+        <button class="btn-o" onclick="window.print()" style="margin-left:auto">🖨️ Print this view</button>
+        <button class="btn-o" onclick="copyHistoryText()">📋 Copy</button>
       </div>
       <div id="timeline_view"></div>
       <div id="compare_view" style="display:none"></div>
@@ -841,6 +847,13 @@ async function genSummary(){
     out.innerHTML='<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>';
     console.error(e);
   }finally{btn.disabled=false;}
+}
+
+function copyHistoryText(){
+  const el=document.getElementById('timeline_view').style.display!=='none'
+    ?document.getElementById('timeline_view')
+    :document.getElementById('compare_view');
+  navigator.clipboard.writeText(el.innerText).then(()=>toast('Copied ✓'));
 }
 
 // Init date
