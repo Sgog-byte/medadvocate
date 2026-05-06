@@ -392,7 +392,7 @@ async function generateReport(){
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,
         system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary of the medication picture","activeMedsSummary":"One sentence describing the current active medications and their purpose","concerns":["2-4 notable concerns, interactions, or things to discuss with the doctor"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns, or empty array if none"]}',
         messages:[{role:'user',content:`Patient: ${name}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
     });

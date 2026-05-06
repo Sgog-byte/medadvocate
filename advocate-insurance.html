@@ -204,7 +204,7 @@ setupTagInput('ins_docs_in','ins_docs_wrap','vtag-sage');
 async function callClaude(system,user){
   const r=await fetch('/.netlify/functions/claude-proxy',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,system,messages:[{role:'user',content:user}]})
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system,messages:[{role:'user',content:user}]})
   });
   const d=await r.json();
   const text=d.content?.[0]?.text||'';
