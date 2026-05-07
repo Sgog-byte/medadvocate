@@ -989,7 +989,7 @@ Return ONLY valid JSON (no markdown, no backticks):
       "low": 4.0,
       "high": 11.0,
       "status": "normal | high | low | critical",
-      "note": "Brief plain-English note for a non-medical parent. 1-2 sentences.${hasProfile ? ' Consider the patient context.' : ''}"
+      "note": "One short plain-English sentence for a non-medical parent (15 words max).${hasProfile ? ' Consider patient context if relevant.' : ''}"
     }
   ],
   "insights": [
@@ -1016,7 +1016,7 @@ async function extractLabsFromFile(base64, mediaType) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: buildSystemPrompt(),
       messages: [{
         role: 'user',
@@ -1033,29 +1033,34 @@ async function extractLabsFromFile(base64, mediaType) {
 }
 
 function safeParseLabJSON(raw) {
-  const cleaned = raw.replace(/```json|```/g, '').trim();
-  try {
-    return JSON.parse(cleaned);
-  } catch(e) {
-    // Response was truncated — try to salvage what's there
-    // Close any open arrays/objects so JSON.parse has a chance
-    let s = cleaned;
-    // Close open string if needed
-    const quoteCount = (s.match(/"/g) || []).length;
+  // Strip markdown fences and leading/trailing whitespace
+  let cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+  // Direct parse
+  try { return JSON.parse(cleaned); } catch(e) {}
+
+  // Extract outermost { ... } block — handles text before/after JSON
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    const extracted = cleaned.substring(start, end + 1);
+
+    // Fix trailing commas (common Haiku quirk)
+    const fixed = extracted.replace(/,(\s*[}\]])/g, '$1');
+    try { return JSON.parse(fixed); } catch(e) {}
+
+    // Last resort: close truncated arrays/objects
+    let s = fixed;
+    const quoteCount = (s.match(/(?<!\\)"/g) || []).length;
     if (quoteCount % 2 !== 0) s += '"';
-    // Count open brackets and close them
-    const opens = (s.match(/\[/g) || []).length - (s.match(/\]/g) || []).length;
-    const openBraces = (s.match(/\{/g) || []).length - (s.match(/\}/g) || []).length;
-    // Remove trailing comma before closing
     s = s.replace(/,\s*$/, '');
-    for (let i = 0; i < opens; i++) s += ']';
-    for (let i = 0; i < openBraces; i++) s += '}';
-    try {
-      return JSON.parse(s);
-    } catch(e2) {
-      throw new Error('Could not parse lab results — report may be too long. Try splitting into sections.');
-    }
+    const openArr = (s.match(/\[/g) || []).length - (s.match(/\]/g) || []).length;
+    const openObj = (s.match(/\{/g) || []).length - (s.match(/\}/g) || []).length;
+    s += ']'.repeat(Math.max(0, openArr)) + '}'.repeat(Math.max(0, openObj));
+    try { return JSON.parse(s); } catch(e) {}
   }
+
+  throw new Error('Could not parse AI response — please try again.');
 }
 
 async function extractLabsFromImages(base64Array) {
@@ -1067,7 +1072,7 @@ async function extractLabsFromImages(base64Array) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: buildSystemPrompt(),
       messages: [{
         role: 'user',
@@ -1090,7 +1095,7 @@ async function extractLabsFromText(text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
     })
