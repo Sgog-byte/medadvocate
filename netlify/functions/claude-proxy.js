@@ -27,6 +27,7 @@ exports.handler = async function(event) {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'pdfs-2024-09-25',
         'Content-Length': Buffer.byteLength(payload)
       }
     };
