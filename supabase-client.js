@@ -80,6 +80,7 @@ const Auth = {
   /**
    * Guard: call at top of every protected page.
    * Redirects to login if not authenticated.
+   * Also checks beta trial status and shows warning/expired UI.
    */
   async requireAuth() {
     const user = await Auth.user();
@@ -87,7 +88,55 @@ const Auth = {
       window.location.href = 'advocate-login.html?next=' + encodeURIComponent(window.location.pathname);
       return null;
     }
+    Auth._checkTrial(user);
     return user;
+  },
+
+  _checkTrial(user) {
+    try {
+      const meta = user.user_metadata || {};
+      if (meta.plan !== 'beta' || !meta.trial_end) return;
+      const daysLeft = Math.ceil((new Date(meta.trial_end) - new Date()) / 864e5);
+      if (daysLeft > 10) return;
+      if (daysLeft <= 0) {
+        Auth._showExpiredModal();
+      } else {
+        Auth._showWarningBanner(daysLeft);
+      }
+    } catch(e) {}
+  },
+
+  _showWarningBanner(daysLeft) {
+    if (sessionStorage.getItem('trial_banner_dismissed')) return;
+    const b = document.createElement('div');
+    b.id = 'trialBanner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1b4332;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:14px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:400';
+    b.innerHTML = `
+      <span>🌿 Your free trial ends in <strong>${daysLeft} day${daysLeft===1?'':'s'}</strong> — subscribe to keep your data and full access.</span>
+      <a href="advocate-checkout.html" style="padding:6px 16px;background:#95d5b2;color:#0d1f15;border-radius:100px;font-weight:600;font-size:12px;text-decoration:none;white-space:nowrap">Subscribe now</a>
+      <button onclick="sessionStorage.setItem('trial_banner_dismissed','1');document.getElementById('trialBanner').remove()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;margin-left:4px">×</button>
+    `;
+    document.body.prepend(b);
+    // Push page content down so the banner doesn't overlap the nav
+    document.body.style.paddingTop = (document.body.style.paddingTop ? parseInt(document.body.style.paddingTop) + b.offsetHeight : b.offsetHeight) + 'px';
+  },
+
+  _showExpiredModal() {
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(13,31,21,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px';
+    o.innerHTML = `
+      <div style="background:#fdfcf8;border-radius:24px;padding:40px 36px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.3)">
+        <div style="font-size:52px;margin-bottom:16px">🌿</div>
+        <div style="font-family:Fraunces,serif;font-size:28px;font-weight:300;color:#0d1f15;margin-bottom:10px;line-height:1.2">Your free trial <em style="font-style:italic;color:#2d6a4f">has ended.</em></div>
+        <p style="font-size:14px;color:#1b4332;line-height:1.75;font-weight:300;margin-bottom:8px">Your data is safe and waiting for you. Subscribe to pick up right where you left off — everything you've added is still here.</p>
+        <p style="font-size:13px;color:#4a7a5e;margin-bottom:28px;font-weight:300">Thank you for being an early tester. Your feedback has meant everything.</p>
+        <a href="advocate-checkout.html" style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:#1b4332;color:#fff;border-radius:100px;font-family:DM Sans,sans-serif;font-size:15px;font-weight:500;text-decoration:none;transition:background .2s">Subscribe &amp; continue →</a>
+        <div style="margin-top:16px">
+          <a href="mailto:hello@medadvocate.org?subject=Beta trial question" style="font-size:12px;color:#4a7a5e;text-decoration:none">Questions? Email us</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(o);
   }
 };
 
