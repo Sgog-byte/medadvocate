@@ -871,7 +871,8 @@ async function processFile(file) {
   } catch (err) {
     document.getElementById('processingCard').classList.add('hidden');
     document.getElementById('emptyLabs').classList.remove('hidden');
-    showToast('Could not read this file — try a clearer scan or paste the text directly.');
+    const errMsg = (err.message || 'unknown error').substring(0, 100);
+    showToast('Upload failed: ' + errMsg);
     console.error(err);
   }
 }
@@ -1009,31 +1010,26 @@ Rules:
 - Today's date: ${new Date().toISOString().split('T')[0]}`;
 }
 
-async function extractLabsFromFile(base64, mediaType, isImage) {
-  const contentBlock = isImage
-    ? { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } }
-    : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } };
-
+async function extractLabsFromFile(base64, mediaType) {
   const resp = await fetch('/.netlify/functions/claude-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
       system: buildSystemPrompt(),
       messages: [{
         role: 'user',
         content: [
-          contentBlock,
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
           { type: 'text', text: 'Please extract all lab results from this report and provide personalized insights.' }
         ]
       }]
     })
   });
-
   const data = await resp.json();
-  const text = data.content?.[0]?.text || '';
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
+  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
+  return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
 function safeParseLabJSON(raw) {
@@ -1083,10 +1079,12 @@ async function extractLabsFromImages(base64Array) {
     })
   });
   const data = await resp.json();
+  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
   return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
 async function extractLabsFromText(text) {
+  const truncated = text.length > 12000 ? text.substring(0, 12000) + '\n[truncated]' : text;
   const resp = await fetch('/.netlify/functions/claude-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1094,10 +1092,11 @@ async function extractLabsFromText(text) {
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 4000,
       system: buildSystemPrompt(),
-      messages: [{ role: 'user', content: `Lab report text:\n\n${text}` }]
+      messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
     })
   });
   const data = await resp.json();
+  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
   return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
