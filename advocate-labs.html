@@ -992,6 +992,32 @@ async function extractLabsFromFile(base64, mediaType, isImage) {
   return JSON.parse(text.replace(/```json|```/g, '').trim());
 }
 
+function safeParseLabJSON(raw) {
+  const cleaned = raw.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch(e) {
+    // Response was truncated — try to salvage what's there
+    // Close any open arrays/objects so JSON.parse has a chance
+    let s = cleaned;
+    // Close open string if needed
+    const quoteCount = (s.match(/"/g) || []).length;
+    if (quoteCount % 2 !== 0) s += '"';
+    // Count open brackets and close them
+    const opens = (s.match(/\[/g) || []).length - (s.match(/\]/g) || []).length;
+    const openBraces = (s.match(/\{/g) || []).length - (s.match(/\}/g) || []).length;
+    // Remove trailing comma before closing
+    s = s.replace(/,\s*$/, '');
+    for (let i = 0; i < opens; i++) s += ']';
+    for (let i = 0; i < openBraces; i++) s += '}';
+    try {
+      return JSON.parse(s);
+    } catch(e2) {
+      throw new Error('Could not parse lab results — report may be too long. Try splitting into sections.');
+    }
+  }
+}
+
 async function extractLabsFromImages(base64Array) {
   const imageBlocks = base64Array.map(b64 => ({
     type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
@@ -1001,7 +1027,7 @@ async function extractLabsFromImages(base64Array) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      max_tokens: 4000,
       system: buildSystemPrompt(),
       messages: [{
         role: 'user',
@@ -1013,8 +1039,7 @@ async function extractLabsFromImages(base64Array) {
     })
   });
   const data = await resp.json();
-  const text = data.content?.[0]?.text || '';
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
+  return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
 async function extractLabsFromText(text) {
@@ -1023,15 +1048,13 @@ async function extractLabsFromText(text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      max_tokens: 4000,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: `Lab report text:\n\n${text}` }]
     })
   });
-
   const data = await resp.json();
-  const raw = data.content?.[0]?.text || '';
-  return JSON.parse(raw.replace(/```json|```/g, '').trim());
+  return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
 // ─────────────────────────────────
