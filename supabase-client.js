@@ -71,6 +71,12 @@ const Auth = {
     if (error) throw error;
   },
 
+  /** Store arbitrary metadata on the auth user (e.g. plan, trial_end) */
+  async setUserMeta(data) {
+    const { error } = await _supa.auth.updateUser({ data });
+    if (error) throw error;
+  },
+
   /**
    * Guard: call at top of every protected page.
    * Redirects to login if not authenticated.

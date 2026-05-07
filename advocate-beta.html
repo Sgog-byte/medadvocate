@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Beta Access — MedAdvocate</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#4a7a5e;
+  --border:#b7d9c4;--white:#ffffff;
+  --shadow-sm:0 2px 12px rgba(13,31,21,.08);--shadow:0 8px 32px rgba(13,31,21,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 0% 0%,rgba(27,67,50,.06) 0%,transparent 55%),radial-gradient(ellipse 60% 50% at 100% 100%,rgba(45,106,79,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.96);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-logo{display:flex;align-items:center;gap:9px}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+.nav-login{margin-left:auto;font-size:13px;color:var(--ink-muted);text-decoration:none;font-weight:500}
+.nav-login:hover{color:var(--sage-deep)}
+
+.page{max-width:520px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1;width:100%}
+
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);padding:5px 14px;border:1.5px solid var(--sage-light);border-radius:100px;background:var(--sage-pale);margin-bottom:20px}
+h1{font-family:'Fraunces',serif;font-size:clamp(30px,5vw,42px);font-weight:300;line-height:1.2;color:var(--ink);margin-bottom:14px}
+h1 em{font-style:italic;color:var(--sage)}
+.sub{font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;margin-bottom:32px}
+
+.perks{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.perk{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--ink-soft);line-height:1.55}
+.perk-dot{width:20px;height:20px;background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;margin-top:1px}
+
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--shadow-sm)}
+.field{margin-bottom:18px}
+.field:last-of-type{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
+.flabel-opt{font-size:11px;font-weight:300;letter-spacing:0;text-transform:none;color:var(--ink-muted);margin-left:4px}
+.finput,.fselect,.ftextarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder{color:var(--ink-muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.pw-wrap{position:relative}
+.pw-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-muted);padding:2px}
+
+.err{display:none;background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:11px 15px;color:#dc2626;font-size:13px;margin-top:14px;line-height:1.5}
+
+.btn{width:100%;padding:15px;background:var(--sage-deep);color:white;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;cursor:pointer;transition:all .22s;margin-top:18px;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn:hover:not(:disabled){background:var(--ink);transform:translateY(-1px);box-shadow:0 8px 24px rgba(27,67,50,.22)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+.fine-print{text-align:center;font-size:12px;color:var(--ink-muted);margin-top:14px;line-height:1.6;font-weight:300}
+.fine-print a{color:var(--sage);text-decoration:none}
+.fine-print a:hover{text-decoration:underline}
+
+/* Success state */
+#successState{display:none;text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:20px}
+.success-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:12px;line-height:1.2}
+.success-title em{font-style:italic;color:var(--sage)}
+.success-sub{font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;max-width:400px;margin:0 auto 28px}
+.btn-go{display:inline-flex;align-items:center;gap:10px;padding:14px 32px;background:var(--sage-deep);color:white;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;text-decoration:none;transition:all .2s}
+.btn-go:hover{background:var(--ink);transform:translateY(-1px)}
+
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--ink-muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+@media(max-width:480px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+  </div>
+  <a href="advocate-login.html" class="nav-login">Already have an account →</a>
+</nav>
+
+<div class="page">
+
+  <div id="formState">
+    <div class="badge">🌿 Beta Access — Free for 3 Months</div>
+    <h1>Try MedAdvocate <em>free.</em></h1>
+    <p class="sub">Get full access for three months — no credit card, no commitment. Your data lives in the cloud so you can keep everything if you choose to stay.</p>
+
+    <div class="perks">
+      <div class="perk"><div class="perk-dot">✓</div><span><strong>Full access to every tool</strong> — Visit Scripts, Lab Tracker, Symptom Tracker, Medical Summary, and more</span></div>
+      <div class="perk"><div class="perk-dot">✓</div><span><strong>All your data saved securely</strong> — in the cloud, accessible on any device</span></div>
+      <div class="perk"><div class="perk-dot">✓</div><span><strong>Data stays yours</strong> — everything transfers if you continue after three months</span></div>
+      <div class="perk"><div class="perk-dot">✓</div><span><strong>No card required</strong> — we'll reach out before your trial ends</span></div>
+    </div>
+
+    <div class="card">
+      <div class="two">
+        <div class="field">
+          <label class="flabel">First name</label>
+          <input type="text" class="finput" id="f_first" placeholder="Sarah" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label class="flabel">Last name <span class="flabel-opt">optional</span></label>
+          <input type="text" class="finput" id="f_last" placeholder="M." autocomplete="family-name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Email</label>
+        <input type="email" class="finput" id="f_email" placeholder="you@example.com" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label class="flabel">Password</label>
+        <div class="pw-wrap">
+          <input type="password" class="finput" id="f_pw" placeholder="At least 8 characters" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('f_pw',this)">👁</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Confirm password</label>
+        <div class="pw-wrap">
+          <input type="password" class="finput" id="f_pw2" placeholder="Repeat password" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('f_pw2',this)">👁</button>
+        </div>
+      </div>
+
+      <div class="divider">tell us a little about you</div>
+
+      <div class="field">
+        <label class="flabel">I am a <span class="flabel-opt">optional</span></label>
+        <select class="fselect" id="f_role">
+          <option value="">Select one…</option>
+          <option value="parent">Parent / caregiver of a child with medical complexity</option>
+          <option value="self">Managing my own chronic illness</option>
+          <option value="both">Both — managing my health and a child's</option>
+          <option value="caregiver">Caregiver for a spouse, parent, or adult family member</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="flabel">Conditions being managed <span class="flabel-opt">optional</span></label>
+        <input type="text" class="finput" id="f_conditions" placeholder="e.g. POTS, EDS, MCAS, Hashimoto's…">
+      </div>
+
+      <div id="errMsg" class="err"></div>
+
+      <button class="btn" id="submitBtn" onclick="signUp()">
+        <span>🌿</span> Get free access
+      </button>
+    </div>
+
+    <p class="fine-print">
+      By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.<br>
+      Already have an account? <a href="advocate-login.html">Sign in here.</a>
+    </p>
+  </div>
+
+  <!-- Success -->
+  <div id="successState">
+    <div class="success-icon">🌿</div>
+    <h2 class="success-title">You're in.<br><em>Welcome.</em></h2>
+    <p class="success-sub" id="successMsg">Your account is ready. Three months of full access, starting today. Your data will always be here waiting for you.</p>
+    <a href="index.html" class="btn-go">Open MedAdvocate →</a>
+  </div>
+
+</div>
+
+<script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideErr() {
+  document.getElementById('errMsg').style.display = 'none';
+}
+
+async function signUp() {
+  hideErr();
+  const first     = document.getElementById('f_first').value.trim();
+  const last      = document.getElementById('f_last').value.trim();
+  const email     = document.getElementById('f_email').value.trim();
+  const pw        = document.getElementById('f_pw').value;
+  const pw2       = document.getElementById('f_pw2').value;
+  const role      = document.getElementById('f_role').value;
+  const conditions = document.getElementById('f_conditions').value.trim();
+
+  if (!first)           return showErr('Please enter your first name.');
+  if (!email)           return showErr('Please enter your email address.');
+  if (!pw)              return showErr('Please choose a password.');
+  if (pw.length < 8)    return showErr('Password must be at least 8 characters.');
+  if (pw !== pw2)       return showErr('Passwords don\'t match — please check and try again.');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Creating your account…';
+
+  try {
+    const name = last ? `${first} ${last}` : first;
+    await Auth.signUp(email, pw, name);
+
+    // Store trial metadata on the auth user
+    const trialEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    await Auth.setUserMeta({
+      plan: 'beta',
+      trial_end: trialEnd,
+      role: role || null,
+      conditions: conditions || null
+    });
+
+    // Pre-fill diagnoses on the patient profile if provided
+    if (conditions) {
+      try { await DB.saveProfile({ diagnoses: conditions }); } catch(e) {}
+    }
+
+    // Show success
+    document.getElementById('formState').style.display = 'none';
+    const s = document.getElementById('successState');
+    s.style.display = 'block';
+    document.getElementById('successMsg').textContent =
+      `Welcome, ${first}! Your account is ready — three months of full access, starting today. Everything you add is saved to your account so your data is always there when you need it.`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🌿</span> Get free access';
+    const msg = e.message || '';
+    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+      showErr('An account with that email already exists. Try signing in instead.');
+    } else if (msg.toLowerCase().includes('password')) {
+      showErr('Password is too weak — try something longer or more complex.');
+    } else if (msg.toLowerCase().includes('email')) {
+      showErr('That email address doesn\'t look right — please check and try again.');
+    } else {
+      showErr('Something went wrong. Please try again in a moment.');
+    }
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('submitBtn').disabled) signUp();
+});
+</script>
+
+</body>
+</html>
