@@ -696,9 +696,26 @@
 // ─────────────────────────────────
 // STATE
 // ─────────────────────────────────
-let allLabDates = []; // [{date, fileName, results:[{name,value,unit,low,high,status,note}]}]
+const LAB_CACHE_KEY = 'advocate_lab_results';
+let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,low,high,status,note}]}]
 let charts = {};
 let activeChartFilter = 'all';
+
+function saveLabs() {
+  try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates)); } catch(e) {}
+}
+function loadLabs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAB_CACHE_KEY) || '[]');
+    if (saved.length) {
+      allLabDates = saved;
+      updateHistory();
+      showLabEntry(allLabDates[allLabDates.length - 1]);
+      document.getElementById('labResults').classList.remove('hidden');
+      document.getElementById('emptyLabs').classList.add('hidden');
+    }
+  } catch(e) {}
+}
 
 // ─────────────────────────────────
 // NAVIGATION
@@ -773,6 +790,18 @@ async function pdfToBase64Image(pdfDoc, pageNum) {
 }
 
 async function processFile(file) {
+  const fileKey = file.name + '_' + file.size;
+
+  // Return cached result instantly — no API call needed
+  const cached = allLabDates.find(e => e.fileKey === fileKey);
+  if (cached) {
+    showLabEntry(cached);
+    document.getElementById('labResults').classList.remove('hidden');
+    document.getElementById('emptyLabs').classList.add('hidden');
+    showToast('Loaded from cache ✓');
+    return;
+  }
+
   document.getElementById('emptyLabs').classList.add('hidden');
   document.getElementById('labResults').classList.add('hidden');
   document.getElementById('processingCard').classList.remove('hidden');
@@ -822,7 +851,7 @@ async function processFile(file) {
     }
 
     document.getElementById('processingCard').classList.add('hidden');
-    renderLabResults(content, file.name);
+    renderLabResults(content, file.name, fileKey);
 
   } catch (err) {
     document.getElementById('processingCard').classList.add('hidden');
@@ -1026,7 +1055,7 @@ async function extractLabsFromImages(base64Array) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 4000,
       system: buildSystemPrompt(),
       messages: [{
@@ -1047,7 +1076,7 @@ async function extractLabsFromText(text) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 4000,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: `Lab report text:\n\n${text}` }]
@@ -1060,20 +1089,22 @@ async function extractLabsFromText(text) {
 // ─────────────────────────────────
 // RENDER LAB RESULTS
 // ─────────────────────────────────
-function renderLabResults(data, fileName) {
+function renderLabResults(data, fileName, fileKey) {
   // Store
   const entry = {
     date: data.reportDate || new Date().toISOString().split('T')[0],
     fileName,
+    fileKey: fileKey || null,
     patientName: data.patientName,
     results: data.results || [],
     insights: data.insights || []
   };
 
-  // Remove existing entry for same date
-  allLabDates = allLabDates.filter(e => e.date !== entry.date);
+  // Remove existing entry for same date or same file
+  allLabDates = allLabDates.filter(e => e.date !== entry.date && e.fileKey !== entry.fileKey);
   allLabDates.push(entry);
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
+  saveLabs();
 
   // Update history
   updateHistory();
@@ -1482,6 +1513,7 @@ function loadDemo() {
 // Load demo on first visit if no data
 document.addEventListener('DOMContentLoaded', () => {
   loadProfile();
+  loadLabs();
   // Add demo button to empty state
   document.getElementById('emptyLabs').innerHTML += `
     <button class="btn btn-outline" style="margin:20px auto 0; display:inline-flex;" onclick="loadDemo()">
