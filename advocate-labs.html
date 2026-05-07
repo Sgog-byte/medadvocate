@@ -1010,26 +1010,34 @@ Rules:
 - Today's date: ${new Date().toISOString().split('T')[0]}`;
 }
 
-async function extractLabsFromFile(base64, mediaType) {
+async function callProxy(payload) {
   const resp = await fetch('/.netlify/functions/claude-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      system: buildSystemPrompt(),
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-          { type: 'text', text: 'Please extract all lab results from this report and provide personalized insights.' }
-        ]
-      }]
-    })
+    body: JSON.stringify(payload)
   });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`HTTP ${resp.status}: ${txt.substring(0, 120)}`);
+  }
   const data = await resp.json();
   if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
   return safeParseLabJSON(data.content?.[0]?.text || '');
+}
+
+async function extractLabsFromFile(base64, mediaType) {
+  return callProxy({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 8000,
+    system: buildSystemPrompt(),
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+        { type: 'text', text: 'Extract all lab results and provide personalized insights.' }
+      ]
+    }]
+  });
 }
 
 function safeParseLabJSON(raw) {
@@ -1067,42 +1075,28 @@ async function extractLabsFromImages(base64Array) {
   const imageBlocks = base64Array.map(b64 => ({
     type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
   }));
-  const resp = await fetch('/.netlify/functions/claude-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      system: buildSystemPrompt(),
-      messages: [{
-        role: 'user',
-        content: [
-          ...imageBlocks,
-          { type: 'text', text: 'Please extract all lab results from these scanned report pages and provide personalized insights.' }
-        ]
-      }]
-    })
+  return callProxy({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 8000,
+    system: buildSystemPrompt(),
+    messages: [{
+      role: 'user',
+      content: [
+        ...imageBlocks,
+        { type: 'text', text: 'Extract all lab results from these scanned pages and provide personalized insights.' }
+      ]
+    }]
   });
-  const data = await resp.json();
-  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
-  return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
 async function extractLabsFromText(text) {
   const truncated = text.length > 12000 ? text.substring(0, 12000) + '\n[truncated]' : text;
-  const resp = await fetch('/.netlify/functions/claude-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      system: buildSystemPrompt(),
-      messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
-    })
+  return callProxy({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 8000,
+    system: buildSystemPrompt(),
+    messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
   });
-  const data = await resp.json();
-  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
-  return safeParseLabJSON(data.content?.[0]?.text || '');
 }
 
 // ─────────────────────────────────
