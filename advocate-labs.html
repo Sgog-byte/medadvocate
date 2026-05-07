@@ -551,10 +551,10 @@
         ondragover="event.preventDefault(); this.classList.add('dragging')"
         ondragleave="this.classList.remove('dragging')"
         ondrop="handleDrop(event)">
-        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt" onchange="handleFile(event)">
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx" onchange="handleFile(event)">
         <div class="upload-icon">🧪</div>
         <div class="upload-title">Drop a lab report here</div>
-        <div class="upload-sub">PDF, image, or text file • We'll extract all values automatically</div>
+        <div class="upload-sub">PDF, Word doc, image, or text file • We'll extract all values automatically</div>
       </div>
 
       <!-- Processing -->
@@ -733,6 +733,23 @@ function handleFile(e) {
   e.target.value = '';
 }
 
+async function loadMammoth() {
+  if (window.mammoth) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function extractTextFromDoc(file) {
+  await loadMammoth();
+  const buf = await file.arrayBuffer();
+  const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value.trim();
+}
+
 async function loadPdfJs() {
   if (window.pdfjsLib) return;
   await new Promise((resolve, reject) => {
@@ -765,7 +782,13 @@ async function processFile(file) {
     const isImage = file.type.startsWith('image/');
     const isPDF = file.type === 'application/pdf';
 
-    if (isPDF) {
+    const isDoc = file.name.endsWith('.doc') || file.name.endsWith('.docx');
+
+    if (isDoc) {
+      const text = await extractTextFromDoc(file);
+      if (!text) throw new Error('No text found in document');
+      content = await extractLabsFromText(text);
+    } else if (isPDF) {
       await loadPdfJs();
       const buf = await file.arrayBuffer();
       const pdfDoc = await window.pdfjsLib.getDocument({ data: buf }).promise;
