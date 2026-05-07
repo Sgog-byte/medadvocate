@@ -1116,7 +1116,8 @@ function renderLabResults(data, fileName, fileKey) {
   };
 
   // Remove existing entry for same date or same file
-  allLabDates = allLabDates.filter(e => e.date !== entry.date && e.fileKey !== entry.fileKey);
+  // Only deduplicate by fileKey — same date is valid (multiple panels same day)
+  allLabDates = allLabDates.filter(e => !entry.fileKey || e.fileKey !== entry.fileKey);
   allLabDates.push(entry);
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
   saveLabs();
