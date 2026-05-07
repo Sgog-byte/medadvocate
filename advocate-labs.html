@@ -733,6 +733,31 @@ function handleFile(e) {
   e.target.value = '';
 }
 
+async function loadPdfJs() {
+  if (window.pdfjsLib) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function extractTextFromPDF(file) {
+  await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const c = await page.getTextContent();
+    text += c.items.map(item => item.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
 async function processFile(file) {
   document.getElementById('emptyLabs').classList.add('hidden');
   document.getElementById('labResults').classList.add('hidden');
@@ -743,11 +768,14 @@ async function processFile(file) {
     const isImage = file.type.startsWith('image/');
     const isPDF = file.type === 'application/pdf';
 
-    if (isImage || isPDF) {
-      // Convert to base64
+    if (isPDF) {
+      // Extract text client-side — avoids Netlify body size limits
+      const text = await extractTextFromPDF(file);
+      if (!text) throw new Error('No text found in PDF');
+      content = await extractLabsFromText(text);
+    } else if (isImage) {
       const base64 = await fileToBase64(file);
-      const mediaType = file.type;
-      content = await extractLabsFromFile(base64, mediaType, isImage);
+      content = await extractLabsFromFile(base64, file.type, true);
     } else {
       content = await file.text();
       content = await extractLabsFromText(content);
@@ -759,7 +787,7 @@ async function processFile(file) {
   } catch (err) {
     document.getElementById('processingCard').classList.add('hidden');
     document.getElementById('emptyLabs').classList.remove('hidden');
-    showToast('Error reading file. Please try a different format.');
+    showToast('Could not read this file — try a clearer scan or paste the text directly.');
     console.error(err);
   }
 }
