@@ -704,15 +704,30 @@ let activeChartFilter = 'all';
 function saveLabs() {
   try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates)); } catch(e) {}
 }
-function loadLabs() {
+
+function applyLoadedLabs(reports) {
+  if (!reports.length) return false;
+  allLabDates = reports;
+  allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
+  saveLabs();
+  updateHistory();
+  showLabEntry(allLabDates[allLabDates.length - 1]);
+  document.getElementById('labResults').classList.remove('hidden');
+  document.getElementById('emptyLabs').classList.add('hidden');
+  return true;
+}
+
+async function loadLabs() {
+  // Try Supabase first (works across devices)
+  try {
+    const dbReports = await DB.getLabReports();
+    if (dbReports.length) { applyLoadedLabs(dbReports); return; }
+  } catch(e) {}
+  // Fall back to localStorage; migrate to Supabase in background
   try {
     const saved = JSON.parse(localStorage.getItem(LAB_CACHE_KEY) || '[]');
-    if (saved.length) {
-      allLabDates = saved;
-      updateHistory();
-      showLabEntry(allLabDates[allLabDates.length - 1]);
-      document.getElementById('labResults').classList.remove('hidden');
-      document.getElementById('emptyLabs').classList.add('hidden');
+    if (applyLoadedLabs(saved)) {
+      saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
     }
   } catch(e) {}
 }
@@ -1105,6 +1120,7 @@ function renderLabResults(data, fileName, fileKey) {
   allLabDates.push(entry);
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
   saveLabs();
+  DB.saveLabReport(entry).catch(() => {});
 
   // Update history
   updateHistory();

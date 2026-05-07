@@ -387,6 +387,45 @@ const DB = {
     await _supa.from('lab_results').delete().eq('id', id);
   },
 
+  // ── LAB REPORTS (full processed report blobs) ────────────────
+  // Stored as sentinel rows (test_name='__report__') with JSON in notes.
+
+  async getLabReports() {
+    const pid = await DB.patientId();
+    if (!pid) return [];
+    const { data } = await _supa
+      .from('lab_results')
+      .select('id, lab_date, notes')
+      .eq('patient_id', pid)
+      .eq('test_name', '__report__')
+      .order('lab_date', { ascending: true });
+    return (data || []).map(row => {
+      try { return { dbId: row.id, ...JSON.parse(row.notes) }; } catch { return null; }
+    }).filter(Boolean);
+  },
+
+  async saveLabReport(report) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    const blob = JSON.stringify(report);
+    const { data: existing } = await _supa
+      .from('lab_results').select('id')
+      .eq('patient_id', pid).eq('test_name', '__report__').eq('lab_date', report.date)
+      .maybeSingle();
+    if (existing?.id) {
+      await _supa.from('lab_results').update({ notes: blob }).eq('id', existing.id);
+    } else {
+      await _supa.from('lab_results').insert({
+        patient_id: pid, test_name: '__report__',
+        lab_date: report.date, status: 'report', notes: blob
+      });
+    }
+  },
+
+  async deleteLabReport(id) {
+    await _supa.from('lab_results').delete().eq('id', id);
+  },
+
   // ── DIAGNOSTIC TESTS ────────────────────────────────────────
 
   async getDiagnosticTests() {
