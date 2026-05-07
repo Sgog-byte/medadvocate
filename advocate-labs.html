@@ -745,17 +745,14 @@ async function loadPdfJs() {
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-async function extractTextFromPDF(file) {
-  await loadPdfJs();
-  const buf = await file.arrayBuffer();
-  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-  let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const c = await page.getTextContent();
-    text += c.items.map(item => item.str).join(' ') + '\n';
-  }
-  return text.trim();
+async function pdfToBase64Image(pdfDoc, pageNum) {
+  const page = await pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({ scale: 2.0 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  return canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
 }
 
 async function processFile(file) {
@@ -769,10 +766,30 @@ async function processFile(file) {
     const isPDF = file.type === 'application/pdf';
 
     if (isPDF) {
-      // Extract text client-side — avoids Netlify body size limits
-      const text = await extractTextFromPDF(file);
-      if (!text) throw new Error('No text found in PDF');
-      content = await extractLabsFromText(text);
+      await loadPdfJs();
+      const buf = await file.arrayBuffer();
+      const pdfDoc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+
+      // Try text extraction first (works for digital PDFs)
+      let text = '';
+      for (let i = 1; i <= Math.min(pdfDoc.numPages, 4); i++) {
+        const page = await pdfDoc.getPage(i);
+        const c = await page.getTextContent();
+        text += c.items.map(item => item.str).join(' ') + '\n';
+      }
+      text = text.trim();
+
+      if (text.length > 80) {
+        // Digital PDF — send text to Claude
+        content = await extractLabsFromText(text);
+      } else {
+        // Scanned PDF — render pages to images and send via vision
+        const images = [];
+        for (let i = 1; i <= Math.min(pdfDoc.numPages, 3); i++) {
+          images.push(await pdfToBase64Image(pdfDoc, i));
+        }
+        content = await extractLabsFromImages(images);
+      }
     } else if (isImage) {
       const base64 = await fileToBase64(file);
       content = await extractLabsFromFile(base64, file.type, true);
@@ -947,6 +964,31 @@ async function extractLabsFromFile(base64, mediaType, isImage) {
     })
   });
 
+  const data = await resp.json();
+  const text = data.content?.[0]?.text || '';
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+async function extractLabsFromImages(base64Array) {
+  const imageBlocks = base64Array.map(b64 => ({
+    type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
+  }));
+  const resp = await fetch('/.netlify/functions/claude-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      system: buildSystemPrompt(),
+      messages: [{
+        role: 'user',
+        content: [
+          ...imageBlocks,
+          { type: 'text', text: 'Please extract all lab results from these scanned report pages and provide personalized insights.' }
+        ]
+      }]
+    })
+  });
   const data = await resp.json();
   const text = data.content?.[0]?.text || '';
   return JSON.parse(text.replace(/```json|```/g, '').trim());
