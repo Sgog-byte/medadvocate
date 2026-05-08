@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MedAdvocate — Lab Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --sage: #7a9e87;
@@ -269,7 +268,7 @@
   .status-low { background: #eff6ff; color: #2563eb; }
   .status-watch { background: var(--gold-pale); color: #92400e; }
 
-  /* ─── CHART AREA ─── */
+  /* ─── TREND FILTERS ─── */
   .chart-controls {
     display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
   }
@@ -286,9 +285,27 @@
   .chart-filter-btn:hover { border-color: var(--sage-light); background: var(--sage-pale); }
   .chart-filter-btn.active { border-color: var(--sage); background: var(--sage-pale); color: var(--sage-dark); font-weight: 500; }
 
-  .chart-wrapper {
-    position: relative; height: 280px;
-  }
+  /* ─── RANGE BARS ─── */
+  .rbar-row { display:flex; align-items:center; gap:20px; padding:14px 0; border-bottom:1px solid var(--border); }
+  .rbar-row:last-child { border-bottom:none; }
+  .rbar-label { width:190px; flex-shrink:0; }
+  .rbar-name { font-size:13px; font-weight:500; color:var(--ink); line-height:1.4; }
+  .rbar-val { font-size:16px; font-weight:500; color:var(--ink); margin-top:3px; }
+  .rbar-unit { font-size:12px; color:var(--ink-muted); font-weight:400; }
+  .rbar-change { font-size:11px; margin-top:2px; }
+  .rbar-track-wrap { flex:1; min-width:0; }
+  .rbar-track { position:relative; height:16px; border-radius:8px; background:#ebebeb; margin-bottom:5px; overflow:visible; }
+  .rbar-zone { position:absolute; top:0; bottom:0; }
+  .rbar-zone-low { border-radius:8px 0 0 8px; background:#dbeafe; }
+  .rbar-zone-normal { background:var(--sage-pale); border-top:1px solid var(--sage-light); border-bottom:1px solid var(--sage-light); }
+  .rbar-zone-high { border-radius:0 8px 8px 0; background:#fee2e2; }
+  .rbar-dot { position:absolute; top:50%; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.18); transform:translate(-50%,-50%); }
+  .rbar-dot-prev { width:9px; height:9px; opacity:.55; z-index:1; }
+  .rbar-dot-curr { width:18px; height:18px; z-index:2; }
+  .rbar-limits { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); }
+  .rbar-no-range { display:flex; align-items:center; gap:12px; }
+  .rbar-no-range-bar { flex:1; height:6px; border-radius:3px; background:var(--border); position:relative; }
+  .rbar-no-range-dot { position:absolute; top:50%; left:50%; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); transform:translate(-50%,-50%); }
 
   /* ─── TABLE ─── */
   .lab-table {
@@ -412,7 +429,7 @@
       margin-bottom: 16px;
     }
 
-    .chart-wrapper { height: 220px; }
+    .rbar-dot-prev { display: none; }
 
     .summary-tile { break-inside: avoid; }
 
@@ -701,7 +718,6 @@
 // ─────────────────────────────────
 const LAB_CACHE_KEY = 'advocate_lab_results';
 let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,low,high,status,note}]}]
-let charts = {};
 let activeChartFilter = 'all';
 
 function saveLabs() {
@@ -1187,16 +1203,19 @@ function renderTrends() {
     document.getElementById('trendsContent').classList.add('hidden');
     return;
   }
-
   document.getElementById('trendsEmpty').classList.add('hidden');
   document.getElementById('trendsContent').classList.remove('hidden');
 
-  // Collect all unique test names
+  // Collect all tests with all their readings across dates
   const allTests = {};
   allLabDates.forEach(entry => {
-    entry.results.forEach(r => {
-      if (!allTests[r.name]) allTests[r.name] = { name: r.name, status: r.status };
-      else if (r.status !== 'normal') allTests[r.name].status = r.status;
+    (entry.results || []).forEach(r => {
+      if (!allTests[r.name]) allTests[r.name] = { status: 'normal', readings: [], low: null, high: null, unit: r.unit || '' };
+      if (r.status !== 'normal') allTests[r.name].status = r.status;
+      if (r.low != null) allTests[r.name].low = r.low;
+      if (r.high != null) allTests[r.name].high = r.high;
+      if (r.unit) allTests[r.name].unit = r.unit;
+      allTests[r.name].readings.push({ date: entry.date, value: r.value, status: r.status });
     });
   });
 
@@ -1208,7 +1227,6 @@ function renderTrends() {
     metabolic: testNames.filter(n => /glucose|creatinine|bun|sodium|potassium|chloride|co2|calcium|protein|albumin|bilirubin|alt|ast|alk/i.test(n)),
   };
 
-  // Filter buttons
   const btns = document.getElementById('chartFilterBtns');
   btns.innerHTML = ['all','flagged','cbc','metabolic'].map(cat => {
     const labels = { all:'All Tests', flagged:'⚠ Out of Range', cbc:'CBC Panel', metabolic:'Metabolic Panel' };
@@ -1218,136 +1236,96 @@ function renderTrends() {
       : '';
   }).join('');
 
-  // Destroy old charts
-  Object.values(charts).forEach(c => c.destroy());
-  charts = {};
-
   const toShow = categories[activeChartFilter] || testNames;
   const container = document.getElementById('chartsContainer');
   container.innerHTML = '';
 
   if (toShow.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No flagged results</div><div class="empty-sub">All results in range. Switch to "All Tests" to see charts.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">All results in range</div><div class="empty-sub">Switch to "All Tests" to browse every value.</div></div>';
     return;
   }
 
-  const dates = allLabDates.map(e => {
-    const d = new Date(e.date + 'T12:00:00');
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
-  });
+  // Group into a single card with rows
+  const card = document.createElement('div');
+  card.className = 'card';
 
-  // Color palette
-  const COLORS = ['#7a9e87','#c9906e','#c4a862','#6baed6','#9e7a9e','#7a9e9e'];
+  toShow.forEach(testName => {
+    const t = allTests[testName];
+    const latest = t.readings[t.readings.length - 1];
+    const prev = t.readings.length > 1 ? t.readings[t.readings.length - 2] : null;
+    const { low, high, unit } = t;
+    const v = latest.value;
+    const status = latest.status;
 
-  toShow.forEach((testName, idx) => {
-    const values = allLabDates.map(entry => {
-      const r = entry.results.find(x => x.name === testName);
-      return r ? r.value : null;
-    });
+    // Dot color by status
+    const dotColor = status === 'critical' ? '#dc2626' : status === 'high' ? '#e05555' : status === 'low' ? '#3b82f6' : '#2d6a4f';
 
-    // Get reference range from most recent entry
-    let low = null, high = null;
-    for (let i = allLabDates.length - 1; i >= 0; i--) {
-      const r = allLabDates[i].results.find(x => x.name === testName);
-      if (r) { low = r.low; high = r.high; break; }
+    // Status badge
+    const badge = status !== 'normal'
+      ? `<span class="tile-status ${status === 'high' || status === 'critical' ? 'status-high' : 'status-low'}" style="display:inline-flex;margin-left:5px;font-size:10px;padding:1px 5px">${status === 'critical' ? '⚠' : status === 'high' ? '↑' : '↓'}</span>`
+      : '';
+
+    // Trend vs previous reading
+    let changeHtml = '';
+    if (prev != null) {
+      const delta = v - prev.value;
+      const pct = prev.value !== 0 ? Math.abs(delta / prev.value * 100).toFixed(0) : '';
+      const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
+      const color = (status !== 'normal') ? '#e05555' : 'var(--ink-muted)';
+      changeHtml = `<div class="rbar-change" style="color:${color}">${arrow} ${pct ? pct + '% from ' : ''}${new Date(prev.date + 'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>`;
     }
 
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.marginBottom = '20px';
+    let barHtml = '';
+    if (low != null && high != null && high > low) {
+      // Calculate display range with padding
+      const span = high - low;
+      let dMin = low - span * 0.35;
+      let dMax = high + span * 0.35;
+      // Ensure value and all readings fit
+      t.readings.forEach(r => { dMin = Math.min(dMin, r.value - span * 0.05); dMax = Math.max(dMax, r.value + span * 0.05); });
+      const dSpan = dMax - dMin;
+      const pct = x => Math.max(1, Math.min(99, ((x - dMin) / dSpan) * 100));
 
-    const status = allTests[testName].status;
-    const badge = status !== 'normal' ? `<span class="tile-status ${status === 'high' || status === 'critical' ? 'status-high' : 'status-low'}" style="display:inline-flex; margin-left:10px">${status === 'high' ? '↑ High' : status === 'critical' ? '⚠ Critical' : '↓ Low'}</span>` : '';
+      const lowPct  = pct(low);
+      const highPct = pct(high);
 
-    card.innerHTML = `
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; flex-wrap:wrap; gap:8px;">
-        <div style="font-family:'Fraunces',serif; font-size:16px; font-weight:400;">${testName} ${badge}</div>
-        ${low != null ? `<div style="font-size:12px; color:var(--ink-muted);">Ref range: ${low} – ${high}</div>` : ''}
+      // Previous dots (all except latest)
+      const prevDots = t.readings.slice(0, -1).map(r => {
+        const c = r.status === 'high' || r.status === 'critical' ? '#e05555' : r.status === 'low' ? '#3b82f6' : '#7a9e87';
+        const dateLabel = new Date(r.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        return `<div class="rbar-dot rbar-dot-prev" style="left:${pct(r.value)}%;background:${c}" title="${dateLabel}: ${r.value} ${unit}"></div>`;
+      }).join('');
+
+      barHtml = `
+        <div class="rbar-track">
+          <div class="rbar-zone rbar-zone-low" style="left:0;right:${100-lowPct}%"></div>
+          <div class="rbar-zone rbar-zone-normal" style="left:${lowPct}%;right:${100-highPct}%"></div>
+          <div class="rbar-zone rbar-zone-high" style="left:${highPct}%;right:0"></div>
+          ${prevDots}
+          <div class="rbar-dot rbar-dot-curr" style="left:${pct(v)}%;background:${dotColor}"></div>
+        </div>
+        <div class="rbar-limits">
+          <span>${low} ${unit}</span>
+          <span style="color:var(--ink-muted);font-size:10px">reference range</span>
+          <span>${high} ${unit}</span>
+        </div>`;
+    } else {
+      barHtml = `<div class="rbar-no-range"><div class="rbar-no-range-bar"><div class="rbar-no-range-dot" style="background:${dotColor}"></div></div><span style="font-size:11px;color:var(--ink-muted)">No reference range</span></div>`;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'rbar-row';
+    row.innerHTML = `
+      <div class="rbar-label">
+        <div class="rbar-name">${testName}${badge}</div>
+        <div class="rbar-val">${v} <span class="rbar-unit">${unit}</span></div>
+        ${changeHtml}
       </div>
-      <div class="chart-wrapper"><canvas id="chart-${idx}"></canvas></div>
-    `;
-    container.appendChild(card);
-
-    const ctx = document.getElementById(`chart-${idx}`).getContext('2d');
-    const color = COLORS[idx % COLORS.length];
-
-    const datasets = [{
-      label: testName,
-      data: values,
-      borderColor: color,
-      backgroundColor: color + '18',
-      borderWidth: 2.5,
-      pointBackgroundColor: values.map((v, i) => {
-        if (v == null) return 'transparent';
-        if (low != null && v < low) return '#3b82f6';
-        if (high != null && v > high) return '#e05555';
-        return color;
-      }),
-      pointRadius: 5,
-      pointHoverRadius: 7,
-      tension: 0.35,
-      fill: true,
-      spanGaps: true
-    }];
-
-    // Add reference range bands
-    if (low != null && high != null) {
-      datasets.push({
-        label: 'Upper Limit',
-        data: dates.map(() => high),
-        borderColor: '#e0555540',
-        borderWidth: 1,
-        borderDash: [6, 4],
-        pointRadius: 0,
-        fill: false,
-        tension: 0
-      });
-      datasets.push({
-        label: 'Lower Limit',
-        data: dates.map(() => low),
-        borderColor: '#3b82f640',
-        borderWidth: 1,
-        borderDash: [6, 4],
-        pointRadius: 0,
-        fill: false,
-        tension: 0
-      });
-    }
-
-    charts[`chart-${idx}`] = new Chart(ctx, {
-      type: 'line',
-      data: { labels: dates, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => {
-                if (ctx.datasetIndex > 0) return null;
-                const v = ctx.parsed.y;
-                let note = ` ${testName}: ${v}`;
-                if (high != null && v > high) note += ' ↑ Above range';
-                if (low != null && v < low) note += ' ↓ Below range';
-                return note;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { color: '#dde8e040' },
-            ticks: { font: { family: 'DM Sans', size: 11 }, color: '#8a9e90' }
-          },
-          y: {
-            grid: { color: '#dde8e050' },
-            ticks: { font: { family: 'DM Sans', size: 11 }, color: '#8a9e90' }
-          }
-        }
-      }
-    });
+      <div class="rbar-track-wrap">${barHtml}</div>`;
+    card.appendChild(row);
   });
+
+  container.appendChild(card);
 }
 
 function setChartFilter(cat) {
