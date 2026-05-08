@@ -296,6 +296,54 @@ function processExtractFile(file) {
   reader.readAsDataURL(file);
 }
 
+// ── SAFE JSON PARSER (handles truncated responses) ──
+function safeParseTimelineJSON(raw) {
+  let txt = (raw || '').replace(/```json[\s\S]*?```|```[\s\S]*?```/g, s => s.replace(/```json|```/g, '')).trim();
+  // Find outermost { ... }
+  const start = txt.indexOf('{');
+  if (start === -1) throw new Error('No JSON object found in response');
+  // Find the last valid closing brace
+  let depth = 0, end = -1;
+  for (let i = start; i < txt.length; i++) {
+    if (txt[i] === '{') depth++;
+    else if (txt[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  let json = end !== -1 ? txt.slice(start, end + 1) : txt.slice(start);
+  // If truncated, try to close open structures
+  if (end === -1) {
+    // Remove trailing incomplete string/field
+    json = json.replace(/,\s*"[^"]*$/, '').replace(/,\s*\{[^}]*$/, '');
+    // Close open arrays and objects
+    let opens = 0, inStr = false, esc = false;
+    for (const ch of json) {
+      if (esc) { esc = false; continue; }
+      if (ch === '\\' && inStr) { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (!inStr) { if (ch === '[' || ch === '{') opens++; else if (ch === ']' || ch === '}') opens--; }
+    }
+    // Add missing summary/eventsFound if we're inside the events array
+    json = json.replace(/,\s*$/, '');
+    json += '"],"summary":"Extracted from document (response was truncated)","eventsFound":0}';
+    // That added one closing brace; add the rest for any unclosed objects
+    for (let i = 1; i < Math.abs(opens); i++) json += '}';
+  }
+  // Fix trailing commas before ] or }
+  json = json.replace(/,(\s*[}\]])/g, '$1');
+  try {
+    return JSON.parse(json);
+  } catch(e) {
+    // Last resort: extract just the events array
+    const evMatch = json.match(/"events"\s*:\s*(\[[\s\S]*?\])/);
+    if (evMatch) {
+      try {
+        const events = JSON.parse(evMatch[1].replace(/,(\s*[}\]])/g, '$1'));
+        return { events, summary: 'Extracted from document', eventsFound: events.length };
+      } catch(e2) {}
+    }
+    throw new Error('Could not parse response — try a shorter document or paste the text instead');
+  }
+}
+
 // ── EXTRACT FROM RECORDS ──
 async function extractFromRecords() {
   const text = document.getElementById('extract_text').value.trim();
@@ -334,9 +382,9 @@ Extract everything that happened — diagnoses, medications started or stopped, 
       const contentBlock = extractIsImage
         ? { type: 'image', source: { type: 'base64', media_type: extractFileType, data: extractFileData } }
         : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: extractFileData } };
-      body = { model: 'claude-sonnet-4-6', max_tokens: 1500, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Please extract all medical timeline events from this document.' }] }] };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 4000, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Please extract all medical timeline events from this document.' }] }] };
     } else {
-      body = { model: 'claude-sonnet-4-6', max_tokens: 1500, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 4000, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
     }
 
     const r = await fetch('/.netlify/functions/claude-proxy', {
@@ -349,7 +397,7 @@ Extract everything that happened — diagnoses, medications started or stopped, 
     }
     const d = await r.json();
     if (d.error) throw new Error('API: ' + (d.error.message || JSON.stringify(d.error)));
-    const result = JSON.parse((d.content?.[0]?.text || '').replace(/```json|```/g, '').trim());
+    const result = safeParseTimelineJSON(d.content?.[0]?.text || '');
 
     if (!result.events?.length) {
       statusEl.innerHTML = '<div style="color:var(--amber);font-size:13px">No events found. Try pasting more detailed medical records.</div>';
@@ -380,8 +428,13 @@ Extract everything that happened — diagnoses, medications started or stopped, 
 
   } catch (e) {
     console.error(e);
-    const msg = e.message || '(no message)';
-    statusEl.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${msg}</div>`;
+    const msg = e.message || '';
+    const friendly = msg.includes('504') || msg.toLowerCase().includes('timeout')
+      ? 'The request timed out — try a shorter document or paste the text instead.'
+      : msg.includes('413') ? 'File is too large. Please paste the text instead.'
+      : msg.includes('Could not parse') ? msg
+      : 'Something went wrong — please try again in a moment.';
+    statusEl.innerHTML = `<div style="color:var(--red);font-size:13px">${friendly}</div>`;
   }
 }
 
