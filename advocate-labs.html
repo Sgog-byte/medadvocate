@@ -643,7 +643,10 @@
           <div class="page-title">AI <em>Insights</em></div>
           <div class="page-sub">Patterns and flags worth discussing with your doctor.</div>
         </div>
-        <button class="btn btn-outline no-print" onclick="printPage()">🖨️ Print Insights</button>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn btn-outline no-print" id="refreshInsightsBtn" onclick="refreshInsights()">🔄 Refresh Insights</button>
+          <button class="btn btn-outline no-print" onclick="printPage()">🖨️ Print Insights</button>
+        </div>
       </div>
 
       <div id="insightsEmpty" class="empty-state">
@@ -1355,6 +1358,42 @@ function setChartFilter(cat) {
 // ─────────────────────────────────
 // AI INSIGHTS
 // ─────────────────────────────────
+async function refreshInsights() {
+  if (allLabDates.length === 0) return;
+  const btn = document.getElementById('refreshInsightsBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Regenerating…';
+
+  const latest = allLabDates[allLabDates.length - 1];
+  const labSummary = (latest.results || []).map(r =>
+    `${r.name}: ${r.value} ${r.unit || ''} (ref: ${r.low ?? '?'}–${r.high ?? '?'}, status: ${r.status})`
+  ).join('\n');
+
+  try {
+    const data = await callProxy({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4500,
+      system: buildSystemPrompt(),
+      messages: [{ role: 'user', content: `Here are the already-extracted lab values from a report dated ${latest.date}. Do NOT re-extract — instead generate rich insights and a contextual summary.\n\nLab values:\n${labSummary}\n\nReturn JSON with only these keys:\n{"insights":[{"level":"urgent|watch|info","text":"..."}],"contextualSummary":"..."}` }]
+    });
+    if (data.insights) {
+      latest.insights = data.insights;
+      if (data.contextualSummary) latest.contextualSummary = data.contextualSummary;
+      saveLabs();
+      DB.saveLabReport(latest).catch(() => {});
+      // Clear old summary box so it re-renders fresh
+      const old = document.getElementById('contextualSummaryBox');
+      if (old) old.remove();
+      renderInsights();
+      showToast('✓ Insights refreshed');
+    }
+  } catch(e) {
+    showToast('Refresh failed: ' + (e.message || 'unknown error').substring(0, 80));
+  }
+  btn.disabled = false;
+  btn.textContent = '🔄 Refresh Insights';
+}
+
 function renderInsights() {
   if (allLabDates.length === 0) {
     document.getElementById('insightsEmpty').classList.remove('hidden');
