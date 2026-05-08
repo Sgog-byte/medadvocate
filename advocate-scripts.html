@@ -304,12 +304,15 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
       <label class="flabel">Anything specific about this doctor or situation?</label>
       <textarea class="fta" id="s_context" placeholder="e.g. 'She's our 4th cardiologist and I want to come in calm but prepared. She tends to cut me off.' Or 'He dismissed us last time and I need to know how to bring it back up.'" style="min-height:70px"></textarea>
     </div>
-    <div id="labInsightsBanner" style="display:none;margin-top:12px;background:#f0f7f2;border:1.5px solid #95d5b2;border-radius:13px;padding:14px 16px">
+    <div id="labInsightsBanner" style="margin-top:12px;background:#f0f7f2;border:1.5px solid #95d5b2;border-radius:13px;padding:14px 16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:600;color:#2d6a4f;letter-spacing:.06em;text-transform:uppercase">📋 Lab Insights Added</div>
-        <button onclick="clearLabInsights()" style="font-size:11px;color:#4a7a5e;background:none;border:none;cursor:pointer;text-decoration:underline">Clear all</button>
+        <div style="font-size:12px;font-weight:600;color:#2d6a4f;letter-spacing:.06em;text-transform:uppercase">📋 Lab Insights</div>
+        <button id="clearLabsBtn" onclick="clearLabInsights()" style="display:none;font-size:11px;color:#4a7a5e;background:none;border:none;cursor:pointer;text-decoration:underline">Clear all</button>
       </div>
-      <div id="labInsightsList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="labInsightsEmpty" style="font-size:13px;color:#4a7a5e;line-height:1.6">
+        No lab insights added yet. Go to <a href="advocate-labs.html" style="color:#2d6a4f;font-weight:500">Lab Tracker → AI Insights</a>, then click <strong>📋 Add to script</strong> on any insight to pull it in here.
+      </div>
+      <div id="labInsightsList" style="display:none;flex-direction:column;gap:8px"></div>
     </div>
   </div>
 
@@ -334,14 +337,22 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function loadLabInsights() {
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
-  const banner = document.getElementById('labInsightsBanner');
+  const empty = document.getElementById('labInsightsEmpty');
   const list = document.getElementById('labInsightsList');
-  if (!saved.length) { banner.style.display = 'none'; return; }
-  banner.style.display = 'block';
+  const clearBtn = document.getElementById('clearLabsBtn');
+  if (!saved.length) {
+    empty.style.display = 'block';
+    list.style.display = 'none';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  list.style.display = 'flex';
+  clearBtn.style.display = 'inline';
   list.innerHTML = saved.map((txt, i) => `
     <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
       <span style="color:#2d6a4f;margin-top:1px">•</span>
-      <span style="flex:1">${txt}</span>
+      <span style="flex:1">${escH(txt)}</span>
       <button onclick="removeLabInsight(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
     </div>`).join('');
 }
@@ -530,7 +541,25 @@ Write one focused script per situation (max 3). Keep each script concise — 2-3
 }
 
 function copyScripts(){
-  navigator.clipboard.writeText(window._scriptText||'').then(()=>showToast('Scripts copied ✓'));
+  const text = window._scriptText || '';
+  if (!text) { showToast('Generate a script first'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Scripts copied ✓'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast('Scripts copied ✓'); }
+  catch(e) { showToast('Copy failed — please select text and copy manually'); }
+  document.body.removeChild(ta);
 }
 
 // Pre-fill from profile + medications
