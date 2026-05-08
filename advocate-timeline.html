@@ -266,19 +266,32 @@ function handleExtractFile(e) {
 
 function processExtractFile(file) {
   const name = file.name;
+  const maxMB = 4;
+  if (file.size > maxMB * 1024 * 1024) {
+    document.getElementById('extract_status').innerHTML = `<div style="color:var(--red);font-size:13px">File is too large (${(file.size/1024/1024).toFixed(1)} MB). Please use a file under ${maxMB} MB, or copy-paste the text instead.</div>`;
+    return;
+  }
   document.getElementById('extract_file_name').textContent = '📄 ' + name;
+  document.getElementById('extract_status').innerHTML = '';
   const reader = new FileReader();
   reader.onload = ev => {
     const result = ev.target.result;
     if (file.type === 'text/plain') {
       extractFileData = null;
-      document.getElementById('extract_text').value = atob(result.split(',')[1] || '') || result;
+      try {
+        document.getElementById('extract_text').value = atob(result.split(',')[1] || '') || result;
+      } catch(e) {
+        document.getElementById('extract_text').value = result;
+      }
       switchExtractTab('paste', document.getElementById('tab-paste'));
     } else {
       extractFileData = result.split(',')[1];
       extractFileType = file.type;
       extractIsImage = file.type.startsWith('image/');
     }
+  };
+  reader.onerror = () => {
+    document.getElementById('extract_status').innerHTML = '<div style="color:var(--red);font-size:13px">Could not read the file. Please try again.</div>';
   };
   reader.readAsDataURL(file);
 }
@@ -330,7 +343,12 @@ Extract everything that happened — diagnoses, medications started or stopped, 
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error('Server error ' + r.status + (txt ? ': ' + txt.substring(0, 120) : ''));
+    }
     const d = await r.json();
+    if (d.error) throw new Error('API: ' + (d.error.message || JSON.stringify(d.error)));
     const result = JSON.parse((d.content?.[0]?.text || '').replace(/```json|```/g, '').trim());
 
     if (!result.events?.length) {
@@ -361,8 +379,14 @@ Extract everything that happened — diagnoses, medications started or stopped, 
     document.getElementById('timeline_wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   } catch (e) {
-    statusEl.innerHTML = '<div style="color:var(--red);font-size:13px">Something went wrong. Please try again.</div>';
     console.error(e);
+    const msg = e.message || '';
+    const friendly = msg.includes('504') || msg.toLowerCase().includes('timeout')
+      ? 'The request timed out — the file may be too large. Try a shorter document or paste the text instead.'
+      : msg.includes('413') ? 'File is too large to send. Please paste the text instead.'
+      : msg.includes('parse') || msg.includes('Parse') ? 'Could not read the response — please try again.'
+      : 'Something went wrong. Please try again in a moment.';
+    statusEl.innerHTML = `<div style="color:var(--red);font-size:13px">${friendly}</div>`;
   }
 }
 
