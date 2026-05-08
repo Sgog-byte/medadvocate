@@ -289,17 +289,21 @@
   .rbar-card { margin-bottom:16px; }
   .rbar-card-title { font-family:'Fraunces',serif; font-size:16px; font-weight:400; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
   .rbar-track-wrap { position:relative; }
-  .rbar-track { position:relative; height:12px; border-radius:6px; background:#e8e8e8; margin:28px 0 22px; overflow:visible; }
+  .rbar-track { position:relative; height:12px; border-radius:6px; background:#e8e8e8; margin:30px 0 34px; overflow:visible; }
   .rbar-zone { position:absolute; top:0; bottom:0; }
   .rbar-zone-low { border-radius:6px 0 0 6px; background:#dbeafe; }
   .rbar-zone-normal { background:var(--sage-pale); border-top:1px solid var(--sage-light); border-bottom:1px solid var(--sage-light); }
   .rbar-zone-high { border-radius:0 6px 6px 0; background:#fee2e2; }
+  /* Default reading: value above dot, date below */
   .rbar-reading { position:absolute; top:50%; transform:translate(-50%,-50%); z-index:2; width:14px; height:14px; }
   .rbar-reading-latest { width:18px; height:18px; }
   .rbar-reading-dot { width:100%; height:100%; border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.22); }
-  .rbar-reading-val { position:absolute; bottom:calc(100% + 5px); left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; white-space:nowrap; line-height:1; }
+  .rbar-reading-val { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; white-space:nowrap; line-height:1; }
   .rbar-reading-date { position:absolute; top:calc(100% + 5px); left:50%; transform:translateX(-50%); font-size:10px; color:var(--ink-muted); white-space:nowrap; line-height:1; }
-  .rbar-limits { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); margin-top:2px; }
+  /* Flipped reading: date above dot, value below */
+  .rbar-flip .rbar-reading-val { bottom:auto; top:calc(100% + 18px); }
+  .rbar-flip .rbar-reading-date { top:auto; bottom:calc(100% + 5px); }
+  .rbar-limits { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); margin-top:4px; }
   .rbar-norange-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:8px 0; }
   .rbar-norange-item { text-align:center; }
   .rbar-norange-dot { width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); margin:0 auto 4px; }
@@ -1277,15 +1281,27 @@ function renderTrends() {
       const lowPct  = toPct(low);
       const highPct = toPct(high);
 
+      // Assign flip tiers: readings within 10% of each other alternate above/below
+      const sortedByPct = t.readings.map((r, i) => ({ i, p: toPct(r.value) })).sort((a, b) => a.p - b.p);
+      const flipMap = new Map();
+      let lastP = -999, lastFlip = false;
+      sortedByPct.forEach(({ i, p }) => {
+        const flip = (p - lastP < 10) ? !lastFlip : false;
+        flipMap.set(i, flip);
+        lastP = p;
+        lastFlip = flip;
+      });
+
       const dots = t.readings.map((r, i) => {
         const isLatest = i === t.readings.length - 1;
         const p = toPct(r.value);
         const c = dotColor(r.status);
-        const yr = new Date(r.date + 'T12:00:00').getFullYear();
-        return `<div class="rbar-reading${isLatest ? ' rbar-reading-latest' : ''}" style="left:${p}%">
+        const label = new Date(r.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const cls = `rbar-reading${isLatest ? ' rbar-reading-latest' : ''}${flipMap.get(i) ? ' rbar-flip' : ''}`;
+        return `<div class="${cls}" style="left:${p}%">
           <div class="rbar-reading-val" style="color:${c}">${r.value}</div>
           <div class="rbar-reading-dot" style="background:${c}"></div>
-          <div class="rbar-reading-date">${yr}</div>
+          <div class="rbar-reading-date">${label}</div>
         </div>`;
       }).join('');
 
