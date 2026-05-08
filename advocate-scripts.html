@@ -304,6 +304,13 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
       <label class="flabel">Anything specific about this doctor or situation?</label>
       <textarea class="fta" id="s_context" placeholder="e.g. 'She's our 4th cardiologist and I want to come in calm but prepared. She tends to cut me off.' Or 'He dismissed us last time and I need to know how to bring it back up.'" style="min-height:70px"></textarea>
     </div>
+    <div id="labInsightsBanner" style="display:none;margin-top:12px;background:#f0f7f2;border:1.5px solid #95d5b2;border-radius:13px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#2d6a4f;letter-spacing:.06em;text-transform:uppercase">📋 Lab Insights Added</div>
+        <button onclick="clearLabInsights()" style="font-size:11px;color:#4a7a5e;background:none;border:none;cursor:pointer;text-decoration:underline">Clear all</button>
+      </div>
+      <div id="labInsightsList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
   </div>
 
   <div class="gen-wrap">
@@ -322,6 +329,44 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 <script>
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+
+// ─── LAB INSIGHTS FROM LAB TRACKER ───
+function loadLabInsights() {
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  const banner = document.getElementById('labInsightsBanner');
+  const list = document.getElementById('labInsightsList');
+  if (!saved.length) { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  list.innerHTML = saved.map((txt, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
+      <span style="color:#2d6a4f;margin-top:1px">•</span>
+      <span style="flex:1">${txt}</span>
+      <button onclick="removeLabInsight(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function removeLabInsight(i) {
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  saved.splice(i, 1);
+  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+  loadLabInsights();
+}
+
+function clearLabInsights() {
+  localStorage.removeItem('advocate_script_labs');
+  loadLabInsights();
+}
+
+function getLabInsightsText() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]');
+    return saved.length ? '\n\nRecent lab findings to reference in scripts:\n' + saved.join('\n') : '';
+  } catch(e) { return ''; }
+}
+
+document.addEventListener('DOMContentLoaded', loadLabInsights);
 
 let currentTone = 'firm';
 function setTone(t, btn){
@@ -418,7 +463,7 @@ Patient: ${name||'the patient'}
 Diagnoses/conditions: ${dx||'not specified'}
 Appointment/setting: ${appt||'medical appointment'}
 Tone preference: ${TONE_MAP[currentTone]}
-${context?'Context: '+context:''}
+${context?'Context: '+context:''}${getLabInsightsText()}
 
 Situations to write scripts for:
 ${situations.length ? situations.slice(0,3).map((s,i)=>`${i+1}. ${s}`).join('\n') : 'General dismissal and advocacy scripts for these conditions'}

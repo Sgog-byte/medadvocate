@@ -1437,10 +1437,11 @@ function renderInsights(idx) {
     `Results from ${new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · ${entry.results.length} tests`;
 
   document.getElementById('insightsList').innerHTML = insights.length > 0
-    ? insights.map(ins => `
-        <div class="insight-item">
-          <div class="insight-dot ${dotColor[ins.level] || 'dot-sage'}"></div>
-          <div class="insight-text">${ins.text}</div>
+    ? insights.map((ins, i) => `
+        <div class="insight-item" style="align-items:flex-start">
+          <div class="insight-dot ${dotColor[ins.level] || 'dot-sage'}" style="margin-top:4px"></div>
+          <div class="insight-text" style="flex:1">${ins.text}</div>
+          <button onclick="addInsightToScript(${idx},${i})" id="script-btn-${idx}-${i}" style="flex-shrink:0;margin-left:10px;padding:4px 10px;font-size:11px;border:1.5px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--ink-muted);white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .2s" onmouseover="this.style.borderColor='var(--sage)';this.style.color='var(--sage)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'">📋 Add to script</button>
         </div>`).join('')
     : '<div style="color:var(--ink-muted);font-size:14px;padding:16px 0">No insights for this report — click 🔄 Refresh Insights to generate them.</div>';
 
@@ -1533,6 +1534,30 @@ function printPage() {
 
 // ─────────────────────────────────
 // TOAST
+// ─────────────────────────────────
+// LAB → VISIT SCRIPT
+// ─────────────────────────────────
+function addInsightToScript(entryIdx, insightIdx) {
+  const entry = allLabDates[entryIdx];
+  if (!entry) return;
+  const ins = (entry.insights || [])[insightIdx];
+  if (!ins) return;
+
+  const dateLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const text = `[Lab ${dateLabel}] ${ins.text}`;
+
+  // Store as an array so multiple insights can be added
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  if (!saved.includes(text)) saved.push(text);
+  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+
+  // Visual feedback on the button
+  const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
+  if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
+  showToast('✓ Insight saved — open Visit Script to use it');
+}
+
 // ─────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
