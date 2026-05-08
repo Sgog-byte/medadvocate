@@ -995,18 +995,20 @@ Return ONLY valid JSON (no markdown, no backticks):
   "insights": [
     {
       "level": "urgent | watch | info",
-      "text": "${hasProfile ? 'Personalized insight for this patient given their diagnoses/meds. What to ask the doctor. 2 sentences max.' : '2-sentence plain-English insight. What it might mean, what to ask the doctor.'}"
+      "text": "${hasProfile ? 'Personalized insight connecting this result to the patient\'s diagnoses/medications. Explain what it means, why it matters for their conditions, and what specific question to ask the doctor. 3-4 sentences.' : 'Plain-English explanation of what this result means, why a caregiver should care, and what to ask the doctor. 3-4 sentences.'}"
     }
   ]${hasProfile ? `,
-  "contextualSummary": "2 sentences: what these results mean for this patient and what to raise at next appointment."` : ''}
+  "contextualSummary": "3-4 sentences summarizing the overall picture: what stands out, what looks good, and 2-3 specific questions to raise at the next appointment given the patient\'s conditions."` : `,
+  "contextualSummary": "3-4 sentences summarizing the overall picture: what stands out, what looks good, and 2-3 specific questions to raise at the next appointment."`}
 }
 
 Rules:
 - Extract every numeric lab result (include all panels)
 - Mark values outside reference range as high/low; well outside = critical
 - notes: empty string "" for normal results — only write notes for abnormal
-- insights: 3-5 items max, focus on abnormal values
-- Keep language parent-friendly
+- insights: generate one item per abnormal result, plus 1-2 info items for notable normal results; aim for 5-10 items total
+- level "urgent" = critical or significantly abnormal, "watch" = mildly abnormal or trending, "info" = reassuring normal or context
+- Keep language parent-friendly — no jargon without explanation
 - Today's date: ${new Date().toISOString().split('T')[0]}`;
 }
 
@@ -1028,7 +1030,7 @@ async function callProxy(payload) {
 async function extractLabsFromFile(base64, mediaType) {
   return callProxy({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
+    max_tokens: 4500,
     system: buildSystemPrompt(),
     messages: [{
       role: 'user',
@@ -1077,7 +1079,7 @@ async function extractLabsFromImages(base64Array) {
   }));
   return callProxy({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
+    max_tokens: 4500,
     system: buildSystemPrompt(),
     messages: [{
       role: 'user',
@@ -1093,7 +1095,7 @@ async function extractLabsFromText(text) {
   const truncated = text.length > 12000 ? text.substring(0, 12000) + '\n[truncated]' : text;
   return callProxy({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
+    max_tokens: 4500,
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
   });
