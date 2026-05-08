@@ -373,7 +373,7 @@ function safeParseTimelineJSON(raw) {
         return { events, summary: 'Extracted from document', eventsFound: events.length };
       } catch(e2) {}
     }
-    throw new Error('Could not parse response — try a shorter document or paste the text instead');
+    throw new Error('Parse failed. Raw: ' + raw.substring(0, 200));
   }
 }
 
@@ -418,7 +418,9 @@ Rules: date format YYYY-MM-DD always; use approximate dates (2021-06-01 for June
     }
     const d = await r.json();
     if (d.error) throw new Error('API: ' + (d.error.message || JSON.stringify(d.error)));
-    const result = safeParseTimelineJSON(d.content?.[0]?.text || '');
+    const rawText = d.content?.[0]?.text || '';
+    console.log('RAW RESPONSE:', rawText.substring(0, 500));
+    const result = safeParseTimelineJSON(rawText);
 
     if (!result.events?.length) {
       statusEl.innerHTML = '<div style="color:var(--amber);font-size:13px">No events found. Try pasting more detailed medical records.</div>';
