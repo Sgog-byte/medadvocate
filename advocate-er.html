@@ -365,53 +365,69 @@ async function generateER(){
   }
 }
 
-// ── Auto-populate from profile ──────────────────────────────────
+// ── Auto-populate from MedAdvocate data ─────────────────────────
 async function runPrefillER() {
   try {
     const [profile, meds, contacts] = await Promise.all([
       DB.getProfile(), DB.getMedications(), DB.getCareTeam()
     ]);
 
-    if (!profile || !profile.name) return; // nothing to fill
+    if (!profile || !profile.name) return;
 
     const fill = (id, val) => { const el = document.getElementById(id); if (el && !el.value && val) el.value = val; };
+    const filled = [];
 
+    // Patient info
     fill('er_name', profile.name);
-    if (profile.age) fill('er_dob', 'Age ' + profile.age);
+    if (profile.name) filled.push('name');
+    if (profile.age) { fill('er_dob', 'Age ' + profile.age); filled.push('date of birth'); }
 
-    // Add diagnoses as tags
+    // Diagnoses → tag input
     if (profile.diagnoses) {
-      const dxList = profile.diagnoses.split(/[,;
-]+/).map(s => s.trim()).filter(Boolean);
-      dxList.forEach(dx => {
-        if (typeof createTag === 'function') createTag(dx, 'er_diag_wrap', 'er_diag_in', 'vtag');
-      });
+      const diagWrap = document.getElementById('er_diag_wrap');
+      const diagIn = document.getElementById('er_diag_in');
+      const dxList = profile.diagnoses.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+      dxList.forEach(dx => createTag(dx, diagWrap, diagIn, 'vtag-red'));
+      if (dxList.length) filled.push('diagnoses');
     }
 
-    // Add active medications as tags
-    if (meds && meds.length) {
-      meds.filter(m => m.status === 'active' || !m.status).slice(0, 8).forEach(m => {
-        const label = m.name + (m.dose ? ' ' + m.dose : '');
-        if (typeof createTag === 'function') createTag(label, 'er_meds_wrap', 'er_meds_in', 'vtag-blue');
-      });
+    // Active medications → dynamic rows (replace empty placeholder row)
+    const activeMeds = (meds || []).filter(m => m.status === 'active' || !m.status);
+    if (activeMeds.length) {
+      document.getElementById('med_rows').innerHTML = '';
+      activeMeds.slice(0, 10).forEach(m => addMedRow(m.name, m.dose || '', m.frequency || ''));
+      filled.push('medications');
     }
 
-    // PCP from care team
+    // Care team → emergency contacts + PCP
     if (contacts && contacts.length) {
-      const pcp = contacts.find(c => c.is_primary) || contacts[0];
-      if (pcp) {
-        fill('er_pcp_name', pcp.name + (pcp.role ? ' (' + pcp.role + ')' : ''));
-        fill('er_pcp_phone', pcp.phone || '');
+      const pcp = contacts.find(c => c.is_primary);
+      const others = contacts.filter(c => !c.is_primary && c.phone);
+
+      // Fill emergency contacts (non-PCP with phones)
+      if (others.length) {
+        document.getElementById('ec_rows').innerHTML = '';
+        others.slice(0, 3).forEach(c => addECRow(c.name, c.role || '', c.phone || ''));
+        filled.push('emergency contacts');
+      }
+
+      // PCP section
+      const pcpContact = pcp || contacts.find(c => /doctor|physician|pcp|specialist/i.test(c.role || ''));
+      if (pcpContact) {
+        fill('er_pcp_name', pcpContact.name + (pcpContact.role ? ' (' + pcpContact.role + ')' : ''));
+        fill('er_pcp_phone', pcpContact.phone || '');
+        filled.push('primary doctor');
       }
     }
 
-    // Show green notice banner
-    const notice = document.createElement('div');
-    notice.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:13px;color:#1b4332;line-height:1.5';
-    notice.innerHTML = '✅ <strong>Auto-filled from your profile, medications, and care team.</strong> Review and add any missing details below.';
-    const shell = document.querySelector('.shell');
-    if (shell && shell.children[1]) shell.insertBefore(notice, shell.children[1]);
-  } catch(e) { console.warn('Prefill error:', e.message); }
+    if (filled.length) {
+      const notice = document.createElement('div');
+      notice.style.cssText = 'background:#f0f7f2;border:1.5px solid #7a9e87;border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:13px;color:#1b4332;line-height:1.5';
+      notice.innerHTML = `✅ <strong>Imported from your MedAdvocate data:</strong> ${filled.join(', ')}. Add allergies, triggers, and any special instructions below.`;
+      const firstCard = document.querySelector('.shell .fcard');
+      if (firstCard) firstCard.parentNode.insertBefore(notice, firstCard);
+    }
+  } catch(e) { console.warn('ER prefill error:', e.message); }
 }
 // Run after a short delay to ensure auth + DB are ready
 setTimeout(runPrefillER, 800);
