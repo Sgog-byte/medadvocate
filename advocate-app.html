@@ -777,6 +777,21 @@
     color: #16a34a;
     background: rgba(34,197,94,0.06);
   }
+/* Edit mode */
+  #editScriptWrap { display:none; margin-top:16px; }
+  #editScriptWrap textarea { width:100%; min-height:340px; padding:18px; border:1.5px solid var(--border); border-radius:14px; font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.7; color:var(--ink); background:var(--warm-white); resize:vertical; outline:none; }
+  #editScriptWrap textarea:focus { border-color:var(--sage); }
+  .edit-actions { display:flex; gap:10px; margin-top:10px; }
+
+@media print {
+  header, .btn-primary, .action-row, .read-aloud-bar, .calm-banner,
+  #formSection, #loadingSection, #labInsightsBanner, #editScriptWrap { display:none!important }
+  .container { max-width:100%; padding:0 }
+  .result-card { box-shadow:none; border:1px solid #ccc; }
+  .result-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .priority-num { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  @page { margin:12mm; size:letter }
+}
 </style>
   <!-- Supabase auth + data layer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -883,6 +898,15 @@
     <div class="card">
       <div class="card-label">What do you most need from this visit? (optional)</div>
       <input type="text" class="input-field" id="goals" placeholder="e.g. a diagnosis, new treatment options, referrals, test orders..." maxlength="200">
+    </div>
+
+    <div id="labInsightsBanner" style="margin-top:14px;background:#f0f7f2;border:1.5px solid #95d5b2;border-radius:13px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:600;color:#2d6a4f;letter-spacing:.06em;text-transform:uppercase">📋 Lab Insights</div>
+        <button id="clearLabsBtn" onclick="clearLabInsights()" style="display:none;font-size:11px;color:#4a7a5e;background:none;border:none;cursor:pointer;text-decoration:underline">Clear all</button>
+      </div>
+      <div id="labInsightsEmpty" style="font-size:13px;color:#4a5e50;line-height:1.6">No lab insights added yet. Go to <a href="advocate-labs.html" style="color:#2d6a4f;font-weight:500">Lab Tracker → AI Insights</a>, then click <strong>📋 Add to script</strong> on any insight to include it here.</div>
+      <div id="labInsightsList" style="display:none;flex-direction:column;gap:8px"></div>
     </div>
 
     <div id="errorBox" class="error-box">Please select a specialist and describe at least a few symptoms.</div>
@@ -1066,7 +1090,7 @@ Rules:
     const userMessage = `Patient: ${patientName}
 Specialist: ${specialist}
 Symptoms and concerns: ${symptoms}
-${goals ? `Goals for this visit: ${goals}` : ''}
+${goals ? `Goals for this visit: ${goals}` : ''}${getLabInsightsText()}
 
 Please create a focused visit script for this appointment.`;
 
@@ -1182,12 +1206,17 @@ Please create a focused visit script for this appointment.`;
       </div>
 
       <div class="action-row">
-        <button class="btn-secondary" onclick="copyScript(\`${fullScriptText.replace(/`/g,'\\`')}\`)">
-          📋 Copy Full Script
-        </button>
-        <button class="btn-secondary" onclick="startOver()">
-          ↩ New Visit
-        </button>
+        <button class="btn-secondary" onclick="copyAppScript()">📋 Copy</button>
+        <button class="btn-secondary" onclick="window.print()">🖨️ Print</button>
+        <button class="btn-secondary" onclick="editAppScript()">✏️ Edit</button>
+        <button class="btn-secondary" onclick="startOver()">↩ New</button>
+      </div>
+      <div id="editScriptWrap">
+        <textarea id="editScriptTA"></textarea>
+        <div class="edit-actions">
+          <button class="btn-secondary" style="flex:1" onclick="saveAppEdit()">✓ Save changes</button>
+          <button class="btn-secondary" style="flex:1" onclick="cancelAppEdit()">✕ Cancel</button>
+        </div>
       </div>
 
       <div class="read-aloud-bar" id="raBar">
@@ -1213,6 +1242,9 @@ Please create a focused visit script for this appointment.`;
         You are their best advocate. You've got this. 🌿
       </div>
     `;
+
+    // Store plain text for copy/edit/print
+    window._appScriptText = fullScriptText;
 
     // Store result for read-aloud
     window._raResult = result;
@@ -1403,12 +1435,85 @@ Please create a focused visit script for this appointment.`;
   }
   // ── END READ ALOUD ─────────────────────────────────────────────
 
-  function copyScript(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      const toast = document.getElementById('toast');
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2500);
-    });
+  // ── LAB INSIGHTS ────────────────────────────────────────────────
+  function loadLabInsights() {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+    const empty = document.getElementById('labInsightsEmpty');
+    const list = document.getElementById('labInsightsList');
+    const clearBtn = document.getElementById('clearLabsBtn');
+    if (!saved.length) {
+      empty.style.display = 'block';
+      list.style.display = 'none';
+      clearBtn.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    list.style.display = 'flex';
+    clearBtn.style.display = 'inline';
+    list.innerHTML = saved.map((txt, i) => `
+      <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
+        <span style="color:#2d6a4f;margin-top:1px">•</span>
+        <span style="flex:1">${txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+        <button onclick="removeLabInsight(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
+      </div>`).join('');
+  }
+  function removeLabInsight(i) {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+    saved.splice(i, 1);
+    localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+    loadLabInsights();
+  }
+  function clearLabInsights() {
+    localStorage.removeItem('advocate_script_labs');
+    loadLabInsights();
+  }
+  function getLabInsightsText() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]');
+      return saved.length ? '\n\nRecent lab findings to reference:\n' + saved.join('\n') : '';
+    } catch(e) { return ''; }
+  }
+  document.addEventListener('DOMContentLoaded', loadLabInsights);
+
+  // ── COPY / PRINT / EDIT ─────────────────────────────────────────
+  function showToastApp(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+  function copyAppScript() {
+    const text = window._appScriptText || '';
+    if (!text) { showToastApp('Generate a script first'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToastApp('Script copied ✓')).catch(() => fallbackCopyApp(text));
+    } else { fallbackCopyApp(text); }
+  }
+  function fallbackCopyApp(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); showToastApp('Script copied ✓'); }
+    catch(e) { showToastApp('Copy failed — please select and copy manually'); }
+    document.body.removeChild(ta);
+  }
+  function editAppScript() {
+    const wrap = document.getElementById('editScriptWrap');
+    const ta = document.getElementById('editScriptTA');
+    ta.value = window._appScriptText || '';
+    wrap.style.display = 'block';
+    ta.focus();
+  }
+  function saveAppEdit() {
+    window._appScriptText = document.getElementById('editScriptTA').value;
+    document.getElementById('editScriptWrap').style.display = 'none';
+    showToastApp('Changes saved ✓');
+  }
+  function cancelAppEdit() {
+    document.getElementById('editScriptWrap').style.display = 'none';
   }
 
   function startOver() {

@@ -489,9 +489,17 @@ Write one focused script per situation (max 3). Keep each script concise — 2-3
 
     out.innerHTML = `
       <div class="action-row">
-        <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print Scripts</button>
-        <button class="abtn abtn-outline" onclick="copyScripts()">📋 Copy All</button>
+        <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print</button>
+        <button class="abtn abtn-outline" onclick="copyScripts()">📋 Copy</button>
+        <button class="abtn abtn-outline" onclick="editScripts()">✏️ Edit</button>
         <button class="abtn abtn-outline" onclick="document.getElementById('scripts_out').innerHTML='';window.scrollTo({top:0,behavior:'smooth'})">✕ Start Over</button>
+      </div>
+      <div id="editScriptsWrap" style="display:none;margin-bottom:14px">
+        <textarea id="editScriptsTA" style="width:100%;min-height:340px;padding:18px;border:1.5px solid var(--border);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.7;color:var(--ink);background:var(--warm);resize:vertical;outline:none" onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div style="display:flex;gap:10px;margin-top:10px">
+          <button class="abtn abtn-dark" style="flex:1" onclick="saveScriptsEdit()">✓ Save changes</button>
+          <button class="abtn abtn-outline" style="flex:1" onclick="document.getElementById('editScriptsWrap').style.display='none'">✕ Cancel</button>
+        </div>
       </div>
       <div class="print-tip">
         💡 <span><strong>Print tip:</strong> These print beautifully as a card you can fold and keep in your bag. Each script fits in a pocket-sized reference card.</span>
@@ -560,6 +568,20 @@ function fallbackCopy(text) {
   try { document.execCommand('copy'); showToast('Scripts copied ✓'); }
   catch(e) { showToast('Copy failed — please select text and copy manually'); }
   document.body.removeChild(ta);
+}
+
+function editScripts() {
+  const wrap = document.getElementById('editScriptsWrap');
+  const ta = document.getElementById('editScriptsTA');
+  ta.value = window._scriptText || '';
+  wrap.style.display = 'block';
+  ta.focus();
+  ta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function saveScriptsEdit() {
+  window._scriptText = document.getElementById('editScriptsTA').value;
+  document.getElementById('editScriptsWrap').style.display = 'none';
+  showToast('Changes saved ✓');
 }
 
 // Pre-fill from profile + medications
