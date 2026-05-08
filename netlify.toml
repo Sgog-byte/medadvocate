@@ -6,7 +6,7 @@
   included_files = ["netlify/functions/**"]
 
 [functions."claude-proxy"]
-  timeout = 30
+  timeout = 26
 
 [functions."create-checkout"]
   timeout = 30
