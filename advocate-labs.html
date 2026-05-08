@@ -286,26 +286,25 @@
   .chart-filter-btn.active { border-color: var(--sage); background: var(--sage-pale); color: var(--sage-dark); font-weight: 500; }
 
   /* ─── RANGE BARS ─── */
-  .rbar-row { display:flex; align-items:center; gap:20px; padding:14px 0; border-bottom:1px solid var(--border); }
-  .rbar-row:last-child { border-bottom:none; }
-  .rbar-label { width:190px; flex-shrink:0; }
-  .rbar-name { font-size:13px; font-weight:500; color:var(--ink); line-height:1.4; }
-  .rbar-val { font-size:16px; font-weight:500; color:var(--ink); margin-top:3px; }
-  .rbar-unit { font-size:12px; color:var(--ink-muted); font-weight:400; }
-  .rbar-change { font-size:11px; margin-top:2px; }
-  .rbar-track-wrap { flex:1; min-width:0; }
-  .rbar-track { position:relative; height:16px; border-radius:8px; background:#ebebeb; margin-bottom:5px; overflow:visible; }
+  .rbar-card { margin-bottom:16px; }
+  .rbar-card-title { font-family:'Fraunces',serif; font-size:16px; font-weight:400; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .rbar-track-wrap { position:relative; }
+  .rbar-track { position:relative; height:12px; border-radius:6px; background:#e8e8e8; margin:28px 0 22px; overflow:visible; }
   .rbar-zone { position:absolute; top:0; bottom:0; }
-  .rbar-zone-low { border-radius:8px 0 0 8px; background:#dbeafe; }
+  .rbar-zone-low { border-radius:6px 0 0 6px; background:#dbeafe; }
   .rbar-zone-normal { background:var(--sage-pale); border-top:1px solid var(--sage-light); border-bottom:1px solid var(--sage-light); }
-  .rbar-zone-high { border-radius:0 8px 8px 0; background:#fee2e2; }
-  .rbar-dot { position:absolute; top:50%; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.18); transform:translate(-50%,-50%); }
-  .rbar-dot-prev { width:9px; height:9px; opacity:.55; z-index:1; }
-  .rbar-dot-curr { width:18px; height:18px; z-index:2; }
-  .rbar-limits { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); }
-  .rbar-no-range { display:flex; align-items:center; gap:12px; }
-  .rbar-no-range-bar { flex:1; height:6px; border-radius:3px; background:var(--border); position:relative; }
-  .rbar-no-range-dot { position:absolute; top:50%; left:50%; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); transform:translate(-50%,-50%); }
+  .rbar-zone-high { border-radius:0 6px 6px 0; background:#fee2e2; }
+  .rbar-reading { position:absolute; top:50%; transform:translate(-50%,-50%); z-index:2; width:14px; height:14px; }
+  .rbar-reading-latest { width:18px; height:18px; }
+  .rbar-reading-dot { width:100%; height:100%; border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.22); }
+  .rbar-reading-val { position:absolute; bottom:calc(100% + 5px); left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; white-space:nowrap; line-height:1; }
+  .rbar-reading-date { position:absolute; top:calc(100% + 5px); left:50%; transform:translateX(-50%); font-size:10px; color:var(--ink-muted); white-space:nowrap; line-height:1; }
+  .rbar-limits { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); margin-top:2px; }
+  .rbar-norange-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:8px 0; }
+  .rbar-norange-item { text-align:center; }
+  .rbar-norange-dot { width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); margin:0 auto 4px; }
+  .rbar-norange-val { font-size:12px; font-weight:600; color:var(--ink); }
+  .rbar-norange-date { font-size:10px; color:var(--ink-muted); }
 
   /* ─── TABLE ─── */
   .lab-table {
@@ -1197,6 +1196,10 @@ function showLabEntry(entry) {
 // ─────────────────────────────────
 // TREND CHARTS
 // ─────────────────────────────────
+function dotColor(status) {
+  return status === 'critical' ? '#dc2626' : status === 'high' ? '#e05555' : status === 'low' ? '#3b82f6' : '#2d6a4f';
+}
+
 function renderTrends() {
   if (allLabDates.length === 0) {
     document.getElementById('trendsEmpty').classList.remove('hidden');
@@ -1206,7 +1209,7 @@ function renderTrends() {
   document.getElementById('trendsEmpty').classList.add('hidden');
   document.getElementById('trendsContent').classList.remove('hidden');
 
-  // Collect all tests with all their readings across dates
+  // Collect all tests with all readings across dates
   const allTests = {};
   allLabDates.forEach(entry => {
     (entry.results || []).forEach(r => {
@@ -1245,87 +1248,80 @@ function renderTrends() {
     return;
   }
 
-  // Group into a single card with rows
-  const card = document.createElement('div');
-  card.className = 'card';
-
   toShow.forEach(testName => {
     const t = allTests[testName];
-    const latest = t.readings[t.readings.length - 1];
-    const prev = t.readings.length > 1 ? t.readings[t.readings.length - 2] : null;
     const { low, high, unit } = t;
-    const v = latest.value;
+    const latest = t.readings[t.readings.length - 1];
     const status = latest.status;
 
-    // Dot color by status
-    const dotColor = status === 'critical' ? '#dc2626' : status === 'high' ? '#e05555' : status === 'low' ? '#3b82f6' : '#2d6a4f';
-
-    // Status badge
     const badge = status !== 'normal'
-      ? `<span class="tile-status ${status === 'high' || status === 'critical' ? 'status-high' : 'status-low'}" style="display:inline-flex;margin-left:5px;font-size:10px;padding:1px 5px">${status === 'critical' ? '⚠' : status === 'high' ? '↑' : '↓'}</span>`
+      ? `<span class="tile-status ${status === 'high' || status === 'critical' ? 'status-high' : 'status-low'}" style="display:inline-flex;font-size:10px;padding:1px 6px">${status === 'critical' ? '⚠ Critical' : status === 'high' ? '↑ High' : '↓ Low'}</span>`
       : '';
 
-    // Trend vs previous reading
-    let changeHtml = '';
-    if (prev != null) {
-      const delta = v - prev.value;
-      const pct = prev.value !== 0 ? Math.abs(delta / prev.value * 100).toFixed(0) : '';
-      const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
-      const color = (status !== 'normal') ? '#e05555' : 'var(--ink-muted)';
-      changeHtml = `<div class="rbar-change" style="color:${color}">${arrow} ${pct ? pct + '% from ' : ''}${new Date(prev.date + 'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>`;
-    }
+    const card = document.createElement('div');
+    card.className = 'card rbar-card';
 
     let barHtml = '';
+
     if (low != null && high != null && high > low) {
-      // Calculate display range with padding
       const span = high - low;
       let dMin = low - span * 0.35;
       let dMax = high + span * 0.35;
-      // Ensure value and all readings fit
-      t.readings.forEach(r => { dMin = Math.min(dMin, r.value - span * 0.05); dMax = Math.max(dMax, r.value + span * 0.05); });
+      t.readings.forEach(r => {
+        dMin = Math.min(dMin, r.value - span * 0.12);
+        dMax = Math.max(dMax, r.value + span * 0.12);
+      });
       const dSpan = dMax - dMin;
-      const pct = x => Math.max(1, Math.min(99, ((x - dMin) / dSpan) * 100));
+      const toPct = x => Math.max(2, Math.min(98, ((x - dMin) / dSpan) * 100));
 
-      const lowPct  = pct(low);
-      const highPct = pct(high);
+      const lowPct  = toPct(low);
+      const highPct = toPct(high);
 
-      // Previous dots (all except latest)
-      const prevDots = t.readings.slice(0, -1).map(r => {
-        const c = r.status === 'high' || r.status === 'critical' ? '#e05555' : r.status === 'low' ? '#3b82f6' : '#7a9e87';
-        const dateLabel = new Date(r.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        return `<div class="rbar-dot rbar-dot-prev" style="left:${pct(r.value)}%;background:${c}" title="${dateLabel}: ${r.value} ${unit}"></div>`;
+      const dots = t.readings.map((r, i) => {
+        const isLatest = i === t.readings.length - 1;
+        const p = toPct(r.value);
+        const c = dotColor(r.status);
+        const yr = new Date(r.date + 'T12:00:00').getFullYear();
+        return `<div class="rbar-reading${isLatest ? ' rbar-reading-latest' : ''}" style="left:${p}%">
+          <div class="rbar-reading-val" style="color:${c}">${r.value}</div>
+          <div class="rbar-reading-dot" style="background:${c}"></div>
+          <div class="rbar-reading-date">${yr}</div>
+        </div>`;
       }).join('');
 
       barHtml = `
-        <div class="rbar-track">
-          <div class="rbar-zone rbar-zone-low" style="left:0;right:${100-lowPct}%"></div>
-          <div class="rbar-zone rbar-zone-normal" style="left:${lowPct}%;right:${100-highPct}%"></div>
-          <div class="rbar-zone rbar-zone-high" style="left:${highPct}%;right:0"></div>
-          ${prevDots}
-          <div class="rbar-dot rbar-dot-curr" style="left:${pct(v)}%;background:${dotColor}"></div>
-        </div>
-        <div class="rbar-limits">
-          <span>${low} ${unit}</span>
-          <span style="color:var(--ink-muted);font-size:10px">reference range</span>
-          <span>${high} ${unit}</span>
+        <div class="rbar-track-wrap">
+          <div class="rbar-track">
+            <div class="rbar-zone rbar-zone-low" style="left:0;right:${100-lowPct}%"></div>
+            <div class="rbar-zone rbar-zone-normal" style="left:${lowPct}%;right:${100-highPct}%"></div>
+            <div class="rbar-zone rbar-zone-high" style="left:${highPct}%;right:0"></div>
+            ${dots}
+          </div>
+          <div class="rbar-limits">
+            <span>${low} ${unit}</span>
+            <span>reference range</span>
+            <span>${high} ${unit}</span>
+          </div>
         </div>`;
     } else {
-      barHtml = `<div class="rbar-no-range"><div class="rbar-no-range-bar"><div class="rbar-no-range-dot" style="background:${dotColor}"></div></div><span style="font-size:11px;color:var(--ink-muted)">No reference range</span></div>`;
+      // No reference range — show dots in a simple row
+      const items = t.readings.map(r => {
+        const c = dotColor(r.status);
+        const yr = new Date(r.date + 'T12:00:00').getFullYear();
+        return `<div class="rbar-norange-item">
+          <div class="rbar-norange-dot" style="background:${c}"></div>
+          <div class="rbar-norange-val" style="color:${c}">${r.value} ${unit}</div>
+          <div class="rbar-norange-date">${yr}</div>
+        </div>`;
+      }).join('<div style="flex:1;height:1px;background:var(--border);margin-top:6px"></div>');
+      barHtml = `<div class="rbar-norange-row">${items}<span style="font-size:11px;color:var(--ink-muted)">No reference range available</span></div>`;
     }
 
-    const row = document.createElement('div');
-    row.className = 'rbar-row';
-    row.innerHTML = `
-      <div class="rbar-label">
-        <div class="rbar-name">${testName}${badge}</div>
-        <div class="rbar-val">${v} <span class="rbar-unit">${unit}</span></div>
-        ${changeHtml}
-      </div>
-      <div class="rbar-track-wrap">${barHtml}</div>`;
-    card.appendChild(row);
+    card.innerHTML = `
+      <div class="rbar-card-title">${testName} ${badge} <span style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;color:var(--ink-muted)">${unit}</span></div>
+      ${barHtml}`;
+    container.appendChild(card);
   });
-
-  container.appendChild(card);
 }
 
 function setChartFilter(cat) {
