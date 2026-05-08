@@ -285,6 +285,10 @@
   .chart-filter-btn:hover { border-color: var(--sage-light); background: var(--sage-pale); }
   .chart-filter-btn.active { border-color: var(--sage); background: var(--sage-pale); color: var(--sage-dark); font-weight: 500; }
 
+  .date-pill { padding:6px 14px; border-radius:100px; border:1.5px solid var(--border); background:transparent; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink-soft); transition:all .2s; white-space:nowrap; }
+  .date-pill:hover { border-color:var(--sage-light); background:var(--sage-pale); }
+  .date-pill.active { border-color:var(--sage); background:var(--sage); color:#fff; font-weight:500; }
+
   /* ─── RANGE BARS ─── */
   .rbar-card { margin-bottom:16px; }
   .rbar-card-title { font-family:'Fraunces',serif; font-size:16px; font-weight:400; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
@@ -585,6 +589,9 @@
           </div>
         </div>
       </div>
+
+      <!-- Date strip — all uploaded dates -->
+      <div id="dateStrip" class="hidden no-print" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px"></div>
 
       <!-- Results -->
       <div id="labResults" class="hidden">
@@ -1156,7 +1163,10 @@ function renderLabResults(data, fileName, fileKey) {
 }
 
 function showLabEntry(entry) {
-  // Date label
+  // Track active date for strip highlighting
+  activeDateKey = entry.fileKey || entry.date;
+  updateDateStrip();
+
   const d = new Date(entry.date + 'T12:00:00');
   const label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   document.getElementById('labDateLabel').textContent = `Results from ${label}${entry.patientName ? ' · ' + entry.patientName : ''}`;
@@ -1348,7 +1358,8 @@ async function refreshInsights() {
   btn.disabled = true;
   btn.textContent = '⏳ Regenerating…';
 
-  const latest = allLabDates[allLabDates.length - 1];
+  const idx = activeInsightIdx ?? allLabDates.length - 1;
+  const latest = allLabDates[idx];
   const labSummary = (latest.results || []).map(r =>
     `${r.name}: ${r.value} ${r.unit || ''} (ref: ${r.low ?? '?'}–${r.high ?? '?'}, status: ${r.status})`
   ).join('\n');
@@ -1378,7 +1389,9 @@ async function refreshInsights() {
   btn.textContent = '🔄 Refresh Insights';
 }
 
-function renderInsights() {
+let activeInsightIdx = null; // which date's insights are showing
+
+function renderInsights(idx) {
   if (allLabDates.length === 0) {
     document.getElementById('insightsEmpty').classList.remove('hidden');
     document.getElementById('insightsContent').classList.add('hidden');
@@ -1388,22 +1401,40 @@ function renderInsights() {
   document.getElementById('insightsEmpty').classList.add('hidden');
   document.getElementById('insightsContent').classList.remove('hidden');
 
-  const latest = allLabDates[allLabDates.length - 1];
-  const insights = latest.insights || [];
+  if (idx == null) idx = activeInsightIdx ?? allLabDates.length - 1;
+  activeInsightIdx = idx;
+  const entry = allLabDates[idx];
+  const insights = entry.insights || [];
   const dotColor = { urgent: 'dot-red', watch: 'dot-gold', info: 'dot-sage' };
 
-  // Show contextual summary if available
+  // Date picker pills
   const insightsCard = document.getElementById('insightsCard');
-  if (latest.contextualSummary) {
-    const existingSummary = document.getElementById('contextualSummaryBox');
-    if (!existingSummary) {
-      const summaryBox = document.createElement('div');
-      summaryBox.id = 'contextualSummaryBox';
-      summaryBox.style.cssText = 'background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:13px;padding:16px 18px;margin-bottom:18px;font-size:14px;line-height:1.75;color:var(--ink-soft)';
-      summaryBox.innerHTML = `<div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-dark);margin-bottom:8px">🧠 Personalized Summary for ${getProfile().name || 'this patient'}</div>${latest.contextualSummary}`;
-      insightsCard.insertBefore(summaryBox, insightsCard.firstChild);
-    }
+  let picker = document.getElementById('insightDatePicker');
+  if (!picker) {
+    picker = document.createElement('div');
+    picker.id = 'insightDatePicker';
+    picker.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px';
+    insightsCard.insertBefore(picker, insightsCard.firstChild);
   }
+  picker.innerHTML = allLabDates.map((e, i) => {
+    const label = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    return `<button class="date-pill${i === idx ? ' active' : ''}" onclick="renderInsights(${i})">${label}</button>`;
+  }).join('');
+
+  // Contextual summary
+  const old = document.getElementById('contextualSummaryBox');
+  if (old) old.remove();
+  if (entry.contextualSummary) {
+    const summaryBox = document.createElement('div');
+    summaryBox.id = 'contextualSummaryBox';
+    summaryBox.style.cssText = 'background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:13px;padding:16px 18px;margin-bottom:18px;font-size:14px;line-height:1.75;color:var(--ink-soft)';
+    summaryBox.innerHTML = `<div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-dark);margin-bottom:8px">🧠 Summary — ${new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>${entry.contextualSummary}`;
+    picker.insertAdjacentElement('afterend', summaryBox);
+  }
+
+  // Update card subtitle
+  document.querySelector('#insightsCard .card-sub').textContent =
+    `Results from ${new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · ${entry.results.length} tests`;
 
   document.getElementById('insightsList').innerHTML = insights.length > 0
     ? insights.map(ins => `
@@ -1411,7 +1442,7 @@ function renderInsights() {
           <div class="insight-dot ${dotColor[ins.level] || 'dot-sage'}"></div>
           <div class="insight-text">${ins.text}</div>
         </div>`).join('')
-    : '<div style="color:var(--ink-muted); font-size:14px; padding:16px 0">No specific concerns flagged in this report.</div>';
+    : '<div style="color:var(--ink-muted);font-size:14px;padding:16px 0">No insights for this report — click 🔄 Refresh Insights to generate them.</div>';
 
   // Trend insights if multiple dates
   if (allLabDates.length >= 2) {
@@ -1455,6 +1486,8 @@ function getTrendInsights() {
 // ─────────────────────────────────
 // HISTORY
 // ─────────────────────────────────
+let activeDateKey = null; // tracks which entry is currently shown
+
 function updateHistory() {
   const list = document.getElementById('historyList');
   if (allLabDates.length === 0) return;
@@ -1470,6 +1503,22 @@ function updateHistory() {
       </div>
       ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
     </div>`;
+  }).join('');
+
+  updateDateStrip();
+}
+
+function updateDateStrip() {
+  const strip = document.getElementById('dateStrip');
+  if (allLabDates.length === 0) { strip.classList.add('hidden'); return; }
+  strip.style.display = 'flex';
+  strip.classList.remove('hidden');
+  strip.innerHTML = allLabDates.map(entry => {
+    const d = new Date(entry.date + 'T12:00:00');
+    const label = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const key = entry.fileKey || entry.date;
+    const isActive = key === activeDateKey;
+    return `<button class="date-pill${isActive ? ' active' : ''}" onclick="showLabEntry(${JSON.stringify(entry).replace(/"/g,'&quot;')})">${label}</button>`;
   }).join('');
 }
 
