@@ -76,6 +76,14 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 .filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .filter-btn{padding:5px 13px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);font-family:'DM Sans',sans-serif;transition:all .2s}
 .filter-btn.active{background:var(--sage-pale);border-color:var(--sage);color:var(--sage-deep)}
+/* Import log */
+.import-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--warm);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;font-size:13px}
+.import-row:last-child{margin-bottom:0}
+.import-icon{font-size:18px;flex-shrink:0}
+.import-info{flex:1;min-width:0}
+.import-name{font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.import-meta{font-size:11px;color:var(--ink-muted);margin-top:2px}
+.import-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep);flex-shrink:0}
 .empty-state{text-align:center;padding:48px 24px;color:var(--ink-muted)}
 .empty-icon{font-size:40px;margin-bottom:12px}
 .empty-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
@@ -168,6 +176,18 @@ Claude will identify every significant event and extract it into your timeline a
       <span style="font-size:12px;color:var(--ink-muted)">Claude will add extracted events to your timeline below</span>
     </div>
     <div id="extract_status" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Import Log -->
+  <div class="fcard no-print" id="importLogCard" style="display:none;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div class="fcard-title" style="margin-bottom:0">📂 Imported Documents</div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Records you've already processed — avoid importing these again</div>
+      </div>
+      <button class="btn-outline no-print" style="font-size:11px;padding:5px 11px" onclick="clearImportLog()">Clear log</button>
+    </div>
+    <div id="importLogList"></div>
   </div>
 
   <!-- Manual Add -->
@@ -419,6 +439,12 @@ Rules: date format YYYY-MM-DD always; use approximate dates (2021-06-01 for June
 
     statusEl.innerHTML = `<div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--sage-deep)">✓ Added <strong>${added} events</strong> to your timeline. ${result.summary || ''}</div>`;
 
+    // Log the import
+    const sourceName = extractFileData
+      ? (document.getElementById('extract_file_name').textContent.replace('📄 ', '') || 'Uploaded file')
+      : 'Pasted text';
+    saveImportRecord(sourceName, added, result.summary);
+
     // Clear inputs
     document.getElementById('extract_text').value = '';
     extractFileData = null;
@@ -437,6 +463,45 @@ Rules: date format YYYY-MM-DD always; use approximate dates (2021-06-01 for June
       : 'Something went wrong — please try again in a moment.';
     statusEl.innerHTML = `<div style="color:var(--red);font-size:13px">${friendly}</div>`;
   }
+}
+
+// ── IMPORT LOG ──
+const IMPORT_LOG_KEY = 'advocate_timeline_imports';
+function saveImportRecord(sourceName, eventsAdded, summary) {
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem(IMPORT_LOG_KEY) || '[]'); } catch(e) {}
+  log.unshift({
+    name: sourceName,
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+    count: eventsAdded,
+    summary: (summary || '').substring(0, 120)
+  });
+  // Keep last 50
+  log = log.slice(0, 50);
+  localStorage.setItem(IMPORT_LOG_KEY, JSON.stringify(log));
+  renderImportLog();
+}
+function renderImportLog() {
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem(IMPORT_LOG_KEY) || '[]'); } catch(e) {}
+  const card = document.getElementById('importLogCard');
+  const list = document.getElementById('importLogList');
+  if (!log.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  list.innerHTML = log.map(r => `
+    <div class="import-row">
+      <div class="import-icon">${r.name === 'Pasted text' ? '📋' : '📄'}</div>
+      <div class="import-info">
+        <div class="import-name">${escH(r.name)}</div>
+        <div class="import-meta">${escH(r.date)}${r.summary ? ' · ' + escH(r.summary) : ''}</div>
+      </div>
+      <div class="import-badge">+${r.count} event${r.count !== 1 ? 's' : ''}</div>
+    </div>`).join('');
+}
+function clearImportLog() {
+  if (!confirm('Clear the import history? This only removes the log — your timeline events stay.')) return;
+  localStorage.removeItem(IMPORT_LOG_KEY);
+  renderImportLog();
 }
 
 // ── UTILS ──
@@ -592,6 +657,7 @@ async function generateSummary(){
 
 // ── INIT ──
 document.getElementById('ev_date').value=new Date().toISOString().split('T')[0];
+renderImportLog();
 renderTimeline();
 </script>
 
