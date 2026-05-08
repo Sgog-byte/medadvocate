@@ -357,24 +357,12 @@ async function extractFromRecords() {
 
   statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-muted)"><div class="load-ring" style="width:22px;height:22px;border-width:2px;margin:0"></div> Analyzing your records and extracting timeline events…</div>`;
 
-  const system = `You are a medical records analyst extracting timeline events from medical documents.
+  // Trim pasted text to avoid timeout (approx 6000 chars ≈ 1500 tokens of input)
+  const trimmedText = text.length > 6000 ? text.slice(0, 6000) + '\n[truncated for length]' : text;
 
-Extract every significant medical event and return ONLY valid JSON no markdown:
-{
-  "events": [
-    {
-      "date": "YYYY-MM-DD (use approximate date if only month/year known, e.g. 2021-06-01 for June 2021)",
-      "cat": "diagnosis | symptom | medication | procedure | hospitalization | appointment | test | milestone | other",
-      "title": "Brief clear description of the event (e.g. Diagnosed with POTS, Started Florinef 0.1mg, Tilt table test positive)",
-      "doctor": "Doctor name or facility if mentioned",
-      "notes": "Any additional relevant detail worth capturing"
-    }
-  ],
-  "summary": "One sentence describing what type of records these are and the time period covered",
-  "eventsFound": number
-}
-
-Extract everything that happened — diagnoses, medications started or stopped, procedures, tests, hospitalizations, ER visits, specialist appointments, symptom onsets, and milestones. If a date is unclear, make your best estimate. Do NOT skip events — capture everything significant.`;
+  const system = `Extract medical timeline events from the document. Return ONLY valid JSON, no markdown:
+{"events":[{"date":"YYYY-MM-DD","cat":"diagnosis|symptom|medication|procedure|hospitalization|appointment|test|milestone|other","title":"Brief event description","doctor":"Name/facility or empty"}],"summary":"One sentence about these records"}
+Rules: date format YYYY-MM-DD always; use approximate dates (2021-06-01 for June 2021); title max 10 words; extract diagnoses, medications, procedures, tests, ER visits, hospitalizations, appointments; skip routine vitals.`;
 
   try {
     let body;
@@ -382,9 +370,9 @@ Extract everything that happened — diagnoses, medications started or stopped, 
       const contentBlock = extractIsImage
         ? { type: 'image', source: { type: 'base64', media_type: extractFileType, data: extractFileData } }
         : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: extractFileData } };
-      body = { model: 'claude-sonnet-4-6', max_tokens: 4000, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Please extract all medical timeline events from this document.' }] }] };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 2500, system, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Extract all medical timeline events.' }] }] };
     } else {
-      body = { model: 'claude-sonnet-4-6', max_tokens: 4000, system, messages: [{ role: 'user', content: `Medical records:\n\n${text}` }] };
+      body = { model: 'claude-sonnet-4-6', max_tokens: 2500, system, messages: [{ role: 'user', content: `Medical records:\n\n${trimmedText}` }] };
     }
 
     const r = await fetch('/.netlify/functions/claude-proxy', {
