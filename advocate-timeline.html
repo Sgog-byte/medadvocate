@@ -380,13 +380,8 @@ Extract everything that happened — diagnoses, medications started or stopped, 
 
   } catch (e) {
     console.error(e);
-    const msg = e.message || '';
-    const friendly = msg.includes('504') || msg.toLowerCase().includes('timeout')
-      ? 'The request timed out — the file may be too large. Try a shorter document or paste the text instead.'
-      : msg.includes('413') ? 'File is too large to send. Please paste the text instead.'
-      : msg.includes('parse') || msg.includes('Parse') ? 'Could not read the response — please try again.'
-      : 'Something went wrong. Please try again in a moment.';
-    statusEl.innerHTML = `<div style="color:var(--red);font-size:13px">${friendly}</div>`;
+    const msg = e.message || '(no message)';
+    statusEl.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${msg}</div>`;
   }
 }
 
