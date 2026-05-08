@@ -337,7 +337,8 @@ async function generateER(){
     out.innerHTML=`
       <div class="out-actions">
         <button class="abtn abtn-red" onclick="window.print()">🖨️ Print Card</button>
-        <button class="abtn abtn-outline" onclick="location.reload()">✏️ Start Over</button>
+        <button class="abtn abtn-outline" id="editCardBtn" onclick="toggleEditMode()">✏️ Edit Card</button>
+        <button class="abtn abtn-outline" onclick="location.reload()">↩ Start Over</button>
       </div>
       <div class="er-card">
         <div class="er-top">
@@ -362,6 +363,69 @@ async function generateER(){
     console.error(e);
   }finally{
     document.querySelector('.gen-btn').disabled=false;
+  }
+}
+
+// ── EDIT MODE ──
+function toggleEditMode() {
+  const card = document.querySelector('.er-card');
+  if (!card) return;
+  const btn = document.getElementById('editCardBtn');
+  const editing = card.dataset.editing === '1';
+
+  if (!editing) {
+    card.dataset.editing = '1';
+    btn.innerHTML = '✓ Done Editing';
+
+    // Make the alert banner and name/dob editable
+    card.querySelectorAll('.er-alert, .er-name, .er-dob').forEach(el => {
+      el.contentEditable = 'true';
+      el.style.outline = '1.5px dashed rgba(192,57,43,.45)';
+      el.style.borderRadius = '4px';
+      el.style.cursor = 'text';
+    });
+
+    // Add ✕ remove button to every list item and make text editable
+    card.querySelectorAll('.er-item').forEach(el => {
+      el.contentEditable = 'true';
+      el.style.cursor = 'text';
+      const b = document.createElement('button');
+      b.className = 'er-item-del';
+      b.innerHTML = '✕';
+      b.title = 'Remove this item';
+      b.style.cssText = 'background:none;border:none;color:#c0392b;cursor:pointer;font-size:13px;margin-left:auto;padding:0 0 0 8px;flex-shrink:0;line-height:1;opacity:.7;font-family:sans-serif';
+      b.onclick = e => { e.stopPropagation(); el.remove(); };
+      el.appendChild(b);
+    });
+
+    // Make medication table cells editable
+    card.querySelectorAll('.med-tbl td').forEach(el => {
+      el.contentEditable = 'true';
+      el.style.outline = '1px dashed rgba(100,100,100,.25)';
+      el.style.cursor = 'text';
+    });
+
+    // Make medication and special notes editable
+    card.querySelectorAll('.er-sec p, .er-sec .er-item-sage').forEach(el => {
+      el.contentEditable = 'true';
+      el.style.cursor = 'text';
+    });
+
+    const tip = document.createElement('div');
+    tip.id = 'erEditTip';
+    tip.style.cssText = 'background:#fdf3e7;border:1px solid #f0d4a8;border-radius:8px;padding:9px 14px;font-size:12px;color:#8b5e2a;margin:0 0 12px;text-align:center';
+    tip.innerHTML = '✏️ Click any text to edit it directly. Use <strong>✕</strong> to remove items before printing.';
+    document.querySelector('.out-actions').insertAdjacentElement('afterend', tip);
+  } else {
+    card.dataset.editing = '0';
+    btn.innerHTML = '✏️ Edit Card';
+    card.querySelectorAll('[contenteditable]').forEach(el => {
+      el.removeAttribute('contenteditable');
+      el.style.outline = '';
+      el.style.cursor = '';
+    });
+    card.querySelectorAll('.er-item-del').forEach(b => b.remove());
+    document.getElementById('erEditTip')?.remove();
   }
 }
 
