@@ -177,13 +177,40 @@
 
   /* PRINT */
   @media print {
-    body{background:white}body::before{display:none}
-    nav,.tab-bar,.chart-controls,.btn,.no-print{display:none !important}
-    .shell{max-width:100%;padding:0}
-    .panel{display:block !important}
-    .card,.chart-card{box-shadow:none;break-inside:avoid}
-    .chart-wrap{height:200px}
-    @page{margin:15mm}
+    body{background:white}
+    body::before{display:none}
+    nav,.tab-bar,.chart-controls,.btn,.no-print,.toast{display:none !important}
+
+    /* Hide interactive input panels — only data panels print */
+    #panel-setup, #panel-log { display:none !important }
+    #panel-history, #panel-trends { display:block !important }
+
+    .shell{max-width:100%;padding:0 8px}
+
+    /* Cards */
+    .card,.chart-card{box-shadow:none;border:1px solid #dde8e0;break-inside:avoid;margin-bottom:12px}
+
+    /* History entries — compact for print */
+    .history-item{padding:10px 14px;margin-bottom:6px;break-inside:avoid}
+    .history-item:hover{box-shadow:none}
+
+    /* Insight summary tiles — 4 across */
+    .insight-grid{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+    .insight-tile{padding:12px 14px}
+
+    /* Charts */
+    .chart-wrap{height:180px}
+
+    /* Preserve chart colours */
+    .insight-tile,.chart-card,.history-sym-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+    /* Section break between history and trends */
+    #panel-trends{page-break-before:always}
+
+    /* Don't orphan chart cards */
+    .chart-card{break-inside:avoid}
+
+    @page{margin:12mm;size:letter}
   }
 
   .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
