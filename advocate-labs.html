@@ -289,21 +289,19 @@
   .rbar-card { margin-bottom:16px; }
   .rbar-card-title { font-family:'Fraunces',serif; font-size:16px; font-weight:400; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
   .rbar-track-wrap { position:relative; }
-  .rbar-track { position:relative; height:12px; border-radius:6px; background:#e8e8e8; margin:30px 0 34px; overflow:visible; }
+  .rbar-track { position:relative; height:12px; border-radius:6px; background:#e8e8e8; margin:8px 0 6px; overflow:visible; }
   .rbar-zone { position:absolute; top:0; bottom:0; }
   .rbar-zone-low { border-radius:6px 0 0 6px; background:#dbeafe; }
   .rbar-zone-normal { background:var(--sage-pale); border-top:1px solid var(--sage-light); border-bottom:1px solid var(--sage-light); }
   .rbar-zone-high { border-radius:0 6px 6px 0; background:#fee2e2; }
-  /* Default reading: value above dot, date below */
-  .rbar-reading { position:absolute; top:50%; transform:translate(-50%,-50%); z-index:2; width:14px; height:14px; }
-  .rbar-reading-latest { width:18px; height:18px; }
-  .rbar-reading-dot { width:100%; height:100%; border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.22); }
-  .rbar-reading-val { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; white-space:nowrap; line-height:1; }
-  .rbar-reading-date { position:absolute; top:calc(100% + 5px); left:50%; transform:translateX(-50%); font-size:10px; color:var(--ink-muted); white-space:nowrap; line-height:1; }
-  /* Flipped reading: date above dot, value below */
-  .rbar-flip .rbar-reading-val { bottom:auto; top:calc(100% + 18px); }
-  .rbar-flip .rbar-reading-date { top:auto; bottom:calc(100% + 5px); }
+  .rbar-dot-only { position:absolute; top:50%; transform:translate(-50%,-50%); border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.22); z-index:2; }
   .rbar-limits { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); margin-top:4px; }
+  .rbar-legend { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .rbar-legend-item { display:flex; align-items:center; gap:6px; background:var(--sage-pale); border:1px solid var(--border); border-radius:8px; padding:5px 10px; }
+  .rbar-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .rbar-legend-val { font-size:13px; font-weight:600; color:var(--ink); }
+  .rbar-legend-date { font-size:11px; color:var(--ink-muted); }
+  .rbar-legend-arrow { font-size:12px; color:var(--ink-muted); }
   .rbar-norange-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:8px 0; }
   .rbar-norange-item { text-align:center; }
   .rbar-norange-dot { width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.15); margin:0 auto 4px; }
@@ -1281,28 +1279,23 @@ function renderTrends() {
       const lowPct  = toPct(low);
       const highPct = toPct(high);
 
-      // Assign flip tiers: readings within 10% of each other alternate above/below
-      const sortedByPct = t.readings.map((r, i) => ({ i, p: toPct(r.value) })).sort((a, b) => a.p - b.p);
-      const flipMap = new Map();
-      let lastP = -999, lastFlip = false;
-      sortedByPct.forEach(({ i, p }) => {
-        const flip = (p - lastP < 10) ? !lastFlip : false;
-        flipMap.set(i, flip);
-        lastP = p;
-        lastFlip = flip;
-      });
-
       const dots = t.readings.map((r, i) => {
         const isLatest = i === t.readings.length - 1;
         const p = toPct(r.value);
         const c = dotColor(r.status);
+        const size = isLatest ? '18px' : '12px';
+        return `<div class="rbar-dot-only" style="left:${p}%;width:${size};height:${size};background:${c}"></div>`;
+      }).join('');
+
+      const legend = t.readings.map((r, i) => {
+        const c = dotColor(r.status);
         const label = new Date(r.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        const cls = `rbar-reading${isLatest ? ' rbar-reading-latest' : ''}${flipMap.get(i) ? ' rbar-flip' : ''}`;
-        return `<div class="${cls}" style="left:${p}%">
-          <div class="rbar-reading-val" style="color:${c}">${r.value}</div>
-          <div class="rbar-reading-dot" style="background:${c}"></div>
-          <div class="rbar-reading-date">${label}</div>
-        </div>`;
+        const arrow = i < t.readings.length - 1 ? '<span class="rbar-legend-arrow">→</span>' : '';
+        return `<div class="rbar-legend-item">
+          <div class="rbar-legend-dot" style="background:${c}"></div>
+          <span class="rbar-legend-val" style="color:${c}">${r.value}</span>
+          <span class="rbar-legend-date">${label}</span>
+        </div>${arrow}`;
       }).join('');
 
       barHtml = `
@@ -1318,6 +1311,7 @@ function renderTrends() {
             <span>reference range</span>
             <span>${high} ${unit}</span>
           </div>
+          <div class="rbar-legend">${legend}</div>
         </div>`;
     } else {
       // No reference range — show dots in a simple row
