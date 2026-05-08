@@ -1100,20 +1100,26 @@ Please create a focused visit script for this appointment.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
+          max_tokens: 1200,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }]
         })
       });
 
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error('Server error ' + response.status + (txt ? ': ' + txt.substring(0, 80) : ''));
+      }
+
       const data = await response.json();
+      if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
       const rawText = data.content?.[0]?.text || '';
 
       let result;
       try {
-        result = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        result = JSON.parse(rawText.replace(/```json[\s\S]*?```|```/g, '').trim());
       } catch {
-        throw new Error('Could not parse response');
+        throw new Error('Could not parse response — please try again.');
       }
 
       renderResult(result, specialist, patientName);
@@ -1121,7 +1127,12 @@ Please create a focused visit script for this appointment.`;
     } catch (err) {
       document.getElementById('loadingSection').classList.add('hidden');
       document.getElementById('formSection').classList.remove('hidden');
-      document.getElementById('errorBox').textContent = 'Something went wrong generating your script. Please try again.';
+      const msg = err.message || '';
+      const friendly = msg.includes('504') || msg.includes('timeout') || msg.includes('Timeout')
+        ? 'The request timed out — please try again.'
+        : msg.includes('parse') ? 'Could not read the response — please try again.'
+        : 'Something went wrong. Please try again in a moment.';
+      document.getElementById('errorBox').textContent = friendly;
       document.getElementById('errorBox').style.display = 'block';
       updateProgress(2);
     }
