@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MedAdvocate — Get Started</title>
+<title>The Hidden Reason Your Doctor Isn't Listening — Get Instant Access</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -72,6 +72,9 @@ body{font-family:'DM Sans',sans-serif;background:#f4f4f6;color:var(--ink);min-he
 .founder-quote{font-family:'Lora',serif;font-style:italic;font-size:14px;color:var(--ink);line-height:1.7;margin-bottom:14px}
 .founder-attr{display:flex;align-items:center;gap:12px}
 .founder-avatar{width:36px;height:36px;border-radius:50%;background:var(--sage-deep);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.founder-photo-wrap{flex-shrink:0;position:relative}
+.founder-photo{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--border-sage);display:block}
+.founder-photo-placeholder{width:64px;height:64px;border-radius:50%;background:var(--sage-deep);border:3px solid var(--border-sage);display:none;align-items:center;justify-content:center;font-size:28px}
 .founder-name{font-family:'Lora',serif;font-weight:600;font-size:13px;color:var(--ink)}
 .founder-role{font-size:12px;color:var(--sage);line-height:1.4}
 
@@ -219,7 +222,7 @@ body{font-family:'DM Sans',sans-serif;background:#f4f4f6;color:var(--ink);min-he
         <div class="co-price-amount">$47</div>
         <div class="co-price-period">one-time · instant access</div>
       </div>
-      <div class="co-price-desc">A complete 4 module digital course<br>Learn it once. Use it forever.</div>
+      <div class="co-price-desc">A complete 4 module digital course<br>Learn it once. Use it at every appointment.</div>
     </div>
 
     <!-- WHAT'S INCLUDED -->
@@ -252,7 +255,12 @@ body{font-family:'DM Sans',sans-serif;background:#f4f4f6;color:var(--ink);min-he
           <p>I am truly honored to help you get there.</p>
         </div>
         <div class="founder-attr">
-          <div class="founder-avatar">🌿</div>
+          <div class="founder-photo-wrap">
+            <img src="sarah-founder.jpg" alt="Sarah, founder of MedAdvocate"
+                 class="founder-photo"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="founder-photo-placeholder">🌿</div>
+          </div>
           <div>
             <div class="founder-name">Love, Sarah</div>
             <div class="founder-role">Founder of MedAdvocate &amp; mom of two medically complex kids</div>
@@ -270,8 +278,7 @@ body{font-family:'DM Sans',sans-serif;background:#f4f4f6;color:var(--ink);min-he
        ═══════════════════════════════════════════ -->
   <div class="form-col">
 
-    <div class="form-logo">Med<span class="dot"></span><span class="adv">Advocate</span></div>
-    <div class="form-tagline">Beside you, always.</div>
+    <div class="form-logo">Complete Your Order</div>
 
     <!-- ORDER HEADER -->
     <div class="order-header">
