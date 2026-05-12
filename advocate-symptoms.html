@@ -222,6 +222,67 @@
     .sym-setup-grid{grid-template-columns:1fr 1fr}
     .insight-grid{grid-template-columns:1fr 1fr}
   }
+
+  /* ── VOICE LOG TAB ── */
+  .vl-mic-wrap{display:flex;flex-direction:column;align-items:center;padding:28px 0 20px}
+  .vl-mic-ring{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s}
+  .vl-mic-ring.idle{background:var(--sage-pale);border:2.5px solid var(--border)}
+  .vl-mic-ring.idle:hover{background:#daf0e6;border-color:var(--sage-light);transform:scale(1.04)}
+  .vl-mic-ring.listening{background:var(--sage);border:2.5px solid var(--sage);box-shadow:0 0 0 12px rgba(45,106,79,.12),0 0 0 24px rgba(45,106,79,.06);animation:vl-breathe 2s ease-in-out infinite}
+  .vl-mic-ring.processing{background:var(--amber-pale);border:2.5px solid var(--amber)}
+  .vl-mic-icon{font-size:44px;transition:all .2s;user-select:none}
+  @keyframes vl-breathe{0%,100%{box-shadow:0 0 0 12px rgba(45,106,79,.12),0 0 0 24px rgba(45,106,79,.06)}50%{box-shadow:0 0 0 20px rgba(45,106,79,.08),0 0 0 36px rgba(45,106,79,.03)}}
+  .vl-mic-label{font-size:14px;font-weight:500;color:var(--ink-muted);margin-top:14px;letter-spacing:.02em;min-height:22px;text-align:center}
+  .vl-mic-hint{font-size:12px;color:var(--ink-muted);margin-top:6px;font-weight:300;text-align:center;min-height:18px}
+  .vl-tx-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow-sm);min-height:80px}
+  .vl-tx-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px}
+  .vl-tx-text{font-size:15px;color:var(--ink-soft);line-height:1.75;font-weight:300;min-height:36px}
+  .vl-tx-text.empty{color:var(--ink-muted);font-style:italic;font-size:14px}
+  .vl-tx-live{color:var(--sage);font-style:italic}
+  .vl-parse-card{background:var(--white);border:1.5px solid var(--sage-light);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:16px;display:none}
+  .vl-parse-header{background:var(--sage-pale);padding:14px 18px}
+  .vl-parse-title{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:var(--sage-deep)}
+  .vl-parse-sub{font-size:12px;color:var(--ink-muted);font-weight:300}
+  .vl-parse-body{padding:16px 18px}
+  .vl-parse-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .vl-parse-row:last-child{border-bottom:none}
+  .vl-parse-key{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);min-width:80px;padding-top:2px}
+  .vl-parse-val{font-size:14px;color:var(--ink);font-weight:400;flex:1;line-height:1.5}
+  .vl-parse-val.editable{background:var(--warm);border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;width:100%;transition:border-color .2s}
+  .vl-parse-val.editable:focus{border-color:var(--sage)}
+  select.vl-parse-val{background:var(--warm);border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;cursor:pointer;width:100%}
+  select.vl-parse-val:focus{border-color:var(--sage)}
+  .vl-sev-row{display:flex;gap:5px;flex-wrap:wrap}
+  .vl-sev-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;color:var(--ink-muted)}
+  .vl-sev-btn:hover{border-color:var(--sage-light)}
+  .vl-sev-btn.sel{border-color:var(--sage);background:var(--sage);color:white;font-weight:600}
+  .vl-btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .vl-btn-primary{padding:13px 22px;background:var(--sage-deep);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+  .vl-btn-primary:hover{background:var(--ink);transform:translateY(-1px)}
+  .vl-btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .vl-btn-secondary{padding:11px 18px;background:transparent;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+  .vl-btn-secondary:hover{border-color:var(--sage);color:var(--sage-deep)}
+  .vl-btn-danger{padding:11px 18px;background:transparent;border:1.5px solid var(--red-border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--red);cursor:pointer;transition:all .2s}
+  .vl-btn-danger:hover{background:var(--red-pale)}
+  .vl-warn{background:var(--amber-pale);border:1.5px solid var(--amber);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;display:none}
+  .vl-success{background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:14px;padding:16px 20px;margin-bottom:16px;display:none;align-items:center;gap:12px}
+  .vl-success-icon{font-size:24px}
+  .vl-success-text{font-size:14px;color:var(--sage-deep);line-height:1.5}
+  .vl-recent{margin-top:24px}
+  .vl-recent-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:3px}
+  .vl-recent-sub{font-size:13px;color:var(--ink-muted);font-weight:300;margin-bottom:14px}
+  .vl-log-entry{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:13px 16px;margin-bottom:9px;box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;gap:12px}
+  .vl-log-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px;background:var(--sage-light)}
+  .vl-log-dot.high{background:#fca5a5}.vl-log-dot.med{background:#fcd34d}
+  .vl-log-info{flex:1;min-width:0}
+  .vl-log-sym{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:2px}
+  .vl-log-meta{font-size:12px;color:var(--ink-muted);font-weight:300}
+  .vl-log-sev{font-size:12px;font-weight:600;padding:3px 9px;border-radius:100px;flex-shrink:0}
+  .vl-log-sev.high{background:var(--red-pale);color:var(--red)}
+  .vl-log-sev.med{background:var(--amber-pale);color:var(--amber)}
+  .vl-log-sev.low{background:var(--sage-pale);color:var(--sage-deep)}
+  .vl-spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:white;animation:vl-spin 1s linear infinite;display:none}
+  @keyframes vl-spin{to{transform:rotate(360deg)}}
 </style>
   <!-- Supabase auth + data layer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -254,6 +315,7 @@
     <button class="tab" onclick="switchTab('history')" id="tab-history">📋 History</button>
     <button class="tab" onclick="switchTab('trends')" id="tab-trends">📈 Trends</button>
     <button class="tab" onclick="switchTab('setup')" id="tab-setup">⚙️ Setup</button>
+    <button class="tab" onclick="switchTab('voice')" id="tab-voice">🎙️ Voice Log</button>
   </div>
 
   <!-- ══ SETUP PANEL ══ -->
@@ -444,6 +506,91 @@
     </div>
   </div>
 
+  <!-- ══ VOICE LOG PANEL ══ -->
+  <div class="panel" id="panel-voice">
+
+    <div class="vl-warn" id="vl_compatWarn"></div>
+
+    <div class="vl-mic-wrap">
+      <div class="vl-mic-ring idle" id="vl_micRing" onclick="vlToggleListen()">
+        <div class="vl-mic-icon" id="vl_micIcon">🎤</div>
+      </div>
+      <div class="vl-mic-label" id="vl_micLabel">Tap to speak</div>
+      <div class="vl-mic-hint" id="vl_micHint">e.g. "Kira just said her ribs hurt, about a 7"</div>
+    </div>
+
+    <div class="vl-tx-card">
+      <div class="vl-tx-label">What you said</div>
+      <div class="vl-tx-text empty" id="vl_txText">Your words will appear here as you speak...</div>
+    </div>
+
+    <div class="vl-parse-card" id="vl_parseCard">
+      <div class="vl-parse-header">
+        <div class="vl-parse-title">✦ AI extracted this from your note</div>
+        <div class="vl-parse-sub">Review and edit before saving</div>
+      </div>
+      <div class="vl-parse-body">
+        <div class="vl-parse-row">
+          <div class="vl-parse-key">Patient</div>
+          <input class="vl-parse-val editable" id="vl_f_patient" type="text" placeholder="Who is this about?">
+        </div>
+        <div class="vl-parse-row">
+          <div class="vl-parse-key">Symptom</div>
+          <input class="vl-parse-val editable" id="vl_f_symptom" type="text" placeholder="What symptom?">
+        </div>
+        <div class="vl-parse-row">
+          <div class="vl-parse-key">Severity</div>
+          <div>
+            <div class="vl-sev-row" id="vl_sevRow"></div>
+            <div style="font-size:11px;color:var(--ink-muted);margin-top:6px">1 = barely noticeable · 10 = worst possible</div>
+          </div>
+        </div>
+        <div class="vl-parse-row">
+          <div class="vl-parse-key">Overall</div>
+          <select class="vl-parse-val" id="vl_f_overall">
+            <option value="">— select —</option>
+            <option value="great">😊 Good day</option>
+            <option value="ok">😐 Okay</option>
+            <option value="hard">😔 Hard day</option>
+            <option value="worst">😢 Worst day</option>
+          </select>
+        </div>
+        <div class="vl-parse-row">
+          <div class="vl-parse-key">Notes</div>
+          <input class="vl-parse-val editable" id="vl_f_notes" type="text" placeholder="Any additional context">
+        </div>
+        <div class="vl-parse-row">
+          <div class="vl-parse-key">Date & Time</div>
+          <div class="vl-parse-val" id="vl_f_datetime" style="font-size:13px;color:var(--ink-muted)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vl-success" id="vl_successFlash">
+      <div class="vl-success-icon">✅</div>
+      <div class="vl-success-text">
+        <strong id="vl_successMsg">Logged!</strong><br>
+        <span style="font-size:12px">Saved! <a href="#" onclick="switchTab('history');return false;" style="color:var(--sage);text-decoration:none;font-weight:500">View history →</a></span>
+      </div>
+    </div>
+
+    <div class="vl-btn-row" id="vl_actionBtns" style="display:none">
+      <button class="vl-btn-primary" id="vl_saveBtn" onclick="vlSaveLog()">
+        <div class="vl-spinner" id="vl_saveSpinner"></div>
+        <span id="vl_saveBtnText">💾 Save to Tracker</span>
+      </button>
+      <button class="vl-btn-secondary" onclick="vlRetryVoice()">🎤 Re-record</button>
+      <button class="vl-btn-danger" onclick="vlResetAll()">✕ Discard</button>
+    </div>
+
+    <div class="vl-recent">
+      <div class="vl-recent-title">Recent <em>voice logs</em></div>
+      <div class="vl-recent-sub">Entries added through voice today</div>
+      <div id="vl_recentList"><div style="font-size:13px;color:var(--ink-muted);font-style:italic">No voice logs today yet</div></div>
+    </div>
+
+  </div>
+
 </div><!-- shell -->
 
 <div class="toast" id="toast"></div>
@@ -572,6 +719,7 @@ function switchTab(tab) {
   if (tab === 'history') renderHistory();
   if (tab === 'setup') renderSetup();
   if (tab === 'log') renderLog();
+  if (tab === 'voice') vlInit();
 }
 
 // ══ SETUP ══
@@ -1116,7 +1264,341 @@ if (!entries.length) {
   save();
 }
 
-renderLog();
+if (window.location.hash === '#voice') switchTab('voice');
+else renderLog();
+
+// ══ VOICE LOG ══
+const VL_SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let vl_recog = null, vl_isListening = false, vl_fullTx = '', vl_interimTx = '';
+let vl_parsedData = null, vl_selectedSev = 0, vl_patientName = '', vl_initialized = false;
+
+function vlEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function vlInit() {
+  if (vl_initialized) { vlLoadRecentLogs(); return; }
+  vl_initialized = true;
+
+  try {
+    const profile = await DB.getProfile();
+    vl_patientName = profile.name || '';
+  } catch(e) {}
+
+  const sevRow = document.getElementById('vl_sevRow');
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'vl-sev-btn';
+    btn.textContent = i;
+    btn.id = 'vl_sev_' + i;
+    btn.onclick = () => vlSelectSev(i);
+    sevRow.appendChild(btn);
+  }
+
+  if (!VL_SR) {
+    const warn = document.getElementById('vl_compatWarn');
+    warn.style.display = 'block';
+    warn.innerHTML = '<strong>Voice logging requires Chrome or Edge.</strong> You can type your note manually using the text box below.';
+    document.getElementById('vl_micRing').style.cursor = 'not-allowed';
+    document.getElementById('vl_micLabel').textContent = 'Voice not supported — type below';
+    vlAddTextFallback();
+  }
+
+  await vlLoadRecentLogs();
+}
+
+function vlAddTextFallback() {
+  const wrap = document.getElementById('vl_micRing').parentNode;
+  const ta = document.createElement('textarea');
+  ta.id = 'vl_manualInput';
+  ta.placeholder = 'Type your note here, e.g. "Kira just said her ribs hurt, about a 7"';
+  ta.style.cssText = 'width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-family:DM Sans,sans-serif;font-size:14px;color:var(--ink);background:var(--warm);outline:none;resize:none;min-height:80px;margin-top:12px;line-height:1.6';
+  const btn = document.createElement('button');
+  btn.className = 'vl-btn-primary';
+  btn.style.marginTop = '10px';
+  btn.textContent = '✦ Analyze note';
+  btn.onclick = () => {
+    const val = document.getElementById('vl_manualInput').value.trim();
+    if (!val) return;
+    vl_fullTx = val;
+    vlUpdateTxDisplay(val, false);
+    vlParseWithAI(val);
+  };
+  wrap.appendChild(ta);
+  wrap.appendChild(btn);
+}
+
+function vlSetupRecog() {
+  vl_recog = new VL_SR();
+  vl_recog.continuous = false;
+  vl_recog.interimResults = true;
+  vl_recog.lang = 'en-US';
+
+  vl_recog.onresult = (e) => {
+    vl_interimTx = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) vl_fullTx += e.results[i][0].transcript + ' ';
+      else vl_interimTx = e.results[i][0].transcript;
+    }
+    vlUpdateTxDisplay(vl_fullTx, vl_interimTx);
+  };
+
+  vl_recog.onerror = (e) => {
+    if (e.error === 'not-allowed') showToast('Microphone access denied');
+    else if (e.error === 'no-speech') vlStopListening(true);
+    else vlStopListening(false);
+  };
+
+  vl_recog.onend = () => {
+    if (vl_isListening) vlStopListening(true);
+  };
+}
+
+function vlToggleListen() {
+  if (!VL_SR) return;
+  if (vl_isListening) vlStopListening(true);
+  else vlStartListening();
+}
+
+async function vlStartListening() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    showToast('Microphone access required');
+    return;
+  }
+
+  vl_fullTx = ''; vl_interimTx = '';
+  vl_isListening = true;
+
+  document.getElementById('vl_micRing').className = 'vl-mic-ring listening';
+  document.getElementById('vl_micIcon').textContent = '⏹';
+  document.getElementById('vl_micLabel').textContent = 'Listening... tap to stop';
+  document.getElementById('vl_micHint').textContent = 'Speak naturally — describe what happened';
+  const txEl = document.getElementById('vl_txText');
+  txEl.className = 'vl-tx-text';
+  txEl.innerHTML = '<span class="vl-tx-live">Listening...</span>';
+  document.getElementById('vl_parseCard').style.display = 'none';
+  document.getElementById('vl_actionBtns').style.display = 'none';
+  document.getElementById('vl_successFlash').style.display = 'none';
+
+  vlSetupRecog();
+  try { vl_recog.start(); } catch(e) {}
+}
+
+async function vlStopListening(autoProcess = true) {
+  vl_isListening = false;
+  if (vl_recog) try { vl_recog.stop(); } catch(e) {}
+
+  const text = vl_fullTx.trim();
+
+  if (!text) {
+    document.getElementById('vl_micRing').className = 'vl-mic-ring idle';
+    document.getElementById('vl_micIcon').textContent = '🎤';
+    document.getElementById('vl_micLabel').textContent = 'Tap to speak';
+    document.getElementById('vl_micHint').textContent = 'e.g. "Kira just said her ribs hurt, about a 7"';
+    const txEl = document.getElementById('vl_txText');
+    txEl.className = 'vl-tx-text empty';
+    txEl.textContent = 'Your words will appear here as you speak...';
+    return;
+  }
+
+  document.getElementById('vl_micRing').className = 'vl-mic-ring processing';
+  document.getElementById('vl_micIcon').textContent = '✦';
+  document.getElementById('vl_micLabel').textContent = 'Analyzing...';
+  document.getElementById('vl_micHint').textContent = 'AI is extracting symptom details';
+
+  vlUpdateTxDisplay(text, '');
+  if (autoProcess) await vlParseWithAI(text);
+}
+
+function vlUpdateTxDisplay(final, interim) {
+  const el = document.getElementById('vl_txText');
+  el.className = 'vl-tx-text';
+  el.innerHTML = vlEsc(final) + (interim ? '<span class="vl-tx-live"> ' + vlEsc(interim) + '</span>' : '');
+}
+
+async function vlParseWithAI(text) {
+  const profileCtx = vl_patientName ? `The patient's name is ${vl_patientName}.` : '';
+  try {
+    const r = await fetch('/.netlify/functions/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 500,
+        system: `You extract symptom information from casual voice notes spoken by a medical caregiver or patient. ${profileCtx}
+Return ONLY valid JSON with no markdown:
+{
+  "patient": "patient name or 'myself' if unclear",
+  "symptom": "the main symptom in 2-4 words",
+  "severity": number from 1-10 or null if not mentioned,
+  "overall": "great|ok|hard|worst or null",
+  "notes": "any additional relevant context"
+}
+Be concise. Extract only what was said.`,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const d = await r.json();
+    const raw = d.content?.[0]?.text || '{}';
+    vl_parsedData = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    vlShowParsed(vl_parsedData);
+  } catch(e) {
+    vl_parsedData = { patient: vl_patientName || '', symptom: '', severity: null, overall: null, notes: text };
+    vlShowParsed(vl_parsedData);
+    showToast('Could not auto-parse — please fill in manually');
+  }
+
+  document.getElementById('vl_micRing').className = 'vl-mic-ring idle';
+  document.getElementById('vl_micIcon').textContent = '🎤';
+  document.getElementById('vl_micLabel').textContent = 'Tap to speak again';
+  document.getElementById('vl_micHint').textContent = 'Review the details below, then save';
+}
+
+function vlShowParsed(data) {
+  document.getElementById('vl_f_patient').value = data.patient || vl_patientName || '';
+  document.getElementById('vl_f_symptom').value = data.symptom || '';
+  document.getElementById('vl_f_notes').value = data.notes || '';
+  if (data.overall) document.getElementById('vl_f_overall').value = data.overall;
+  if (data.severity) vlSelectSev(data.severity);
+
+  const now = new Date();
+  document.getElementById('vl_f_datetime').textContent = now.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'long', day: 'numeric'
+  }) + ' at ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  document.getElementById('vl_parseCard').style.display = 'block';
+  document.getElementById('vl_actionBtns').style.display = 'flex';
+  document.getElementById('vl_parseCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function vlSelectSev(n) {
+  vl_selectedSev = n;
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.getElementById('vl_sev_' + i);
+    if (btn) btn.classList.toggle('sel', i === n);
+  }
+}
+
+async function vlSaveLog() {
+  const symptom = document.getElementById('vl_f_symptom').value.trim();
+  if (!symptom) { showToast('Please enter a symptom'); return; }
+
+  const btn = document.getElementById('vl_saveBtn');
+  const spinner = document.getElementById('vl_saveSpinner');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  document.getElementById('vl_saveBtnText').textContent = 'Saving...';
+
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const overall = document.getElementById('vl_f_overall').value || null;
+    const notes = document.getElementById('vl_f_notes').value.trim();
+    const patient = document.getElementById('vl_f_patient').value.trim();
+
+    const existing = await DB.getSymptomEntries(1000);
+    const todayEntry = existing.find(e => e.date === today) || {
+      date: today, symptoms: {}, overall: null, interference: {}, notes: ''
+    };
+
+    const symKey = 'voice_' + symptom.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30) + '_' + Date.now();
+    todayEntry.symptoms[symKey] = vl_selectedSev || 5;
+    if (overall) todayEntry.overall = overall;
+
+    const timeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const noteAppend = `[${timeStr}] ${patient ? patient + ': ' : ''}${symptom}${vl_selectedSev ? ' (' + vl_selectedSev + '/10)' : ''}${notes ? ' — ' + notes : ''}`;
+    todayEntry.notes = [todayEntry.notes, noteAppend].filter(Boolean).join('\n');
+
+    const existingConfig = await DB.getSymptomConfig();
+    const alreadyTracked = existingConfig.some(s => s.symptom_id === symKey);
+    if (!alreadyTracked) {
+      await DB.setSymptomConfig([
+        ...existingConfig.map(s => ({ id: s.symptom_id, label: s.label, icon: s.icon, custom: s.is_custom })),
+        { id: symKey, label: symptom, icon: '🎤', custom: true }
+      ]);
+    }
+
+    await DB.upsertSymptomEntry(todayEntry);
+
+    document.getElementById('vl_successMsg').textContent = `"${symptom}" logged!`;
+    document.getElementById('vl_successFlash').style.display = 'flex';
+    document.getElementById('vl_parseCard').style.display = 'none';
+    document.getElementById('vl_actionBtns').style.display = 'none';
+    document.getElementById('vl_txText').className = 'vl-tx-text empty';
+    document.getElementById('vl_txText').textContent = 'Your words will appear here as you speak...';
+
+    showToast('Saved to Symptom Tracker ✓');
+    await vlLoadRecentLogs();
+
+  } catch(e) {
+    showToast('Save failed — ' + (e.message || 'please try again'));
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    document.getElementById('vl_saveBtnText').textContent = '💾 Save to Tracker';
+  }
+}
+
+async function vlLoadRecentLogs() {
+  const el = document.getElementById('vl_recentList');
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const allEntries = await DB.getSymptomEntries(100);
+    const todayEntry = allEntries.find(e => e.date === today);
+
+    if (!todayEntry || !todayEntry.notes) {
+      el.innerHTML = '<div style="font-size:13px;color:var(--ink-muted);font-style:italic">No voice logs today yet</div>';
+      return;
+    }
+
+    const lines = todayEntry.notes.split('\n').filter(l => l.includes('[') && l.includes(']'));
+    if (!lines.length) {
+      el.innerHTML = '<div style="font-size:13px;color:var(--ink-muted);font-style:italic">No voice logs today yet</div>';
+      return;
+    }
+
+    el.innerHTML = lines.slice().reverse().map(line => {
+      const timeMatch = line.match(/\[([^\]]+)\]/);
+      const time = timeMatch ? timeMatch[1] : '';
+      const content = line.replace(/\[([^\]]+)\]\s*/, '');
+      const sevMatch = content.match(/\((\d+)\/10\)/);
+      const sev = sevMatch ? parseInt(sevMatch[1]) : 0;
+      const sevClass = sev >= 7 ? 'high' : sev >= 4 ? 'med' : 'low';
+      return `<div class="vl-log-entry">
+        <div class="vl-log-dot ${sevClass}"></div>
+        <div class="vl-log-info">
+          <div class="vl-log-sym">${vlEsc(content.replace(/\s*\(\d+\/10\)/, ''))}</div>
+          <div class="vl-log-meta">Today at ${vlEsc(time)}</div>
+        </div>
+        ${sev ? `<div class="vl-log-sev ${sevClass}">${sev}/10</div>` : ''}
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--ink-muted)">Could not load recent logs</div>';
+  }
+}
+
+function vlRetryVoice() {
+  document.getElementById('vl_parseCard').style.display = 'none';
+  document.getElementById('vl_actionBtns').style.display = 'none';
+  document.getElementById('vl_successFlash').style.display = 'none';
+  vl_fullTx = '';
+  vlStartListening();
+}
+
+function vlResetAll() {
+  document.getElementById('vl_parseCard').style.display = 'none';
+  document.getElementById('vl_actionBtns').style.display = 'none';
+  document.getElementById('vl_successFlash').style.display = 'none';
+  const txEl = document.getElementById('vl_txText');
+  txEl.className = 'vl-tx-text empty';
+  txEl.textContent = 'Your words will appear here as you speak...';
+  document.getElementById('vl_micRing').className = 'vl-mic-ring idle';
+  document.getElementById('vl_micIcon').textContent = '🎤';
+  document.getElementById('vl_micLabel').textContent = 'Tap to speak';
+  document.getElementById('vl_micHint').textContent = 'e.g. "Kira just said her ribs hurt, about a 7"';
+  vl_fullTx = ''; vl_interimTx = ''; vl_parsedData = null; vl_selectedSev = 0;
+}
 </script>
 <!-- DoD/VA Pain Scale Reference Chart -->
 <div style="max-width:960px;margin:0 auto;padding:0 22px 60px;position:relative;z-index:1">
