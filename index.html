@@ -876,6 +876,60 @@ initAuth();
 // Keyboard close
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTool(); });
 
+// ── PWA INSTALL ──────────────────────────────────────────────
+let _installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  if (localStorage.getItem('pwa_dismissed') === '1') return;
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  const banner = document.getElementById('installBanner');
+  if (banner) setTimeout(() => banner.classList.add('show'), 4000);
+}
+
+function triggerInstall() {
+  if (_installPrompt) {
+    _installPrompt.prompt();
+    _installPrompt.userChoice.then(r => {
+      if (r.outcome === 'accepted') dismissInstall();
+      _installPrompt = null;
+    });
+  }
+}
+
+function dismissInstall() {
+  localStorage.setItem('pwa_dismissed', '1');
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.classList.remove('show');
+}
+
+// iOS: no beforeinstallprompt — show manual instructions instead
+(function() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|crios|fxios/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && isSafari && !isStandalone && !localStorage.getItem('pwa_dismissed')) {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    const addBtn = banner.querySelector('.ib-add');
+    if (addBtn) addBtn.style.display = 'none';
+    const sub = banner.querySelector('.ib-s');
+    if (sub) sub.innerHTML = 'Tap <strong style="color:white">Share ⬆</strong> then <strong style="color:white">Add to Home Screen</strong>';
+    setTimeout(() => banner.classList.add('show'), 5000);
+  }
+})();
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+// ─────────────────────────────────────────────────────────────
+
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
   "name": "MedAdvocate — Medical Mom's Companion",
   "short_name": "MedAdvocate",
   "description": "The medical advocacy toolkit for moms of complex kids. Visit scripts, lab tracking, credibility documents, and IEP prep — all in one place.",
-  "start_url": "/advocate-home.html",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#fdfcf8",
