@@ -148,7 +148,11 @@ const SOURCES=[
     try{return JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0;}catch{return false;}
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
-  {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>(await DB.getLabResults()).length>0},
+  {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
+    const db=await DB.getLabResults();
+    if(db.length)return true;
+    try{return JSON.parse(localStorage.getItem('advocate_lab_entries')||'[]').length>0;}catch{return false;}
+  }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>(await DB.getDiagnosticTests()).length>0},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
   {key:'flares',icon:'🔥',label:'Flare History',check:async()=>(await DB.getFlares()).length>0},
@@ -185,6 +189,11 @@ async function buildData(){
   if(!meds.length){
     try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch(e){meds=[];}
   }
+  // Labs: try Supabase first, fall back to localStorage
+  let labsFallback=(await DB.getLabResults());
+  if(!labsFallback.length){
+    try{labsFallback=JSON.parse(localStorage.getItem('advocate_lab_entries')||'[]');}catch(e){labsFallback=[];}
+  }
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
   const symState=JSON.parse(localStorage.getItem('advocate_symptoms')||'{"trackedSymptoms":[]}');
@@ -211,10 +220,16 @@ async function buildData(){
     const active=tracked.filter(s=>latest.symptoms?.[s.id]>=3).sort((a,b)=>(latest.symptoms[b.id]||0)-(latest.symptoms[a.id]||0));
     if(active.length) parts.push(`CURRENT SYMPTOMS (${fmtD(latest.date)}):\n${active.map(s=>`- ${s.label}: ${latest.symptoms[s.id]}/10 — ${DOD[latest.symptoms[s.id]]||'Severe'}`).join('\n')}`);
   }
-  if(sel.has('labs')&&labs.length){
-    const latest=labs[labs.length-1];
-    const abnormal=latest.results?.filter(r=>r.status==='high'||r.status==='low'||r.status==='critical')||[];
-    parts.push(`LABS (${fmtD(latest.date)}): ${abnormal.length?'Abnormal — '+abnormal.map(r=>`${r.name}: ${r.value} ${r.unit} (${r.status})`).join(', '):'All within normal range'}`);
+  if(sel.has('labs')&&labsFallback.length){
+    // Each row is one test: {test_name/name, result_value/value, unit, status, lab_date/date, reference_range}
+    const abnormal=labsFallback.filter(r=>['high','low','critical','abnormal'].includes((r.status||'').toLowerCase()));
+    const labLines=labsFallback.slice(0,15).map(r=>{
+      const name=r.test_name||r.name||'Test';
+      const val=r.result_value||r.value||'';
+      const date=r.lab_date||r.date||'';
+      return `- ${name}${val?' '+val:''}${r.unit?' '+r.unit:''}${r.reference_range?' (ref: '+r.reference_range+')':''}${r.status?' ['+r.status+']':''}${date?' ('+fmtD(date)+')':''}`;
+    });
+    parts.push(`LAB RESULTS (${labsFallback.length} total):\n${labLines.join('\n')}${abnormal.length?'\n⚠️ Abnormal: '+abnormal.map(r=>r.test_name||r.name).join(', '):''}`);
   }
   if(sel.has('tests')&&tests.length){
     const abnormal=tests.filter(t=>t.status==='abnormal');
@@ -257,7 +272,7 @@ async function generateSummary(){
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,
         system:`You create professional clinical summary documents for medical advocates. Write clearly and clinically — a specialist should respect this document immediately. Return ONLY valid JSON no markdown:
 {"clinicalSnapshot":"3-4 sentence professional clinical overview","primaryConcerns":["Top 3-5 current clinical concerns stated clinically"],"currentMedications":[{"name":"","dose":"","indication":""}],"recentFindings":["Notable lab, test, or imaging findings"],"medicalHistory":["Key historical events chronologically"],"currentSymptoms":[{"symptom":"","severity":"","impact":""}],"careTeam":[{"name":"","role":""}],"goalsForVisit":["Patient goals"],"redFlags":["Urgent items — empty array if none"],"questionsForDoctor":["3-4 specific clinical questions based on this data"]}`,
         messages:[{role:'user',content:`Patient data:\n\n${dataStr}${purpose?'\n\nAppointment: '+purpose:''}${notes?'\n\nAdditional context: '+notes:''}${goals?'\n\nPatient goals: '+goals:''}`}]})
