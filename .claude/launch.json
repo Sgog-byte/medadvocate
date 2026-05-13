@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "medadvocate",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-Command", "Start-Job { $l = [System.Net.HttpListener]::new(); $l.Prefixes.Add('http://localhost:3000/'); $l.Start(); while($l.IsListening){ $c=$l.GetContext(); $f='C:\\Users\\sarah\\OneDrive\\Documents\\GitHub\\medadvocate\\.claude\\worktrees\\gallant-sutherland-6a9c9e\\'+$c.Request.Url.LocalPath.TrimStart('/'); if(Test-Path $f -PathType Leaf){$b=[System.IO.File]::ReadAllBytes($f);$c.Response.OutputStream.Write($b,0,$b.Length)}; $c.Response.Close() } }; Wait-Job"],
+      "port": 3000
+    }
+  ]
+}
