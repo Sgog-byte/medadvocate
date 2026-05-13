@@ -142,7 +142,11 @@ function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateS
 const SOURCES=[
   {key:'profile',icon:'👤',label:'Patient Profile',check:async()=>{const p=await DB.getProfile();return Object.keys(p).filter(k=>p[k]).length>0;}},
   {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:async()=>{const p=await DB.getProfile();return p.diagnoses?.length>0;}},
-  {key:'medications',icon:'💊',label:'Medications',check:async()=>(await DB.getMedications()).length>0},
+  {key:'medications',icon:'💊',label:'Medications',check:async()=>{
+    const db=await DB.getMedications();
+    if(db.length)return true;
+    try{return JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0;}catch{return false;}
+  }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>(await DB.getLabResults()).length>0},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>(await DB.getDiagnosticTests()).length>0},
@@ -176,7 +180,11 @@ function toggleSrc(key){
 
 async function buildData(){
   const p=(await DB.getProfile());
-  const meds=(await DB.getMedications());
+  // Medications: try Supabase first, fall back to localStorage
+  let meds=(await DB.getMedications());
+  if(!meds.length){
+    try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch(e){meds=[];}
+  }
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
   const symState=JSON.parse(localStorage.getItem('advocate_symptoms')||'{"trackedSymptoms":[]}');
@@ -192,7 +200,8 @@ async function buildData(){
   if(sel.has('medications')&&meds.length){
     const active=meds.filter(m=>m.status==='active');
     const stopped=meds.filter(m=>m.status!=='active');
-    if(active.length) parts.push(`CURRENT MEDICATIONS:\n${active.map(m=>`- ${m.name}${m.dose?' '+m.dose:''}${m.freq?' '+m.freq:''}${m.reason?' — '+m.reason:''}`).join('\n')}`);
+    // support both localStorage (freq, reason) and Supabase (frequency) field names
+    if(active.length) parts.push(`CURRENT MEDICATIONS:\n${active.map(m=>`- ${m.name}${m.dose?' '+m.dose:''}${(m.freq||m.frequency)?' '+(m.freq||m.frequency):''}${m.reason?' — '+m.reason:''}`).join('\n')}`);
     if(stopped.length) parts.push(`STOPPED/PAUSED: ${stopped.map(m=>m.name).join(', ')}`);
   }
   if(sel.has('symptoms')&&symEntries.length){
@@ -295,7 +304,7 @@ async function generateSummary(){
 
     window._sumText=`MEDICAL SUMMARY — ${name}\n${today}${purpose?'\n'+purpose:''}\n\n${res.clinicalSnapshot||''}\n\nPRIMARY CONCERNS:\n${(res.primaryConcerns||[]).map(c=>'• '+c).join('\n')}\n\nMEDICATIONS:\n${(res.currentMedications||[]).map(m=>'• '+m.name+' '+m.dose).join('\n')}\n\nQUESTIONS FOR DOCTOR:\n${(res.questionsForDoctor||[]).map(q=>'? '+q).join('\n')}`;
   }catch(e){
-    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:16px;color:var(--red)">Something went wrong. Please try again.</div>`;
+    out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:16px;color:var(--red)"><strong>Something went wrong.</strong><br><span style="font-size:12px;opacity:.8">${escH(e.message||String(e))}</span></div>`;
     console.error(e);
   }finally{document.getElementById('gen_btn').disabled=false;}
 }
