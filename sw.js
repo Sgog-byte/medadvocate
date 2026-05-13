@@ -1,4 +1,4 @@
-const CACHE = 'medadvocate-v3';
+const CACHE = 'medadvocate-v4';
 
 const PRECACHE = [
   '/', '/index.html', '/manifest.json', '/supabase-client.js',

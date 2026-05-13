@@ -152,9 +152,11 @@ const SOURCES=[
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
-    const db=await DB.getLabReports();
-    if(db.length)return true;
-    try{return JSON.parse(localStorage.getItem('advocate_lab_results')||'[]').length>0;}catch{return false;}
+    // Check localStorage first (labs tracker always writes here)
+    try{if(JSON.parse(localStorage.getItem('advocate_lab_results')||'[]').length>0)return true;}catch{}
+    // Then try Supabase
+    try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
+    return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>(await DB.getDiagnosticTests()).length>0},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
@@ -192,11 +194,10 @@ async function buildData(){
   if(!meds.length){
     try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch(e){meds=[];}
   }
-  // Labs: try Supabase first, fall back to localStorage (key: advocate_lab_results)
-  let labReports=(await DB.getLabReports());
-  if(!labReports.length){
-    try{labReports=JSON.parse(localStorage.getItem('advocate_lab_results')||'[]');}catch(e){labReports=[];}
-  }
+  // Labs: localStorage first (labs tracker always writes here), then Supabase
+  let labReports=[];
+  try{labReports=JSON.parse(localStorage.getItem('advocate_lab_results')||'[]');}catch{}
+  if(!labReports.length){try{labReports=await DB.getLabReports();}catch{}}
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
   const symState=JSON.parse(localStorage.getItem('advocate_symptoms')||'{"trackedSymptoms":[]}');
