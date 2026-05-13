@@ -500,7 +500,7 @@ async function extractAndSave(){
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-5',max_tokens:1500,
+        model:'claude-3-5-sonnet-20241022',max_tokens:1500,
         system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
         messages:msgs
       })
@@ -804,7 +804,7 @@ async function genSummary(){
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-5',max_tokens:2000,
+        model:'claude-3-5-sonnet-20241022',max_tokens:2000,
         system:'You create diagnostic testing summaries for medical advocates. Return ONLY valid JSON no markdown:\n{"overview":"2-3 sentence clinical overview of the full testing history","byType":[{"type":"Test type","testCount":0,"trend":"improving|worsening|stable|mixed","summary":"1-2 sentences on what the tests show over time","keyFindings":["Notable finding"]}],"redFlags":["Urgent findings needing attention — empty if none"],"questionsForDoctor":["3-4 specific questions based on this testing history"],"closingNote":"One sentence context for the receiving doctor"}',
         messages:[{role:'user',content:'Create a diagnostic testing summary.\nPatient: '+(prof.name||'Patient')+(prof.diagnoses?'\nDiagnoses: '+prof.diagnoses:'')+'\n'+(appt?'Appointment: '+appt+'\n':'')+'\nTesting history:\n'+dataStr}]
       })
