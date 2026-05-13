@@ -77,6 +77,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 .report-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .report-item{padding:10px 14px;background:var(--sage-pale);border-radius:10px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6}
 .empty-state{text-align:center;padding:48px 24px;color:var(--ink-muted)}
+.rpt-toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;font-weight:300}
+.rpt-toggle input[type=checkbox]{accent-color:var(--sage);width:15px;height:15px;cursor:pointer}
 .empty-icon{font-size:40px;margin-bottom:12px}
 .empty-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
 .empty-sub{font-size:13px;font-weight:300;line-height:1.6}
@@ -189,10 +191,22 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
       <div class="fcard-title">Generate Appointment Report</div>
       <div class="fcard-sub">A clean, printable medication summary your doctor can review in 60 seconds.</div>
       <div class="two-col">
-        <div class="field"><label class="flabel">Patient Name</label><input type="text" class="finput" id="rpt_name" placeholder="e.g. Emma Johnson or myself"></div>
+        <div class="field"><label class="flabel">Patient Name</label><input type="text" class="finput" id="rpt_name" placeholder="e.g. Kira"></div>
         <div class="field"><label class="flabel">Appointment Date</label><input type="date" class="finput" id="rpt_date"></div>
       </div>
       <div class="field"><label class="flabel">Appointment type / Doctor</label><input type="text" class="finput" id="rpt_doctor" placeholder="e.g. Cardiology follow-up with Dr. Webb"></div>
+      <div class="field"><label class="flabel">Diagnoses <span style="font-weight:300;text-transform:none;letter-spacing:0">(pulled from profile — edit if needed)</span></label><textarea class="ftextarea" id="rpt_diagnoses" placeholder="e.g. hEDS, POTS, MCAS — loaded from patient profile" style="min-height:54px"></textarea></div>
+      <div class="field">
+        <label class="flabel">Include in report</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label class="rpt-toggle"><input type="checkbox" id="sec_summary" checked> Clinical summary</label>
+          <label class="rpt-toggle"><input type="checkbox" id="sec_active" checked> Active medications</label>
+          <label class="rpt-toggle"><input type="checkbox" id="sec_stopped" checked> Stopped / paused medications</label>
+          <label class="rpt-toggle"><input type="checkbox" id="sec_considerations" checked> Notable considerations</label>
+          <label class="rpt-toggle"><input type="checkbox" id="sec_redflags" checked> Potential concerns to discuss</label>
+          <label class="rpt-toggle"><input type="checkbox" id="sec_questions" checked> Questions to ask your doctor</label>
+        </div>
+      </div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn-primary" onclick="generateReport()">📄 Generate Report</button>
         <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
@@ -372,10 +386,19 @@ function deleteLog(id){
 }
 
 // ── REPORT ──
-function prefillReport(){
+async function prefillReport(){
   if(!document.getElementById('rpt_date').value){
     document.getElementById('rpt_date').value=new Date().toISOString().split('T')[0];
   }
+  try{
+    const profile=await DB.getProfile();
+    if(profile.name && !document.getElementById('rpt_name').value){
+      document.getElementById('rpt_name').value=profile.name;
+    }
+    if(profile.diagnoses && !document.getElementById('rpt_diagnoses').value){
+      document.getElementById('rpt_diagnoses').value=profile.diagnoses;
+    }
+  }catch(e){}
 }
 
 async function generateReport(){
@@ -385,6 +408,16 @@ async function generateReport(){
   const name=document.getElementById('rpt_name').value.trim()||'Patient';
   const date=document.getElementById('rpt_date').value;
   const doctor=document.getElementById('rpt_doctor').value.trim();
+  const diagnoses=document.getElementById('rpt_diagnoses').value.trim();
+
+  const sec={
+    summary:document.getElementById('sec_summary').checked,
+    active:document.getElementById('sec_active').checked,
+    stopped:document.getElementById('sec_stopped').checked,
+    considerations:document.getElementById('sec_considerations').checked,
+    redflags:document.getElementById('sec_redflags').checked,
+    questions:document.getElementById('sec_questions').checked,
+  };
 
   const out=document.getElementById('report_out');
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Generating your medication report…</p></div>`;
@@ -393,8 +426,8 @@ async function generateReport(){
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,
-        system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary of the medication picture","activeMedsSummary":"One sentence describing the current active medications and their purpose","concerns":["2-4 notable concerns, interactions, or things to discuss with the doctor"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns, or empty array if none"]}',
-        messages:[{role:'user',content:`Patient: ${name}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
+        system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Use ONLY the confirmed diagnoses provided — never speculate, suggest possible diagnoses, or use language like "could have" or "may indicate". Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary referencing the confirmed diagnoses and current medication picture","concerns":["2-4 notable considerations or interactions based on confirmed conditions and medications"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns given the confirmed diagnoses, or empty array if none"]}',
+        messages:[{role:'user',content:`Patient: ${name}\nConfirmed diagnoses: ${diagnoses||'Not specified'}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
     });
     const d=await r.json();
     const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
@@ -411,14 +444,15 @@ async function generateReport(){
         <div class="report-top">
           <div class="report-title">Medication Report — ${escH(name)}</div>
           <div class="report-sub">${doctor?escH(doctor)+' · ':''}${fmtDate(date)||today} · Generated by MedAdvocate</div>
+          ${diagnoses?`<div class="report-sub" style="margin-top:4px">Diagnoses: ${escH(diagnoses)}</div>`:''}
         </div>
         <div class="report-body">
-          <div class="report-sec"><div class="report-sec-title">Clinical Summary</div><div class="report-item">${escH(result.summary)}</div></div>
-          <div class="report-sec"><div class="report-sec-title">Active Medications (${activeMeds.length})</div>${activeMeds.map(m=>`<div class="report-item"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.freq?' '+escH(m.freq):''}${m.reason?'<br><span style="font-size:12px;color:var(--ink-muted)">For: '+escH(m.reason)+'</span>':''}${m.doctor?'<span style="font-size:12px;color:var(--ink-muted)"> · '+escH(m.doctor)+'</span>':''}</div>`).join('')}</div>
-          ${stoppedMeds.length?`<div class="report-sec"><div class="report-sec-title">Stopped / Paused</div>${stoppedMeds.map(m=>`<div class="report-item" style="opacity:.7">${escH(m.name)} (${m.status})</div>`).join('')}</div>`:''}
-          ${result.concerns?.length?`<div class="report-sec"><div class="report-sec-title">Notable Considerations</div>${result.concerns.map(c=>`<div class="report-item">⚠️ ${escH(c)}</div>`).join('')}</div>`:''}
-          ${result.redFlags?.length?`<div class="report-sec"><div class="report-sec-title">🚨 Potential Concerns to Discuss</div>${result.redFlags.map(f=>`<div class="report-item" style="background:var(--red-pale);border:1px solid var(--red-border)">🚨 ${escH(f)}</div>`).join('')}</div>`:''}
-          ${result.questionsToAsk?.length?`<div class="report-sec"><div class="report-sec-title">Questions to Ask Your Doctor</div>${result.questionsToAsk.map(q=>`<div class="report-item">→ ${escH(q)}</div>`).join('')}</div>`:''}
+          ${sec.summary&&result.summary?`<div class="report-sec"><div class="report-sec-title">Clinical Summary</div><div class="report-item">${escH(result.summary)}</div></div>`:''}
+          ${sec.active&&activeMeds.length?`<div class="report-sec"><div class="report-sec-title">Active Medications (${activeMeds.length})</div>${activeMeds.map(m=>`<div class="report-item"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.freq?' '+escH(m.freq):''}${m.reason?'<br><span style="font-size:12px;color:var(--ink-muted)">For: '+escH(m.reason)+'</span>':''}${m.doctor?'<span style="font-size:12px;color:var(--ink-muted)"> · '+escH(m.doctor)+'</span>':''}</div>`).join('')}</div>`:''}
+          ${sec.stopped&&stoppedMeds.length?`<div class="report-sec"><div class="report-sec-title">Stopped / Paused</div>${stoppedMeds.map(m=>`<div class="report-item" style="opacity:.7">${escH(m.name)} (${m.status})</div>`).join('')}</div>`:''}
+          ${sec.considerations&&result.concerns?.length?`<div class="report-sec"><div class="report-sec-title">Notable Considerations</div>${result.concerns.map(c=>`<div class="report-item">⚠️ ${escH(c)}</div>`).join('')}</div>`:''}
+          ${sec.redflags&&result.redFlags?.length?`<div class="report-sec"><div class="report-sec-title">🚨 Potential Concerns to Discuss</div>${result.redFlags.map(f=>`<div class="report-item" style="background:var(--red-pale);border:1px solid var(--red-border)">🚨 ${escH(f)}</div>`).join('')}</div>`:''}
+          ${sec.questions&&result.questionsToAsk?.length?`<div class="report-sec"><div class="report-sec-title">Questions to Ask Your Doctor</div>${result.questionsToAsk.map(q=>`<div class="report-item">→ ${escH(q)}</div>`).join('')}</div>`:''}
         </div>
       </div>`;
   }catch(e){
