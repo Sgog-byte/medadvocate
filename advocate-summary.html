@@ -47,7 +47,10 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .sum-body{padding:24px 28px}
 .sum-sec{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border)}
 .sum-sec:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.sum-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px}
+.sum-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.sum-remove-btn{font-size:10px;font-weight:500;color:#aaa;background:none;border:1px solid #e0e0e8;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all .15s}
+.sum-remove-btn:hover{color:var(--red);border-color:var(--red);background:var(--red-pale)}
+@media print{.sum-remove-btn{display:none!important}}
 .sum-item{padding:9px 13px;background:var(--sage-pale);border-radius:9px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6}
 .sum-item.red{background:var(--red-pale);border-left:3px solid var(--red)}
 .sum-item.amber{background:var(--amber-pale);border-left:3px solid var(--amber)}
@@ -149,9 +152,9 @@ const SOURCES=[
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
-    const db=await DB.getLabResults();
+    const db=await DB.getLabReports();
     if(db.length)return true;
-    try{return JSON.parse(localStorage.getItem('advocate_lab_entries')||'[]').length>0;}catch{return false;}
+    try{return JSON.parse(localStorage.getItem('advocate_lab_results')||'[]').length>0;}catch{return false;}
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>(await DB.getDiagnosticTests()).length>0},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
@@ -189,10 +192,10 @@ async function buildData(){
   if(!meds.length){
     try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch(e){meds=[];}
   }
-  // Labs: try Supabase first, fall back to localStorage
-  let labsFallback=(await DB.getLabResults());
-  if(!labsFallback.length){
-    try{labsFallback=JSON.parse(localStorage.getItem('advocate_lab_entries')||'[]');}catch(e){labsFallback=[];}
+  // Labs: try Supabase first, fall back to localStorage (key: advocate_lab_results)
+  let labReports=(await DB.getLabReports());
+  if(!labReports.length){
+    try{labReports=JSON.parse(localStorage.getItem('advocate_lab_results')||'[]');}catch(e){labReports=[];}
   }
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
@@ -220,16 +223,12 @@ async function buildData(){
     const active=tracked.filter(s=>latest.symptoms?.[s.id]>=3).sort((a,b)=>(latest.symptoms[b.id]||0)-(latest.symptoms[a.id]||0));
     if(active.length) parts.push(`CURRENT SYMPTOMS (${fmtD(latest.date)}):\n${active.map(s=>`- ${s.label}: ${latest.symptoms[s.id]}/10 — ${DOD[latest.symptoms[s.id]]||'Severe'}`).join('\n')}`);
   }
-  if(sel.has('labs')&&labsFallback.length){
-    // Each row is one test: {test_name/name, result_value/value, unit, status, lab_date/date, reference_range}
-    const abnormal=labsFallback.filter(r=>['high','low','critical','abnormal'].includes((r.status||'').toLowerCase()));
-    const labLines=labsFallback.slice(0,15).map(r=>{
-      const name=r.test_name||r.name||'Test';
-      const val=r.result_value||r.value||'';
-      const date=r.lab_date||r.date||'';
-      return `- ${name}${val?' '+val:''}${r.unit?' '+r.unit:''}${r.reference_range?' (ref: '+r.reference_range+')':''}${r.status?' ['+r.status+']':''}${date?' ('+fmtD(date)+')':''}`;
-    });
-    parts.push(`LAB RESULTS (${labsFallback.length} total):\n${labLines.join('\n')}${abnormal.length?'\n⚠️ Abnormal: '+abnormal.map(r=>r.test_name||r.name).join(', '):''}`);
+  if(sel.has('labs')&&labReports.length){
+    // Each report: {date, fileName, results:[{name, value, unit, status, note, low, high}]}
+    const latest=labReports[labReports.length-1];
+    const allAbnormal=labReports.flatMap(r=>(r.results||[]).filter(t=>t.status!=='normal'));
+    const latestLines=(latest.results||[]).slice(0,20).map(r=>`- ${r.name}${r.value?' '+r.value:''}${r.unit?' '+r.unit:''}${r.low&&r.high?' ('+r.low+'–'+r.high+')':''}${r.status&&r.status!=='normal'?' ['+r.status+']':''}${r.note?' — '+r.note:''}`);
+    parts.push(`LAB RESULTS — Latest panel (${fmtD(latest.date)}, ${labReports.length} report${labReports.length>1?'s':''} total):\n${latestLines.join('\n')}${allAbnormal.length?'\n⚠️ Abnormal across all dates: '+allAbnormal.map(r=>r.name).join(', '):''}`);
   }
   if(sel.has('tests')&&tests.length){
     const abnormal=tests.filter(t=>t.status==='abnormal');
@@ -305,16 +304,16 @@ async function generateSummary(){
           </div>
         </div>
         <div class="sum-body">
-          ${res.clinicalSnapshot?`<div class="sum-sec"><div class="sum-sec-title">🩺 Clinical Snapshot</div><div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink-soft);line-height:1.7;padding:14px 18px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 12px 12px 0">${escH(res.clinicalSnapshot)}</div></div>`:''}
-          ${res.redFlags?.length?`<div class="sum-sec"><div class="sum-sec-title" style="color:var(--red)">🚨 Red Flags — Urgent</div>${res.redFlags.map(f=>`<div class="sum-item red">⚠️ ${escH(f)}</div>`).join('')}</div>`:''}
-          ${res.primaryConcerns?.length?`<div class="sum-sec"><div class="sum-sec-title">🔴 Primary Concerns</div>${res.primaryConcerns.map(c=>`<div class="sum-item">${escH(c)}</div>`).join('')}</div>`:''}
-          ${res.currentSymptoms?.length?`<div class="sum-sec"><div class="sum-sec-title">📊 Current Symptoms</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">${res.currentSymptoms.map(s=>`<div style="padding:10px 13px;background:var(--warm);border:1px solid var(--border);border-radius:10px"><div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px">${escH(s.symptom)}</div><div style="font-size:12px;color:var(--ink-muted)">${s.severity?escH(s.severity):''}${s.impact?' · '+escH(s.impact):''}</div></div>`).join('')}</div></div>`:''}
-          ${res.currentMedications?.length?`<div class="sum-sec"><div class="sum-sec-title">💊 Current Medications</div>${res.currentMedications.map(m=>`<div class="sum-item"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.indication?' · '+escH(m.indication):''}</div>`).join('')}</div>`:''}
-          ${res.recentFindings?.length?`<div class="sum-sec"><div class="sum-sec-title">🧪 Recent Findings</div>${res.recentFindings.map(f=>`<div class="sum-item amber">→ ${escH(f)}</div>`).join('')}</div>`:''}
-          ${res.medicalHistory?.length?`<div class="sum-sec"><div class="sum-sec-title">📅 Medical History</div>${res.medicalHistory.map(h=>`<div class="sum-item">${escH(h)}</div>`).join('')}</div>`:''}
-          ${res.careTeam?.length?`<div class="sum-sec"><div class="sum-sec-title">👥 Care Team</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">${res.careTeam.map(c=>`<div style="padding:9px 13px;background:var(--warm);border:1px solid var(--border);border-radius:10px;font-size:13px"><strong>${escH(c.name)}</strong>${c.role?'<br><span style="color:var(--ink-muted);font-size:12px">'+escH(c.role)+'</span>':''}</div>`).join('')}</div></div>`:''}
-          ${res.goalsForVisit?.length?`<div class="sum-sec"><div class="sum-sec-title">🎯 Goals for This Visit</div>${res.goalsForVisit.map(g=>`<div class="sum-item">→ ${escH(g)}</div>`).join('')}</div>`:''}
-          ${res.questionsForDoctor?.length?`<div class="sum-sec"><div class="sum-sec-title">❓ Questions for the Doctor</div>${res.questionsForDoctor.map(q=>`<div class="sum-item">? ${escH(q)}</div>`).join('')}</div>`:''}
+          ${res.clinicalSnapshot?`<div class="sum-sec"><div class="sum-sec-title"><span>🩺 Clinical Snapshot</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div><div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink-soft);line-height:1.7;padding:14px 18px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 12px 12px 0">${escH(res.clinicalSnapshot)}</div></div>`:''}
+          ${res.redFlags?.length?`<div class="sum-sec"><div class="sum-sec-title" style="color:var(--red)"><span>🚨 Red Flags — Urgent</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.redFlags.map(f=>`<div class="sum-item red">⚠️ ${escH(f)}</div>`).join('')}</div>`:''}
+          ${res.primaryConcerns?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Primary Concerns</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.primaryConcerns.map(c=>`<div class="sum-item">${escH(c)}</div>`).join('')}</div>`:''}
+          ${res.currentSymptoms?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>📊 Current Symptoms</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">${res.currentSymptoms.map(s=>`<div style="padding:10px 13px;background:var(--warm);border:1px solid var(--border);border-radius:10px"><div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px">${escH(s.symptom)}</div><div style="font-size:12px;color:var(--ink-muted)">${s.severity?escH(s.severity):''}${s.impact?' · '+escH(s.impact):''}</div></div>`).join('')}</div></div>`:''}
+          ${res.currentMedications?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>💊 Current Medications</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.currentMedications.map(m=>`<div class="sum-item"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.indication?' · '+escH(m.indication):''}</div>`).join('')}</div>`:''}
+          ${res.recentFindings?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🧪 Recent Findings</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.recentFindings.map(f=>`<div class="sum-item amber">→ ${escH(f)}</div>`).join('')}</div>`:''}
+          ${res.medicalHistory?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>📅 Medical History</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.medicalHistory.map(h=>`<div class="sum-item">${escH(h)}</div>`).join('')}</div>`:''}
+          ${res.careTeam?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>👥 Care Team</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">${res.careTeam.map(c=>`<div style="padding:9px 13px;background:var(--warm);border:1px solid var(--border);border-radius:10px;font-size:13px"><strong>${escH(c.name)}</strong>${c.role?'<br><span style="color:var(--ink-muted);font-size:12px">'+escH(c.role)+'</span>':''}</div>`).join('')}</div></div>`:''}
+          ${res.goalsForVisit?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🎯 Goals for This Visit</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.goalsForVisit.map(g=>`<div class="sum-item">→ ${escH(g)}</div>`).join('')}</div>`:''}
+          ${res.questionsForDoctor?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>❓ Questions for the Doctor</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Remove</button></div>${res.questionsForDoctor.map(q=>`<div class="sum-item">? ${escH(q)}</div>`).join('')}</div>`:''}
         </div>
         <div class="sum-footer">
           <span>Generated from patient-entered data. Verify all information with your healthcare provider.</span>
