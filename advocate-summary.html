@@ -146,9 +146,8 @@ const SOURCES=[
   {key:'profile',icon:'👤',label:'Patient Profile',check:async()=>{const p=await DB.getProfile();return Object.keys(p).filter(k=>p[k]).length>0;}},
   {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:async()=>{const p=await DB.getProfile();return p.diagnoses?.length>0;}},
   {key:'medications',icon:'💊',label:'Medications',check:async()=>{
-    const db=await DB.getMedications();
-    if(db.length)return true;
-    try{return JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0;}catch{return false;}
+    try{if(JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0)return true;}catch{}
+    try{return (await DB.getMedications()).length>0;}catch{return false;}
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
@@ -189,11 +188,10 @@ function toggleSrc(key){
 
 async function buildData(){
   const p=(await DB.getProfile());
-  // Medications: try Supabase first, fall back to localStorage
-  let meds=(await DB.getMedications());
-  if(!meds.length){
-    try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch(e){meds=[];}
-  }
+  // Medications: localStorage first (always up to date), fall back to Supabase
+  let meds=[];
+  try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch{}
+  if(!meds.length){try{meds=await DB.getMedications();}catch{}}
   // Labs: localStorage first (labs tracker always writes here), then Supabase
   let labReports=[];
   try{labReports=JSON.parse(localStorage.getItem('advocate_lab_results')||'[]');}catch{}
