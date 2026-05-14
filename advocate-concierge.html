@@ -502,7 +502,7 @@ function quickScript(title,contact){
 async function callClaude(system,user,maxTokens=1500){
   const r=await fetch('/.netlify/functions/claude-proxy',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:maxTokens,system,messages:[{role:'user',content:user}]})
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,system,messages:[{role:'user',content:user}]})
   });
   const d=await r.json();
   const text=d.content?.[0]?.text||'';
