@@ -50,14 +50,12 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .sum-sec-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
 .sum-remove-btn{font-size:10px;font-weight:500;color:#aaa;background:none;border:1px solid #e0e0e8;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all .15s}
 .sum-remove-btn:hover{color:var(--red);border-color:var(--red);background:var(--red-pale)}
-@media print{.sum-remove-btn{display:none!important}}
 .sum-item{padding:9px 13px;background:var(--sage-pale);border-radius:9px;margin-bottom:7px;font-size:14px;color:var(--ink-soft);line-height:1.6;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .sum-item.red{background:var(--red-pale);border-left:3px solid var(--red)}
 .sum-item.amber{background:var(--amber-pale);border-left:3px solid var(--amber)}
 .sum-item-text{flex:1}
 .sum-item-remove{flex-shrink:0;background:none;border:none;color:#ccc;font-size:14px;cursor:pointer;padding:0 2px;line-height:1;transition:color .15s;align-self:center}
 .sum-item-remove:hover{color:var(--red)}
-@media print{.sum-item-remove{display:none!important}}
 .sum-footer{background:var(--warm);border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--ink-muted)}
 .load-wrap{text-align:center;padding:48px 24px}
 .load-ring{width:48px;height:48px;margin:0 auto 18px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
@@ -68,7 +66,45 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .abtn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
 .toast.show{transform:translateX(-50%) translateY(0)}
-@media print{nav,.fcard,.action-row{display:none!important}.shell{max-width:100%;padding:0}.sum-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:12mm}}
+@media print{
+  /* ── Page setup ── */
+  @page{margin:14mm 16mm}
+  /* ── Hide all UI chrome ── */
+  nav,
+  .page-header,
+  .fcard,
+  .action-row,
+  #howToUseBtn,
+  .toast,
+  #tourCard,
+  .sum-remove-btn,
+  .sum-item-remove{display:none!important}
+  /* ── Body / shell ── */
+  body{background:#fff!important;color:#0d1f15!important;font-size:12pt}
+  .shell{max-width:100%!important;padding:0!important;margin:0!important}
+  /* ── Summary document ── */
+  .summary-doc{border:1.5pt solid #1b4332!important;border-radius:0!important;box-shadow:none!important;page-break-inside:avoid}
+  /* ── Preserve colours ── */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  /* ── Header ── */
+  .sum-header{background:#1b4332!important;color:#fff!important;padding:16px 20px!important}
+  .sum-patient{font-size:18pt!important}
+  .sum-meta{color:rgba(255,255,255,.75)!important;font-size:9pt!important}
+  /* ── Body ── */
+  .sum-body{padding:16px 20px!important}
+  /* ── Section titles ── */
+  .sum-sec-title{color:#1b4332!important;font-size:8pt!important}
+  /* ── Items ── */
+  .sum-item{background:#e8f5ee!important;border-radius:6px!important;font-size:10.5pt!important;margin-bottom:5px!important;padding:7px 11px!important}
+  .sum-item.red{background:#fff5f5!important;border-left:3px solid #c0392b!important}
+  .sum-item.amber{background:#fdf3e7!important;border-left:3px solid #c9923a!important}
+  /* ── Snapshot quote block ── */
+  .sum-body [style*="border-left:3px solid var(--sage)"]{background:#e8f5ee!important;border-left:3px solid #2d6a4f!important;font-size:11pt!important}
+  /* ── Section breaks ── */
+  .sum-sec{page-break-inside:avoid;margin-bottom:14px!important;padding-bottom:14px!important}
+  /* ── Footer ── */
+  .sum-footer{background:#fdfcf8!important;border-top:1pt solid #b7d9c4!important;padding:8px 20px!important;font-size:8pt!important}
+}
 @media(max-width:640px){.two-col{grid-template-columns:1fr}.sum-body,.sum-header{padding:16px}}
 .hidden{display:none!important}
 /* ── GUIDED TOUR ── */
