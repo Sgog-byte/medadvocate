@@ -272,9 +272,9 @@ async function generateSummary(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1400,
         system:`Create a clinical summary. Return ONLY this JSON (no markdown, no extra text):
-{"snapshot":"2 sentence clinical overview","concerns":["up to 4 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"history":["up to 3 key events"],"questions":["3 questions for doctor"]}
-IMPORTANT: Include ALL medications listed in the data — do not skip or truncate any.`,
-        messages:[{role:'user',content:`Summarise this patient data concisely:\n\n${dataStr.slice(0,4000)}${purpose?'\nAppointment: '+purpose:''}${goals?'\nGoals: '+goals:''}`}]})
+{"snapshot":"2 sentence clinical overview","concerns":["up to 4 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"history":["up to 3 key events"],"questions":["3 questions"]}
+Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data.`,
+        messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,4000)}${goals?'\nPatient goals: '+goals:''}`}]})
     });
     const responseText=await r.text();
     if(!r.ok||responseText.trimStart().startsWith('<')) throw new Error('Server error (HTTP '+r.status+'). This is usually a function timeout — the AI took too long. Please try again.');
