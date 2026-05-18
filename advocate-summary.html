@@ -246,17 +246,21 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
+// Patient-namespaced localStorage key helper
+let _pid=null;
+function lsKey(base){return _pid?`${base}_${_pid}`:base;}
+
 const SOURCES=[
   {key:'profile',icon:'👤',label:'Patient Profile',check:async()=>{const p=await DB.getProfile();return Object.keys(p).filter(k=>p[k]).length>0;}},
   {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:async()=>{const p=await DB.getProfile();return p.diagnoses?.length>0;}},
   {key:'medications',icon:'💊',label:'Medications',check:async()=>{
-    try{if(JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0)return true;}catch{}
+    try{if(JSON.parse(localStorage.getItem(lsKey('advocate_medications'))||'[]').length>0)return true;}catch{}
     try{return (await DB.getMedications()).length>0;}catch{return false;}
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
     // Check localStorage first (labs tracker always writes here)
-    try{if(JSON.parse(localStorage.getItem('advocate_lab_results')||'[]').length>0)return true;}catch{}
+    try{if(JSON.parse(localStorage.getItem(lsKey('advocate_lab_results'))||'[]').length>0)return true;}catch{}
     // Then try Supabase
     try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
     return false;
@@ -271,6 +275,8 @@ const SOURCES=[
 let sel=new Set();
 
 async function renderSources(){
+  // Resolve patient ID first so all localStorage reads use the right namespace
+  try{_pid=await DB.patientId();}catch{}
   const grid=document.getElementById('sources_grid');
   const results=await Promise.all(SOURCES.map(s=>s.check().catch(()=>false)));
   grid.innerHTML=SOURCES.map((s,i)=>{
@@ -294,15 +300,15 @@ async function buildData(){
   const p=(await DB.getProfile());
   // Medications: localStorage first (always up to date), fall back to Supabase
   let meds=[];
-  try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch{}
+  try{meds=JSON.parse(localStorage.getItem(lsKey('advocate_medications'))||'[]');}catch{}
   if(!meds.length){try{meds=await DB.getMedications();}catch{}}
   // Labs: localStorage first (labs tracker always writes here), then Supabase
   let labReports=[];
-  try{labReports=JSON.parse(localStorage.getItem('advocate_lab_results')||'[]');}catch{}
+  try{labReports=JSON.parse(localStorage.getItem(lsKey('advocate_lab_results'))||'[]');}catch{}
   if(!labReports.length){try{labReports=await DB.getLabReports();}catch{}}
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
-  const symState=JSON.parse(localStorage.getItem('advocate_symptoms')||'{"trackedSymptoms":[]}');
+  const symState=JSON.parse(localStorage.getItem(lsKey('advocate_symptoms'))||'{"trackedSymptoms":[]}');
   const symEntries=(await DB.getSymptomEntries());
   const labs=(await DB.getLabResults());
   const tests=(await DB.getDiagnosticTests());

@@ -724,7 +724,7 @@
 // ─────────────────────────────────
 // STATE
 // ─────────────────────────────────
-const LAB_CACHE_KEY = 'advocate_lab_results';
+let LAB_CACHE_KEY = 'advocate_lab_results';
 let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,low,high,status,note}]}]
 let activeChartFilter = 'all';
 
@@ -916,7 +916,7 @@ function fileToBase64(file) {
 // ─────────────────────────────────
 // PATIENT PROFILE
 // ─────────────────────────────────
-const PROFILE_KEY = 'advocate_lab_profile';
+let PROFILE_KEY = 'advocate_lab_profile';
 
 function getProfile() {
   return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
@@ -1625,7 +1625,16 @@ function loadDemo() {
 }
 
 // Load demo on first visit if no data
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Namespace localStorage keys by patient so data never bleeds between profiles
+  try {
+    const pid = await DB.patientId();
+    if (pid) {
+      LAB_CACHE_KEY = `advocate_lab_results_${pid}`;
+      PROFILE_KEY   = `advocate_lab_profile_${pid}`;
+    }
+  } catch(e) {}
+
   loadProfile();
   loadLabs();
   // Add demo button to empty state

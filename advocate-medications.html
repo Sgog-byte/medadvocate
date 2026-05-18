@@ -231,8 +231,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
 // ── STORAGE ──
-const MED_KEY='advocate_medications';
-const LOG_KEY='advocate_med_logs';
+let MED_KEY='advocate_medications';
+let LOG_KEY='advocate_med_logs';
 function getMeds(){return JSON.parse(localStorage.getItem(MED_KEY)||'[]')}
 function saveMeds(meds){localStorage.setItem(MED_KEY,JSON.stringify(meds))}
 function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
@@ -473,8 +473,16 @@ document.getElementById('log_effectiveness').addEventListener('input',function()
   document.getElementById('log_eff_label').textContent=this.value;
 });
 document.getElementById('log_date').value=new Date().toISOString().split('T')[0];
-renderMeds();
-renderLogs();
+
+// Namespace storage keys by patient so data never bleeds between profiles
+(async()=>{
+  try{
+    const pid=await DB.patientId();
+    if(pid){MED_KEY=`advocate_medications_${pid}`;LOG_KEY=`advocate_med_logs_${pid}`;}
+  }catch(e){}
+  renderMeds();
+  renderLogs();
+})();
 </script>
 </body>
 </html>
