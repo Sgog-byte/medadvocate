@@ -1630,8 +1630,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const pid = await DB.patientId();
     if (pid) {
-      LAB_CACHE_KEY = `advocate_lab_results_${pid}`;
-      PROFILE_KEY   = `advocate_lab_profile_${pid}`;
+      const newLabKey     = `advocate_lab_results_${pid}`;
+      const newProfileKey = `advocate_lab_profile_${pid}`;
+      // One-time migration: copy old flat key data into the namespaced key
+      if (!localStorage.getItem(newLabKey) && localStorage.getItem('advocate_lab_results')) {
+        localStorage.setItem(newLabKey, localStorage.getItem('advocate_lab_results'));
+      }
+      if (!localStorage.getItem(newProfileKey) && localStorage.getItem('advocate_lab_profile')) {
+        localStorage.setItem(newProfileKey, localStorage.getItem('advocate_lab_profile'));
+      }
+      LAB_CACHE_KEY = newLabKey;
+      PROFILE_KEY   = newProfileKey;
     }
   } catch(e) {}
 

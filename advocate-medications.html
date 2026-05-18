@@ -478,7 +478,19 @@ document.getElementById('log_date').value=new Date().toISOString().split('T')[0]
 (async()=>{
   try{
     const pid=await DB.patientId();
-    if(pid){MED_KEY=`advocate_medications_${pid}`;LOG_KEY=`advocate_med_logs_${pid}`;}
+    if(pid){
+      const newMedKey=`advocate_medications_${pid}`;
+      const newLogKey=`advocate_med_logs_${pid}`;
+      // One-time migration: copy old flat key data into the namespaced key
+      if(!localStorage.getItem(newMedKey)&&localStorage.getItem('advocate_medications')){
+        localStorage.setItem(newMedKey,localStorage.getItem('advocate_medications'));
+      }
+      if(!localStorage.getItem(newLogKey)&&localStorage.getItem('advocate_med_logs')){
+        localStorage.setItem(newLogKey,localStorage.getItem('advocate_med_logs'));
+      }
+      MED_KEY=newMedKey;
+      LOG_KEY=newLogKey;
+    }
   }catch(e){}
   renderMeds();
   renderLogs();
