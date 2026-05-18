@@ -626,11 +626,12 @@ function renderInterference(saved) {
 }
 
 // ── STATE ──
-const STORAGE_KEY = 'advocate_symptoms';
-const ENTRIES_KEY = 'advocate_entries';
+let STORAGE_KEY = 'advocate_symptoms';
+let ENTRIES_KEY = 'advocate_entries';
 
-let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"trackedSymptoms":[]}');
-let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
+// Loaded after patient ID is resolved in the async init below
+let state = {"trackedSymptoms":[]};
+let entries = [];
 let logDate = todayStr();
 let selectedOverall = '';
 let rangeFilter = 14;
@@ -1264,8 +1265,30 @@ if (!entries.length) {
   save();
 }
 
-if (window.location.hash === '#voice') switchTab('voice');
-else renderLog();
+// Namespace keys by patient, migrate old data, then load state and render
+(async () => {
+  try {
+    const pid = await DB.patientId();
+    if (pid) {
+      const newSK = `advocate_symptoms_${pid}`;
+      const newEK = `advocate_entries_${pid}`;
+      // One-time migration: copy old flat key data into the namespaced key
+      if (!localStorage.getItem(newSK) && localStorage.getItem('advocate_symptoms')) {
+        localStorage.setItem(newSK, localStorage.getItem('advocate_symptoms'));
+      }
+      if (!localStorage.getItem(newEK) && localStorage.getItem('advocate_entries')) {
+        localStorage.setItem(newEK, localStorage.getItem('advocate_entries'));
+      }
+      STORAGE_KEY = newSK;
+      ENTRIES_KEY = newEK;
+    }
+  } catch(e) {}
+  // Load data with the correct (possibly namespaced) keys
+  state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"trackedSymptoms":[]}');
+  entries = JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
+  if (window.location.hash === '#voice') switchTab('voice');
+  else renderLog();
+})();
 
 // ══ VOICE LOG ══
 const VL_SR = window.SpeechRecognition || window.webkitSpeechRecognition;
