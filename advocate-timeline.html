@@ -144,7 +144,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
   <!-- AI Extraction -->
   <div class="fcard no-print" style="border:2px solid var(--sage-deep);margin-bottom:14px">
     <div class="fcard-title">🧠 Extract from Records <span style="font-size:12px;font-weight:400;color:var(--ink-muted);font-family:'DM Sans',sans-serif"> — fastest way to build your timeline</span></div>
-    <div class="fcard-sub">Paste discharge summaries, doctor notes, medical records, or insurance EOBs — Claude will extract all the events and add them to your timeline automatically. Or upload a PDF or image.</div>
+    <div class="fcard-sub">Paste discharge summaries, doctor notes, medical records, or insurance EOBs — MedAdvocate will extract all the events and add them to your timeline automatically. Or upload a PDF or image.</div>
 
     <div class="tabs" style="border-bottom:1px solid var(--border);margin-bottom:16px">
       <button class="tab active" id="tab-paste" onclick="switchExtractTab('paste',this)" style="padding:8px 16px;font-size:13px">📋 Paste Text</button>
@@ -154,7 +154,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
     <div id="extract-paste">
       <textarea class="ftextarea" id="extract_text" style="min-height:130px" placeholder="Paste any medical records here — discharge summaries, doctor notes, visit summaries, insurance EOBs, lab reports with dates, referral letters…
 
-Claude will identify every significant event and extract it into your timeline automatically."></textarea>
+MedAdvocate will identify every significant event and extract it into your timeline automatically."></textarea>
     </div>
 
     <div id="extract-upload" class="hidden">
@@ -173,7 +173,7 @@ Claude will identify every significant event and extract it into your timeline a
 
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn-blue" onclick="extractFromRecords()">🧠 Extract Timeline Events</button>
-      <span style="font-size:12px;color:var(--ink-muted)">Claude will add extracted events to your timeline below</span>
+      <span style="font-size:12px;color:var(--ink-muted)">MedAdvocate will add extracted events to your timeline below</span>
     </div>
     <div id="extract_status" style="margin-top:12px"></div>
   </div>
@@ -719,20 +719,20 @@ document.getElementById('ev_date').value=new Date().toISOString().split('T')[0];
     {
       target: '.fcard',
       title: 'Extract from Records — Fastest Way',
-      body: 'The quickest way to build your timeline. Paste any medical records and Claude will extract all events automatically — often dozens at once from a single document.',
-      voice: 'The fastest way to build your timeline is to paste medical records here. Claude will extract all events automatically — often dozens at once from a single document.'
+      body: 'The quickest way to build your timeline. Paste any medical records and MedAdvocate will extract all events automatically — often dozens at once from a single document.',
+      voice: 'The fastest way to build your timeline is to paste medical records here. MedAdvocate will extract all events automatically — often dozens at once from a single document.'
     },
     {
       target: '#extract_text',
       title: 'Paste Your Medical Records',
-      body: 'Paste text from discharge summaries, doctor notes, insurance EOBs, or referral letters. Claude understands messy medical language and pulls out every significant event with its date.',
-      voice: 'Paste text from any medical document here — discharge summaries, doctor notes, or insurance letters. Claude will pull out every significant event with its date.'
+      body: 'Paste text from discharge summaries, doctor notes, insurance EOBs, or referral letters. MedAdvocate understands messy medical language and pulls out every significant event with its date.',
+      voice: 'Paste text from any medical document here — discharge summaries, doctor notes, or insurance letters. MedAdvocate will pull out every significant event with its date.'
     },
     {
       target: '.btn-blue',
       title: 'Extract Timeline Events',
-      body: 'Click here to send your records to Claude. It will identify every event and add them to your timeline below.',
-      voice: 'Click this button to send your records to Claude. It will identify every event and add them straight to your timeline.'
+      body: 'Click here to send your records to MedAdvocate. It will identify every event and add them to your timeline below.',
+      voice: 'Click this button to send your records to MedAdvocate. It will identify every event and add them straight to your timeline.'
     },
     {
       target: '#manual_form',
