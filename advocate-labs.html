@@ -781,7 +781,26 @@ let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,lo
 let activeChartFilter = 'all';
 
 function saveLabs() {
-  try { localStorage.setItem(labCacheKey(), JSON.stringify(allLabDates)); } catch(e) {}
+  // Embed _pid so we can detect cross-patient corruption on next load
+  try { localStorage.setItem(labCacheKey(), JSON.stringify({ _pid: currentPatientId, reports: allLabDates })); } catch(e) {}
+}
+
+function readLabCache(key) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(key));
+    if (!raw) return [];
+    // New format: { _pid, reports }
+    if (raw._pid !== undefined) {
+      if (currentPatientId && raw._pid !== currentPatientId) {
+        // Corrupted — belongs to a different patient; clear it
+        localStorage.removeItem(key);
+        return [];
+      }
+      return Array.isArray(raw.reports) ? raw.reports : [];
+    }
+    // Old format: plain array — accept as-is
+    return Array.isArray(raw) ? raw : [];
+  } catch(e) { return []; }
 }
 
 function applyLoadedLabs(reports) {
@@ -803,14 +822,12 @@ async function loadLabs() {
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. Patient-namespaced localStorage key — ONLY this patient's key, never another patient's
-  try {
-    const saved = JSON.parse(localStorage.getItem(labCacheKey()) || '[]');
-    if (applyLoadedLabs(saved)) {
-      saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
-      return;
-    }
-  } catch(e) {}
+  // 2. Patient-namespaced localStorage key — validates _pid to reject cross-patient data
+  const cached = readLabCache(labCacheKey());
+  if (applyLoadedLabs(cached)) {
+    cached.forEach(r => DB.saveLabReport(r).catch(() => {}));
+    return;
+  }
 
   // 3. One-time migration: flat key, but ONLY if it was confirmed to belong to this patient
   if (currentPatientId) {
@@ -819,8 +836,7 @@ async function loadLabs() {
       if (cachedPid === currentPatientId) {
         const saved = JSON.parse(localStorage.getItem('advocate_lab_results') || '[]');
         if (applyLoadedLabs(saved)) {
-          // Move data to namespaced key and clean up flat key
-          localStorage.setItem(labCacheKey(), JSON.stringify(saved));
+          // Move data to namespaced key (saveLabs already called inside applyLoadedLabs)
           localStorage.removeItem('advocate_lab_results');
           localStorage.removeItem(LAB_PID_KEY);
           saved.forEach(r => DB.saveLabReport(r).catch(() => {}));

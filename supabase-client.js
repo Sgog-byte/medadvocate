@@ -399,15 +399,38 @@ const DB = {
       .eq('patient_id', pid)
       .eq('test_name', '__report__')
       .order('lab_date', { ascending: true });
-    return (data || []).map(row => {
-      try { return { dbId: row.id, ...JSON.parse(row.notes) }; } catch { return null; }
-    }).filter(Boolean);
+
+    const good = [];
+    const badIds = []; // rows whose embedded _pid doesn't match — cross-patient corruption
+
+    for (const row of (data || [])) {
+      try {
+        const report = JSON.parse(row.notes);
+        // _pid was added to new saves so we can detect cross-patient contamination.
+        // If _pid is present and doesn't match, this row was saved for a different patient.
+        if (report._pid && report._pid !== pid) {
+          badIds.push(row.id);
+        } else {
+          good.push({ dbId: row.id, ...report });
+        }
+      } catch { /* skip unparseable */ }
+    }
+
+    // Auto-purge corrupt rows in the background — no user action needed
+    if (badIds.length) {
+      badIds.forEach(id =>
+        _supa.from('lab_results').delete().eq('id', id).catch(() => {})
+      );
+    }
+
+    return good;
   },
 
   async saveLabReport(report) {
     const pid = await DB.patientId();
     if (!pid) return;
-    const blob = JSON.stringify(report);
+    // Embed _pid inside the blob so cross-patient contamination can be auto-detected on load
+    const blob = JSON.stringify({ ...report, _pid: pid });
     const { data: existing } = await _supa
       .from('lab_results').select('id')
       .eq('patient_id', pid).eq('test_name', '__report__').eq('lab_date', report.date)
