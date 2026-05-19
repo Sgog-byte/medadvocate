@@ -1519,6 +1519,27 @@ function setChartFilter(cat) {
 // ─────────────────────────────────
 // AI INSIGHTS
 // ─────────────────────────────────
+// Build a multi-date trend summary string for the AI prompt
+function buildTrendSummaryForAI() {
+  if (allLabDates.length < 2) return '';
+  // Collect all tests that appear in ≥2 dates
+  const testMap = {};
+  allLabDates.forEach(entry => {
+    (entry.results || []).forEach(r => {
+      if (!testMap[r.name]) testMap[r.name] = [];
+      testMap[r.name].push({ date: entry.date, value: r.value, status: r.status, unit: r.unit || '' });
+    });
+  });
+  const lines = [];
+  Object.entries(testMap).forEach(([name, readings]) => {
+    if (readings.length < 2) return;
+    readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const history = readings.map(r => `${r.date}: ${r.value} ${r.unit} (${r.status})`).join(' → ');
+    lines.push(`${name}: ${history}`);
+  });
+  return lines.join('\n');
+}
+
 async function refreshInsights() {
   if (allLabDates.length === 0) return;
   const btn = document.getElementById('refreshInsightsBtn');
@@ -1531,19 +1552,31 @@ async function refreshInsights() {
     `${r.name}: ${r.value} ${r.unit || ''} (ref: ${r.low ?? '?'}–${r.high ?? '?'}, status: ${r.status})`
   ).join('\n');
 
+  // Include full cross-date trend history when multiple uploads exist
+  const trendHistory = buildTrendSummaryForAI();
+  const trendSection = trendHistory
+    ? `\n\nTrend history across all ${allLabDates.length} lab dates (oldest → newest):\n${trendHistory}\n\nPlease analyse these trends and generate trendInsights covering the trajectory of values over time — not just the most recent date.`
+    : '';
+
   try {
     const data = await callProxy({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4500,
+      max_tokens: 5000,
       system: buildSystemPrompt(),
-      messages: [{ role: 'user', content: `Here are the already-extracted lab values from a report dated ${latest.date}. Do NOT re-extract — instead generate rich insights and a contextual summary.\n\nLab values:\n${labSummary}\n\nReturn JSON with only these keys:\n{"insights":[{"level":"urgent|watch|info","text":"..."}],"contextualSummary":"..."}` }]
+      messages: [{ role: 'user', content: `Here are the already-extracted lab values from a report dated ${latest.date}. Do NOT re-extract — instead generate rich insights and a contextual summary.\n\nLab values:\n${labSummary}${trendSection}\n\nReturn JSON with only these keys:\n{"insights":[{"level":"urgent|watch|info","text":"..."}],"trendInsights":[{"level":"urgent|watch|info","text":"..."}],"contextualSummary":"..."}` }]
     });
     if (data.insights) {
       latest.insights = data.insights;
       if (data.contextualSummary) latest.contextualSummary = data.contextualSummary;
+      // Store AI-generated trend insights on the most recent entry so they persist
+      if (data.trendInsights && data.trendInsights.length) {
+        allLabDates[allLabDates.length - 1].trendInsights = data.trendInsights;
+      }
       saveLabs();
       DB.saveLabReport(latest).catch(() => {});
-      // Clear old summary box so it re-renders fresh
+      if (allLabDates.length - 1 !== idx) {
+        DB.saveLabReport(allLabDates[allLabDates.length - 1]).catch(() => {});
+      }
       const old = document.getElementById('contextualSummaryBox');
       if (old) old.remove();
       renderInsights();
@@ -1612,43 +1645,103 @@ function renderInsights(idx) {
         </div>`).join('')
     : '<div style="color:var(--ink-muted);font-size:14px;padding:16px 0">No insights for this report — click 🔄 Refresh Insights to generate them.</div>';
 
-  // Trend insights if multiple dates
+  // Trend insights — shown whenever ≥2 dates exist, across ALL dates not just selected
   if (allLabDates.length >= 2) {
     document.getElementById('trendInsightsCard').style.display = 'block';
-    const trending = getTrendInsights();
-    document.getElementById('trendInsightsList').innerHTML = trending.map(t => `
-      <div class="insight-item">
-        <div class="insight-dot ${t.direction === 'up' ? 'dot-red' : t.direction === 'down' ? 'dot-sage' : 'dot-gold'}"></div>
-        <div class="insight-text">${t.text}</div>
-      </div>`).join('');
+    document.querySelector('#trendInsightsCard .card-sub').textContent =
+      `Patterns across all ${allLabDates.length} lab dates`;
+
+    // Prefer AI-generated trend insights (stored on most recent entry after Refresh)
+    const aiTrends = allLabDates[allLabDates.length - 1].trendInsights;
+    if (aiTrends && aiTrends.length) {
+      const dotColor2 = { urgent: 'dot-red', watch: 'dot-gold', info: 'dot-sage' };
+      document.getElementById('trendInsightsList').innerHTML = aiTrends.map(t => `
+        <div class="insight-item">
+          <div class="insight-dot ${dotColor2[t.level] || 'dot-gold'}"></div>
+          <div class="insight-text">${t.text}</div>
+        </div>`).join('');
+    } else {
+      // Fall back to calculated trends across all dates
+      const trending = getTrendInsights();
+      document.getElementById('trendInsightsList').innerHTML = trending.map(t => `
+        <div class="insight-item">
+          <div class="insight-dot ${t.direction === 'up' ? 'dot-red' : t.direction === 'down' ? 'dot-sage' : 'dot-gold'}"></div>
+          <div class="insight-text">${t.text}</div>
+        </div>`).join('') +
+        `<div style="font-size:12px;color:var(--ink-muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          Hit <strong>🔄 Refresh Insights</strong> for AI-generated trend analysis across all your lab dates.
+        </div>`;
+    }
   }
 }
 
 function getTrendInsights() {
   const insights = [];
-  const first = allLabDates[0];
-  const last = allLabDates[allLabDates.length - 1];
 
-  last.results.forEach(r => {
-    const firstR = first.results.find(x => x.name === r.name);
-    if (!firstR || firstR.value == null || r.value == null) return;
-    const change = ((r.value - firstR.value) / firstR.value) * 100;
-    if (Math.abs(change) >= 15) {
-      const dir = change > 0 ? 'up' : 'down';
-      const pct = Math.abs(change).toFixed(0);
-      const outside = (r.high != null && r.value > r.high) || (r.low != null && r.value < r.low);
-      insights.push({
-        direction: outside ? dir : 'watch',
-        text: `<strong>${r.name}</strong> has ${dir === 'up' ? 'increased' : 'decreased'} by ${pct}% since ${new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', {month:'long', year:'numeric'})}${outside ? ' and is currently outside the reference range' : ''}.`
+  // Build full reading history for every test across ALL dates
+  const testMap = {};
+  allLabDates.forEach(entry => {
+    (entry.results || []).forEach(r => {
+      if (r.value == null) return;
+      if (!testMap[r.name]) testMap[r.name] = [];
+      testMap[r.name].push({
+        date: entry.date, value: Number(r.value),
+        status: r.status, low: r.low, high: r.high, unit: r.unit || ''
       });
+    });
+  });
+
+  Object.entries(testMap).forEach(([name, readings]) => {
+    if (readings.length < 2) return;
+    readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const first = readings[0];
+    const last  = readings[readings.length - 1];
+    const firstDate = new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', year:'numeric' });
+    const lastDate  = new Date(last.date  + 'T12:00:00').toLocaleDateString('en-US', { month:'short', year:'numeric' });
+
+    const wasAbnormal = first.status !== 'normal';
+    const isAbnormal  = last.status  !== 'normal';
+    const totalChange = first.value !== 0
+      ? ((last.value - first.value) / Math.abs(first.value)) * 100 : 0;
+    const pct = Math.abs(totalChange).toFixed(0);
+    const dir = totalChange > 0 ? 'increased' : 'decreased';
+    const dotDir = totalChange > 0 ? 'up' : 'down';
+
+    // Detect consistent direction across all steps
+    let rises = 0, falls = 0;
+    for (let i = 1; i < readings.length; i++) {
+      if (readings[i].value > readings[i-1].value) rises++;
+      else if (readings[i].value < readings[i-1].value) falls++;
+    }
+    const steps = readings.length - 1;
+    const consistent = rises === steps || falls === steps;
+    const consistentNote = consistent && steps > 1 ? `, consistently across all ${readings.length} readings,` : '';
+
+    // Priority 0 = most important
+    if (!wasAbnormal && isAbnormal) {
+      // Crossed into abnormal — most important
+      insights.push({ direction: 'up', priority: 0,
+        text: `<strong>${name}</strong> was within normal range in ${firstDate} but is now outside the reference range as of ${lastDate}. Worth discussing with your doctor.` });
+    } else if (wasAbnormal && !isAbnormal) {
+      // Returned to normal — good news
+      insights.push({ direction: 'down', priority: 1,
+        text: `<strong>${name}</strong> was outside the normal range in ${firstDate} and has returned to normal by ${lastDate}. Good progress.` });
+    } else if (isAbnormal && Math.abs(totalChange) >= 10) {
+      // Still abnormal but changing
+      insights.push({ direction: dotDir, priority: 2,
+        text: `<strong>${name}</strong> has ${dir} by ${pct}%${consistentNote} from ${firstDate} to ${lastDate} and remains outside the reference range.` });
+    } else if (!isAbnormal && Math.abs(totalChange) >= 20) {
+      // Normal but large shift — worth noting
+      insights.push({ direction: 'watch', priority: 3,
+        text: `<strong>${name}</strong> has ${dir} by ${pct}%${consistentNote} from ${firstDate} to ${lastDate} and is currently within normal range.` });
     }
   });
 
-  if (insights.length === 0) {
-    insights.push({ direction: 'watch', text: 'No major trends detected yet. Upload more lab dates to see patterns over time.' });
-  }
+  insights.sort((a, b) => a.priority - b.priority);
 
-  return insights;
+  return insights.length > 0 ? insights
+    : [{ direction: 'watch', text: `Values appear stable across all ${allLabDates.length} lab dates. No significant shifts detected.` }];
 }
 
 // ─────────────────────────────────
