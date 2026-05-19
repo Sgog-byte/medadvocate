@@ -768,13 +768,19 @@
 // ─────────────────────────────────
 // STATE
 // ─────────────────────────────────
-const LAB_CACHE_KEY = 'advocate_lab_results'; // flat key — patient validated via LAB_PID_KEY
-const LAB_PID_KEY   = 'advocate_labs_pid';    // which patient the cache belongs to
+const LAB_PID_KEY = 'advocate_labs_pid'; // legacy — kept for migration detection only
+let currentPatientId = null;             // set in DOMContentLoaded before any data load
+
+// Always returns the namespaced key for the current patient, or the flat fallback
+function labCacheKey() {
+  return currentPatientId ? `advocate_lab_results_${currentPatientId}` : 'advocate_lab_results';
+}
+
 let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,low,high,status,note}]}]
 let activeChartFilter = 'all';
 
 function saveLabs() {
-  try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates)); } catch(e) {}
+  try { localStorage.setItem(labCacheKey(), JSON.stringify(allLabDates)); } catch(e) {}
 }
 
 function applyLoadedLabs(reports) {
@@ -790,31 +796,35 @@ function applyLoadedLabs(reports) {
 }
 
 async function loadLabs() {
-  // 1. Try Supabase first (patient-scoped, works across devices)
+  // 1. Supabase first — already scoped to the active patient by DB.getLabReports()
   try {
     const dbReports = await DB.getLabReports();
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. Build a list of every possible localStorage key to try:
-  //    - flat key (original + current)
-  //    - any advocate_lab_results_* namespaced keys from previous deploys
-  const keysToTry = new Set([LAB_CACHE_KEY]);
+  // 2. Patient-namespaced localStorage key — ONLY this patient's key, never another patient's
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('advocate_lab_results')) keysToTry.add(k);
+    const saved = JSON.parse(localStorage.getItem(labCacheKey()) || '[]');
+    if (applyLoadedLabs(saved)) {
+      saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+      return;
     }
   } catch(e) {}
 
-  for (const key of keysToTry) {
+  // 3. One-time migration: flat key, but ONLY if it was confirmed to belong to this patient
+  if (currentPatientId) {
     try {
-      const saved = JSON.parse(localStorage.getItem(key) || '[]');
-      if (applyLoadedLabs(saved)) {
-        // Found data — normalise to flat key and push to Supabase
-        localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved));
-        saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
-        return;
+      const cachedPid = localStorage.getItem(LAB_PID_KEY);
+      if (cachedPid === currentPatientId) {
+        const saved = JSON.parse(localStorage.getItem('advocate_lab_results') || '[]');
+        if (applyLoadedLabs(saved)) {
+          // Move data to namespaced key and clean up flat key
+          localStorage.setItem(labCacheKey(), JSON.stringify(saved));
+          localStorage.removeItem('advocate_lab_results');
+          localStorage.removeItem(LAB_PID_KEY);
+          saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+          return;
+        }
       }
     } catch(e) {}
   }
@@ -1729,17 +1739,10 @@ function loadDemo() {
 
 // Load demo on first visit if no data
 document.addEventListener('DOMContentLoaded', async () => {
-  // Patient-switch guard: if the localStorage cache belongs to a different patient, clear it
+  // Set currentPatientId FIRST — loadLabs() and saveLabs() use it to namespace their key
   try {
     const pid = await DB.patientId();
-    if (pid) {
-      const cachedPid = localStorage.getItem(LAB_PID_KEY);
-      if (cachedPid && cachedPid !== pid) {
-        // Patient has changed — clear stale lab cache so we load fresh from Supabase
-        localStorage.removeItem(LAB_CACHE_KEY);
-      }
-      localStorage.setItem(LAB_PID_KEY, pid);
-    }
+    if (pid) currentPatientId = pid;
   } catch(e) {}
 
   loadProfile();
