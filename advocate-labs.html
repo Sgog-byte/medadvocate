@@ -418,7 +418,9 @@
 
     .main { padding: 0; }
 
-    .page { display: block !important; }
+    /* Only print the currently active page — prevents insights/history bleeding in */
+    .page { display: none !important; }
+    .page.active { display: block !important; }
 
     .print-header {
       display: flex !important;
@@ -440,13 +442,54 @@
 
     h1, .page-title { font-size: 22px; }
 
+    /* ── Trend charts print layout ── */
+    /* Show the active filter label */
+    .chart-print-label {
+      display: block !important;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    /* 2-column grid = fewer pages */
+    #chartsContainer {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Compact individual chart cards */
+    .rbar-card {
+      break-inside: avoid;
+      margin-bottom: 0 !important;
+      padding: 8px 10px !important;
+    }
+
+    .rbar-card .card-title { font-size: 11px !important; }
+    .rbar-card .tile-status { font-size: 9px !important; }
+    .rbar-bar-wrap { margin: 4px 0 !important; }
+    .rbar-legend { font-size: 9px !important; }
+    .rbar-history { font-size: 9px !important; margin-top: 4px !important; }
+
+    /* Preserve background colours — without this range bar zones print as blank white */
+    .rbar-zone, .rbar-track, .rbar-dot-only,
+    .rbar-legend-item, .rbar-legend-dot,
+    .rbar-norange-dot, .status-high, .status-low, .status-critical {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
     @page {
-      margin: 20mm;
+      margin: 15mm 12mm;
       size: A4;
     }
   }
 
   .print-header { display: none; }
+  .chart-print-label { display: none; }
 
   /* ─── TOAST ─── */
   .toast {
@@ -657,6 +700,7 @@
 
       <div id="trendsContent" class="hidden">
         <div class="chart-controls no-print" id="chartFilterBtns"></div>
+        <div class="chart-print-label" id="chartPrintLabel"></div>
         <div id="chartsContainer"></div>
       </div>
     </div>
@@ -1265,6 +1309,8 @@ function renderTrends() {
     metabolic: testNames.filter(n => /glucose|creatinine|bun|sodium|potassium|chloride|co2|calcium|protein|albumin|bilirubin|alt|ast|alk/i.test(n)),
   };
 
+  const filterLabels = { all:'All Tests', flagged:'Out of Range', cbc:'CBC Panel', metabolic:'Metabolic Panel' };
+
   const btns = document.getElementById('chartFilterBtns');
   btns.innerHTML = ['all','flagged','cbc','metabolic'].map(cat => {
     const labels = { all:'All Tests', flagged:'⚠ Out of Range', cbc:'CBC Panel', metabolic:'Metabolic Panel' };
@@ -1273,6 +1319,10 @@ function renderTrends() {
       ? `<button class="chart-filter-btn ${activeChartFilter===cat?'active':''}" onclick="setChartFilter('${cat}')">${labels[cat]} (${count})</button>`
       : '';
   }).join('');
+
+  // Keep print label in sync with the active filter
+  const printLabel = document.getElementById('chartPrintLabel');
+  if (printLabel) printLabel.textContent = `Trend Charts — ${filterLabels[activeChartFilter] || 'All Tests'}`;
 
   const toShow = categories[activeChartFilter] || testNames;
   const container = document.getElementById('chartsContainer');
@@ -1549,6 +1599,36 @@ function updateDateStrip() {
 // ─────────────────────────────────
 // PRINT
 // ─────────────────────────────────
+
+// beforeprint: hide every page except the active one via inline style
+// (inline style beats all CSS, so no specificity battles)
+window.addEventListener('beforeprint', () => {
+  const activePage = document.querySelector('.page.active');
+  document.querySelectorAll('.page').forEach(p => {
+    if (p !== activePage) {
+      p.setAttribute('data-was-visible', p.style.display || '');
+      p.style.setProperty('display', 'none', 'important');
+    }
+  });
+  // Make sure the active page and its trendsContent are visible
+  if (activePage) {
+    activePage.style.removeProperty('display');
+    // If printing trends, ensure trendsContent isn't hidden
+    const tc = activePage.querySelector('#trendsContent');
+    if (tc && tc.classList.contains('hidden')) tc.classList.remove('hidden');
+  }
+});
+
+// afterprint: restore all pages to their normal CSS-driven state
+window.addEventListener('afterprint', () => {
+  document.querySelectorAll('.page[data-was-visible]').forEach(p => {
+    const prev = p.getAttribute('data-was-visible');
+    p.style.removeProperty('display');
+    if (prev) p.style.display = prev;
+    p.removeAttribute('data-was-visible');
+  });
+});
+
 function printPage() {
   document.getElementById('printDate').textContent =
     'Printed ' + new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
