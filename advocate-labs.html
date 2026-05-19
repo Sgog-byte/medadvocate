@@ -639,6 +639,18 @@
       <!-- Results -->
       <div id="labResults" class="hidden">
 
+        <!-- Wrong-patient warning — shown if labs may belong to a different patient -->
+        <div id="wrongPatientBanner" class="hidden no-print" style="
+          background:#fff3cd; border:1px solid #ffc107; border-radius:12px;
+          padding:14px 18px; margin-bottom:20px;
+          display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <div>
+            <strong style="color:#856404;">⚠️ Wrong patient data?</strong>
+            <span style="color:#856404; font-size:13px; margin-left:6px;">If these labs belong to a different patient, clear them and re-upload the correct files.</span>
+          </div>
+          <button class="btn" onclick="clearAllLabs()" style="background:#c0392b;color:#fff;border:none;white-space:nowrap;flex-shrink:0;">🗑️ Clear &amp; Reset Labs</button>
+        </div>
+
         <!-- Summary tiles -->
         <div id="summarySection">
           <div class="label" style="margin-bottom:14px;" id="labDateLabel"></div>
@@ -812,6 +824,11 @@ function applyLoadedLabs(reports) {
   showLabEntry(allLabDates[allLabDates.length - 1]);
   document.getElementById('labResults').classList.remove('hidden');
   document.getElementById('emptyLabs').classList.add('hidden');
+  // Show warning banner if any report lacks _pid certification for this patient
+  const allCertified = currentPatientId &&
+    reports.every(r => r._pid === currentPatientId);
+  const banner = document.getElementById('wrongPatientBanner');
+  if (banner) banner.classList.toggle('hidden', !!allCertified);
   return true;
 }
 
@@ -1645,6 +1662,8 @@ async function clearAllLabs() {
       <div class="empty-title">No history yet</div>
       <div class="empty-sub">Uploaded labs will appear here, sorted by date.</div>
     </div>`;
+  const banner = document.getElementById('wrongPatientBanner');
+  if (banner) banner.classList.add('hidden');
   showToast('All lab data cleared — you can now re-upload');
 }
 
