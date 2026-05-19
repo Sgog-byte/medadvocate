@@ -198,13 +198,6 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 </head>
 <body>
 
-<!-- Lock gate -->
-<script>
-(function(){
-  var u=JSON.parse(localStorage.getItem('advocate_unlocked')||'{}');
-  if(!u.testing){window.location.replace('advocate-locked.html?tool=testing');}
-})();
-</script>
 
 <nav>
   <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>

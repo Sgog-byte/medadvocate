@@ -64,15 +64,6 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 @media print{nav,.fcard,.rec-center,.rec-controls{display:none!important}.shell{max-width:100%;padding:0}@page{margin:12mm}}
 @media(max-width:640px){.two{grid-template-columns:1fr}}
 </style>
-<script>
-// LOCK GATE — redirect to unlock screen if not purchased
-(function() {
-  var unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
-  if (!unlocked.recorder) {
-    window.location.replace('advocate-locked.html?tool=recorder');
-  }
-})();
-</script>
   <!-- Supabase auth + data layer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>

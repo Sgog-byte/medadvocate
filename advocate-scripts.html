@@ -147,14 +147,6 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   .hero{padding:36px 22px 32px}
 }
 </style>
-<script>
-(function() {
-  var unlocked = JSON.parse(localStorage.getItem('advocate_unlocked') || '{}');
-  if (!unlocked.scripts) {
-    window.location.replace('advocate-locked.html?tool=scripts');
-  }
-})();
-</script>
   <!-- Supabase auth + data layer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
