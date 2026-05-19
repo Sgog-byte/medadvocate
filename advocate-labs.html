@@ -745,18 +745,31 @@ function applyLoadedLabs(reports) {
 }
 
 async function loadLabs() {
-  // Try Supabase first (works across devices)
+  // 1. Try Supabase first (patient-scoped, works across devices)
   try {
     const dbReports = await DB.getLabReports();
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
-  // Fall back to localStorage; migrate to Supabase in background
+  // 2. Try patient-namespaced localStorage key
   try {
     const saved = JSON.parse(localStorage.getItem(LAB_CACHE_KEY) || '[]');
     if (applyLoadedLabs(saved)) {
       saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+      return;
     }
   } catch(e) {}
+  // 3. Final fallback: legacy flat key (pre-namespace migration)
+  //    Catches cases where migration didn't run or ran on wrong profile
+  if (LAB_CACHE_KEY !== 'advocate_lab_results') {
+    try {
+      const legacy = JSON.parse(localStorage.getItem('advocate_lab_results') || '[]');
+      if (applyLoadedLabs(legacy)) {
+        // Save into the correct namespaced key and push to Supabase
+        saveLabs();
+        legacy.forEach(r => DB.saveLabReport(r).catch(() => {}));
+      }
+    } catch(e) {}
+  }
 }
 
 // ─────────────────────────────────
@@ -938,17 +951,23 @@ function saveProfile() {
 }
 
 async function loadProfile() {
-  let profile = getProfile();
-  // Pull from central DB profile if local is empty
-  if (!profile.name && !profile.diagnoses) {
-    try {
-      const dbp = await DB.getProfile();
-      if (dbp && (dbp.name || dbp.diagnoses)) {
-        profile = { name: dbp.name||'', age: dbp.age||'', diagnoses: dbp.diagnoses||'', meds: dbp.meds||'', notes: dbp.notes||'' };
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-      }
-    } catch(e) {}
-  }
+  // Always load base data from DB first (patient-scoped — never bleeds between profiles)
+  let profile = {};
+  try {
+    const dbp = await DB.getProfile();
+    if (dbp && (dbp.name || dbp.diagnoses)) {
+      profile = { name: dbp.name||'', age: dbp.age||'', diagnoses: dbp.diagnoses||'', meds: dbp.meds||'', notes: dbp.notes||'' };
+    }
+  } catch(e) {}
+  // Merge in any extra notes the user typed locally (only the notes field — not name/diagnoses)
+  try {
+    const local = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+    // Only use local name/diagnoses if DB returned nothing (offline fallback)
+    if (!profile.name && local.name) profile = { ...local };
+    else if (local.notes) profile.notes = local.notes;
+  } catch(e) {}
+  // Save the validated profile back to the namespaced key
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   if (profile.name) document.getElementById('profile_name').value = profile.name;
   if (profile.age) document.getElementById('profile_age').value = profile.age;
   if (profile.diagnoses) document.getElementById('profile_diagnoses').value = profile.diagnoses;
@@ -1632,13 +1651,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (pid) {
       const newLabKey     = `advocate_lab_results_${pid}`;
       const newProfileKey = `advocate_lab_profile_${pid}`;
-      // One-time migration: copy old flat key data into the namespaced key
-      if (!localStorage.getItem(newLabKey) && localStorage.getItem('advocate_lab_results')) {
-        localStorage.setItem(newLabKey, localStorage.getItem('advocate_lab_results'));
-      }
-      if (!localStorage.getItem(newProfileKey) && localStorage.getItem('advocate_lab_profile')) {
-        localStorage.setItem(newProfileKey, localStorage.getItem('advocate_lab_profile'));
-      }
       LAB_CACHE_KEY = newLabKey;
       PROFILE_KEY   = newProfileKey;
     }
