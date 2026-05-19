@@ -489,6 +489,9 @@
     .insight-item { padding: 8px 0 !important; }
     .insight-text { font-size: 13px !important; line-height: 1.55 !important; }
 
+    /* Hide "Add to script" buttons — UI chrome only */
+    .insight-item button { display: none !important; }
+
     /* ── Trend charts print layout ── */
     /* Show the active filter label */
     .chart-print-label {
@@ -1684,6 +1687,7 @@ function renderInsights(idx) {
 
     // Prefer AI-generated trend insights (stored on most recent entry after Refresh)
     const aiTrends = allLabDates[allLabDates.length - 1].trendInsights;
+    const scriptBtnStyle = `flex-shrink:0;margin-left:10px;padding:4px 10px;font-size:11px;border:1.5px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--ink-muted);white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .2s`;
     if (aiTrends && aiTrends.length) {
       // Match trend chart colours: urgent/high→red, low→blue, info/normal→green, watch→gold
       const aiDot = (level) =>
@@ -1691,18 +1695,23 @@ function renderInsights(idx) {
         : level === 'low'  ? 'dot-blue'
         : level === 'info' ? 'dot-sage'
         : 'dot-gold'; // watch / default
-      document.getElementById('trendInsightsList').innerHTML = aiTrends.map(t => `
-        <div class="insight-item">
-          <div class="insight-dot ${aiDot(t.level)}"></div>
-          <div class="insight-text">${t.text}</div>
+      // Cache texts for addTrendInsightToScript
+      window._trendTexts = aiTrends.map(t => t.text);
+      document.getElementById('trendInsightsList').innerHTML = aiTrends.map((t, ti) => `
+        <div class="insight-item" style="align-items:flex-start">
+          <div class="insight-dot ${aiDot(t.level)}" style="margin-top:4px"></div>
+          <div class="insight-text" style="flex:1">${t.text}</div>
+          <button onclick="addTrendInsightToScript(${ti})" id="trend-btn-${ti}" style="${scriptBtnStyle}" onmouseover="this.style.borderColor='var(--sage)';this.style.color='var(--sage)'" onmouseout="if(!this.disabled){this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'}">📋 Add to script</button>
         </div>`).join('');
     } else {
       // Fall back to calculated trends across all dates
       const trending = getTrendInsights();
-      document.getElementById('trendInsightsList').innerHTML = trending.map(t => `
-        <div class="insight-item">
-          <div class="insight-dot ${t.dot || 'dot-gold'}"></div>
-          <div class="insight-text">${t.text}</div>
+      window._trendTexts = trending.map(t => t.text);
+      document.getElementById('trendInsightsList').innerHTML = trending.map((t, ti) => `
+        <div class="insight-item" style="align-items:flex-start">
+          <div class="insight-dot ${t.dot || 'dot-gold'}" style="margin-top:4px"></div>
+          <div class="insight-text" style="flex:1">${t.text}</div>
+          <button onclick="addTrendInsightToScript(${ti})" id="trend-btn-${ti}" style="${scriptBtnStyle}" onmouseover="this.style.borderColor='var(--sage)';this.style.color='var(--sage)'" onmouseout="if(!this.disabled){this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'}">📋 Add to script</button>
         </div>`).join('') +
         `<div style="font-size:12px;color:var(--ink-muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
           Hit <strong>🔄 Refresh Insights</strong> for AI-generated trend analysis across all your lab dates.
@@ -1957,6 +1966,20 @@ function addInsightToScript(entryIdx, insightIdx) {
   const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
   showToast('✓ Insight saved — open Visit Script to use it');
+}
+
+function addTrendInsightToScript(i) {
+  const texts = window._trendTexts || [];
+  const rawText = texts[i];
+  if (!rawText) return;
+  const text = `[Lab trend] ${rawText}`;
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  if (!saved.includes(text)) saved.push(text);
+  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+  const btn = document.getElementById(`trend-btn-${i}`);
+  if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
+  showToast('✓ Trend insight saved — open Visit Script to use it');
 }
 
 // ─────────────────────────────────
