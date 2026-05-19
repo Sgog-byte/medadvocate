@@ -1304,7 +1304,10 @@ function renderLabResults(data, fileName, fileKey) {
   showToast('✓ Lab report extracted successfully');
 }
 
-function showLabEntry(entry) {
+function showLabEntry(entryOrIndex) {
+  // Accept either an index into allLabDates or a direct entry object
+  const entry = (typeof entryOrIndex === 'number') ? allLabDates[entryOrIndex] : entryOrIndex;
+  if (!entry) return;
   // Track active date for strip highlighting
   activeDateKey = entry.fileKey || entry.date;
   updateDateStrip();
@@ -1641,16 +1644,16 @@ function updateHistory() {
   const list = document.getElementById('historyList');
   if (allLabDates.length === 0) return;
 
+  // Use index-based onclick — avoids JSON-in-attribute corruption for large reports
   list.innerHTML = [...allLabDates].reverse().map((entry, revIdx) => {
-    const idx = allLabDates.length - 1 - revIdx; // index in allLabDates
+    const idx = allLabDates.length - 1 - revIdx;
     const d = new Date(entry.date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-    const flagCount = entry.results.filter(r => r.status !== 'normal').length;
-    const entryJson = JSON.stringify(entry).replace(/"/g,'&quot;');
+    const flagCount = (entry.results || []).filter(r => r.status !== 'normal').length;
     return `<div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-      <div style="cursor:pointer; flex:1; min-width:0;" onclick="showLabEntry(${entryJson}); goTo('labs')">
+      <div style="cursor:pointer; flex:1; min-width:0;" onclick="showLabEntry(${idx}); goTo('labs')">
         <div style="font-family:'Fraunces',serif; font-size:16px; font-weight:400;">${label}</div>
-        <div style="font-size:13px; color:var(--ink-muted); margin-top:2px;">${entry.fileName} · ${entry.results.length} tests</div>
+        <div style="font-size:13px; color:var(--ink-muted); margin-top:2px;">${entry.fileName} · ${(entry.results||[]).length} tests</div>
       </div>
       <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
         ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
@@ -1668,12 +1671,12 @@ function updateDateStrip() {
   if (allLabDates.length === 0) { strip.classList.add('hidden'); return; }
   strip.style.display = 'flex';
   strip.classList.remove('hidden');
-  strip.innerHTML = allLabDates.map(entry => {
+  strip.innerHTML = allLabDates.map((entry, idx) => {
     const d = new Date(entry.date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const key = entry.fileKey || entry.date;
     const isActive = key === activeDateKey;
-    return `<button class="date-pill${isActive ? ' active' : ''}" onclick="showLabEntry(${JSON.stringify(entry).replace(/"/g,'&quot;')})">${label}</button>`;
+    return `<button class="date-pill${isActive ? ' active' : ''}" onclick="showLabEntry(${idx})">${label}</button>`;
   }).join('');
 }
 
