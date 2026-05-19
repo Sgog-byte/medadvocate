@@ -361,15 +361,17 @@
   .insight-item:last-child { border-bottom: none; }
 
   .insight-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    flex-shrink: 0; margin-top: 6px;
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 5px;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .dot-red  { background: var(--red); }
-  .dot-gold { background: var(--gold); }
-  .dot-sage { background: var(--sage); }
+  /* Match trend chart dot colours exactly */
+  .dot-red  { background: #e05555; }   /* high / critical */
+  .dot-blue { background: #3b82f6; }   /* low */
+  .dot-sage { background: #2d6a4f; }   /* normal / in range / improving */
+  .dot-gold { background: var(--gold); } /* caution / watch — no specific direction */
 
   .insight-text { font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
   .insight-text strong { color: var(--ink); }
@@ -1683,10 +1685,15 @@ function renderInsights(idx) {
     // Prefer AI-generated trend insights (stored on most recent entry after Refresh)
     const aiTrends = allLabDates[allLabDates.length - 1].trendInsights;
     if (aiTrends && aiTrends.length) {
-      const dotColor2 = { urgent: 'dot-red', watch: 'dot-gold', info: 'dot-sage' };
+      // Match trend chart colours: urgent/high→red, low→blue, info/normal→green, watch→gold
+      const aiDot = (level) =>
+        level === 'urgent' ? 'dot-red'
+        : level === 'low'  ? 'dot-blue'
+        : level === 'info' ? 'dot-sage'
+        : 'dot-gold'; // watch / default
       document.getElementById('trendInsightsList').innerHTML = aiTrends.map(t => `
         <div class="insight-item">
-          <div class="insight-dot ${dotColor2[t.level] || 'dot-gold'}"></div>
+          <div class="insight-dot ${aiDot(t.level)}"></div>
           <div class="insight-text">${t.text}</div>
         </div>`).join('');
     } else {
@@ -1694,7 +1701,7 @@ function renderInsights(idx) {
       const trending = getTrendInsights();
       document.getElementById('trendInsightsList').innerHTML = trending.map(t => `
         <div class="insight-item">
-          <div class="insight-dot ${t.direction === 'up' ? 'dot-red' : t.direction === 'down' ? 'dot-sage' : 'dot-gold'}"></div>
+          <div class="insight-dot ${t.dot || 'dot-gold'}"></div>
           <div class="insight-text">${t.text}</div>
         </div>`).join('') +
         `<div style="font-size:12px;color:var(--ink-muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
@@ -1735,7 +1742,13 @@ function getTrendInsights() {
       ? ((last.value - first.value) / Math.abs(first.value)) * 100 : 0;
     const pct = Math.abs(totalChange).toFixed(0);
     const dir = totalChange > 0 ? 'increased' : 'decreased';
-    const dotDir = totalChange > 0 ? 'up' : 'down';
+
+    // Dot colour matches trend chart: high→red, low→blue, normal→green, caution→gold
+    const statusDot = (s) =>
+      (s === 'high' || s === 'critical') ? 'dot-red'
+      : s === 'low' ? 'dot-blue'
+      : s === 'normal' ? 'dot-sage'
+      : 'dot-gold';
 
     // Detect consistent direction across all steps
     let rises = 0, falls = 0;
@@ -1749,20 +1762,20 @@ function getTrendInsights() {
 
     // Priority 0 = most important
     if (!wasAbnormal && isAbnormal) {
-      // Crossed into abnormal — most important
-      insights.push({ direction: 'up', priority: 0,
+      // Crossed into abnormal — colour shows whether it's now high or low
+      insights.push({ dot: statusDot(last.status), priority: 0,
         text: `<strong>${name}</strong> was within normal range in ${firstDate} but is now outside the reference range as of ${lastDate}. Worth discussing with your doctor.` });
     } else if (wasAbnormal && !isAbnormal) {
-      // Returned to normal — good news
-      insights.push({ direction: 'down', priority: 1,
+      // Returned to normal — green dot
+      insights.push({ dot: 'dot-sage', priority: 1,
         text: `<strong>${name}</strong> was outside the normal range in ${firstDate} and has returned to normal by ${lastDate}. Good progress.` });
     } else if (isAbnormal && Math.abs(totalChange) >= 10) {
-      // Still abnormal but changing
-      insights.push({ direction: dotDir, priority: 2,
+      // Still abnormal and shifting — colour matches current status
+      insights.push({ dot: statusDot(last.status), priority: 2,
         text: `<strong>${name}</strong> has ${dir} by ${pct}%${consistentNote} from ${firstDate} to ${lastDate} and remains outside the reference range.` });
     } else if (!isAbnormal && Math.abs(totalChange) >= 20) {
-      // Normal but large shift — worth noting
-      insights.push({ direction: 'watch', priority: 3,
+      // Normal range but large shift — gold caution dot
+      insights.push({ dot: 'dot-gold', priority: 3,
         text: `<strong>${name}</strong> has ${dir} by ${pct}%${consistentNote} from ${firstDate} to ${lastDate} and is currently within normal range.` });
     }
   });
@@ -1770,7 +1783,7 @@ function getTrendInsights() {
   insights.sort((a, b) => a.priority - b.priority);
 
   return insights.length > 0 ? insights
-    : [{ direction: 'watch', text: `Values appear stable across all ${allLabDates.length} lab dates. No significant shifts detected.` }];
+    : [{ dot: 'dot-sage', text: `Values appear stable across all ${allLabDates.length} lab dates. No significant shifts detected.` }];
 }
 
 // ─────────────────────────────────
