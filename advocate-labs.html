@@ -746,20 +746,34 @@ function applyLoadedLabs(reports) {
 }
 
 async function loadLabs() {
-  // 1. Try Supabase first (always patient-scoped, works across devices)
+  // 1. Try Supabase first (patient-scoped, works across devices)
   try {
     const dbReports = await DB.getLabReports();
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
-  // 2. Fall back to localStorage cache
-  //    DOMContentLoaded already cleared it if the patient changed, so this is safe
+
+  // 2. Build a list of every possible localStorage key to try:
+  //    - flat key (original + current)
+  //    - any advocate_lab_results_* namespaced keys from previous deploys
+  const keysToTry = new Set([LAB_CACHE_KEY]);
   try {
-    const saved = JSON.parse(localStorage.getItem(LAB_CACHE_KEY) || '[]');
-    if (applyLoadedLabs(saved)) {
-      // Sync to Supabase so future loads (and other devices) work
-      saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('advocate_lab_results')) keysToTry.add(k);
     }
   } catch(e) {}
+
+  for (const key of keysToTry) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) || '[]');
+      if (applyLoadedLabs(saved)) {
+        // Found data — normalise to flat key and push to Supabase
+        localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved));
+        saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+        return;
+      }
+    } catch(e) {}
+  }
 }
 
 // ─────────────────────────────────
