@@ -426,6 +426,16 @@ const DB = {
     await _supa.from('lab_results').delete().eq('id', id);
   },
 
+  /** Delete every lab report row for the active patient (clears corrupted / wrong-patient data) */
+  async deleteAllLabReports() {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    await _supa.from('lab_results')
+      .delete()
+      .eq('patient_id', pid)
+      .eq('test_name', '__report__');
+  },
+
   // ── DIAGNOSTIC TESTS ────────────────────────────────────────
 
   async getDiagnosticTests() {

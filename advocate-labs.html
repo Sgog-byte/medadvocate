@@ -668,6 +668,7 @@
           <button class="btn btn-outline" onclick="goTo('insights')">💡 See AI Insights</button>
           <button class="btn btn-outline" onclick="printPage()">🖨️ Print Report</button>
           <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">➕ Add Another Date</button>
+          <button class="btn btn-outline" style="color:#c0392b;border-color:#c0392b;" onclick="clearAllLabs()">🗑️ Clear All Labs</button>
         </div>
 
       </div>
@@ -1604,6 +1605,31 @@ function updateDateStrip() {
     const isActive = key === activeDateKey;
     return `<button class="date-pill${isActive ? ' active' : ''}" onclick="showLabEntry(${JSON.stringify(entry).replace(/"/g,'&quot;')})">${label}</button>`;
   }).join('');
+}
+
+// ─────────────────────────────────
+// CLEAR ALL LABS
+// ─────────────────────────────────
+async function clearAllLabs() {
+  if (!confirm('Delete all lab data for this patient? This cannot be undone. You can re-upload their labs afterwards.')) return;
+  // Clear Supabase
+  try { await DB.deleteAllLabReports(); } catch(e) {}
+  // Clear localStorage (namespaced key for this patient)
+  try { localStorage.removeItem(labCacheKey()); } catch(e) {}
+  // Reset in-memory state
+  allLabDates = [];
+  // Reset UI back to empty state
+  document.getElementById('labResults').classList.add('hidden');
+  document.getElementById('emptyLabs').classList.remove('hidden');
+  document.getElementById('dateStrip').classList.add('hidden');
+  document.getElementById('dateStrip').innerHTML = '';
+  document.getElementById('historyList').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📁</div>
+      <div class="empty-title">No history yet</div>
+      <div class="empty-sub">Uploaded labs will appear here, sorted by date.</div>
+    </div>`;
+  showToast('All lab data cleared — you can now re-upload');
 }
 
 // ─────────────────────────────────
