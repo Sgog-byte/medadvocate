@@ -1253,9 +1253,40 @@ function renderLabResults(data, fileName, fileKey) {
     insights: data.insights || []
   };
 
-  // Remove existing entry for same date or same file
-  // Only deduplicate by fileKey — same date is valid (multiple panels same day)
-  allLabDates = allLabDates.filter(e => !entry.fileKey || e.fileKey !== entry.fileKey);
+  // ── Duplicate detection ──────────────────────────────────────
+  // 1. Exact fileKey match (same file uploaded twice)
+  const sameFile = allLabDates.find(e => entry.fileKey && e.fileKey === entry.fileKey);
+  if (sameFile) {
+    showToast('⚠️ This file has already been uploaded — skipping duplicate');
+    showLabEntry(sameFile);
+    return;
+  }
+
+  // 2. Same date AND high test-name overlap (>70%) → likely duplicate or re-upload
+  const sameDate = allLabDates.find(e => e.date === entry.date);
+  if (sameDate && entry.results.length > 0) {
+    const newNames  = new Set(entry.results.map(r => r.name.toLowerCase().trim()));
+    const existingNames = new Set(sameDate.results.map(r => r.name.toLowerCase().trim()));
+    const overlap = [...newNames].filter(n => existingNames.has(n)).length;
+    const similarity = overlap / Math.max(newNames.size, existingNames.size);
+    if (similarity >= 0.7) {
+      const d = new Date(entry.date + 'T12:00:00');
+      const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+      const replace = confirm(
+        `A lab report for ${label} already exists with similar tests (${Math.round(similarity*100)}% overlap).\n\n` +
+        `Existing: "${sameDate.fileName}"\nNew: "${fileName}"\n\n` +
+        `Click OK to replace the existing report, or Cancel to keep both.`
+      );
+      if (replace) {
+        // Delete the old entry from Supabase and memory
+        if (sameDate.dbId) DB.deleteLabReport(sameDate.dbId).catch(() => {});
+        allLabDates = allLabDates.filter(e => e.date !== entry.date);
+      }
+      // If cancel, both are kept (falls through to push below)
+    }
+  }
+  // ────────────────────────────────────────────────────────────
+
   allLabDates.push(entry);
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
   saveLabs();
@@ -1610,16 +1641,22 @@ function updateHistory() {
   const list = document.getElementById('historyList');
   if (allLabDates.length === 0) return;
 
-  list.innerHTML = [...allLabDates].reverse().map(entry => {
+  list.innerHTML = [...allLabDates].reverse().map((entry, revIdx) => {
+    const idx = allLabDates.length - 1 - revIdx; // index in allLabDates
     const d = new Date(entry.date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
     const flagCount = entry.results.filter(r => r.status !== 'normal').length;
-    return `<div class="card" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;" onclick="showLabEntry(${JSON.stringify(entry).replace(/"/g,'&quot;')}); goTo('labs')">
-      <div>
+    const entryJson = JSON.stringify(entry).replace(/"/g,'&quot;');
+    return `<div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div style="cursor:pointer; flex:1; min-width:0;" onclick="showLabEntry(${entryJson}); goTo('labs')">
         <div style="font-family:'Fraunces',serif; font-size:16px; font-weight:400;">${label}</div>
         <div style="font-size:13px; color:var(--ink-muted); margin-top:2px;">${entry.fileName} · ${entry.results.length} tests</div>
       </div>
-      ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
+      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+        ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
+        <button onclick="deleteLabEntry(${idx})" title="Delete this report"
+          style="background:none;border:1px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#c0392b;line-height:1;" class="no-print">🗑️</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -1665,6 +1702,42 @@ async function clearAllLabs() {
   const banner = document.getElementById('wrongPatientBanner');
   if (banner) banner.classList.add('hidden');
   showToast('All lab data cleared — you can now re-upload');
+}
+
+// ─────────────────────────────────
+// DELETE SINGLE LAB REPORT
+// ─────────────────────────────────
+async function deleteLabEntry(idx) {
+  const entry = allLabDates[idx];
+  if (!entry) return;
+  const d = new Date(entry.date + 'T12:00:00');
+  const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  if (!confirm(`Delete the lab report from ${label} (${entry.fileName})? This cannot be undone.`)) return;
+
+  // Remove from Supabase
+  if (entry.dbId) {
+    try { await DB.deleteLabReport(entry.dbId); } catch(e) {}
+  }
+
+  // Remove from in-memory array
+  allLabDates.splice(idx, 1);
+
+  // Persist updated list
+  saveLabs();
+
+  if (allLabDates.length === 0) {
+    // No labs left — show empty state
+    document.getElementById('labResults').classList.add('hidden');
+    document.getElementById('emptyLabs').classList.remove('hidden');
+    document.getElementById('dateStrip').classList.add('hidden');
+    document.getElementById('dateStrip').innerHTML = '';
+  } else {
+    // Show the most recent remaining entry
+    showLabEntry(allLabDates[allLabDates.length - 1]);
+    updateHistory();
+    renderTrends();
+  }
+  showToast('Lab report deleted');
 }
 
 // ─────────────────────────────────
