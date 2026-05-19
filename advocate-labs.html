@@ -449,14 +449,41 @@
       box-shadow: none;
       break-inside: avoid;
       border: 1px solid #ccc;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      /* Clone border/padding so the box closes neatly at every page break */
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
     }
 
     .rbar-dot-prev { display: none; }
 
     .summary-tile { break-inside: avoid; }
 
-    h1, .page-title { font-size: 22px; }
+    h1, .page-title { font-size: 20px; }
+
+    /* ── AI Insights page print tweaks ── */
+
+    /* Hide date-picker pills, subtitles and card sub-headings — they're UI chrome */
+    #insightDatePicker,
+    #page-insights .page-sub,
+    #insightsCard .card-sub,
+    #trendInsightsCard .card-sub,
+    #contextualSummaryBox { display: none !important; }
+
+    /* Reduce page-header gap so content starts close to the print header */
+    .page-header { margin-bottom: 10px !important; }
+
+    /* Allow large insight cards to break across pages (don't push whole card to next page) */
+    #insightsCard, #trendInsightsCard {
+      break-inside: auto !important;
+    }
+
+    /* But keep each individual insight bullet on one page */
+    .insight-item { break-inside: avoid; }
+
+    /* Compact insight text */
+    .insight-item { padding: 8px 0 !important; }
+    .insight-text { font-size: 13px !important; line-height: 1.55 !important; }
 
     /* ── Trend charts print layout ── */
     /* Show the active filter label */
