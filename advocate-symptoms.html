@@ -773,6 +773,7 @@ function switchTab(tab) {
 
 // ── PRINT DATE RANGE ──
 let _printSavedEntries = null;
+let _printSavedRangeFilter = undefined;
 
 function openPrintModal() {
   const modal = document.getElementById('printModal');
@@ -783,7 +784,6 @@ function openPrintModal() {
   const from = earliest > ninetyAgo ? earliest : ninetyAgo;
   document.getElementById('printFrom').value = from;
   document.getElementById('printTo').value   = to;
-  // Highlight matching preset
   updatePrintPresetHighlight(from, to);
   modal.style.display = 'flex';
 }
@@ -804,15 +804,14 @@ function setPrintRange(days) {
 
 function updatePrintPresetHighlight(from, to) {
   const dayDiff = Math.round((new Date(to) - new Date(from)) / 86400000);
-  const presets = { 30: 30, 90: 90, 180: 180, 365: 365 };
   document.querySelectorAll('.print-preset').forEach(btn => {
     btn.classList.remove('active');
     const txt = btn.textContent;
-    if ((txt.includes('30') && dayDiff <= 31) ||
-        (txt.includes('90') && dayDiff > 31 && dayDiff <= 91) ||
+    if ((txt.includes('30 days') && dayDiff <= 31) ||
+        (txt.includes('90 days') && dayDiff > 31 && dayDiff <= 91) ||
         (txt.includes('6 months') && dayDiff > 91 && dayDiff <= 182) ||
         (txt.includes('year') && dayDiff > 182 && dayDiff <= 366) ||
-        (txt.includes('All') && entries.length && from === entries[0].date)) {
+        (txt.includes('All') && entries.length && from <= entries[0].date)) {
       btn.classList.add('active');
     }
   });
@@ -822,20 +821,30 @@ function confirmPrint() {
   const from = document.getElementById('printFrom').value;
   const to   = document.getElementById('printTo').value;
   if (!from || !to) { showToast('Please select a date range'); return; }
-  if (from > to) { showToast('Start date must be before end date'); return; }
+  if (from > to)    { showToast('Start date must be before end date'); return; }
   closePrintModal();
 
-  // Stash full entries and temporarily replace with filtered range
+  // Stash full entries and replace with date-range-filtered set
   _printSavedEntries = entries;
   entries = entries.filter(e => e.date >= from && e.date <= to);
 
-  // Re-render the active panel with filtered data
   const tab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
-  if (tab === 'history') renderHistory();
-  if (tab === 'trends')  renderTrends();
 
-  // Small delay so charts finish drawing, then print
-  setTimeout(() => window.print(), 200);
+  if (tab === 'trends') {
+    // Stash rangeFilter and set to 0 so getFilteredEntries() doesn't
+    // double-filter the already-filtered entries array
+    _printSavedRangeFilter = rangeFilter;
+    rangeFilter = 0;
+    // Disable Chart.js animations so canvas paints instantly
+    if (typeof Chart !== 'undefined') Chart.defaults.animation = false;
+    renderTrends();
+    // Wait two animation frames so canvas pixels are actually committed
+    // before the browser captures them for print
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  } else if (tab === 'history') {
+    renderHistory();
+    window.print();
+  }
 }
 
 // Print: show only the currently active panel
@@ -877,6 +886,12 @@ window.addEventListener('afterprint', () => {
   if (_printSavedEntries !== null) {
     entries = _printSavedEntries;
     _printSavedEntries = null;
+    // Restore rangeFilter and Chart.js animations
+    if (_printSavedRangeFilter !== undefined) {
+      rangeFilter = _printSavedRangeFilter;
+      _printSavedRangeFilter = undefined;
+      if (typeof Chart !== 'undefined') Chart.defaults.animation = undefined;
+    }
     const tab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
     if (tab === 'history') renderHistory();
     if (tab === 'trends')  renderTrends();
