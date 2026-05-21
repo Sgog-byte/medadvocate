@@ -768,7 +768,7 @@ function switchTab(tab) {
   if (tab === 'voice') vlInit();
   // Only show print button on tabs that have printable content
   const printBtn = document.querySelector('.nav-print');
-  if (printBtn) printBtn.style.display = (tab === 'history' || tab === 'trends') ? '' : 'none';
+  if (printBtn) printBtn.style.display = (tab === 'history' || tab === 'trends') ? 'flex' : 'none';
 }
 
 // ── PRINT DATE RANGE ──
@@ -895,6 +895,9 @@ window.addEventListener('afterprint', () => {
     const tab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
     if (tab === 'history') renderHistory();
     if (tab === 'trends')  renderTrends();
+    // Re-show the print button (it's hidden during print via no-print class)
+    const printBtn = document.querySelector('.nav-print');
+    if (printBtn && (tab === 'history' || tab === 'trends')) printBtn.style.display = 'flex';
   }
 });
 
