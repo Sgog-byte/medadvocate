@@ -613,11 +613,11 @@
     <div style="font-size:13px;color:#2d6a4f;font-weight:300;margin-bottom:20px">Choose which dates to include.</div>
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
-      <button onclick="setPrintRange(30)"  class="print-preset">Last 30 days</button>
-      <button onclick="setPrintRange(90)"  class="print-preset">Last 90 days</button>
-      <button onclick="setPrintRange(180)" class="print-preset">Last 6 months</button>
-      <button onclick="setPrintRange(365)" class="print-preset">Last year</button>
-      <button onclick="setPrintRange(0)"   class="print-preset">All time</button>
+      <button onclick="setPrintRange(30,this)"  class="print-preset">Last 30 days</button>
+      <button onclick="setPrintRange(90,this)"  class="print-preset">Last 90 days</button>
+      <button onclick="setPrintRange(180,this)" class="print-preset">Last 6 months</button>
+      <button onclick="setPrintRange(365,this)" class="print-preset">Last year</button>
+      <button onclick="setPrintRange(0,this)"   class="print-preset">All time</button>
     </div>
 
     <div style="display:flex;gap:12px;margin-bottom:24px">
@@ -777,14 +777,16 @@ let _printSavedRangeFilter = undefined;
 
 function openPrintModal() {
   const modal = document.getElementById('printModal');
-  // Default to last 90 days (or earliest entry if shorter history)
-  const to   = new Date().toISOString().split('T')[0];
+  const to      = new Date().toISOString().split('T')[0];
   const earliest = entries.length ? entries[0].date : to;
   const ninetyAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
   const from = earliest > ninetyAgo ? earliest : ninetyAgo;
   document.getElementById('printFrom').value = from;
   document.getElementById('printTo').value   = to;
-  updatePrintPresetHighlight(from, to);
+  // Clear all preset highlights, then highlight the "Last 90 days" button by default
+  document.querySelectorAll('.print-preset').forEach(b => b.classList.remove('active'));
+  const defaultBtn = [...document.querySelectorAll('.print-preset')].find(b => b.textContent.includes('90'));
+  if (defaultBtn) defaultBtn.classList.add('active');
   modal.style.display = 'flex';
 }
 
@@ -792,29 +794,16 @@ function closePrintModal() {
   document.getElementById('printModal').style.display = 'none';
 }
 
-function setPrintRange(days) {
+function setPrintRange(days, btn) {
   const to = new Date().toISOString().split('T')[0];
   const from = days === 0
     ? (entries.length ? entries[0].date : to)
     : new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
   document.getElementById('printFrom').value = from;
   document.getElementById('printTo').value   = to;
-  updatePrintPresetHighlight(from, to);
-}
-
-function updatePrintPresetHighlight(from, to) {
-  const dayDiff = Math.round((new Date(to) - new Date(from)) / 86400000);
-  document.querySelectorAll('.print-preset').forEach(btn => {
-    btn.classList.remove('active');
-    const txt = btn.textContent;
-    if ((txt.includes('30 days') && dayDiff <= 31) ||
-        (txt.includes('90 days') && dayDiff > 31 && dayDiff <= 91) ||
-        (txt.includes('6 months') && dayDiff > 91 && dayDiff <= 182) ||
-        (txt.includes('year') && dayDiff > 182 && dayDiff <= 366) ||
-        (txt.includes('All') && entries.length && from <= entries[0].date)) {
-      btn.classList.add('active');
-    }
-  });
+  // Highlight just the clicked button
+  document.querySelectorAll('.print-preset').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
 }
 
 function confirmPrint() {
@@ -835,15 +824,16 @@ function confirmPrint() {
     // double-filter the already-filtered entries array
     _printSavedRangeFilter = rangeFilter;
     rangeFilter = 0;
-    // Disable Chart.js animations so canvas paints instantly
+    // Disable Chart.js animations so canvas renders without waiting for tweens
     if (typeof Chart !== 'undefined') Chart.defaults.animation = false;
     renderTrends();
-    // Wait two animation frames so canvas pixels are actually committed
-    // before the browser captures them for print
-    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+    // Chart.js still needs a full browser paint cycle even with animation off.
+    // 500ms gives all canvas elements time to commit pixels before print fires.
+    setTimeout(() => window.print(), 500);
   } else if (tab === 'history') {
     renderHistory();
-    window.print();
+    // Small delay so DOM is settled before print dialog opens
+    setTimeout(() => window.print(), 50);
   }
 }
 
