@@ -1303,6 +1303,20 @@ if (!entries.length) {
   // Load data with the correct (possibly namespaced) keys
   state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"trackedSymptoms":[]}');
   entries = JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
+
+  // Refresh saved symptom labels/icons from current PRESETS so any renamed
+  // presets (e.g. 'Mood' → 'Low Mood') are picked up automatically.
+  let labelsMigrated = false;
+  state.trackedSymptoms = state.trackedSymptoms.map(s => {
+    const preset = PRESETS.find(p => p.id === s.id);
+    if (preset && (s.label !== preset.label || s.icon !== preset.icon)) {
+      labelsMigrated = true;
+      return { ...s, label: preset.label, icon: preset.icon };
+    }
+    return s;
+  });
+  if (labelsMigrated) save();
+
   if (window.location.hash === '#voice') switchTab('voice');
   else renderLog();
 })();
