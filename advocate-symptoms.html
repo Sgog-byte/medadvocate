@@ -203,14 +203,21 @@
     .insight-grid{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
     .insight-tile{padding:10px 12px}
 
-    /* Charts */
-    .chart-wrap{height:180px}
+    /* Charts — fixed height, clean card layout */
+    .chart-wrap{height:160px !important;margin-bottom:0}
+    .chart-card{padding:12px 14px !important;margin-bottom:10px;break-inside:avoid}
+    .chart-card-title{font-size:13px !important;margin-bottom:2px !important}
+    .chart-card-sub{font-size:11px !important;margin-bottom:8px !important}
+
+    /* Stat row (Avg / Peak) — keep on one line, don't wrap over title */
+    .chart-card > div:first-child{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:nowrap;gap:8px}
+
+    /* Hide For Your Doctor card — not needed in print */
+    #panel-trends .card:has(#doctorSummary){display:none !important}
 
     /* Preserve chip/chart colours */
-    .insight-tile,.chart-card,.history-sym-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-
-    /* Don't orphan chart cards */
-    .chart-card{break-inside:avoid}
+    .insight-tile,.chart-card,.history-sym-chip,canvas{
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
 
     @page{margin:14mm;size:letter}
   }
@@ -510,7 +517,7 @@
       <div id="symCharts"></div>
 
       <!-- Doctor summary -->
-      <div class="card" style="margin-top:8px">
+      <div class="card no-print" style="margin-top:8px">
         <div class="card-title">📋 For Your Doctor</div>
         <div class="card-sub">A summary you can print or read aloud at your next appointment.</div>
         <div id="doctorSummary" style="font-size:14px;line-height:1.8;color:var(--ink-soft);font-weight:300;white-space:pre-wrap"></div>
@@ -817,6 +824,9 @@ function confirmPrint() {
 
 // beforeprint: isolate active panel + filter history items by date range
 window.addEventListener('beforeprint', () => {
+  // Stop all Chart.js animations so canvas is fully rendered (no rainbow effect)
+  Object.values(charts).forEach(c => { try { c.stop(); } catch(e){} });
+
   const activePanel = document.querySelector('.panel.active');
   // Hide all non-active panels
   document.querySelectorAll('.panel').forEach(p => {
