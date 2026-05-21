@@ -186,30 +186,33 @@
 
     .shell{max-width:100%;padding:0 8px}
 
-    /* Cards */
-    .card,.chart-card{box-shadow:none;border:1px solid #dde8e0;break-inside:avoid;margin-bottom:12px}
+    /* Print header */
+    .print-header{display:flex !important;align-items:center;justify-content:space-between;padding:0 0 10px;border-bottom:1px solid #dde8e0;margin-bottom:16px}
+    .print-header-title{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:#1e2a22}
+    .print-header-date{font-size:11px;color:#8a9e90}
 
-    /* History entries — compact for print */
-    .history-item{padding:10px 14px;margin-bottom:6px;break-inside:avoid}
+    /* Cards */
+    .card,.chart-card{box-shadow:none;border:1px solid #dde8e0;break-inside:avoid;margin-bottom:10px}
+
+    /* History entries — compact, clean */
+    .history-item{padding:8px 12px;margin-bottom:4px;break-inside:avoid;box-shadow:none !important}
     .history-item:hover{box-shadow:none}
+    .history-sym-chip{font-size:10px;padding:1px 6px}
 
     /* Insight summary tiles — 4 across */
-    .insight-grid{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-    .insight-tile{padding:12px 14px}
+    .insight-grid{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+    .insight-tile{padding:10px 12px}
 
     /* Charts */
     .chart-wrap{height:180px}
 
-    /* Preserve chart colours */
+    /* Preserve chip/chart colours */
     .insight-tile,.chart-card,.history-sym-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-
-    /* Section break between history and trends */
-    #panel-trends{page-break-before:always}
 
     /* Don't orphan chart cards */
     .chart-card{break-inside:avoid}
 
-    @page{margin:12mm;size:letter}
+    @page{margin:14mm;size:letter}
   }
 
   .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
@@ -453,6 +456,10 @@
 
   <!-- ══ HISTORY PANEL ══ -->
   <div class="panel" id="panel-history">
+    <div class="print-header" style="display:none">
+      <div class="print-header-title">MedAdvocate — Symptom Tracker · Log History</div>
+      <div class="print-header-date" id="printHeaderDate"></div>
+    </div>
     <div class="card">
       <div class="card-title">Log History</div>
       <div class="card-sub">All recorded days — tap any entry to view details.</div>
@@ -740,6 +747,9 @@ window.addEventListener('beforeprint', () => {
   });
   if (activePanel) {
     activePanel.style.setProperty('display', 'block', 'important');
+    // Set print header date
+    const dateEl = document.getElementById('printHeaderDate');
+    if (dateEl) dateEl.textContent = 'Printed ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
 });
 window.addEventListener('afterprint', () => {
@@ -1679,7 +1689,7 @@ function vlResetAll() {
 }
 </script>
 <!-- DoD/VA Pain Scale Reference Chart -->
-<div style="max-width:960px;margin:0 auto;padding:0 22px 60px;position:relative;z-index:1">
+<div class="no-print" style="max-width:960px;margin:0 auto;padding:0 22px 60px;position:relative;z-index:1">
   <div style="background:var(--white);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm)">
     <div style="background:var(--sage-deep);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
