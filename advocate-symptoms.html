@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -772,22 +772,20 @@ function switchTab(tab) {
 }
 
 // ── PRINT DATE RANGE ──
-let _printSavedEntries = null;
-let _printSavedRangeFilter = undefined;
+// _printFrom/_printTo are set by confirmPrint() and read by beforeprint/afterprint
+let _printFrom = null, _printTo = null;
 
 function openPrintModal() {
-  const modal = document.getElementById('printModal');
-  const to      = new Date().toISOString().split('T')[0];
+  const to       = new Date().toISOString().split('T')[0];
   const earliest = entries.length ? entries[0].date : to;
   const ninetyAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
   const from = earliest > ninetyAgo ? earliest : ninetyAgo;
   document.getElementById('printFrom').value = from;
   document.getElementById('printTo').value   = to;
-  // Clear all preset highlights, then highlight the "Last 90 days" button by default
   document.querySelectorAll('.print-preset').forEach(b => b.classList.remove('active'));
   const defaultBtn = [...document.querySelectorAll('.print-preset')].find(b => b.textContent.includes('90'));
   if (defaultBtn) defaultBtn.classList.add('active');
-  modal.style.display = 'flex';
+  document.getElementById('printModal').style.display = 'flex';
 }
 
 function closePrintModal() {
@@ -801,7 +799,6 @@ function setPrintRange(days, btn) {
     : new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
   document.getElementById('printFrom').value = from;
   document.getElementById('printTo').value   = to;
-  // Highlight just the clicked button
   document.querySelectorAll('.print-preset').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
 }
@@ -811,35 +808,17 @@ function confirmPrint() {
   const to   = document.getElementById('printTo').value;
   if (!from || !to) { showToast('Please select a date range'); return; }
   if (from > to)    { showToast('Start date must be before end date'); return; }
+  _printFrom = from;
+  _printTo   = to;
   closePrintModal();
-
-  // Stash full entries and replace with date-range-filtered set
-  _printSavedEntries = entries;
-  entries = entries.filter(e => e.date >= from && e.date <= to);
-
-  const tab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
-
-  if (tab === 'trends') {
-    // Stash rangeFilter and set to 0 so getFilteredEntries() doesn't
-    // double-filter the already-filtered entries array
-    _printSavedRangeFilter = rangeFilter;
-    rangeFilter = 0;
-    // Disable Chart.js animations so canvas renders without waiting for tweens
-    if (typeof Chart !== 'undefined') Chart.defaults.animation = false;
-    renderTrends();
-    // Chart.js still needs a full browser paint cycle even with animation off.
-    // 500ms gives all canvas elements time to commit pixels before print fires.
-    setTimeout(() => window.print(), 500);
-  } else if (tab === 'history') {
-    renderHistory();
-    // Small delay so DOM is settled before print dialog opens
-    setTimeout(() => window.print(), 50);
-  }
+  // Call synchronously — setTimeout/async would be blocked as a popup
+  window.print();
 }
 
-// Print: show only the currently active panel
+// beforeprint: isolate active panel + filter history items by date range
 window.addEventListener('beforeprint', () => {
   const activePanel = document.querySelector('.panel.active');
+  // Hide all non-active panels
   document.querySelectorAll('.panel').forEach(p => {
     if (p !== activePanel) {
       p.setAttribute('data-print-hidden', '1');
@@ -848,23 +827,34 @@ window.addEventListener('beforeprint', () => {
   });
   if (activePanel) {
     activePanel.style.setProperty('display', 'block', 'important');
-    // Set print header date range label
-    const dateEl = document.getElementById('printHeaderDate');
-    if (dateEl) {
-      const from = document.getElementById('printFrom')?.value;
-      const to   = document.getElementById('printTo')?.value;
-      if (from && to) {
-        const fmtFrom = new Date(from + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const fmtTo   = new Date(to   + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        dateEl.textContent = fmtFrom + ' – ' + fmtTo;
-      } else {
-        dateEl.textContent = 'Printed ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      }
+  }
+
+  // Update print header date label
+  const dateEl = document.getElementById('printHeaderDate');
+  if (dateEl) {
+    if (_printFrom && _printTo) {
+      const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      dateEl.textContent = fmt(_printFrom) + ' – ' + fmt(_printTo);
+    } else {
+      dateEl.textContent = 'Printed ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
   }
+
+  // For history: hide entries outside the selected date range
+  if (_printFrom && _printTo) {
+    document.querySelectorAll('#historyList [data-date]').forEach(item => {
+      const d = item.dataset.date;
+      if (d < _printFrom || d > _printTo) {
+        item.setAttribute('data-print-filtered', '1');
+        item.style.setProperty('display', 'none', 'important');
+      }
+    });
+  }
 });
+
+// afterprint: restore everything
 window.addEventListener('afterprint', () => {
-  // Restore filtered panel visibility
+  // Restore non-active panels
   document.querySelectorAll('.panel[data-print-hidden]').forEach(p => {
     p.style.removeProperty('display');
     p.removeAttribute('data-print-hidden');
@@ -872,23 +862,19 @@ window.addEventListener('afterprint', () => {
   const activePanel = document.querySelector('.panel.active');
   if (activePanel) activePanel.style.removeProperty('display');
 
-  // Restore full entries and re-render
-  if (_printSavedEntries !== null) {
-    entries = _printSavedEntries;
-    _printSavedEntries = null;
-    // Restore rangeFilter and Chart.js animations
-    if (_printSavedRangeFilter !== undefined) {
-      rangeFilter = _printSavedRangeFilter;
-      _printSavedRangeFilter = undefined;
-      if (typeof Chart !== 'undefined') Chart.defaults.animation = undefined;
-    }
-    const tab = document.querySelector('.tab.active')?.id?.replace('tab-', '');
-    if (tab === 'history') renderHistory();
-    if (tab === 'trends')  renderTrends();
-    // Re-show the print button (it's hidden during print via no-print class)
-    const printBtn = document.querySelector('.nav-print');
-    if (printBtn && (tab === 'history' || tab === 'trends')) printBtn.style.display = 'flex';
-  }
+  // Restore filtered history items
+  document.querySelectorAll('#historyList [data-print-filtered]').forEach(item => {
+    item.style.removeProperty('display');
+    item.removeAttribute('data-print-filtered');
+  });
+
+  // Re-show print button
+  const tab = activePanel?.id?.replace('panel-', '');
+  const printBtn = document.querySelector('.nav-print');
+  if (printBtn && (tab === 'history' || tab === 'trends')) printBtn.style.display = 'flex';
+
+  _printFrom = null;
+  _printTo   = null;
 });
 
 // ══ SETUP ══
@@ -1125,7 +1111,7 @@ function renderHistory() {
         return `<span class="history-sym-chip ${cls}">${s.icon} ${s.label} ${v}/10</span>`;
       }).join('');
 
-    return `<div class="history-item" onclick="jumpToDate('${e.date}')">
+    return `<div class="history-item" data-date="${e.date}" onclick="jumpToDate('${e.date}')">
       <div>
         <div class="history-date">${dateLabel(e.date)}</div>
         <div style="font-size:11px;color:var(--ink-muted);font-weight:300">${dateDisplay(e.date)}</div>
