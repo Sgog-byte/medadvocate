@@ -411,7 +411,7 @@
             </div>
 
             <div class="interference-item">
-              <div class="interference-label">💭 Mood</div>
+              <div class="interference-label">💭 Low Mood</div>
               <div class="interference-options" id="int-mood">
                 <button class="int-btn" onclick="selectInterference('mood','none',this)">Not at all</button>
                 <button class="int-btn" onclick="selectInterference('mood','mild',this)">A little</button>
@@ -1183,7 +1183,7 @@ function buildDoctorSummary(filtered) {
 
   // Interference summary
   const intDomains = ['activity','sleep','mood','stress'];
-  const intLabels = {activity:'Physical Activity',sleep:'Sleep',mood:'Mood',stress:'Stress Level'};
+  const intLabels = {activity:'Physical Activity',sleep:'Sleep',mood:'Low Mood',stress:'Stress Level'};
   const intData = {};
   intDomains.forEach(d => {
     const vals = filtered.map(e => e.interference?.[d]).filter(Boolean);
