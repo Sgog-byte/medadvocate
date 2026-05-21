@@ -203,23 +203,44 @@
     .insight-grid{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
     .insight-tile{padding:10px 12px}
 
-    /* Charts — fixed height, clean card layout */
-    .chart-wrap{height:160px !important;margin-bottom:0}
-    .chart-card{padding:12px 14px !important;margin-bottom:10px;break-inside:avoid}
-    .chart-card-title{font-size:13px !important;margin-bottom:2px !important}
-    .chart-card-sub{font-size:11px !important;margin-bottom:8px !important}
+    /* Chart cards — one per block, never split across pages */
+    .chart-card{
+      padding:10px 14px !important;
+      margin-bottom:14px !important;
+      page-break-inside:avoid !important;
+      break-inside:avoid !important;
+      overflow:hidden;
+    }
+    .chart-wrap{
+      height:130px !important;
+      max-height:130px !important;
+      overflow:hidden;
+      margin-bottom:0 !important;
+    }
+    .chart-wrap canvas{
+      max-height:130px !important;
+    }
+    .chart-card-title{font-size:12px !important;margin-bottom:1px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chart-card-sub{font-size:10px !important;margin-bottom:6px !important;color:#aaa !important}
 
-    /* Stat row (Avg / Peak) — keep on one line, don't wrap over title */
-    .chart-card > div:first-child{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:nowrap;gap:8px}
+    /* Stat row — floated right so it never collides with title */
+    .chart-card > div:first-child{
+      display:flex !important;align-items:center !important;
+      justify-content:space-between !important;flex-wrap:nowrap !important;
+      gap:6px !important;margin-bottom:2px !important
+    }
+    .chart-card > div:first-child > div:last-child{
+      font-size:10px !important;white-space:nowrap;flex-shrink:0
+    }
 
-    /* Hide For Your Doctor card — not needed in print */
-    #panel-trends .card:has(#doctorSummary){display:none !important}
+    /* Hide For Your Doctor card */
+    #panel-trends .no-print{display:none !important}
 
-    /* Preserve chip/chart colours */
+    /* Preserve chart/chip colours in print */
     .insight-tile,.chart-card,.history-sym-chip,canvas{
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-    @page{margin:14mm;size:letter}
+    @page{margin:12mm;size:letter}
   }
 
   .print-preset{padding:6px 12px;border:1.5px solid var(--border);border-radius:100px;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;color:var(--ink-muted);transition:all .18s}
@@ -677,6 +698,9 @@ function renderInterference(saved) {
   });
 }
 
+// Disable Chart.js animations globally — prevents rainbow artifact in print
+if (typeof Chart !== 'undefined') Chart.defaults.animation = false;
+
 // ── STATE ──
 let STORAGE_KEY = 'advocate_symptoms';
 let ENTRIES_KEY = 'advocate_entries';
@@ -824,8 +848,11 @@ function confirmPrint() {
 
 // beforeprint: isolate active panel + filter history items by date range
 window.addEventListener('beforeprint', () => {
-  // Stop all Chart.js animations so canvas is fully rendered (no rainbow effect)
-  Object.values(charts).forEach(c => { try { c.stop(); } catch(e){} });
+  // Stop animations and force a clean synchronous render on every chart
+  // chart.update('none') redraws immediately without any animation frame
+  Object.values(charts).forEach(c => {
+    try { c.stop(); c.update('none'); } catch(e){}
+  });
 
   const activePanel = document.querySelector('.panel.active');
   // Hide all non-active panels
