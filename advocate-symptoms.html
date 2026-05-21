@@ -181,9 +181,8 @@
     body::before{display:none}
     nav,.tab-bar,.chart-controls,.btn,.no-print,.toast{display:none !important}
 
-    /* Hide header, interactive input panels — only data panels print */
-    .page-header, #panel-setup, #panel-log { display:none !important }
-    #panel-history, #panel-trends { display:block !important }
+    /* Panel visibility is controlled by JS beforeprint — hide all by default */
+    .page-header, .panel { display:none !important }
 
     .shell{max-width:100%;padding:0 8px}
 
@@ -297,7 +296,7 @@
     <div class="nav-gem">🌿</div>
     <div class="nav-wordmark">Med<span style="display:inline-block;width:8px;height:8px;background:#95d5b2;border-radius:50%;margin:0 4px 3px 3px;vertical-align:middle"></span>Advocate</div>
   </div>
-  <button class="nav-print no-print" onclick="window.print()">🖨️ Print Report</button>
+  <button class="nav-print no-print" onclick="window.print()" style="display:none">🖨️ Print Report</button>
 </nav>
 
 <div class="shell">
@@ -725,7 +724,32 @@ function switchTab(tab) {
   if (tab === 'setup') renderSetup();
   if (tab === 'log') renderLog();
   if (tab === 'voice') vlInit();
+  // Only show print button on tabs that have printable content
+  const printBtn = document.querySelector('.nav-print');
+  if (printBtn) printBtn.style.display = (tab === 'history' || tab === 'trends') ? '' : 'none';
 }
+
+// Print: show only the currently active panel
+window.addEventListener('beforeprint', () => {
+  const activePanel = document.querySelector('.panel.active');
+  document.querySelectorAll('.panel').forEach(p => {
+    if (p !== activePanel) {
+      p.setAttribute('data-print-hidden', '1');
+      p.style.setProperty('display', 'none', 'important');
+    }
+  });
+  if (activePanel) {
+    activePanel.style.setProperty('display', 'block', 'important');
+  }
+});
+window.addEventListener('afterprint', () => {
+  document.querySelectorAll('.panel[data-print-hidden]').forEach(p => {
+    p.style.removeProperty('display');
+    p.removeAttribute('data-print-hidden');
+  });
+  const activePanel = document.querySelector('.panel.active');
+  if (activePanel) activePanel.style.removeProperty('display');
+});
 
 // ══ SETUP ══
 function renderSetup() {
