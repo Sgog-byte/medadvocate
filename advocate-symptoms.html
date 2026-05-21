@@ -306,6 +306,10 @@
     <div>
       <h1 class="page-title">Symptom <em>Tracker</em></h1>
       <div class="page-sub">Log daily. See patterns. Show the doctor what words can't.</div>
+      <div id="patientBadge" style="display:none;margin-top:8px;align-items:center;gap:6px;padding:4px 12px 4px 8px;background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:100px;font-size:12px;font-weight:500;color:var(--sage-deep)">
+        <span style="font-size:13px">👤</span>
+        <span id="patientBadgeName"></span>
+      </div>
     </div>
     <button class="btn btn-outline no-print" onclick="switchTab('setup')">⚙️ Edit Symptoms</button>
   </div>
@@ -1272,15 +1276,28 @@ if (!entries.length) {
     if (pid) {
       const newSK = `advocate_symptoms_${pid}`;
       const newEK = `advocate_entries_${pid}`;
-      // One-time migration: copy old flat key data into the namespaced key
+      // One-time migration: copy old flat key data into the namespaced key,
+      // then DELETE the flat key so it can't bleed into other patients' namespaces.
       if (!localStorage.getItem(newSK) && localStorage.getItem('advocate_symptoms')) {
         localStorage.setItem(newSK, localStorage.getItem('advocate_symptoms'));
+        localStorage.removeItem('advocate_symptoms');
       }
       if (!localStorage.getItem(newEK) && localStorage.getItem('advocate_entries')) {
         localStorage.setItem(newEK, localStorage.getItem('advocate_entries'));
+        localStorage.removeItem('advocate_entries');
       }
       STORAGE_KEY = newSK;
       ENTRIES_KEY = newEK;
+
+      // Show patient name badge so user knows which profile is active
+      try {
+        const profile = await DB.getProfile();
+        const name = profile?.name || '';
+        if (name) {
+          document.getElementById('patientBadgeName').textContent = name;
+          document.getElementById('patientBadge').style.display = 'inline-flex';
+        }
+      } catch(e) {}
     }
   } catch(e) {}
   // Load data with the correct (possibly namespaced) keys
