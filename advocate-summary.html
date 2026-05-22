@@ -403,26 +403,36 @@ async function generateSummary(){
   const notes=document.getElementById('sum_notes').value.trim();
   const goals=document.getElementById('sum_goals').value.trim();
   const profile=(await DB.getProfile());
-  // Pull diagnosis events directly from Medical Timeline (real data, exact dates)
-  // DB.getTimelineEvents() returns raw Supabase rows: event_date, category (not date/cat)
+  // Pull diagnosis events directly from Medical Timeline (real data, exact dates).
+  // DB.getTimelineEvents() returns RAW Supabase rows — fields are event_date, category, description.
+  // Doctor is JSON-encoded inside description: {"doctor":"...","notes":"..."}.
   let diagnosisEvents=[];
   try{
     const allTimeline=await DB.getTimelineEvents();
     diagnosisEvents=allTimeline
       .filter(e=>(e.category||e.cat||'').toLowerCase()==='diagnosis')
-      .sort((a,b)=>new Date(a.event_date||a.date||0)-new Date(b.event_date||b.date||0));
-  }catch(e){}
+      .map(e=>{
+        let doctor='';
+        try{const p=JSON.parse(e.description||'null');if(p&&p.doctor)doctor=p.doctor;}catch{}
+        return{...e,_date:e.event_date||e.date||'',_doctor:doctor};
+      })
+      .sort((a,b)=>new Date(a._date||0)-new Date(b._date||0));
+  }catch(e){console.error('[Summary] Timeline fetch error:',e);}
+  console.log('[Summary] diagnosisEvents:',diagnosisEvents.length,diagnosisEvents);
 
-  // Pull lab reports directly (real data, always shown)
+  // Pull lab reports — try BOTH Supabase (primary) AND localStorage (cache), use whichever has more.
+  // Labs page syncs to Supabase on every upload, so Supabase is authoritative.
   let summaryLabReports=[];
-  try{
-    const rawLabs=lsRead('advocate_lab_results');
-    if(Array.isArray(rawLabs)) summaryLabReports=rawLabs;
-    else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) summaryLabReports=rawLabs.reports;
-  }catch{}
-  if(!summaryLabReports.length){try{summaryLabReports=await DB.getLabReports();}catch{}}
-  // Sort ascending by date so latest is last
+  try{const dbLabs=await DB.getLabReports();if(dbLabs.length)summaryLabReports=dbLabs;}catch(e){console.warn('[Summary] Labs DB fetch error:',e);}
+  if(!summaryLabReports.length){
+    try{
+      const rawLabs=lsRead('advocate_lab_results');
+      const lsLabs=Array.isArray(rawLabs)?rawLabs:(rawLabs?.reports&&Array.isArray(rawLabs.reports)?rawLabs.reports:[]);
+      if(lsLabs.length)summaryLabReports=lsLabs;
+    }catch{}
+  }
   summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+  console.log('[Summary] labReports:',summaryLabReports.length,summaryLabReports);
   const out=document.getElementById('sum_out');
   document.getElementById('gen_btn').disabled=true;
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)">Synthesizing data from ${sel.size} sources</p></div>`;
@@ -468,9 +478,9 @@ Rules: Include ALL medications — do not skip any. The "questions" must be spec
         <div class="sum-body">
           ${res.snapshot?`<div class="sum-sec"><div class="sum-sec-title"><span>🩺 Clinical Snapshot</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div><div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink-soft);line-height:1.7;padding:14px 18px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 12px 12px 0">${escH(res.snapshot)}</div></div>`:''}
           ${res.concerns?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Primary Concerns</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.concerns.map(c=>`<div class="sum-item"><span class="sum-item-text">${escH(c)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
-          ${diagnosisEvents.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Diagnoses</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${diagnosisEvents.map(e=>{const d=e.event_date||e.date;const dr=e.doctor||e.description;return`<div class="sum-item"><span class="sum-item-text"><strong>${escH(e.title)}</strong>${d?' — diagnosed '+escH(fmtD(d)):''}${dr?' · '+escH(dr):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`;}).join('')}</div>`:''}
+          ${diagnosisEvents.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Diagnoses</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${diagnosisEvents.map(e=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(e.title)}</strong>${e._date?' — diagnosed '+escH(fmtD(e._date)):''}${e._doctor?' · '+escH(e._doctor):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.meds?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>💊 Current Medications</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.meds.map(m=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.for?' · '+escH(m.for):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
-          ${(sel.has('labs')&&summaryLabReports.length)?`<div class="sum-sec"><div class="sum-sec-title"><span>🧪 Lab Results</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${(()=>{const latest=summaryLabReports[summaryLabReports.length-1];const allAbnormal=summaryLabReports.flatMap(r=>(r.results||[]).filter(t=>t.status&&t.status!=='normal'));const lines=(latest.results||[]).slice(0,20).map(r=>`<div class="sum-item${r.status&&r.status!=='normal'?' amber':''}"><span class="sum-item-text"><strong>${escH(r.name||r.test_name||'')}</strong>${r.value||r.result_value?' '+escH(String(r.value||r.result_value)):''}${r.unit?' '+escH(r.unit):''}${r.low&&r.high?' (ref: '+escH(r.low)+'–'+escH(r.high)+')':''}${r.status&&r.status!=='normal'?' <span style="color:var(--amber);font-weight:600">['+escH(r.status)+']</span>':''}</span><button class="sum-item-remove" onclick="this.closest(\\'.sum-item\\').remove()" title="Remove">✕</button></div>`);return`<div style="font-size:11px;color:var(--ink-muted);margin-bottom:8px">Latest panel: ${escH(fmtD(latest.date))} · ${summaryLabReports.length} report${summaryLabReports.length>1?'s':''} on file${allAbnormal.length?' · <span style="color:var(--amber);font-weight:600">'+allAbnormal.length+' abnormal</span>':''}</div>${lines.join('')}`;})()}</div>`:''}
+          ${summaryLabReports.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🧪 Lab Results</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${(()=>{const latest=summaryLabReports[summaryLabReports.length-1];const allAbnormal=summaryLabReports.flatMap(r=>(r.results||[]).filter(t=>t.status&&t.status!=='normal'));const lines=(latest.results||[]).slice(0,20).map(r=>`<div class="sum-item${r.status&&r.status!=='normal'?' amber':''}"><span class="sum-item-text"><strong>${escH(r.name||r.test_name||'')}</strong>${r.value||r.result_value?' '+escH(String(r.value||r.result_value)):''}${r.unit?' '+escH(r.unit):''}${r.low&&r.high?' (ref: '+escH(r.low)+'–'+escH(r.high)+')':''}${r.status&&r.status!=='normal'?' <span style="color:var(--amber);font-weight:600">['+escH(r.status)+']</span>':''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`);return`<div style="font-size:11px;color:var(--ink-muted);margin-bottom:8px">Latest panel: ${escH(fmtD(latest.date))} · ${summaryLabReports.length} report${summaryLabReports.length>1?'s':''} on file${allAbnormal.length?' · <span style="color:var(--amber);font-weight:600">'+allAbnormal.length+' abnormal</span>':''}</div>${lines.join('')}`;})()}</div>`:''}
           ${res.findings?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔬 AI Findings</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.findings.map(f=>`<div class="sum-item amber"><span class="sum-item-text">→ ${escH(f)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.history?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>📅 Medical History</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.history.map(h=>`<div class="sum-item"><span class="sum-item-text">${escH(h)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.questions?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>❓ Questions for the Doctor</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.questions.map(q=>`<div class="sum-item"><span class="sum-item-text">? ${escH(q)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
