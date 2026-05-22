@@ -299,9 +299,10 @@ const SOURCES=[
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
     // Supabase first — patient_id scoped, always correct
     try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
-    // localStorage fallback (lsRead uses _pid so patient-specific)
+    // advocate-labs.html writes to the flat key 'advocate_lab_results' (not namespaced),
+    // so read it directly — don't use lsRead() which would look for the _pid-suffixed key.
     try{
-      const raw=lsRead('advocate_lab_results');
+      const raw=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
       if(arr.length>0)return true;
     }catch{}
@@ -313,9 +314,6 @@ const SOURCES=[
     try{return lsRead('advocate_testing').length>0;}catch{return false;}
   }},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
-  {key:'flares',icon:'🔥',label:'Flare History',check:async()=>(await DB.getFlares()).length>0},
-  {key:'careteam',icon:'👥',label:'Care Team',check:async()=>(await DB.getCareTeam()).length>0},
-  {key:'documents',icon:'📄',label:'Documents',check:async()=>(await DB.getDocuments()).length>0},
 ];
 
 let sel=new Set();
@@ -360,21 +358,18 @@ async function buildData(){
   try{labReports=await DB.getLabReports();}catch{}
   if(!labReports.length){
     try{
-      const rawLabs=lsRead('advocate_lab_results');
+      // advocate-labs.html writes to the flat key (not patient-namespaced) — read directly
+      const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       if(Array.isArray(rawLabs)) labReports=rawLabs;
       else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
     }catch{}
   }
   const timeline=(await DB.getTimelineEvents());
-  const flares=(await DB.getFlares());
   const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
   const symEntries=(await DB.getSymptomEntries());
-  const labs=(await DB.getLabResults());
   // Tests: localStorage ONLY — matches what the diagnostic testing tool shows.
   // Supabase diagnostic_tests may have cross-patient contamination.
   const tests=lsRead('advocate_testing');
-  const contacts=(await DB.getCareTeam());
-  const docs=(await DB.getDocuments());
   const parts=[];
 
   if(sel.has('profile')&&p.name) parts.push(`PATIENT: ${p.name}${p.age?', age '+p.age:''}`);
@@ -412,18 +407,6 @@ async function buildData(){
       const evts=sorted.filter(e=>e.cat===cat);
       if(evts.length) parts.push(`${cat.toUpperCase()}S:\n${evts.map(e=>`- ${fmtD(e.date)}: ${e.title}${e.doctor?' ('+e.doctor+')':''}`).join('\n')}`);
     });
-  }
-  if(sel.has('flares')&&flares.length){
-    const recent=flares.slice(0,10);
-    const avg=(recent.reduce((a,f)=>a+f.severity,0)/recent.length).toFixed(1);
-    const triggers=Object.entries(recent.reduce((acc,f)=>{(f.triggers||[]).forEach(t=>acc[t]=(acc[t]||0)+1);return acc},{})).sort((a,b)=>b[1]-a[1]);
-    parts.push(`FLARE HISTORY: ${flares.length} flares. Avg severity: ${avg}/10. Top triggers: ${triggers.slice(0,3).map(t=>t[0]).join(', ')||'unspecified'}`);
-  }
-  if(sel.has('careteam')&&contacts.length){
-    parts.push(`CARE TEAM:\n${contacts.map(c=>`- ${c.name}${c.specialty?', '+c.specialty:''}${c.practice?' at '+c.practice:''}${c.phone?' · '+c.phone:''}`).join('\n')}`);
-  }
-  if(sel.has('documents')&&docs.length){
-    parts.push(`DOCUMENTS ON FILE: ${docs.map(d=>d.name||d.type||'Document').join(', ')}`);
   }
   return parts.join('\n\n');
 }
@@ -474,7 +457,8 @@ async function generateSummary(){
   }catch(e){console.warn('[Summary] Labs DB error:',e);}
   if(!summaryLabReports.length){
     try{
-      const rawLabs=lsRead('advocate_lab_results');
+      // advocate-labs.html writes to the flat key (not patient-namespaced) — read directly
+      const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       const lsLabs=Array.isArray(rawLabs)?rawLabs:(rawLabs?.reports&&Array.isArray(rawLabs.reports)?rawLabs.reports:[]);
       if(lsLabs.length){summaryLabReports=lsLabs;labSource='localStorage';}
     }catch{}
