@@ -395,15 +395,30 @@ async function buildData(){
 
 async function generateSummary(){
   if(sel.size===0){showToast('Please select at least one data source');return;}
+
+  // Always re-fetch patient ID fresh — never trust a stale in-memory cache.
+  // This prevents cross-patient bleed if the user switched profiles on another page.
+  DB._patientId=null;
+  _pid=await DB.patientId().catch(()=>null);
+
+  const out=document.getElementById('sum_out');
+  document.getElementById('gen_btn').disabled=true;
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)">Loading data…</p></div>`;
+
   const dataStr=await buildData();
-  if(!dataStr.trim()){showToast('No data found in selected sections — add data to your tools first');return;}
+  if(!dataStr.trim()){
+    document.getElementById('gen_btn').disabled=false;
+    showToast('No data found in selected sections — add data to your tools first');
+    out.innerHTML='';
+    return;
+  }
   const purpose=document.getElementById('sum_purpose').value.trim();
   const notes=document.getElementById('sum_notes').value.trim();
   const goals=document.getElementById('sum_goals').value.trim();
   const profile=(await DB.getProfile());
+
   // Pull diagnosis events directly from Medical Timeline (real data, exact dates).
-  // DB.getTimelineEvents() returns RAW Supabase rows — fields are event_date, category, description.
-  // Doctor is JSON-encoded inside description: {"doctor":"...","notes":"..."}.
+  // Raw Supabase rows: event_date, category. Doctor JSON-encoded in description.
   let diagnosisEvents=[];
   try{
     const allTimeline=await DB.getTimelineEvents();
@@ -416,23 +431,27 @@ async function generateSummary(){
       })
       .sort((a,b)=>new Date(a._date||0)-new Date(b._date||0));
   }catch(e){console.error('[Summary] Timeline fetch error:',e);}
-  console.log('[Summary] diagnosisEvents:',diagnosisEvents.length,diagnosisEvents);
 
-  // Pull lab reports — try BOTH Supabase (primary) AND localStorage (cache), use whichever has more.
-  // Labs page syncs to Supabase on every upload, so Supabase is authoritative.
+  // Pull lab reports: Supabase first (patient_id scoped), then patient-namespaced localStorage.
   let summaryLabReports=[];
-  try{const dbLabs=await DB.getLabReports();if(dbLabs.length)summaryLabReports=dbLabs;}catch(e){console.warn('[Summary] Labs DB fetch error:',e);}
+  let labSource='none';
+  try{
+    const dbLabs=await DB.getLabReports();
+    if(dbLabs.length){summaryLabReports=dbLabs;labSource='supabase';}
+  }catch(e){console.warn('[Summary] Labs DB error:',e);}
   if(!summaryLabReports.length){
     try{
       const rawLabs=lsRead('advocate_lab_results');
       const lsLabs=Array.isArray(rawLabs)?rawLabs:(rawLabs?.reports&&Array.isArray(rawLabs.reports)?rawLabs.reports:[]);
-      if(lsLabs.length)summaryLabReports=lsLabs;
+      if(lsLabs.length){summaryLabReports=lsLabs;labSource='localStorage';}
     }catch{}
   }
   summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
-  console.log('[Summary] labReports:',summaryLabReports.length,summaryLabReports);
-  const out=document.getElementById('sum_out');
-  document.getElementById('gen_btn').disabled=true;
+
+  // Visible debug strip — shown in summary header so data issues are immediately obvious
+  const debugInfo=`Patient: ${escH(profile.name||'Unknown')} · PID: ${(_pid||'none').slice(0,8)}… · Labs: ${summaryLabReports.length} (${labSource}) · Diagnoses: ${diagnosisEvents.length}`;
+  console.log('[Summary debug]',debugInfo);
+
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)">Synthesizing data from ${sel.size} sources</p></div>`;
 
   try{
@@ -457,6 +476,7 @@ Rules: Include ALL medications — do not skip any. The "questions" must be spec
     const name=profile.name||'Patient';
 
     out.innerHTML=`
+      <div style="font-size:10px;color:var(--ink-muted);background:#f5f5f0;border:1px solid #e0e0d8;border-radius:8px;padding:6px 10px;margin-bottom:10px;font-family:monospace">${debugInfo}</div>
       <div class="action-row" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px">
         <button class="abtn abtn-dark" onclick="window.print()">🖨️ Print</button>
         <button class="abtn abtn-outline" onclick="emailSum()">✉️ Email</button>
