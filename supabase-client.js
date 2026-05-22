@@ -401,26 +401,15 @@ const DB = {
       .order('lab_date', { ascending: true });
 
     const good = [];
-    const badIds = []; // rows whose embedded _pid doesn't match — cross-patient corruption
 
     for (const row of (data || [])) {
       try {
         const report = JSON.parse(row.notes);
-        // _pid was added to new saves so we can detect cross-patient contamination.
-        // If _pid is present and doesn't match, this row was saved for a different patient.
-        if (report._pid && report._pid !== pid) {
-          badIds.push(row.id);
-        } else {
-          good.push({ dbId: row.id, ...report });
-        }
-      } catch { /* skip unparseable */ }
-    }
-
-    // Auto-purge corrupt rows in the background — no user action needed
-    if (badIds.length) {
-      badIds.forEach(id =>
-        _supa.from('lab_results').delete().eq('id', id).catch(() => {})
-      );
+        // _pid is an extra in-blob sanity check. The SQL patient_id column already scopes
+        // to the correct patient, so we trust the DB and never auto-delete based on _pid.
+        // A stale _pid (e.g. from a patient-switch race) must not destroy real data.
+        good.push({ dbId: row.id, ...report });
+      } catch { /* skip unparseable rows */ }
     }
 
     return good;

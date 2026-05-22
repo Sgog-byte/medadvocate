@@ -345,9 +345,11 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return d}}
 function fmtY(d){if(!d)return'';try{return new Date(d+'T12:00:00').getFullYear();}catch(e){return d}}
 
-const KEY='advocate_testing';
-function getTests(){return JSON.parse(localStorage.getItem(KEY)||'[]')}
-function saveTests(d){localStorage.setItem(KEY,JSON.stringify(d))}
+const FLAT_KEY='advocate_testing';
+let _testingPid=null;
+function testingKey(){return _testingPid?`advocate_testing_${_testingPid}`:FLAT_KEY;}
+function getTests(){return JSON.parse(localStorage.getItem(testingKey())||'[]')}
+function saveTests(d){localStorage.setItem(testingKey(),JSON.stringify(d));}
 
 const TYPE_META={
   eeg:{label:'EEG',icon:'🧠',color:'var(--violet)',pale:'var(--violet-pale)',border:'var(--violet-border)'},
@@ -849,8 +851,47 @@ function copyHistoryText(){
   navigator.clipboard.writeText(el.innerText).then(()=>toast('Copied ✓'));
 }
 
-// Init date
-document.getElementById('test_date').value=new Date().toISOString().split('T')[0];
+// Init
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('test_date').value = new Date().toISOString().split('T')[0];
+
+  // Get patient ID → namespace the storage key
+  try {
+    const pid = await DB.patientId();
+    if (pid) {
+      _testingPid = pid;
+      // One-time migration: copy flat key data to namespaced key, then delete flat key
+      if (!localStorage.getItem(testingKey()) && localStorage.getItem(FLAT_KEY)) {
+        localStorage.setItem(testingKey(), localStorage.getItem(FLAT_KEY));
+        localStorage.removeItem(FLAT_KEY);
+      }
+    }
+  } catch(e) {}
+
+  // Try Supabase first, fall back to localStorage
+  try {
+    const dbTests = await DB.getDiagnosticTests();
+    if (dbTests.length) {
+      // Sync Supabase data into namespaced localStorage so the page can use getTests()
+      // Map DB field names back to local names
+      const mapped = dbTests.map(t => ({
+        id: t.id,
+        type: t.type || 'other',
+        date: t.date || '',
+        status: t.status || 'pending',
+        doctor: t.doctor || '',
+        facility: t.facility || '',
+        notes: t.notes || '',
+        extracted: t.extracted || null,
+        fileName: t.fileName || null,
+        savedAt: t.savedAt || ''
+      }));
+      // Only overwrite localStorage if DB has more records (DB is authoritative)
+      const local = getTests();
+      if (mapped.length >= local.length) saveTests(mapped);
+    }
+  } catch(e) {}
+});
 </script>
 </body>
 </html>
