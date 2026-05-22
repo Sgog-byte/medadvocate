@@ -1128,6 +1128,8 @@ function saveEntry() {
 
 // ══ HISTORY ══
 function renderHistory() {
+  const pb = document.querySelector('.nav-print');
+  if (pb) pb.style.display = 'flex';
   const list = document.getElementById('historyList');
   if (!entries.length) {
     list.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No entries yet</div><div class="empty-sub">Start logging daily and your history will appear here.</div></div>`;
@@ -1189,6 +1191,8 @@ function getFilteredEntries() {
 }
 
 function renderTrends() {
+  const pb = document.querySelector('.nav-print');
+  if (pb) pb.style.display = 'flex';
   const filtered = getFilteredEntries();
 
   if (entries.length < 3) {
