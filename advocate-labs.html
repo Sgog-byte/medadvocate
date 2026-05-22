@@ -805,10 +805,8 @@ async function loadLabs() {
     try {
       const raw = JSON.parse(localStorage.getItem(key) || 'null');
       if (!raw) continue;
-      // Normalise: stored value may be an array of reports OR a single report object
-      const saved = Array.isArray(raw) ? raw : [raw];
+      const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
       if (applyLoadedLabs(saved)) {
-        // Found data — normalise to flat key and push to Supabase
         localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved));
         saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
         return;
@@ -1821,49 +1819,52 @@ async function diagnoseLabs() {
   box.parentNode.appendChild(btn);
 }
 
+function _extractReports(raw) {
+  // Format A: {_pid, reports:[{date,fileName,results},…]}
+  if (raw && !Array.isArray(raw) && Array.isArray(raw.reports)) return raw.reports;
+  // Format B: [{_pid, reports:[…]}, …]  — pick first blob that has reports
+  if (Array.isArray(raw) && raw[0]?.reports) {
+    for (const blob of raw) { if (Array.isArray(blob.reports) && blob.reports.length) return blob.reports; }
+  }
+  // Format C: [{date,fileName,results},…]  — already a flat report array
+  if (Array.isArray(raw) && raw[0]?.date) return raw;
+  // Format D: single report object {date,fileName,results}
+  if (raw && raw.date) return [raw];
+  return [];
+}
+
 async function forceRestoreLabs() {
-  // Try every advocate_lab_results_* key in localStorage regardless of format
-  const candidates = [];
+  const currentPid = await DB.patientId().catch(()=>null);
+
+  // Build ordered list: current patient's namespaced key first, then flat, then others
+  const ordered = [];
+  if (currentPid) ordered.push('advocate_lab_results_' + currentPid);
+  ordered.push(LAB_CACHE_KEY);
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && k.startsWith('advocate_lab_results')) {
-      try {
-        const raw = JSON.parse(localStorage.getItem(k) || 'null');
-        if (!raw) continue;
-        // Accept array, single object, or {reports:[...]} wrapper
-        let reports = Array.isArray(raw) ? raw
-          : (raw.results || raw.date) ? [raw]  // single report object
-          : Array.isArray(raw.reports) ? raw.reports
-          : null;
-        if (reports && reports.length) candidates.push(...reports);
-      } catch {}
-    }
+    if (k && k.startsWith('advocate_lab_results') && !ordered.includes(k)) ordered.push(k);
   }
 
-  // Deduplicate by date+fileName
-  const seen = new Set();
-  const unique = candidates.filter(r => {
-    const key = (r.date||'') + '|' + (r.fileName||r.fileKey||'');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  for (const k of ordered) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(k) || 'null');
+      if (!raw) continue;
+      const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
+      if (!reports.length) continue;
 
-  if (!unique.length) {
-    showToast('No recoverable lab data found in any backup key');
-    return;
+      allLabDates = reports;
+      allLabDates.sort((a, b) => new Date(a.date||0) - new Date(b.date||0));
+      localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates));
+      allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
+      updateHistory();
+      showLabEntry(allLabDates[allLabDates.length - 1]);
+      document.getElementById('labResults').classList.remove('hidden');
+      document.getElementById('emptyLabs').classList.add('hidden');
+      showToast('✓ Restored ' + allLabDates.length + ' lab report(s) from ' + k);
+      return;
+    } catch(e) { console.error('[forceRestoreLabs]', k, e); }
   }
-
-  // Force load
-  allLabDates = unique;
-  allLabDates.sort((a, b) => new Date(a.date||0) - new Date(b.date||0));
-  localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates));
-  allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
-  updateHistory();
-  if (allLabDates.length) showLabEntry(allLabDates[allLabDates.length - 1]);
-  document.getElementById('labResults').classList.remove('hidden');
-  document.getElementById('emptyLabs').classList.add('hidden');
-  showToast('✓ Restored ' + unique.length + ' lab report(s) from backup');
+  showToast('No recoverable lab data found — see console for details');
 }
 
 // Load demo on first visit if no data
