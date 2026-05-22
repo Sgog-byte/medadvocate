@@ -803,7 +803,10 @@ async function loadLabs() {
 
   for (const key of keysToTry) {
     try {
-      const saved = JSON.parse(localStorage.getItem(key) || '[]');
+      const raw = JSON.parse(localStorage.getItem(key) || 'null');
+      if (!raw) continue;
+      // Normalise: stored value may be an array of reports OR a single report object
+      const saved = Array.isArray(raw) ? raw : [raw];
       if (applyLoadedLabs(saved)) {
         // Found data — normalise to flat key and push to Supabase
         localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved));
@@ -829,7 +832,12 @@ async function loadLabs() {
         .order('lab_date', { ascending: true });
       const recovered = [];
       for (const row of (rows || [])) {
-        try { recovered.push({ dbId: row.id, ...JSON.parse(row.notes) }); } catch {}
+        try {
+          const blob = JSON.parse(row.notes);
+          // blob may be a single report object or an array
+          if (Array.isArray(blob)) blob.forEach(r => recovered.push({ dbId: row.id, ...r }));
+          else recovered.push({ dbId: row.id, ...blob });
+        } catch {}
       }
       if (recovered.length && applyLoadedLabs(recovered)) {
         console.log('[Labs] Recovered', recovered.length, 'report(s) from patient_id', pt.id, '— re-saving under correct patient');
@@ -1779,7 +1787,9 @@ async function diagnoseLabs() {
         const v = localStorage.getItem(k);
         const parsed = JSON.parse(v || 'null');
         const len = Array.isArray(parsed) ? parsed.length : (parsed ? 1 : 0);
-        lines.push(`  ${k}: ${len} item(s)`);
+        // Show first 120 chars of actual content for lab result keys
+        const preview = k.startsWith('advocate_lab_results') ? ' → ' + (v||'').slice(0,120) : '';
+        lines.push(`  ${k}: ${len} item(s)${preview}`);
       } catch { lines.push(`  ${k}: (unparseable)`); }
     }
   }
