@@ -669,6 +669,8 @@
         <div class="empty-icon">📄</div>
         <div class="empty-title">No labs uploaded yet</div>
         <div class="empty-sub">Drop a PDF or image of lab results above. We'll do the rest — extract values, flag anything out of range, and start tracking trends.</div>
+        <button class="btn btn-outline" style="margin:16px auto 0;display:inline-flex;gap:6px" onclick="diagnoseLabs()">🔍 Search for lost labs</button>
+        <div id="labsDiagnostic" style="display:none;margin-top:14px;text-align:left;background:#f5f5f0;border:1px solid #ddd;border-radius:10px;padding:12px 14px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
       </div>
 
     </div>
@@ -1748,6 +1750,57 @@ function loadDemo() {
     renderLabResults(demoData2, 'sample-labs-apr-2025.pdf');
     showToast('✓ Demo data loaded — two dates for trend comparison');
   }, 800);
+}
+
+async function diagnoseLabs() {
+  const box = document.getElementById('labsDiagnostic');
+  box.style.display = 'block';
+  box.textContent = 'Scanning…';
+  const lines = [];
+
+  // 1. Current patient ID
+  let currentPid = null;
+  try { currentPid = await DB.patientId(); } catch(e) {}
+  lines.push('Current patient ID: ' + (currentPid || 'none'));
+
+  // 2. localStorage scan
+  const lsKeys = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.includes('lab') || k.includes('advocate_'))) lsKeys.push(k);
+    }
+  } catch(e) {}
+  lines.push('\nLocalStorage keys with "lab" or "advocate_":');
+  if (!lsKeys.length) { lines.push('  (none)'); }
+  else {
+    for (const k of lsKeys) {
+      try {
+        const v = localStorage.getItem(k);
+        const parsed = JSON.parse(v || 'null');
+        const len = Array.isArray(parsed) ? parsed.length : (parsed ? 1 : 0);
+        lines.push(`  ${k}: ${len} item(s)`);
+      } catch { lines.push(`  ${k}: (unparseable)`); }
+    }
+  }
+
+  // 3. Supabase — all patients
+  try {
+    const pts = await DB.getPatients();
+    lines.push('\nSupabase lab_results per patient:');
+    for (const pt of pts) {
+      // All rows
+      const { count: total } = await _supa.from('lab_results')
+        .select('*', { count: 'exact', head: true }).eq('patient_id', pt.id);
+      // Report blobs only
+      const { count: reports } = await _supa.from('lab_results')
+        .select('*', { count: 'exact', head: true })
+        .eq('patient_id', pt.id).eq('test_name', '__report__');
+      lines.push(`  ${pt.name} (${pt.id.slice(0,8)}…): ${total||0} rows total, ${reports||0} report blobs`);
+    }
+  } catch(e) { lines.push('Supabase scan error: ' + e.message); }
+
+  box.textContent = lines.join('\n');
 }
 
 // Load demo on first visit if no data
