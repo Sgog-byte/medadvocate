@@ -200,6 +200,10 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
     <div class="page-icon">📋</div>
     <h1 class="page-title">Medical <em>Summary</em></h1>
     <p class="page-sub">A complete clinical snapshot pulled automatically from all your MedAdvocate tools. Hand it to any new doctor in 60 seconds.</p>
+    <div id="patientBadge" style="display:none;margin-top:10px;align-items:center;gap:6px;padding:5px 14px 5px 10px;background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:100px;font-size:13px;font-weight:500;color:var(--sage-deep)">
+      <span style="font-size:14px">👤</span>
+      <span id="patientBadgeName"></span>
+    </div>
     <button id="howToUseBtn" onclick="tourStart()">▶ How to use</button>
   </div>
 
@@ -276,8 +280,12 @@ const SOURCES=[
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
-    // Check localStorage first (labs tracker always writes here)
-    try{if(lsRead('advocate_lab_results').length>0)return true;}catch{}
+    // Check localStorage first (labs tracker stores {_pid,reports} or plain array)
+    try{
+      const raw=lsRead('advocate_lab_results');
+      const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
+      if(arr.length>0)return true;
+    }catch{}
     // Then try Supabase
     try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
     return false;
@@ -317,9 +325,14 @@ async function buildData(){
   let meds=[];
   try{meds=lsRead('advocate_medications');}catch{}
   if(!meds.length){try{meds=await DB.getMedications();}catch{}}
-  // Labs: localStorage first (labs tracker always writes here), then Supabase
+  // Labs: localStorage first (labs tracker stores {_pid,reports:[...]} or legacy plain array)
   let labReports=[];
-  try{labReports=lsRead('advocate_lab_results');}catch{}
+  try{
+    const rawLabs=lsRead('advocate_lab_results');
+    // Unwrap wrapped format
+    if(Array.isArray(rawLabs)) labReports=rawLabs;
+    else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
+  }catch{}
   if(!labReports.length){try{labReports=await DB.getLabReports();}catch{}}
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
@@ -397,8 +410,8 @@ async function generateSummary(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1400,
         system:`Create a clinical summary. Return ONLY this JSON (no markdown, no extra text):
-{"snapshot":"2 sentence clinical overview","concerns":["up to 4 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"history":["up to 3 key events"],"questions":["3 questions"]}
-Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data.`,
+{"snapshot":"2 sentence clinical overview","concerns":["up to 4 concerns"],"meds":[{"name":"","dose":"","for":""}],"diagnoses":[{"condition":"","date":"","notes":""}],"findings":["up to 3 notable findings"],"history":["up to 3 key events"],"questions":["3 questions"]}
+Rules: Include ALL medications — do not skip any. For "diagnoses", list each condition with its diagnosis date (if known from the data) and any brief notes. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data.`,
         messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,4000)}${goals?'\nPatient goals: '+goals:''}`}]})
     });
     const responseText=await r.text();
@@ -433,6 +446,7 @@ Rules: Include ALL medications — do not skip any. The "questions" must be spec
         <div class="sum-body">
           ${res.snapshot?`<div class="sum-sec"><div class="sum-sec-title"><span>🩺 Clinical Snapshot</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div><div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink-soft);line-height:1.7;padding:14px 18px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 12px 12px 0">${escH(res.snapshot)}</div></div>`:''}
           ${res.concerns?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Primary Concerns</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.concerns.map(c=>`<div class="sum-item"><span class="sum-item-text">${escH(c)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
+          ${res.diagnoses?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Diagnoses</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.diagnoses.map(d=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(d.condition)}</strong>${d.date?' — diagnosed '+escH(d.date):''}${d.notes?' · '+escH(d.notes):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.meds?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>💊 Current Medications</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.meds.map(m=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.for?' · '+escH(m.for):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.findings?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🧪 Recent Findings</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.findings.map(f=>`<div class="sum-item amber"><span class="sum-item-text">→ ${escH(f)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.history?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>📅 Medical History</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.history.map(h=>`<div class="sum-item"><span class="sum-item-text">${escH(h)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
@@ -458,6 +472,18 @@ async function emailSum(){
 function copySum(){navigator.clipboard.writeText(window._sumText||'').then(()=>showToast('Copied ✓'));}
 
 renderSources();
+
+// Show active patient name badge at top of page
+(async()=>{
+  try{
+    const profile=await DB.getProfile();
+    const name=profile?.name||'';
+    if(name){
+      document.getElementById('patientBadgeName').textContent=name;
+      document.getElementById('patientBadge').style.display='inline-flex';
+    }
+  }catch(e){}
+})();
 </script>
 
 <script>
