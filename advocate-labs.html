@@ -1811,6 +1811,59 @@ async function diagnoseLabs() {
   } catch(e) { lines.push('Supabase scan error: ' + e.message); }
 
   box.textContent = lines.join('\n');
+
+  // Add a force-restore button after the diagnostic
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-primary';
+  btn.style.cssText = 'margin-top:12px;display:inline-flex';
+  btn.textContent = '⚡ Force restore from backup';
+  btn.onclick = forceRestoreLabs;
+  box.parentNode.appendChild(btn);
+}
+
+async function forceRestoreLabs() {
+  // Try every advocate_lab_results_* key in localStorage regardless of format
+  const candidates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('advocate_lab_results')) {
+      try {
+        const raw = JSON.parse(localStorage.getItem(k) || 'null');
+        if (!raw) continue;
+        // Accept array, single object, or {reports:[...]} wrapper
+        let reports = Array.isArray(raw) ? raw
+          : (raw.results || raw.date) ? [raw]  // single report object
+          : Array.isArray(raw.reports) ? raw.reports
+          : null;
+        if (reports && reports.length) candidates.push(...reports);
+      } catch {}
+    }
+  }
+
+  // Deduplicate by date+fileName
+  const seen = new Set();
+  const unique = candidates.filter(r => {
+    const key = (r.date||'') + '|' + (r.fileName||r.fileKey||'');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (!unique.length) {
+    showToast('No recoverable lab data found in any backup key');
+    return;
+  }
+
+  // Force load
+  allLabDates = unique;
+  allLabDates.sort((a, b) => new Date(a.date||0) - new Date(b.date||0));
+  localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates));
+  allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
+  updateHistory();
+  if (allLabDates.length) showLabEntry(allLabDates[allLabDates.length - 1]);
+  document.getElementById('labResults').classList.remove('hidden');
+  document.getElementById('emptyLabs').classList.add('hidden');
+  showToast('✓ Restored ' + unique.length + ' lab report(s) from backup');
 }
 
 // Load demo on first visit if no data
