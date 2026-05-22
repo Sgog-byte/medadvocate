@@ -496,7 +496,7 @@ Rules: Include ALL medications — do not skip any. The "questions" must be spec
         <div class="sum-body">
           ${res.snapshot?`<div class="sum-sec"><div class="sum-sec-title"><span>🩺 Clinical Snapshot</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div><div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink-soft);line-height:1.7;padding:14px 18px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 12px 12px 0">${escH(res.snapshot)}</div></div>`:''}
           ${res.concerns?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Primary Concerns</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.concerns.map(c=>`<div class="sum-item"><span class="sum-item-text">${escH(c)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
-          ${diagnosisEvents.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Diagnoses</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${diagnosisEvents.map(e=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(e.title)}</strong>${e._date?' — diagnosed '+escH(fmtD(e._date)):''}${e._doctor?' · '+escH(e._doctor):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
+          ${diagnosisEvents.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Diagnoses</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${diagnosisEvents.map(e=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(e.title)}</strong>${e._date?' — diagnosed '+escH(fmtD(e._date)):''}${e._doctor?' · '+escH(e._doctor):''}</span><button class="sum-item-remove" onclick="deleteDiagnosis(${e.id},this)" title="Delete from timeline">✕</button></div>`).join('')}</div>`:''}
           ${res.meds?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>💊 Current Medications</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.meds.map(m=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.for?' · '+escH(m.for):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${summaryLabReports.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🧪 Lab Results</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${(()=>{const latest=summaryLabReports[summaryLabReports.length-1];const allAbnormal=summaryLabReports.flatMap(r=>(r.results||[]).filter(t=>t.status&&t.status!=='normal'));const lines=(latest.results||[]).slice(0,20).map(r=>`<div class="sum-item${r.status&&r.status!=='normal'?' amber':''}"><span class="sum-item-text"><strong>${escH(r.name||r.test_name||'')}</strong>${r.value||r.result_value?' '+escH(String(r.value||r.result_value)):''}${r.unit?' '+escH(r.unit):''}${r.low&&r.high?' (ref: '+escH(r.low)+'–'+escH(r.high)+')':''}${r.status&&r.status!=='normal'?' <span style="color:var(--amber);font-weight:600">['+escH(r.status)+']</span>':''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`);return`<div style="font-size:11px;color:var(--ink-muted);margin-bottom:8px">Latest panel: ${escH(fmtD(latest.date))} · ${summaryLabReports.length} report${summaryLabReports.length>1?'s':''} on file${allAbnormal.length?' · <span style="color:var(--amber);font-weight:600">'+allAbnormal.length+' abnormal</span>':''}</div>${lines.join('')}`;})()}</div>`:''}
           ${res.findings?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔬 AI Findings</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.findings.map(f=>`<div class="sum-item amber"><span class="sum-item-text">→ ${escH(f)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
@@ -516,19 +516,28 @@ Rules: Include ALL medications — do not skip any. The "questions" must be spec
   }finally{document.getElementById('gen_btn').disabled=false;}
 }
 
+async function deleteDiagnosis(id,btn){
+  if(!confirm('Delete this diagnosis from Medical Timeline permanently?'))return;
+  try{
+    await DB.deleteTimelineEvent(id);
+    btn.closest('.sum-item').remove();
+    showToast('Diagnosis deleted from timeline ✓');
+  }catch(e){showToast('Could not delete — try removing it from Medical Timeline directly');}
+}
+
 async function emailSum(){
   const p=(await DB.getProfile());
   window.location.href=`mailto:?subject=${encodeURIComponent('Medical Summary — '+(p.name||'Patient'))}&body=${encodeURIComponent(window._sumText||'')}`;
 }
 function copySum(){navigator.clipboard.writeText(window._sumText||'').then(()=>showToast('Copied ✓'));}
 
-renderSources();
-
-// Populate _pid and show active patient name badge at top of page.
-// _pid must be set before generateSummary() runs so lsRead() is patient-scoped.
+// Init: set _pid FIRST, then render sources so lsRead() is patient-scoped in the checks.
 (async()=>{
   try{
     _pid=await DB.patientId();
+  }catch(e){}
+  // Show patient name badge
+  try{
     const profile=await DB.getProfile();
     const name=profile?.name||'';
     if(name){
@@ -536,6 +545,8 @@ renderSources();
       document.getElementById('patientBadge').style.display='inline-flex';
     }
   }catch(e){}
+  // Now render sources — _pid is set so lsRead() targets the right patient's keys
+  renderSources();
 })();
 </script>
 
