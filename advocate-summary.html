@@ -226,6 +226,7 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
     <div style="font-family:'Fraunces',serif;font-size:17px;color:var(--ink);margin-bottom:4px">Data found for <span id="auditPatientName" style="color:var(--sage)"></span></div>
     <div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;font-weight:300">These sources have data. Green = will be included · Grey = empty/excluded.</div>
     <div id="auditList" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div id="debugSourceRow" style="margin-top:10px;font-size:10px;font-family:monospace;color:#aaa;word-break:break-all"></div>
   </div>
 
   <div class="fcard" id="mainCard" style="display:none">
@@ -338,9 +339,13 @@ async function renderSources(gen){
   // A newer selectPatient() call happened while we were awaiting — discard stale results
   // so we never write a different patient's data over the correct one.
   if(gen!==undefined&&gen!==_selectGen)return;
-  // Log which sources found data — visible in DevTools console for debugging
-  console.log('[Summary] renderSources PID:',_pid?.slice(0,8),'results:',
-    Object.fromEntries(SOURCES.map((s,i)=>[s.key,results[i]])));
+  // Log results as flat JSON string so it's readable even when copied from console
+  const _dbg=Object.fromEntries(SOURCES.map((s,i)=>[s.key,results[i]]));
+  console.log('[Summary] PID:'+(_pid||'null').slice(0,8)+' sources:'+JSON.stringify(_dbg));
+  // Show debug row in audit card so issues are visible without DevTools
+  const _dbgEl=document.getElementById('debugSourceRow');
+  if(_dbgEl)_dbgEl.textContent='PID: '+(_pid||'none').slice(0,8)+'… · '+
+    SOURCES.map((s,i)=>s.key+':'+(results[i]?'✓':'✗')).join(' · ');
   grid.innerHTML=SOURCES.map((s,i)=>{
     const has=!!results[i];
     if(has)sel.add(s.key);
