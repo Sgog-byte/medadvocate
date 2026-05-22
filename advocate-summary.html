@@ -33,6 +33,16 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
 .btn-outline{padding:10px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
 .btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.pt-card{display:flex;align-items:center;gap:10px;padding:11px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;background:var(--white);transition:all .2s;font-family:'DM Sans',sans-serif;flex:1;min-width:130px}
+.pt-card:hover{border-color:var(--sage);background:var(--sage-pale)}
+.pt-card.pt-active{border-color:var(--sage-deep);background:var(--sage-pale);box-shadow:0 0 0 2px var(--sage-deep)}
+.pt-avatar{width:36px;height:36px;border-radius:50%;background:var(--sage-deep);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.pt-name{font-size:14px;font-weight:500;color:var(--ink)}
+.pt-check{margin-left:auto;font-size:16px;opacity:0}
+.pt-card.pt-active .pt-check{opacity:1}
+.audit-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;background:var(--sage-pale);font-size:13px}
+.audit-row.empty{background:#f5f5f2;opacity:.6}
+.audit-row.contam{background:#fff3e0;border:1px solid #f0c060}
 .sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:18px}
 .source-chip{display:flex;align-items:center;gap:8px;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;background:var(--white);transition:all .2s;user-select:none}
 .source-chip.has-data{border-color:var(--sage-light);background:var(--sage-pale)}
@@ -199,15 +209,26 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   <div class="page-header">
     <div class="page-icon">📋</div>
     <h1 class="page-title">Medical <em>Summary</em></h1>
-    <p class="page-sub">A complete clinical snapshot pulled automatically from all your MedAdvocate tools. Hand it to any new doctor in 60 seconds.</p>
-    <div id="patientBadge" style="display:none;margin-top:10px;align-items:center;gap:6px;padding:5px 14px 5px 10px;background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:100px;font-size:13px;font-weight:500;color:var(--sage-deep)">
-      <span style="font-size:14px">👤</span>
-      <span id="patientBadgeName"></span>
-    </div>
-    <button id="howToUseBtn" onclick="tourStart()">▶ How to use</button>
+    <p class="page-sub">A complete clinical snapshot pulled automatically from all your MedAdvocate tools.</p>
+    <button id="howToUseBtn" onclick="tourStart()" style="margin-top:10px">▶ How to use</button>
   </div>
 
-  <div class="fcard">
+  <!-- PATIENT PICKER — must select before anything loads -->
+  <div class="fcard" id="patientPickerCard" style="border:2px solid var(--sage-deep);background:var(--sage-pale)">
+    <div style="font-family:'Fraunces',serif;font-size:17px;color:var(--sage-deep);margin-bottom:4px">Who is this summary for?</div>
+    <div style="font-size:13px;color:var(--ink-muted);margin-bottom:14px;font-weight:300">Select a patient — data loads fresh each time so you always get the right information.</div>
+    <div id="patientPickerCards" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px"></div>
+    <div id="patientPickerLoading" style="font-size:13px;color:var(--ink-muted)">Loading profiles…</div>
+  </div>
+
+  <!-- DATA AUDIT — shown after patient selected, before generating -->
+  <div class="fcard" id="dataAuditCard" style="display:none;border:1.5px solid var(--border)">
+    <div style="font-family:'Fraunces',serif;font-size:17px;color:var(--ink);margin-bottom:4px">Data found for <span id="auditPatientName" style="color:var(--sage)"></span></div>
+    <div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;font-weight:300">These sources have data. Green = will be included · Grey = empty/excluded.</div>
+    <div id="auditList" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+
+  <div class="fcard" id="mainCard" style="display:none">
     <div style="font-family:'Fraunces',serif;font-size:17px;color:var(--ink);margin-bottom:4px">Choose What to Include</div>
     <div style="font-size:13px;color:var(--ink-muted);margin-bottom:14px;font-weight:300">🟢 Green = data found in your tools · Grey = no data yet · Click to toggle sections</div>
     <div class="sources-grid" id="sources_grid"></div>
@@ -254,8 +275,9 @@ function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateS
 // When _pid is known, only reads that patient's namespaced key — never bleeds across patients.
 let _pid=null;
 function lsRead(base,defaultVal='[]'){
-  // Try patient-specific key first, then flat fallback (for old/unnamespaced data)
-  const keys=_pid?[`${base}_${_pid}`,base]:[base];
+  // When _pid is known, ONLY read that patient's namespaced key.
+  // Never fall back to the flat key — it may contain another patient's data.
+  const keys=_pid?[`${base}_${_pid}`]:[base];
   for(const key of keys){
     try{
       const val=JSON.parse(localStorage.getItem(key)||defaultVal);
@@ -269,8 +291,9 @@ const SOURCES=[
   {key:'profile',icon:'👤',label:'Patient Profile',check:async()=>{const p=await DB.getProfile();return Object.keys(p).filter(k=>p[k]).length>0;}},
   {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:async()=>{const p=await DB.getProfile();return p.diagnoses?.length>0;}},
   {key:'medications',icon:'💊',label:'Medications',check:async()=>{
-    try{if(lsRead('advocate_medications').length>0)return true;}catch{}
-    try{return (await DB.getMedications()).length>0;}catch{return false;}
+    // Medications tool is localStorage-only — never read from Supabase (may have
+    // cross-patient contamination from old migrations).
+    try{return lsRead('advocate_medications').length>0;}catch{return false;}
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
@@ -284,7 +307,11 @@ const SOURCES=[
     }catch{}
     return false;
   }},
-  {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>(await DB.getDiagnosticTests()).length>0},
+  {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>{
+    // Use localStorage only — matches what the diagnostic testing tool shows.
+    // Supabase may have cross-patient contamination from old data migrations.
+    try{return lsRead('advocate_testing').length>0;}catch{return false;}
+  }},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
   {key:'flares',icon:'🔥',label:'Flare History',check:async()=>(await DB.getFlares()).length>0},
   {key:'careteam',icon:'👥',label:'Care Team',check:async()=>(await DB.getCareTeam()).length>0},
@@ -314,14 +341,16 @@ function toggleSrc(key){
 }
 
 async function buildData(){
-  // Ensure _pid is set so lsRead() is patient-scoped
+  // Hard-pin DB._patientId to _pid before EVERY fetch so no downstream call
+  // can accidentally use a stale cached PID from a different patient.
   if(!_pid){try{_pid=await DB.patientId();}catch{}}
+  DB._patientId=_pid;
   const p=(await DB.getProfile());
-  // Medications: localStorage first (always up to date), fall back to Supabase
-  // lsRead now uses _pid so only this patient's key is read
+  // Medications: localStorage ONLY — the meds tool never writes to Supabase.
+  // Supabase medications table may have cross-patient contamination from old
+  // migrations — never read from it for the summary.
   let meds=[];
   try{meds=lsRead('advocate_medications');}catch{}
-  if(!meds.length){try{meds=await DB.getMedications();}catch{}}
   // Labs: Supabase first (patient-scoped), then patient-specific localStorage cache
   let labReports=[];
   try{labReports=await DB.getLabReports();}catch{}
@@ -337,7 +366,9 @@ async function buildData(){
   const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
   const symEntries=(await DB.getSymptomEntries());
   const labs=(await DB.getLabResults());
-  const tests=(await DB.getDiagnosticTests());
+  // Tests: localStorage ONLY — matches what the diagnostic testing tool shows.
+  // Supabase diagnostic_tests may have cross-patient contamination.
+  const tests=lsRead('advocate_testing');
   const contacts=(await DB.getCareTeam());
   const docs=(await DB.getDocuments());
   const parts=[];
@@ -395,11 +426,9 @@ async function buildData(){
 
 async function generateSummary(){
   if(sel.size===0){showToast('Please select at least one data source');return;}
-
-  // Always re-fetch patient ID fresh — never trust a stale in-memory cache.
-  // This prevents cross-patient bleed if the user switched profiles on another page.
-  DB._patientId=null;
-  _pid=await DB.patientId().catch(()=>null);
+  if(!_pid){showToast('Please select a patient profile first');return;}
+  // _pid is set by the patient selector — always explicit, no guessing.
+  DB._patientId=_pid;
 
   const out=document.getElementById('sum_out');
   document.getElementById('gen_btn').disabled=true;
@@ -531,22 +560,137 @@ async function emailSum(){
 }
 function copySum(){navigator.clipboard.writeText(window._sumText||'').then(()=>showToast('Copied ✓'));}
 
-// Init: set _pid FIRST, then render sources so lsRead() is patient-scoped in the checks.
+// ── Patient picker ───────────────────────────────────────────────────────────
+// _pid is ONLY ever set by selectPatient(). Nothing reads from cache or guesses.
+// The user must click a patient card — this is the single source of truth.
+
+let _allPatients=[];
+
+function initials(name){return(name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+
+async function selectPatient(pid){
+  if(!pid)return;
+  _pid=pid;
+  DB._patientId=pid;
+  localStorage.setItem('advocate_active_patient_id',pid);
+
+  // Highlight selected card
+  document.querySelectorAll('.pt-card').forEach(c=>{
+    c.classList.toggle('pt-active',c.dataset.pid===pid);
+  });
+
+  // Show the rest of the page
+  document.getElementById('dataAuditCard').style.display='block';
+  document.getElementById('mainCard').style.display='block';
+
+  // Run audit and sources in parallel
+  const p=_allPatients.find(x=>x.id===pid);
+  document.getElementById('auditPatientName').textContent=p?.name||'patient';
+
+  sel.clear();
+  await Promise.all([runDataAudit(pid), renderSources()]);
+}
+
+// Fetch raw counts directly from Supabase for a patient — bypasses all caching
+async function dbCount(table,pid){
+  try{
+    const {count}=await _supa.from(table).select('*',{count:'exact',head:true}).eq('patient_id',pid);
+    return count||0;
+  }catch{return 0;}
+}
+
+async function purgeTable(table,pid,label,btn){
+  if(!confirm(`Delete ALL ${label} for this patient from the database?\n\nThis removes contaminated data. Your locally-saved data is not affected.`))return;
+  btn.disabled=true;btn.textContent='Deleting…';
+  try{
+    await _supa.from(table).delete().eq('patient_id',pid);
+    showToast(`${label} cleared ✓`);
+    await runDataAudit(pid);
+    sel.clear();
+    renderSources();
+  }catch(e){
+    showToast('Delete failed — try from Supabase dashboard');
+    btn.disabled=false;btn.textContent='🗑️ Wipe from DB';
+  }
+}
+
+async function runDataAudit(pid){
+  const auditList=document.getElementById('auditList');
+  auditList.innerHTML='<div style="font-size:12px;color:var(--ink-muted)">Scanning database…</div>';
+
+  // Query Supabase counts directly for this patient_id — no caching, no inference
+  const [cMeds,cTests,cTimeline,cLabs,cFlares,cSymptoms,cCareTeam]=await Promise.all([
+    dbCount('medications',pid),
+    dbCount('diagnostic_tests',pid),
+    dbCount('timeline_events',pid),
+    dbCount('lab_results',pid),
+    dbCount('flare_log',pid),
+    dbCount('symptom_entries',pid),
+    dbCount('care_team',pid),
+  ]);
+
+  const lsMeds=lsRead('advocate_medications');
+  const lsTests=lsRead('advocate_testing');
+
+  // Flag tables that have DB data but empty local tool — sign of contamination
+  const medsContam=cMeds>0&&lsMeds.length===0;
+  const testsContam=cTests>0&&lsTests.length===0;
+
+  const rows=[
+    {label:'Medications',dbCount:cMeds,lsCount:lsMeds.length,table:'medications',contam:medsContam,icon:'💊',note:medsContam?`DB has ${cMeds} rows but your Medications tool is empty — these are likely another patient's data`:''},
+    {label:'Diagnostic Tests',dbCount:cTests,lsCount:lsTests.length,table:'diagnostic_tests',contam:testsContam,icon:'🔬',note:testsContam?`DB has ${cTests} rows but your Testing tool is empty — these are likely another patient's data`:''},
+    {label:'Timeline Events',dbCount:cTimeline,table:'timeline_events',contam:false,icon:'📅',note:''},
+    {label:'Lab Reports',dbCount:cLabs,table:'lab_results',contam:false,icon:'🧪',note:''},
+    {label:'Flare Log',dbCount:cFlares,table:'flare_log',contam:false,icon:'🔥',note:''},
+    {label:'Symptom Entries',dbCount:cSymptoms,table:'symptom_entries',contam:false,icon:'📊',note:''},
+    {label:'Care Team',dbCount:cCareTeam,table:'care_team',contam:false,icon:'👥',note:''},
+  ];
+
+  const anyContam=rows.some(r=>r.contam);
+
+  auditList.innerHTML=(anyContam?`
+    <div style="background:#fff3e0;border:1px solid #f0c060;border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#7a4500">
+      <strong>⚠️ Contaminated data detected.</strong> Some database rows for this patient appear to belong to a different patient (data was saved under the wrong ID during an earlier sync). Use the 🗑️ Wipe buttons to remove them — your data entered in each tool is not affected.
+    </div>`:'') +
+  rows.map(r=>`
+    <div class="audit-row${r.dbCount===0?' empty':''}${r.contam?' contam':''}">
+      <span style="font-size:15px">${r.icon}</span>
+      <span style="flex:1;font-weight:${r.dbCount>0?'500':'400'}">${r.label}</span>
+      <span style="font-weight:600;color:${r.dbCount>0?(r.contam?'var(--amber)':'var(--sage-deep)'):'#aaa'}">${r.dbCount} in DB</span>
+      ${r.contam?`<button onclick="purgeTable('${r.table}','${escH(pid)}','${r.label}',this)" style="padding:4px 10px;background:#fff3e0;border:1px solid #f0c060;border-radius:6px;font-size:11px;font-weight:600;color:#7a4500;cursor:pointer">🗑️ Wipe from DB</button>`:''}
+      ${r.note&&!r.contam?`<span style="font-size:11px;color:var(--ink-muted)">${r.note}</span>`:''}
+    </div>`).join('');
+}
+
 (async()=>{
-  try{
-    _pid=await DB.patientId();
-  }catch(e){}
-  // Show patient name badge
-  try{
-    const profile=await DB.getProfile();
-    const name=profile?.name||'';
-    if(name){
-      document.getElementById('patientBadgeName').textContent=name;
-      document.getElementById('patientBadge').style.display='inline-flex';
-    }
-  }catch(e){}
-  // Now render sources — _pid is set so lsRead() targets the right patient's keys
-  renderSources();
+  try{ _allPatients=await DB.getPatients(); }catch(e){}
+
+  const pickerEl=document.getElementById('patientPickerCards');
+  document.getElementById('patientPickerLoading').style.display='none';
+
+  if(!_allPatients.length){
+    pickerEl.innerHTML='<div style="font-size:13px;color:var(--ink-muted)">No patient profiles found. <a href="advocate-patients.html">Add one here →</a></div>';
+    return;
+  }
+
+  // Determine which patient was last active (for pre-highlighting only — user must still click)
+  const lastPid=localStorage.getItem('advocate_active_patient_id')||'';
+  const suggested=_allPatients.find(p=>p.id===lastPid)||null;
+
+  pickerEl.innerHTML=_allPatients.map(p=>`
+    <div class="pt-card${p.id===lastPid?' pt-active':''}" data-pid="${escH(p.id)}" onclick="selectPatient('${escH(p.id)}')">
+      <div class="pt-avatar">${initials(p.name)}</div>
+      <div>
+        <div class="pt-name">${escH(p.name)}</div>
+        ${p.age?`<div style="font-size:11px;color:var(--ink-muted)">Age ${p.age}</div>`:''}
+      </div>
+      <div class="pt-check">✓</div>
+    </div>`).join('');
+
+  // Auto-select the previously active patient so returning users don't have to click
+  if(lastPid&&suggested){
+    await selectPatient(lastPid);
+  }
 })();
 </script>
 

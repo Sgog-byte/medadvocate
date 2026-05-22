@@ -152,18 +152,34 @@ const DB = {
   async patientId() {
     if (DB._patientId) return DB._patientId;
 
-    // Check user_settings for active patient
-    const { data: settings } = await _supa
-      .from('user_settings')
-      .select('active_patient_id')
-      .single();
-
-    if (settings?.active_patient_id) {
-      DB._patientId = settings.active_patient_id;
+    // 1. Check localStorage — fastest and most reliable (set by switchPatient)
+    const lsPid = localStorage.getItem('advocate_active_patient_id');
+    if (lsPid) {
+      DB._patientId = lsPid;
       return DB._patientId;
     }
 
-    // Fall back to default patient
+    // 2. Check user_settings in Supabase — filter by user_id and use limit(1)
+    // so duplicate rows (from old buggy upserts) don't cause .single() to error.
+    try {
+      const user = await Auth.user();
+      if (user) {
+        const { data: rows } = await _supa
+          .from('user_settings')
+          .select('active_patient_id')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const pid = rows?.[0]?.active_patient_id;
+        if (pid) {
+          DB._patientId = pid;
+          localStorage.setItem('advocate_active_patient_id', DB._patientId);
+          return DB._patientId;
+        }
+      }
+    } catch (e) { /* fall through */ }
+
+    // 3. Fall back to default patient
     const { data: patients } = await _supa
       .from('patients')
       .select('id')
@@ -172,6 +188,7 @@ const DB = {
 
     if (patients?.length) {
       DB._patientId = patients[0].id;
+      localStorage.setItem('advocate_active_patient_id', DB._patientId);
       return DB._patientId;
     }
 
@@ -181,9 +198,16 @@ const DB = {
   /** Switch active patient */
   async switchPatient(patientId) {
     DB._patientId = patientId;
-    await _supa
-      .from('user_settings')
-      .upsert({ user_id: (await Auth.user()).id, active_patient_id: patientId });
+    // Store in localStorage so every page gets the right PID without hitting Supabase
+    localStorage.setItem('advocate_active_patient_id', patientId);
+    try {
+      await _supa
+        .from('user_settings')
+        .upsert(
+          { user_id: (await Auth.user()).id, active_patient_id: patientId },
+          { onConflict: 'user_id' }   // update existing row, don't insert duplicates
+        );
+    } catch (e) { /* localStorage is the fallback — Supabase failure is non-fatal */ }
   },
 
   /** Create a new patient profile */
@@ -473,9 +497,10 @@ const DB = {
         .order('test_date', { ascending: false });
       if (data && data.length) return data.map(normalize);
     }
-    // Fallback: read from localStorage (advocate-testing.html saves here)
+    // Fallback: use patient-namespaced key if pid is known (never read flat shared key)
     try {
-      const local = JSON.parse(localStorage.getItem('advocate_testing') || '[]');
+      const lsKey = pid ? `advocate_testing_${pid}` : 'advocate_testing';
+      const local = JSON.parse(localStorage.getItem(lsKey) || '[]');
       return local.map(normalize);
     } catch { return []; }
   },
