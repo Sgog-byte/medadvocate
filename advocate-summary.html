@@ -250,19 +250,13 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
-// Read from localStorage trying the flat key AND any namespaced variants (e.g. key_pid)
-// Returns parsed array or the default value
+// Patient-scoped localStorage read.
+// When _pid is known, only reads that patient's namespaced key — never bleeds across patients.
 let _pid=null;
 function lsRead(base,defaultVal='[]'){
-  // Collect all keys that start with base
-  const candidates=[base];
-  try{
-    for(let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);
-      if(k&&k.startsWith(base+'_')&&!candidates.includes(k))candidates.push(k);
-    }
-  }catch{}
-  for(const key of candidates){
+  // Try patient-specific key first, then flat fallback (for old/unnamespaced data)
+  const keys=_pid?[`${base}_${_pid}`,base]:[base];
+  for(const key of keys){
     try{
       const val=JSON.parse(localStorage.getItem(key)||defaultVal);
       if(Array.isArray(val)?val.length>0:Object.keys(val).length>0)return val;
@@ -280,14 +274,14 @@ const SOURCES=[
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
-    // Check localStorage first (labs tracker stores {_pid,reports} or plain array)
+    // Supabase first — patient_id scoped, always correct
+    try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
+    // localStorage fallback (lsRead uses _pid so patient-specific)
     try{
       const raw=lsRead('advocate_lab_results');
       const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
       if(arr.length>0)return true;
     }catch{}
-    // Then try Supabase
-    try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
     return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>(await DB.getDiagnosticTests()).length>0},
@@ -320,20 +314,24 @@ function toggleSrc(key){
 }
 
 async function buildData(){
+  // Ensure _pid is set so lsRead() is patient-scoped
+  if(!_pid){try{_pid=await DB.patientId();}catch{}}
   const p=(await DB.getProfile());
   // Medications: localStorage first (always up to date), fall back to Supabase
+  // lsRead now uses _pid so only this patient's key is read
   let meds=[];
   try{meds=lsRead('advocate_medications');}catch{}
   if(!meds.length){try{meds=await DB.getMedications();}catch{}}
-  // Labs: localStorage first (labs tracker stores {_pid,reports:[...]} or legacy plain array)
+  // Labs: Supabase first (patient-scoped), then patient-specific localStorage cache
   let labReports=[];
-  try{
-    const rawLabs=lsRead('advocate_lab_results');
-    // Unwrap wrapped format
-    if(Array.isArray(rawLabs)) labReports=rawLabs;
-    else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
-  }catch{}
-  if(!labReports.length){try{labReports=await DB.getLabReports();}catch{}}
+  try{labReports=await DB.getLabReports();}catch{}
+  if(!labReports.length){
+    try{
+      const rawLabs=lsRead('advocate_lab_results');
+      if(Array.isArray(rawLabs)) labReports=rawLabs;
+      else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
+    }catch{}
+  }
   const timeline=(await DB.getTimelineEvents());
   const flares=(await DB.getFlares());
   const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
@@ -506,9 +504,11 @@ function copySum(){navigator.clipboard.writeText(window._sumText||'').then(()=>s
 
 renderSources();
 
-// Show active patient name badge at top of page
+// Populate _pid and show active patient name badge at top of page.
+// _pid must be set before generateSummary() runs so lsRead() is patient-scoped.
 (async()=>{
   try{
+    _pid=await DB.patientId();
     const profile=await DB.getProfile();
     const name=profile?.name||'';
     if(name){
