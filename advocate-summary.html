@@ -320,9 +320,13 @@ const SOURCES=[
 
 let sel=new Set();
 
-async function renderSources(){
+async function renderSources(gen){
   const grid=document.getElementById('sources_grid');
+  // All checks run concurrently — DB._patientId is pinned to _pid at this point
   const results=await Promise.all(SOURCES.map(s=>s.check().catch(()=>false)));
+  // A newer selectPatient() call happened while we were awaiting — discard stale results
+  // so we never write a different patient's data over the correct one.
+  if(gen!==undefined&&gen!==_selectGen)return;
   grid.innerHTML=SOURCES.map((s,i)=>{
     const has=!!results[i];
     if(has)sel.add(s.key);
@@ -565,11 +569,20 @@ function copySum(){navigator.clipboard.writeText(window._sumText||'').then(()=>s
 // The user must click a patient card — this is the single source of truth.
 
 let _allPatients=[];
+// Generation counter: incremented on every selectPatient() call.
+// renderSources and runDataAudit check it before writing to the DOM — if a
+// newer selection happened while they were awaiting DB results, they discard
+// their (now stale) output so the last-clicked patient always wins.
+let _selectGen=0;
 
 function initials(name){return(name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
 
 async function selectPatient(pid){
   if(!pid)return;
+  // Capture a unique generation token for THIS selection call.
+  // Any concurrent in-flight call with a lower gen will discard its results.
+  const myGen=++_selectGen;
+
   _pid=pid;
   DB._patientId=pid;
   localStorage.setItem('advocate_active_patient_id',pid);
@@ -583,12 +596,12 @@ async function selectPatient(pid){
   document.getElementById('dataAuditCard').style.display='block';
   document.getElementById('mainCard').style.display='block';
 
-  // Run audit and sources in parallel
+  // Run audit and sources in parallel — pass myGen so they can detect staleness
   const p=_allPatients.find(x=>x.id===pid);
   document.getElementById('auditPatientName').textContent=p?.name||'patient';
 
   sel.clear();
-  await Promise.all([runDataAudit(pid), renderSources()]);
+  await Promise.all([runDataAudit(pid,myGen), renderSources(myGen)]);
 }
 
 // Fetch raw counts directly from Supabase for a patient — bypasses all caching
@@ -614,7 +627,7 @@ async function purgeTable(table,pid,label,btn){
   }
 }
 
-async function runDataAudit(pid){
+async function runDataAudit(pid,gen){
   const auditList=document.getElementById('auditList');
   auditList.innerHTML='<div style="font-size:12px;color:var(--ink-muted)">Scanning database…</div>';
 
@@ -628,6 +641,9 @@ async function runDataAudit(pid){
     dbCount('symptom_entries',pid),
     dbCount('care_team',pid),
   ]);
+
+  // A newer selectPatient() call happened while we were querying — discard stale results
+  if(gen!==undefined&&gen!==_selectGen)return;
 
   const lsMeds=lsRead('advocate_medications');
   const lsTests=lsRead('advocate_testing');
