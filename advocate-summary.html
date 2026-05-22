@@ -292,9 +292,11 @@ const SOURCES=[
   {key:'profile',icon:'👤',label:'Patient Profile',check:async()=>{const p=await DB.getProfile();return Object.keys(p).filter(k=>p[k]).length>0;}},
   {key:'diagnoses',icon:'🔴',label:'Diagnoses',check:async()=>{const p=await DB.getProfile();return p.diagnoses?.length>0;}},
   {key:'medications',icon:'💊',label:'Medications',check:async()=>{
-    // Medications tool is localStorage-only — never read from Supabase (may have
-    // cross-patient contamination from old migrations).
-    try{return lsRead('advocate_medications').length>0;}catch{return false;}
+    // 1. Patient-namespaced key (current standard)
+    try{if(lsRead('advocate_medications').length>0)return true;}catch{}
+    // 2. Flat key fallback — medications entered before namespacing was deployed
+    try{if(JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0)return true;}catch{}
+    return false;
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
@@ -315,6 +317,12 @@ const SOURCES=[
           if(Array.isArray(arr)&&arr.length>0)return true;
         }
       }
+    }catch{}
+    // 4. Supabase without patient_id filter — finds reports saved under wrong patient_id.
+    // Safe because Supabase RLS scopes all queries to the current authenticated user.
+    try{
+      const {data}=await _supa.from('lab_results').select('id').eq('test_name','__report__').limit(1);
+      if(data?.length>0)return true;
     }catch{}
     return false;
   }},
@@ -369,11 +377,11 @@ async function buildData(){
   if(!_pid){try{_pid=await DB.patientId();}catch{}}
   DB._patientId=_pid;
   const p=(await DB.getProfile());
-  // Medications: localStorage ONLY — the meds tool never writes to Supabase.
-  // Supabase medications table may have cross-patient contamination from old
-  // migrations — never read from it for the summary.
+  // Medications: localStorage only — the meds tool never writes to Supabase.
   let meds=[];
   try{meds=lsRead('advocate_medications');}catch{}
+  // Flat key fallback — medications entered before namespacing was deployed
+  if(!meds.length){try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch{}}
   // Labs: Supabase first (patient-scoped), then patient-specific localStorage cache
   let labReports=[];
   try{labReports=await DB.getLabReports();}catch{}
@@ -383,6 +391,17 @@ async function buildData(){
       const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       if(Array.isArray(rawLabs)) labReports=rawLabs;
       else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
+    }catch{}
+  }
+  // Last resort: find lab reports saved under any patient_id for this user.
+  // Supabase RLS ensures only this user's rows are ever returned.
+  if(!labReports.length){
+    try{
+      const {data:anyLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
+        .eq('test_name','__report__').order('lab_date',{ascending:true});
+      for(const row of(anyLabs||[])){
+        try{labReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}
+      }
     }catch{}
   }
   const timeline=(await DB.getTimelineEvents());
@@ -484,6 +503,17 @@ async function generateSummary(){
       const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       const lsLabs=Array.isArray(rawLabs)?rawLabs:(rawLabs?.reports&&Array.isArray(rawLabs.reports)?rawLabs.reports:[]);
       if(lsLabs.length){summaryLabReports=lsLabs;labSource='localStorage';}
+    }catch{}
+  }
+  // Last resort: find lab reports saved under any patient_id for this user
+  if(!summaryLabReports.length){
+    try{
+      const {data:anyLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
+        .eq('test_name','__report__').order('lab_date',{ascending:true});
+      for(const row of(anyLabs||[])){
+        try{summaryLabReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}
+      }
+      if(summaryLabReports.length)labSource='supabase-any';
     }catch{}
   }
   summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
