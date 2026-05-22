@@ -810,6 +810,37 @@ async function loadLabs() {
       }
     } catch(e) {}
   }
+
+  // 3. Recovery: scan every patient ID for this user.
+  //    Lab reports may have been saved under the wrong patient_id when the active
+  //    patient changed between sessions. Re-saving under the correct ID fixes future loads.
+  try {
+    const currentPid = await DB.patientId();
+    const allPatients = await DB.getPatients();
+    for (const pt of allPatients) {
+      if (pt.id === currentPid) continue; // already tried above
+      const { data: rows } = await _supa
+        .from('lab_results')
+        .select('id, lab_date, notes')
+        .eq('patient_id', pt.id)
+        .eq('test_name', '__report__')
+        .order('lab_date', { ascending: true });
+      const recovered = [];
+      for (const row of (rows || [])) {
+        try { recovered.push({ dbId: row.id, ...JSON.parse(row.notes) }); } catch {}
+      }
+      if (recovered.length && applyLoadedLabs(recovered)) {
+        console.log('[Labs] Recovered', recovered.length, 'report(s) from patient_id', pt.id, '— re-saving under correct patient');
+        // Re-save under the correct patient_id so future loads work without this fallback
+        recovered.forEach(r => {
+          const { dbId, ...reportData } = r;
+          DB.saveLabReport(reportData).catch(() => {});
+        });
+        localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(recovered));
+        return;
+      }
+    }
+  } catch(e) { console.warn('[Labs] Recovery scan failed:', e); }
 }
 
 // ─────────────────────────────────
