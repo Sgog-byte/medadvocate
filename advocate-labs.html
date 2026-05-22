@@ -807,8 +807,8 @@ async function loadLabs() {
       if (!raw) continue;
       const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
       if (applyLoadedLabs(saved)) {
-        localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved));
         saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+        try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved)); } catch(e) {}
         return;
       }
     } catch(e) {}
@@ -1854,8 +1854,10 @@ async function forceRestoreLabs() {
 
       allLabDates = reports;
       allLabDates.sort((a, b) => new Date(a.date||0) - new Date(b.date||0));
-      localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates));
+      // Save to Supabase (authoritative store going forward)
       allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
+      // Cache to localStorage — skip silently if quota exceeded
+      try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates)); } catch(e) {}
       updateHistory();
       showLabEntry(allLabDates[allLabDates.length - 1]);
       document.getElementById('labResults').classList.remove('hidden');
