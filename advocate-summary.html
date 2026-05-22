@@ -318,11 +318,15 @@ const SOURCES=[
         }
       }
     }catch{}
-    // 4. Supabase without patient_id filter — finds reports saved under wrong patient_id.
-    // Safe because Supabase RLS scopes all queries to the current authenticated user.
+    // 4. Scan every patient ID for this user — handles reports saved under wrong patient_id.
+    // DB.getPatients() returns all patients for the current user, so this is always user-scoped.
     try{
-      const {data}=await _supa.from('lab_results').select('id').eq('test_name','__report__').limit(1);
-      if(data?.length>0)return true;
+      const pts=await DB.getPatients();
+      for(const pt of pts){
+        const {count}=await _supa.from('lab_results').select('*',{count:'exact',head:true})
+          .eq('patient_id',pt.id).eq('test_name','__report__');
+        if(count>0)return true;
+      }
     }catch{}
     return false;
   }},
@@ -393,15 +397,16 @@ async function buildData(){
       else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
     }catch{}
   }
-  // Last resort: find lab reports saved under any patient_id for this user.
-  // Supabase RLS ensures only this user's rows are ever returned.
+  // Last resort: scan every patient ID for this user — finds reports saved under wrong patient_id
   if(!labReports.length){
     try{
-      const {data:anyLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
-        .eq('test_name','__report__').order('lab_date',{ascending:true});
-      for(const row of(anyLabs||[])){
-        try{labReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}
+      const pts=await DB.getPatients();
+      for(const pt of pts){
+        const {data:ptLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
+          .eq('patient_id',pt.id).eq('test_name','__report__').order('lab_date',{ascending:true});
+        for(const row of(ptLabs||[])){try{labReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}}
       }
+      labReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
     }catch{}
   }
   const timeline=(await DB.getTimelineEvents());
@@ -505,15 +510,17 @@ async function generateSummary(){
       if(lsLabs.length){summaryLabReports=lsLabs;labSource='localStorage';}
     }catch{}
   }
-  // Last resort: find lab reports saved under any patient_id for this user
+  // Last resort: scan every patient ID — finds reports saved under wrong patient_id
   if(!summaryLabReports.length){
     try{
-      const {data:anyLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
-        .eq('test_name','__report__').order('lab_date',{ascending:true});
-      for(const row of(anyLabs||[])){
-        try{summaryLabReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}
+      const pts=await DB.getPatients();
+      for(const pt of pts){
+        const {data:ptLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
+          .eq('patient_id',pt.id).eq('test_name','__report__').order('lab_date',{ascending:true});
+        for(const row of(ptLabs||[])){try{summaryLabReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}}
       }
-      if(summaryLabReports.length)labSource='supabase-any';
+      summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+      if(summaryLabReports.length)labSource='supabase-scan';
     }catch{}
   }
   summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
@@ -669,14 +676,12 @@ async function runDataAudit(pid,gen){
   auditList.innerHTML='<div style="font-size:12px;color:var(--ink-muted)">Scanning database…</div>';
 
   // Query Supabase counts directly for this patient_id — no caching, no inference
-  const [cMeds,cTests,cTimeline,cLabs,cFlares,cSymptoms,cCareTeam]=await Promise.all([
+  const [cMeds,cTests,cTimeline,cLabs,cSymptoms]=await Promise.all([
     dbCount('medications',pid),
     dbCount('diagnostic_tests',pid),
     dbCount('timeline_events',pid),
     dbCount('lab_results',pid),
-    dbCount('flare_log',pid),
     dbCount('symptom_entries',pid),
-    dbCount('care_team',pid),
   ]);
 
   // A newer selectPatient() call happened while we were querying — discard stale results
@@ -694,9 +699,7 @@ async function runDataAudit(pid,gen){
     {label:'Diagnostic Tests',dbCount:cTests,lsCount:lsTests.length,table:'diagnostic_tests',contam:testsContam,icon:'🔬',note:testsContam?`DB has ${cTests} rows but your Testing tool is empty — these are likely another patient's data`:''},
     {label:'Timeline Events',dbCount:cTimeline,table:'timeline_events',contam:false,icon:'📅',note:''},
     {label:'Lab Reports',dbCount:cLabs,table:'lab_results',contam:false,icon:'🧪',note:''},
-    {label:'Flare Log',dbCount:cFlares,table:'flare_log',contam:false,icon:'🔥',note:''},
     {label:'Symptom Entries',dbCount:cSymptoms,table:'symptom_entries',contam:false,icon:'📊',note:''},
-    {label:'Care Team',dbCount:cCareTeam,table:'care_team',contam:false,icon:'👥',note:''},
   ];
 
   const anyContam=rows.some(r=>r.contam);
