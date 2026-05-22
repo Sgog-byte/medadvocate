@@ -297,21 +297,34 @@ const SOURCES=[
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
-    // Supabase first — patient_id scoped, always correct
+    // 1. Supabase — patient_id scoped
     try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
-    // advocate-labs.html writes to the flat key 'advocate_lab_results' (not namespaced),
-    // so read it directly — don't use lsRead() which would look for the _pid-suffixed key.
+    // 2. Flat localStorage key — advocate-labs.html writes here (NOT namespaced)
     try{
       const raw=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
       if(arr.length>0)return true;
     }catch{}
+    // 3. Any advocate_lab_results_* namespaced keys from older versions
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k&&k.startsWith('advocate_lab_results_')){
+          const arr=JSON.parse(localStorage.getItem(k)||'[]');
+          if(Array.isArray(arr)&&arr.length>0)return true;
+        }
+      }
+    }catch{}
     return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>{
-    // Use localStorage only — matches what the diagnostic testing tool shows.
-    // Supabase may have cross-patient contamination from old data migrations.
-    try{return lsRead('advocate_testing').length>0;}catch{return false;}
+    // 1. Namespaced localStorage key (primary — what testing tool writes)
+    try{if(lsRead('advocate_testing').length>0)return true;}catch{}
+    // 2. Flat localStorage key (data saved before namespacing was added)
+    try{if(JSON.parse(localStorage.getItem('advocate_testing')||'[]').length>0)return true;}catch{}
+    // 3. Supabase (data may only exist there if testing page not visited on this device)
+    try{const db=await DB.getDiagnosticTests();if(db.length>0)return true;}catch{}
+    return false;
   }},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
 ];
@@ -325,6 +338,9 @@ async function renderSources(gen){
   // A newer selectPatient() call happened while we were awaiting — discard stale results
   // so we never write a different patient's data over the correct one.
   if(gen!==undefined&&gen!==_selectGen)return;
+  // Log which sources found data — visible in DevTools console for debugging
+  console.log('[Summary] renderSources PID:',_pid?.slice(0,8),'results:',
+    Object.fromEntries(SOURCES.map((s,i)=>[s.key,results[i]])));
   grid.innerHTML=SOURCES.map((s,i)=>{
     const has=!!results[i];
     if(has)sel.add(s.key);
@@ -367,9 +383,11 @@ async function buildData(){
   const timeline=(await DB.getTimelineEvents());
   const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
   const symEntries=(await DB.getSymptomEntries());
-  // Tests: localStorage ONLY — matches what the diagnostic testing tool shows.
-  // Supabase diagnostic_tests may have cross-patient contamination.
-  const tests=lsRead('advocate_testing');
+  // Tests: localStorage first (namespaced, then flat), then Supabase as fallback.
+  // Supabase is now included so tests show even if testing page not visited on this device.
+  let tests=lsRead('advocate_testing');
+  if(!tests.length){try{tests=JSON.parse(localStorage.getItem('advocate_testing')||'[]');}catch{}}
+  if(!tests.length){try{tests=await DB.getDiagnosticTests();}catch{}}
   const parts=[];
 
   if(sel.has('profile')&&p.name) parts.push(`PATIENT: ${p.name}${p.age?', age '+p.age:''}`);
