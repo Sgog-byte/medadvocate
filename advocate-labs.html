@@ -908,35 +908,21 @@ async function loadLabs() {
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. Current patient's namespaced localStorage key ONLY — never read another patient's key
-  try {
-    const raw = JSON.parse(localStorage.getItem(labCacheKey()) || 'null');
-    if (raw) {
-      const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
-      if (applyLoadedLabs(saved)) {
-        saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
-        return;
-      }
-    }
-  } catch(e) {}
+  // 2. Current patient's namespaced key — readLabCache validates _pid and auto-clears if wrong patient
+  const cached = readLabCache(labCacheKey());
+  if (applyLoadedLabs(cached)) {
+    cached.forEach(r => DB.saveLabReport(r).catch(() => {}));
+    return;
+  }
 
-  // 2b. Flat key migration — only if it carries this patient's _pid tag
-  try {
-    const raw = JSON.parse(localStorage.getItem('advocate_lab_results') || 'null');
-    if (raw) {
-      // Reject flat key if it's tagged to a different patient
-      const pid = raw._pid || (Array.isArray(raw) ? raw[0]?._pid : null);
-      if (!pid || pid === currentPatientId) {
-        const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
-        if (applyLoadedLabs(saved)) {
-          saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
-          try { localStorage.setItem(labCacheKey(), JSON.stringify(saved)); } catch(e) {}
-          localStorage.removeItem('advocate_lab_results');
-          return;
-        }
-      }
-    }
-  } catch(e) {}
+  // 2b. Flat key migration — readLabCache validates _pid, only migrates if it matches this patient
+  const flat = readLabCache('advocate_lab_results');
+  if (applyLoadedLabs(flat)) {
+    flat.forEach(r => DB.saveLabReport(r).catch(() => {}));
+    try { localStorage.setItem(labCacheKey(), JSON.stringify({ _pid: currentPatientId, reports: flat })); } catch(e) {}
+    localStorage.removeItem('advocate_lab_results');
+    return;
+  }
   // No data found — show empty state (normal for a new patient)
 }
 
