@@ -298,7 +298,18 @@ const SOURCES=[
     try{if(JSON.parse(localStorage.getItem('advocate_medications')||'[]').length>0)return true;}catch{}
     return false;
   }},
-  {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>(await DB.getSymptomEntries()).length>0},
+  {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>{
+    // 1. Supabase
+    try{if((await DB.getSymptomEntries()).length>0)return true;}catch{}
+    // 2. Namespaced localStorage key
+    try{if(lsRead('advocate_symptoms').length>0)return true;}catch{}
+    // 3. Flat localStorage key
+    try{if(JSON.parse(localStorage.getItem('advocate_symptoms')||'[]').length>0)return true;}catch{}
+    // 4. Journal/entries key (namespaced and flat)
+    try{if(lsRead('advocate_entries').length>0)return true;}catch{}
+    try{if(JSON.parse(localStorage.getItem('advocate_entries')||'[]').length>0)return true;}catch{}
+    return false;
+  }},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
     // 1. Supabase — patient_id scoped
     try{const db=await DB.getLabReports();if(db.length)return true;}catch{}
@@ -308,13 +319,15 @@ const SOURCES=[
       const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
       if(arr.length>0)return true;
     }catch{}
-    // 3. Any advocate_lab_results_* namespaced keys from older versions
+    // 3. Any advocate_lab_results_* namespaced keys — handles both array and {_pid,reports:[]} formats
     try{
       for(let i=0;i<localStorage.length;i++){
         const k=localStorage.key(i);
         if(k&&k.startsWith('advocate_lab_results_')){
-          const arr=JSON.parse(localStorage.getItem(k)||'[]');
-          if(Array.isArray(arr)&&arr.length>0)return true;
+          const raw=JSON.parse(localStorage.getItem(k)||'null');
+          if(!raw)continue;
+          const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
+          if(arr.length>0)return true;
         }
       }
     }catch{}
@@ -339,7 +352,18 @@ const SOURCES=[
     try{const db=await DB.getDiagnosticTests();if(db.length>0)return true;}catch{}
     return false;
   }},
-  {key:'timeline',icon:'📅',label:'Medical History',check:async()=>(await DB.getTimelineEvents()).length>0},
+  {key:'timeline',icon:'📅',label:'Medical History',check:async()=>{
+    // 1. Supabase
+    try{if((await DB.getTimelineEvents()).length>0)return true;}catch{}
+    // 2. Namespaced localStorage key
+    try{if(lsRead('advocate_timeline').length>0)return true;}catch{}
+    // 3. Flat localStorage key — 370 items stored here before namespacing
+    try{if(JSON.parse(localStorage.getItem('advocate_timeline')||'[]').length>0)return true;}catch{}
+    // 4. Journal/entries key (namespaced and flat)
+    try{if(lsRead('advocate_entries').length>0)return true;}catch{}
+    try{if(JSON.parse(localStorage.getItem('advocate_entries')||'[]').length>0)return true;}catch{}
+    return false;
+  }},
 ];
 
 let sel=new Set();
