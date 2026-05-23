@@ -910,16 +910,21 @@ async function loadLabs() {
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. Current patient's namespaced key — the KEY NAME guarantees patient isolation.
-  //    Do NOT delete it based on _pid mismatch — _pid may be stale from a migration.
-  //    applyLoadedLabs() calls saveLabs() which re-tags with the correct _pid.
+  // 2. Current patient's namespaced key — check _pid to confirm the blob belongs here.
+  //    If _pid doesn't match, the key was written by a different patient; skip but don't delete.
   try {
     const raw = JSON.parse(localStorage.getItem(labCacheKey()) || 'null');
     if (raw) {
-      const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
-      if (applyLoadedLabs(reports)) {
-        reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
-        return;
+      const blobPid = raw._pid || (Array.isArray(raw) && raw[0]?._pid) || null;
+      const pidOk = !blobPid || !currentPatientId || blobPid === currentPatientId;
+      if (pidOk) {
+        const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
+        if (applyLoadedLabs(reports)) {
+          reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
+          return;
+        }
+      } else {
+        console.warn('[Labs] Namespaced key has wrong _pid (' + blobPid?.slice(0,8) + ' ≠ ' + currentPatientId?.slice(0,8) + ') — skipping to prevent bleed');
       }
     }
   } catch(e) {}
