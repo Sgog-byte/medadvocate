@@ -316,7 +316,15 @@
   .lab-table {
     width: 100%; border-collapse: collapse;
     font-size: 14px;
+    table-layout: fixed; /* prevents any column from blowing out the table width */
   }
+
+  /* Column widths: Test · Result · Range · Status · Notes */
+  .lab-table th:nth-child(1) { width: 22%; }
+  .lab-table th:nth-child(2) { width: 14%; }
+  .lab-table th:nth-child(3) { width: 18%; }
+  .lab-table th:nth-child(4) { width: 12%; }
+  .lab-table th:nth-child(5) { width: 34%; }
 
   .lab-table th {
     text-align: left; padding: 10px 14px;
@@ -328,6 +336,14 @@
   .lab-table td {
     padding: 12px 14px; border-bottom: 1px solid var(--border);
     color: var(--ink-soft); vertical-align: top;
+    overflow-wrap: break-word; word-break: break-word;
+  }
+
+  /* Notes column — softer colour, smaller text, wraps freely */
+  .lab-table td:last-child {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.5;
   }
 
   .lab-table tr:last-child td { border-bottom: none; }
@@ -345,13 +361,17 @@
   .insight-item:last-child { border-bottom: none; }
 
   .insight-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    flex-shrink: 0; margin-top: 6px;
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 5px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .dot-red { background: var(--red); }
-  .dot-gold { background: var(--gold); }
-  .dot-sage { background: var(--sage); }
+  /* Match trend chart dot colours exactly */
+  .dot-red  { background: #e05555; }   /* high / critical */
+  .dot-blue { background: #3b82f6; }   /* low */
+  .dot-sage { background: #2d6a4f; }   /* normal / in range / improving */
+  .dot-gold { background: var(--gold); } /* caution / watch — no specific direction */
 
   .insight-text { font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
   .insight-text strong { color: var(--ink); }
@@ -433,14 +453,44 @@
       box-shadow: none;
       break-inside: avoid;
       border: 1px solid #ccc;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      /* Clone border/padding so the box closes neatly at every page break */
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
     }
 
     .rbar-dot-prev { display: none; }
 
     .summary-tile { break-inside: avoid; }
 
-    h1, .page-title { font-size: 22px; }
+    h1, .page-title { font-size: 20px; }
+
+    /* ── AI Insights page print tweaks ── */
+
+    /* Hide date-picker pills, subtitles and card sub-headings — they're UI chrome */
+    #insightDatePicker,
+    #page-insights .page-sub,
+    #insightsCard .card-sub,
+    #trendInsightsCard .card-sub,
+    #contextualSummaryBox { display: none !important; }
+
+    /* Reduce page-header gap so content starts close to the print header */
+    .page-header { margin-bottom: 10px !important; }
+
+    /* Allow large insight cards to break across pages (don't push whole card to next page) */
+    #insightsCard, #trendInsightsCard {
+      break-inside: auto !important;
+    }
+
+    /* But keep each individual insight bullet on one page */
+    .insight-item { break-inside: avoid; }
+
+    /* Compact insight text */
+    .insight-item { padding: 8px 0 !important; }
+    .insight-text { font-size: 13px !important; line-height: 1.55 !important; }
+
+    /* Hide "Add to script" buttons — UI chrome only */
+    .insight-item button { display: none !important; }
 
     /* ── Trend charts print layout ── */
     /* Show the active filter label */
@@ -473,6 +523,14 @@
     .rbar-bar-wrap { margin: 4px 0 !important; }
     .rbar-legend { font-size: 9px !important; }
     .rbar-history { font-size: 9px !important; margin-top: 4px !important; }
+
+    /* Preserve background colours — without this range bar zones print as blank white */
+    .rbar-zone, .rbar-track, .rbar-dot-only,
+    .rbar-legend-item, .rbar-legend-dot,
+    .rbar-norange-dot, .status-high, .status-low, .status-critical {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
 
     @page {
       margin: 15mm 12mm;
@@ -544,7 +602,7 @@
     <!-- Print Header (only shows on print) -->
     <div class="print-header">
       <div>
-        <div style="font-family:'Fraunces',serif; font-size:22px; color:var(--ink);">advocate — Lab Report</div>
+        <div style="font-family:'Fraunces',serif; font-size:22px; color:var(--ink);">MedAdvocate — Lab Report</div>
         <div style="font-size:12px; color:var(--ink-muted); margin-top:4px;" id="printDate"></div>
       </div>
       <div style="font-size:12px; color:var(--ink-muted);">Printed for medical appointment use</div>
@@ -631,6 +689,18 @@
       <!-- Results -->
       <div id="labResults" class="hidden">
 
+        <!-- Wrong-patient warning — shown if labs may belong to a different patient -->
+        <div id="wrongPatientBanner" class="hidden no-print" style="
+          background:#fff3cd; border:1px solid #ffc107; border-radius:12px;
+          padding:14px 18px; margin-bottom:20px;
+          display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <div>
+            <strong style="color:#856404;">⚠️ Wrong patient data?</strong>
+            <span style="color:#856404; font-size:13px; margin-left:6px;">If these labs belong to a different patient, clear them and re-upload the correct files.</span>
+          </div>
+          <button class="btn" onclick="clearAllLabs()" style="background:#c0392b;color:#fff;border:none;white-space:nowrap;flex-shrink:0;">🗑️ Clear &amp; Reset Labs</button>
+        </div>
+
         <!-- Summary tiles -->
         <div id="summarySection">
           <div class="label" style="margin-bottom:14px;" id="labDateLabel"></div>
@@ -660,6 +730,8 @@
           <button class="btn btn-outline" onclick="goTo('insights')">💡 See AI Insights</button>
           <button class="btn btn-outline" onclick="printPage()">🖨️ Print Report</button>
           <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">➕ Add Another Date</button>
+          <button class="btn btn-outline" onclick="forceRestoreLabs()" title="Push all lab data to cloud backup">☁️ Backup to Cloud</button>
+          <button class="btn btn-outline" style="color:#c0392b;border-color:#c0392b;" onclick="clearAllLabs()">🗑️ Clear All Labs</button>
         </div>
 
       </div>
@@ -762,13 +834,38 @@
 // ─────────────────────────────────
 // STATE
 // ─────────────────────────────────
-const LAB_CACHE_KEY = 'advocate_lab_results'; // flat key — patient validated via LAB_PID_KEY
-const LAB_PID_KEY   = 'advocate_labs_pid';    // which patient the cache belongs to
+const LAB_PID_KEY = 'advocate_labs_pid'; // legacy — kept for migration detection only
+let currentPatientId = null;             // set in DOMContentLoaded before any data load
+
+// Always returns the namespaced key for the current patient, or the flat fallback
+function labCacheKey() {
+  return currentPatientId ? `advocate_lab_results_${currentPatientId}` : 'advocate_lab_results';
+}
+
 let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,low,high,status,note}]}]
 let activeChartFilter = 'all';
 
 function saveLabs() {
-  try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates)); } catch(e) {}
+  // Embed _pid so we can detect cross-patient corruption on next load
+  try { localStorage.setItem(labCacheKey(), JSON.stringify({ _pid: currentPatientId, reports: allLabDates })); } catch(e) {}
+}
+
+function readLabCache(key) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(key));
+    if (!raw) return [];
+    // New format: { _pid, reports }
+    if (raw._pid !== undefined) {
+      if (currentPatientId && raw._pid !== currentPatientId) {
+        // Corrupted — belongs to a different patient; clear it
+        localStorage.removeItem(key);
+        return [];
+      }
+      return Array.isArray(raw.reports) ? raw.reports : [];
+    }
+    // Old format: plain array — accept as-is
+    return Array.isArray(raw) ? raw : [];
+  } catch(e) { return []; }
 }
 
 function applyLoadedLabs(reports) {
@@ -780,27 +877,45 @@ function applyLoadedLabs(reports) {
   showLabEntry(allLabDates[allLabDates.length - 1]);
   document.getElementById('labResults').classList.remove('hidden');
   document.getElementById('emptyLabs').classList.add('hidden');
+  // Show warning banner if any report lacks _pid certification for this patient
+  const allCertified = currentPatientId &&
+    reports.every(r => r._pid === currentPatientId);
+  const banner = document.getElementById('wrongPatientBanner');
+  if (banner) banner.classList.toggle('hidden', !!allCertified);
   return true;
 }
 
+// Handles all 4 localStorage storage formats labs may have been saved in
+function _extractReports(raw) {
+  if (!raw) return [];
+  // Format A: {_pid, reports:[{date,fileName,results},…]}
+  if (!Array.isArray(raw) && Array.isArray(raw.reports)) return raw.reports;
+  // Format B: [{_pid, reports:[…]}, …]
+  if (Array.isArray(raw) && raw[0]?.reports) {
+    for (const blob of raw) { if (Array.isArray(blob.reports) && blob.reports.length) return blob.reports; }
+  }
+  // Format C: [{date,fileName,results},…]
+  if (Array.isArray(raw) && raw[0]?.date) return raw;
+  // Format D: single report object
+  if (raw && raw.date) return [raw];
+  return [];
+}
+
 async function loadLabs() {
-  // 1. Try Supabase first (patient-scoped, works across devices)
+  // 1. Supabase first — already scoped to the active patient by DB.getLabReports()
   try {
     const dbReports = await DB.getLabReports();
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. Build a list of every possible localStorage key to try:
-  //    - flat key (original + current)
-  //    - any advocate_lab_results_* namespaced keys from previous deploys
-  const keysToTry = new Set([LAB_CACHE_KEY]);
+  // 2. All advocate_lab_results* localStorage keys (handles any format)
+  const keysToTry = new Set([labCacheKey(), 'advocate_lab_results']);
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (k && k.startsWith('advocate_lab_results')) keysToTry.add(k);
     }
   } catch(e) {}
-
   for (const key of keysToTry) {
     try {
       const raw = JSON.parse(localStorage.getItem(key) || 'null');
@@ -808,43 +923,32 @@ async function loadLabs() {
       const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
       if (applyLoadedLabs(saved)) {
         saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
-        try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(saved)); } catch(e) {}
+        try { localStorage.setItem(labCacheKey(), JSON.stringify(saved)); } catch(e) {}
         return;
       }
     } catch(e) {}
   }
 
-  // 3. Recovery: scan every patient ID for this user.
-  //    Lab reports may have been saved under the wrong patient_id when the active
-  //    patient changed between sessions. Re-saving under the correct ID fixes future loads.
+  // 3. Recovery: scan every patient ID — handles reports saved under wrong patient_id
   try {
-    const currentPid = await DB.patientId();
     const allPatients = await DB.getPatients();
     for (const pt of allPatients) {
-      if (pt.id === currentPid) continue; // already tried above
+      if (pt.id === currentPatientId) continue;
       const { data: rows } = await _supa
-        .from('lab_results')
-        .select('id, lab_date, notes')
-        .eq('patient_id', pt.id)
-        .eq('test_name', '__report__')
+        .from('lab_results').select('id, lab_date, notes')
+        .eq('patient_id', pt.id).eq('test_name', '__report__')
         .order('lab_date', { ascending: true });
       const recovered = [];
       for (const row of (rows || [])) {
         try {
           const blob = JSON.parse(row.notes);
-          // blob may be a single report object or an array
-          if (Array.isArray(blob)) blob.forEach(r => recovered.push({ dbId: row.id, ...r }));
-          else recovered.push({ dbId: row.id, ...blob });
+          const rpts = _extractReports(blob);
+          rpts.forEach(r => recovered.push({ dbId: row.id, ...r }));
         } catch {}
       }
       if (recovered.length && applyLoadedLabs(recovered)) {
-        console.log('[Labs] Recovered', recovered.length, 'report(s) from patient_id', pt.id, '— re-saving under correct patient');
-        // Re-save under the correct patient_id so future loads work without this fallback
-        recovered.forEach(r => {
-          const { dbId, ...reportData } = r;
-          DB.saveLabReport(reportData).catch(() => {});
-        });
-        localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(recovered));
+        recovered.forEach(r => { const { dbId, ...rd } = r; DB.saveLabReport(rd).catch(() => {}); });
+        try { localStorage.setItem(labCacheKey(), JSON.stringify(recovered)); } catch(e) {}
         return;
       }
     }
@@ -1240,9 +1344,40 @@ function renderLabResults(data, fileName, fileKey) {
     insights: data.insights || []
   };
 
-  // Remove existing entry for same date or same file
-  // Only deduplicate by fileKey — same date is valid (multiple panels same day)
-  allLabDates = allLabDates.filter(e => !entry.fileKey || e.fileKey !== entry.fileKey);
+  // ── Duplicate detection ──────────────────────────────────────
+  // 1. Exact fileKey match (same file uploaded twice)
+  const sameFile = allLabDates.find(e => entry.fileKey && e.fileKey === entry.fileKey);
+  if (sameFile) {
+    showToast('⚠️ This file has already been uploaded — skipping duplicate');
+    showLabEntry(sameFile);
+    return;
+  }
+
+  // 2. Same date AND high test-name overlap (>70%) → likely duplicate or re-upload
+  const sameDate = allLabDates.find(e => e.date === entry.date);
+  if (sameDate && entry.results.length > 0) {
+    const newNames  = new Set(entry.results.map(r => r.name.toLowerCase().trim()));
+    const existingNames = new Set(sameDate.results.map(r => r.name.toLowerCase().trim()));
+    const overlap = [...newNames].filter(n => existingNames.has(n)).length;
+    const similarity = overlap / Math.max(newNames.size, existingNames.size);
+    if (similarity >= 0.7) {
+      const d = new Date(entry.date + 'T12:00:00');
+      const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+      const replace = confirm(
+        `A lab report for ${label} already exists with similar tests (${Math.round(similarity*100)}% overlap).\n\n` +
+        `Existing: "${sameDate.fileName}"\nNew: "${fileName}"\n\n` +
+        `Click OK to replace the existing report, or Cancel to keep both.`
+      );
+      if (replace) {
+        // Delete the old entry from Supabase and memory
+        if (sameDate.dbId) DB.deleteLabReport(sameDate.dbId).catch(() => {});
+        allLabDates = allLabDates.filter(e => e.date !== entry.date);
+      }
+      // If cancel, both are kept (falls through to push below)
+    }
+  }
+  // ────────────────────────────────────────────────────────────
+
   allLabDates.push(entry);
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
   saveLabs();
@@ -1260,7 +1395,10 @@ function renderLabResults(data, fileName, fileKey) {
   showToast('✓ Lab report extracted successfully');
 }
 
-function showLabEntry(entry) {
+function showLabEntry(entryOrIndex) {
+  // Accept either an index into allLabDates or a direct entry object
+  const entry = (typeof entryOrIndex === 'number') ? allLabDates[entryOrIndex] : entryOrIndex;
+  if (!entry) return;
   // Track active date for strip highlighting
   activeDateKey = entry.fileKey || entry.date;
   updateDateStrip();
@@ -1456,6 +1594,27 @@ function setChartFilter(cat) {
 // ─────────────────────────────────
 // AI INSIGHTS
 // ─────────────────────────────────
+// Build a multi-date trend summary string for the AI prompt
+function buildTrendSummaryForAI() {
+  if (allLabDates.length < 2) return '';
+  // Collect all tests that appear in ≥2 dates
+  const testMap = {};
+  allLabDates.forEach(entry => {
+    (entry.results || []).forEach(r => {
+      if (!testMap[r.name]) testMap[r.name] = [];
+      testMap[r.name].push({ date: entry.date, value: r.value, status: r.status, unit: r.unit || '' });
+    });
+  });
+  const lines = [];
+  Object.entries(testMap).forEach(([name, readings]) => {
+    if (readings.length < 2) return;
+    readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const history = readings.map(r => `${r.date}: ${r.value} ${r.unit} (${r.status})`).join(' → ');
+    lines.push(`${name}: ${history}`);
+  });
+  return lines.join('\n');
+}
+
 async function refreshInsights() {
   if (allLabDates.length === 0) return;
   const btn = document.getElementById('refreshInsightsBtn');
@@ -1468,19 +1627,31 @@ async function refreshInsights() {
     `${r.name}: ${r.value} ${r.unit || ''} (ref: ${r.low ?? '?'}–${r.high ?? '?'}, status: ${r.status})`
   ).join('\n');
 
+  // Include full cross-date trend history when multiple uploads exist
+  const trendHistory = buildTrendSummaryForAI();
+  const trendSection = trendHistory
+    ? `\n\nTrend history across all ${allLabDates.length} lab dates (oldest → newest):\n${trendHistory}\n\nPlease analyse these trends and generate trendInsights covering the trajectory of values over time — not just the most recent date.`
+    : '';
+
   try {
     const data = await callProxy({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4500,
+      max_tokens: 5000,
       system: buildSystemPrompt(),
-      messages: [{ role: 'user', content: `Here are the already-extracted lab values from a report dated ${latest.date}. Do NOT re-extract — instead generate rich insights and a contextual summary.\n\nLab values:\n${labSummary}\n\nReturn JSON with only these keys:\n{"insights":[{"level":"urgent|watch|info","text":"..."}],"contextualSummary":"..."}` }]
+      messages: [{ role: 'user', content: `Here are the already-extracted lab values from a report dated ${latest.date}. Do NOT re-extract — instead generate rich insights and a contextual summary.\n\nLab values:\n${labSummary}${trendSection}\n\nReturn JSON with only these keys:\n{"insights":[{"level":"urgent|watch|info","text":"..."}],"trendInsights":[{"level":"urgent|watch|info","text":"..."}],"contextualSummary":"..."}` }]
     });
     if (data.insights) {
       latest.insights = data.insights;
       if (data.contextualSummary) latest.contextualSummary = data.contextualSummary;
+      // Store AI-generated trend insights on the most recent entry so they persist
+      if (data.trendInsights && data.trendInsights.length) {
+        allLabDates[allLabDates.length - 1].trendInsights = data.trendInsights;
+      }
       saveLabs();
       DB.saveLabReport(latest).catch(() => {});
-      // Clear old summary box so it re-renders fresh
+      if (allLabDates.length - 1 !== idx) {
+        DB.saveLabReport(allLabDates[allLabDates.length - 1]).catch(() => {});
+      }
       const old = document.getElementById('contextualSummaryBox');
       if (old) old.remove();
       renderInsights();
@@ -1549,43 +1720,120 @@ function renderInsights(idx) {
         </div>`).join('')
     : '<div style="color:var(--ink-muted);font-size:14px;padding:16px 0">No insights for this report — click 🔄 Refresh Insights to generate them.</div>';
 
-  // Trend insights if multiple dates
+  // Trend insights — shown whenever ≥2 dates exist, across ALL dates not just selected
   if (allLabDates.length >= 2) {
     document.getElementById('trendInsightsCard').style.display = 'block';
-    const trending = getTrendInsights();
-    document.getElementById('trendInsightsList').innerHTML = trending.map(t => `
-      <div class="insight-item">
-        <div class="insight-dot ${t.direction === 'up' ? 'dot-red' : t.direction === 'down' ? 'dot-sage' : 'dot-gold'}"></div>
-        <div class="insight-text">${t.text}</div>
-      </div>`).join('');
+    document.querySelector('#trendInsightsCard .card-sub').textContent =
+      `Patterns across all ${allLabDates.length} lab dates`;
+
+    // Prefer AI-generated trend insights (stored on most recent entry after Refresh)
+    const aiTrends = allLabDates[allLabDates.length - 1].trendInsights;
+    const scriptBtnStyle = `flex-shrink:0;margin-left:10px;padding:4px 10px;font-size:11px;border:1.5px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--ink-muted);white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .2s`;
+    if (aiTrends && aiTrends.length) {
+      // Match trend chart colours: urgent/high→red, low→blue, info/normal→green, watch→gold
+      const aiDot = (level) =>
+        level === 'urgent' ? 'dot-red'
+        : level === 'low'  ? 'dot-blue'
+        : level === 'info' ? 'dot-sage'
+        : 'dot-gold'; // watch / default
+      // Cache texts for addTrendInsightToScript
+      window._trendTexts = aiTrends.map(t => t.text);
+      document.getElementById('trendInsightsList').innerHTML = aiTrends.map((t, ti) => `
+        <div class="insight-item" style="align-items:flex-start">
+          <div class="insight-dot ${aiDot(t.level)}" style="margin-top:4px"></div>
+          <div class="insight-text" style="flex:1">${t.text}</div>
+          <button onclick="addTrendInsightToScript(${ti})" id="trend-btn-${ti}" style="${scriptBtnStyle}" onmouseover="this.style.borderColor='var(--sage)';this.style.color='var(--sage)'" onmouseout="if(!this.disabled){this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'}">📋 Add to script</button>
+        </div>`).join('');
+    } else {
+      // Fall back to calculated trends across all dates
+      const trending = getTrendInsights();
+      window._trendTexts = trending.map(t => t.text);
+      document.getElementById('trendInsightsList').innerHTML = trending.map((t, ti) => `
+        <div class="insight-item" style="align-items:flex-start">
+          <div class="insight-dot ${t.dot || 'dot-gold'}" style="margin-top:4px"></div>
+          <div class="insight-text" style="flex:1">${t.text}</div>
+          <button onclick="addTrendInsightToScript(${ti})" id="trend-btn-${ti}" style="${scriptBtnStyle}" onmouseover="this.style.borderColor='var(--sage)';this.style.color='var(--sage)'" onmouseout="if(!this.disabled){this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'}">📋 Add to script</button>
+        </div>`).join('') +
+        `<div style="font-size:12px;color:var(--ink-muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          Hit <strong>🔄 Refresh Insights</strong> for AI-generated trend analysis across all your lab dates.
+        </div>`;
+    }
   }
 }
 
 function getTrendInsights() {
   const insights = [];
-  const first = allLabDates[0];
-  const last = allLabDates[allLabDates.length - 1];
 
-  last.results.forEach(r => {
-    const firstR = first.results.find(x => x.name === r.name);
-    if (!firstR || firstR.value == null || r.value == null) return;
-    const change = ((r.value - firstR.value) / firstR.value) * 100;
-    if (Math.abs(change) >= 15) {
-      const dir = change > 0 ? 'up' : 'down';
-      const pct = Math.abs(change).toFixed(0);
-      const outside = (r.high != null && r.value > r.high) || (r.low != null && r.value < r.low);
-      insights.push({
-        direction: outside ? dir : 'watch',
-        text: `<strong>${r.name}</strong> has ${dir === 'up' ? 'increased' : 'decreased'} by ${pct}% since ${new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', {month:'long', year:'numeric'})}${outside ? ' and is currently outside the reference range' : ''}.`
+  // Build full reading history for every test across ALL dates
+  const testMap = {};
+  allLabDates.forEach(entry => {
+    (entry.results || []).forEach(r => {
+      if (r.value == null) return;
+      if (!testMap[r.name]) testMap[r.name] = [];
+      testMap[r.name].push({
+        date: entry.date, value: Number(r.value),
+        status: r.status, low: r.low, high: r.high, unit: r.unit || ''
       });
+    });
+  });
+
+  Object.entries(testMap).forEach(([name, readings]) => {
+    if (readings.length < 2) return;
+    readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const first = readings[0];
+    const last  = readings[readings.length - 1];
+    const firstDate = new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', year:'numeric' });
+    const lastDate  = new Date(last.date  + 'T12:00:00').toLocaleDateString('en-US', { month:'short', year:'numeric' });
+
+    const wasAbnormal = first.status !== 'normal';
+    const isAbnormal  = last.status  !== 'normal';
+    const totalChange = first.value !== 0
+      ? ((last.value - first.value) / Math.abs(first.value)) * 100 : 0;
+    const pct = Math.abs(totalChange).toFixed(0);
+    const dir = totalChange > 0 ? 'increased' : 'decreased';
+
+    // Dot colour matches trend chart: high→red, low→blue, normal→green, caution→gold
+    const statusDot = (s) =>
+      (s === 'high' || s === 'critical') ? 'dot-red'
+      : s === 'low' ? 'dot-blue'
+      : s === 'normal' ? 'dot-sage'
+      : 'dot-gold';
+
+    // Detect consistent direction across all steps
+    let rises = 0, falls = 0;
+    for (let i = 1; i < readings.length; i++) {
+      if (readings[i].value > readings[i-1].value) rises++;
+      else if (readings[i].value < readings[i-1].value) falls++;
+    }
+    const steps = readings.length - 1;
+    const consistent = rises === steps || falls === steps;
+    const consistentNote = consistent && steps > 1 ? `, consistently across all ${readings.length} readings,` : '';
+
+    // Priority 0 = most important
+    if (!wasAbnormal && isAbnormal) {
+      // Crossed into abnormal — colour shows whether it's now high or low
+      insights.push({ dot: statusDot(last.status), priority: 0,
+        text: `<strong>${name}</strong> was within normal range in ${firstDate} but is now outside the reference range as of ${lastDate}. Worth discussing with your doctor.` });
+    } else if (wasAbnormal && !isAbnormal) {
+      // Returned to normal — green dot
+      insights.push({ dot: 'dot-sage', priority: 1,
+        text: `<strong>${name}</strong> was outside the normal range in ${firstDate} and has returned to normal by ${lastDate}. Good progress.` });
+    } else if (isAbnormal && Math.abs(totalChange) >= 10) {
+      // Still abnormal and shifting — colour matches current status
+      insights.push({ dot: statusDot(last.status), priority: 2,
+        text: `<strong>${name}</strong> has ${dir} by ${pct}%${consistentNote} from ${firstDate} to ${lastDate} and remains outside the reference range.` });
+    } else if (!isAbnormal && Math.abs(totalChange) >= 20) {
+      // Normal range but large shift — gold caution dot
+      insights.push({ dot: 'dot-gold', priority: 3,
+        text: `<strong>${name}</strong> has ${dir} by ${pct}%${consistentNote} from ${firstDate} to ${lastDate} and is currently within normal range.` });
     }
   });
 
-  if (insights.length === 0) {
-    insights.push({ direction: 'watch', text: 'No major trends detected yet. Upload more lab dates to see patterns over time.' });
-  }
+  insights.sort((a, b) => a.priority - b.priority);
 
-  return insights;
+  return insights.length > 0 ? insights
+    : [{ dot: 'dot-sage', text: `Values appear stable across all ${allLabDates.length} lab dates. No significant shifts detected.` }];
 }
 
 // ─────────────────────────────────
@@ -1597,16 +1845,22 @@ function updateHistory() {
   const list = document.getElementById('historyList');
   if (allLabDates.length === 0) return;
 
-  list.innerHTML = [...allLabDates].reverse().map(entry => {
+  // Use index-based onclick — avoids JSON-in-attribute corruption for large reports
+  list.innerHTML = [...allLabDates].reverse().map((entry, revIdx) => {
+    const idx = allLabDates.length - 1 - revIdx;
     const d = new Date(entry.date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-    const flagCount = entry.results.filter(r => r.status !== 'normal').length;
-    return `<div class="card" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;" onclick="showLabEntry(${JSON.stringify(entry).replace(/"/g,'&quot;')}); goTo('labs')">
-      <div>
+    const flagCount = (entry.results || []).filter(r => r.status !== 'normal').length;
+    return `<div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div style="cursor:pointer; flex:1; min-width:0;" onclick="showLabEntry(${idx}); goTo('labs')">
         <div style="font-family:'Fraunces',serif; font-size:16px; font-weight:400;">${label}</div>
-        <div style="font-size:13px; color:var(--ink-muted); margin-top:2px;">${entry.fileName} · ${entry.results.length} tests</div>
+        <div style="font-size:13px; color:var(--ink-muted); margin-top:2px;">${entry.fileName} · ${(entry.results||[]).length} tests</div>
       </div>
-      ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
+      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+        ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
+        <button onclick="deleteLabEntry(${idx})" title="Delete this report"
+          style="background:none;border:1px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#c0392b;line-height:1;" class="no-print">🗑️</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -1618,13 +1872,76 @@ function updateDateStrip() {
   if (allLabDates.length === 0) { strip.classList.add('hidden'); return; }
   strip.style.display = 'flex';
   strip.classList.remove('hidden');
-  strip.innerHTML = allLabDates.map(entry => {
+  strip.innerHTML = allLabDates.map((entry, idx) => {
     const d = new Date(entry.date + 'T12:00:00');
     const label = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const key = entry.fileKey || entry.date;
     const isActive = key === activeDateKey;
-    return `<button class="date-pill${isActive ? ' active' : ''}" onclick="showLabEntry(${JSON.stringify(entry).replace(/"/g,'&quot;')})">${label}</button>`;
+    return `<button class="date-pill${isActive ? ' active' : ''}" onclick="showLabEntry(${idx})">${label}</button>`;
   }).join('');
+}
+
+// ─────────────────────────────────
+// CLEAR ALL LABS
+// ─────────────────────────────────
+async function clearAllLabs() {
+  if (!confirm('Delete all lab data for this patient? This cannot be undone. You can re-upload their labs afterwards.')) return;
+  // Clear Supabase
+  try { await DB.deleteAllLabReports(); } catch(e) {}
+  // Clear localStorage (namespaced key for this patient)
+  try { localStorage.removeItem(labCacheKey()); } catch(e) {}
+  // Reset in-memory state
+  allLabDates = [];
+  // Reset UI back to empty state
+  document.getElementById('labResults').classList.add('hidden');
+  document.getElementById('emptyLabs').classList.remove('hidden');
+  document.getElementById('dateStrip').classList.add('hidden');
+  document.getElementById('dateStrip').innerHTML = '';
+  document.getElementById('historyList').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📁</div>
+      <div class="empty-title">No history yet</div>
+      <div class="empty-sub">Uploaded labs will appear here, sorted by date.</div>
+    </div>`;
+  const banner = document.getElementById('wrongPatientBanner');
+  if (banner) banner.classList.add('hidden');
+  showToast('All lab data cleared — you can now re-upload');
+}
+
+// ─────────────────────────────────
+// DELETE SINGLE LAB REPORT
+// ─────────────────────────────────
+async function deleteLabEntry(idx) {
+  const entry = allLabDates[idx];
+  if (!entry) return;
+  const d = new Date(entry.date + 'T12:00:00');
+  const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  if (!confirm(`Delete the lab report from ${label} (${entry.fileName})? This cannot be undone.`)) return;
+
+  // Remove from Supabase
+  if (entry.dbId) {
+    try { await DB.deleteLabReport(entry.dbId); } catch(e) {}
+  }
+
+  // Remove from in-memory array
+  allLabDates.splice(idx, 1);
+
+  // Persist updated list
+  saveLabs();
+
+  if (allLabDates.length === 0) {
+    // No labs left — show empty state
+    document.getElementById('labResults').classList.add('hidden');
+    document.getElementById('emptyLabs').classList.remove('hidden');
+    document.getElementById('dateStrip').classList.add('hidden');
+    document.getElementById('dateStrip').innerHTML = '';
+  } else {
+    // Show the most recent remaining entry
+    showLabEntry(allLabDates[allLabDates.length - 1]);
+    updateHistory();
+    renderTrends();
+  }
+  showToast('Lab report deleted');
 }
 
 // ─────────────────────────────────
@@ -1690,6 +2007,20 @@ function addInsightToScript(entryIdx, insightIdx) {
   const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
   showToast('✓ Insight saved — open Visit Script to use it');
+}
+
+function addTrendInsightToScript(i) {
+  const texts = window._trendTexts || [];
+  const rawText = texts[i];
+  if (!rawText) return;
+  const text = `[Lab trend] ${rawText}`;
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  if (!saved.includes(text)) saved.push(text);
+  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+  const btn = document.getElementById(`trend-btn-${i}`);
+  if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
+  showToast('✓ Trend insight saved — open Visit Script to use it');
 }
 
 // ─────────────────────────────────
@@ -1758,92 +2089,17 @@ function loadDemo() {
   }, 800);
 }
 
-async function diagnoseLabs() {
-  const box = document.getElementById('labsDiagnostic');
-  box.style.display = 'block';
-  box.textContent = 'Scanning…';
-  const lines = [];
-
-  // 1. Current patient ID
-  let currentPid = null;
-  try { currentPid = await DB.patientId(); } catch(e) {}
-  lines.push('Current patient ID: ' + (currentPid || 'none'));
-
-  // 2. localStorage scan
-  const lsKeys = [];
+// Load demo on first visit if no data
+async function forceRestoreLabs() {
+  const ordered = [];
+  if (currentPatientId) ordered.push('advocate_lab_results_' + currentPatientId);
+  ordered.push('advocate_lab_results');
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && (k.includes('lab') || k.includes('advocate_'))) lsKeys.push(k);
+      if (k && k.startsWith('advocate_lab_results') && !ordered.includes(k)) ordered.push(k);
     }
   } catch(e) {}
-  lines.push('\nLocalStorage keys with "lab" or "advocate_":');
-  if (!lsKeys.length) { lines.push('  (none)'); }
-  else {
-    for (const k of lsKeys) {
-      try {
-        const v = localStorage.getItem(k);
-        const parsed = JSON.parse(v || 'null');
-        const len = Array.isArray(parsed) ? parsed.length : (parsed ? 1 : 0);
-        // Show first 120 chars of actual content for lab result keys
-        const preview = k.startsWith('advocate_lab_results') ? ' → ' + (v||'').slice(0,120) : '';
-        lines.push(`  ${k}: ${len} item(s)${preview}`);
-      } catch { lines.push(`  ${k}: (unparseable)`); }
-    }
-  }
-
-  // 3. Supabase — all patients
-  try {
-    const pts = await DB.getPatients();
-    lines.push('\nSupabase lab_results per patient:');
-    for (const pt of pts) {
-      // All rows
-      const { count: total } = await _supa.from('lab_results')
-        .select('*', { count: 'exact', head: true }).eq('patient_id', pt.id);
-      // Report blobs only
-      const { count: reports } = await _supa.from('lab_results')
-        .select('*', { count: 'exact', head: true })
-        .eq('patient_id', pt.id).eq('test_name', '__report__');
-      lines.push(`  ${pt.name} (${pt.id.slice(0,8)}…): ${total||0} rows total, ${reports||0} report blobs`);
-    }
-  } catch(e) { lines.push('Supabase scan error: ' + e.message); }
-
-  box.textContent = lines.join('\n');
-
-  // Add a force-restore button after the diagnostic
-  const btn = document.createElement('button');
-  btn.className = 'btn btn-primary';
-  btn.style.cssText = 'margin-top:12px;display:inline-flex';
-  btn.textContent = '⚡ Force restore from backup';
-  btn.onclick = forceRestoreLabs;
-  box.parentNode.appendChild(btn);
-}
-
-function _extractReports(raw) {
-  // Format A: {_pid, reports:[{date,fileName,results},…]}
-  if (raw && !Array.isArray(raw) && Array.isArray(raw.reports)) return raw.reports;
-  // Format B: [{_pid, reports:[…]}, …]  — pick first blob that has reports
-  if (Array.isArray(raw) && raw[0]?.reports) {
-    for (const blob of raw) { if (Array.isArray(blob.reports) && blob.reports.length) return blob.reports; }
-  }
-  // Format C: [{date,fileName,results},…]  — already a flat report array
-  if (Array.isArray(raw) && raw[0]?.date) return raw;
-  // Format D: single report object {date,fileName,results}
-  if (raw && raw.date) return [raw];
-  return [];
-}
-
-async function forceRestoreLabs() {
-  const currentPid = await DB.patientId().catch(()=>null);
-
-  // Build ordered list: current patient's namespaced key first, then flat, then others
-  const ordered = [];
-  if (currentPid) ordered.push('advocate_lab_results_' + currentPid);
-  ordered.push(LAB_CACHE_KEY);
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith('advocate_lab_results') && !ordered.includes(k)) ordered.push(k);
-  }
 
   for (const k of ordered) {
     try {
@@ -1851,37 +2107,68 @@ async function forceRestoreLabs() {
       if (!raw) continue;
       const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
       if (!reports.length) continue;
-
-      allLabDates = reports;
-      allLabDates.sort((a, b) => new Date(a.date||0) - new Date(b.date||0));
-      // Save to Supabase (authoritative store going forward)
-      allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
-      // Cache to localStorage — skip silently if quota exceeded
-      try { localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(allLabDates)); } catch(e) {}
-      updateHistory();
-      showLabEntry(allLabDates[allLabDates.length - 1]);
-      document.getElementById('labResults').classList.remove('hidden');
-      document.getElementById('emptyLabs').classList.add('hidden');
-      showToast('✓ Restored ' + allLabDates.length + ' lab report(s) from ' + k);
-      return;
+      if (applyLoadedLabs(reports)) {
+        reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
+        try { localStorage.setItem(labCacheKey(), JSON.stringify(reports)); } catch(e) {}
+        showToast('✓ Backed up ' + reports.length + ' lab report(s) to cloud');
+        return;
+      }
     } catch(e) { console.error('[forceRestoreLabs]', k, e); }
   }
-  showToast('No recoverable lab data found — see console for details');
+  // If nothing in localStorage, push what's currently displayed
+  if (allLabDates && allLabDates.length) {
+    allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
+    showToast('✓ Backed up ' + allLabDates.length + ' lab report(s) to cloud');
+  } else {
+    showToast('No lab data found to back up');
+  }
 }
 
-// Load demo on first visit if no data
+async function diagnoseLabs() {
+  const el = document.getElementById('labsDiagnostic');
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = 'Scanning…\n';
+
+  el.textContent += `Current patient ID: ${currentPatientId || '(none)'}\n\n`;
+  el.textContent += '── localStorage keys ──\n';
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('advocate_lab')) {
+      try {
+        const raw = JSON.parse(localStorage.getItem(k) || 'null');
+        const rpts = _extractReports(raw);
+        el.textContent += `${k}: ${rpts.length} report(s)\n`;
+      } catch { el.textContent += `${k}: (parse error)\n`; }
+    }
+  }
+  try {
+    const pts = await DB.getPatients();
+    el.textContent += '\n── Supabase lab_results ──\n';
+    for (const pt of pts) {
+      const { count } = await _supa.from('lab_results').select('*', { count: 'exact', head: true })
+        .eq('patient_id', pt.id).eq('test_name', '__report__');
+      el.textContent += `${pt.name} (${pt.id.slice(0,8)}): ${count || 0} report(s)\n`;
+    }
+  } catch(e) { el.textContent += 'Supabase check failed: ' + e.message + '\n'; }
+
+  // Add restore button dynamically
+  if (!document.getElementById('forceRestoreBtn')) {
+    const btn = document.createElement('button');
+    btn.id = 'forceRestoreBtn';
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'margin-top:10px;display:inline-flex;gap:6px';
+    btn.textContent = '⚡ Force restore from any backup key';
+    btn.onclick = forceRestoreLabs;
+    el.after(btn);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  // Patient-switch guard: if the localStorage cache belongs to a different patient, clear it
+  // Set currentPatientId FIRST — loadLabs() and saveLabs() use it to namespace their key
   try {
     const pid = await DB.patientId();
-    if (pid) {
-      const cachedPid = localStorage.getItem(LAB_PID_KEY);
-      if (cachedPid && cachedPid !== pid) {
-        // Patient has changed — clear stale lab cache so we load fresh from Supabase
-        localStorage.removeItem(LAB_CACHE_KEY);
-      }
-      localStorage.setItem(LAB_PID_KEY, pid);
-    }
+    if (pid) currentPatientId = pid;
   } catch(e) {}
 
   loadProfile();
