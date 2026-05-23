@@ -856,8 +856,10 @@ function readLabCache(key) {
     if (!raw) return [];
     // New format: { _pid, reports }
     if (raw._pid !== undefined) {
-      if (currentPatientId && raw._pid !== currentPatientId) {
-        // Corrupted — belongs to a different patient; clear it
+      // Only reject on flat/shared key — namespaced keys are patient-isolated by key name
+      // so a stale _pid tag is not grounds for deletion (data is still this patient's)
+      const isNamespaced = currentPatientId && key.includes(currentPatientId);
+      if (!isNamespaced && currentPatientId && raw._pid !== currentPatientId) {
         localStorage.removeItem(key);
         return [];
       }
@@ -908,21 +910,35 @@ async function loadLabs() {
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. Current patient's namespaced key — readLabCache validates _pid and auto-clears if wrong patient
-  const cached = readLabCache(labCacheKey());
-  if (applyLoadedLabs(cached)) {
-    cached.forEach(r => DB.saveLabReport(r).catch(() => {}));
-    return;
-  }
+  // 2. Current patient's namespaced key — the KEY NAME guarantees patient isolation.
+  //    Do NOT delete it based on _pid mismatch — _pid may be stale from a migration.
+  //    applyLoadedLabs() calls saveLabs() which re-tags with the correct _pid.
+  try {
+    const raw = JSON.parse(localStorage.getItem(labCacheKey()) || 'null');
+    if (raw) {
+      const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
+      if (applyLoadedLabs(reports)) {
+        reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
+        return;
+      }
+    }
+  } catch(e) {}
 
-  // 2b. Flat key migration — readLabCache validates _pid, only migrates if it matches this patient
-  const flat = readLabCache('advocate_lab_results');
-  if (applyLoadedLabs(flat)) {
-    flat.forEach(r => DB.saveLabReport(r).catch(() => {}));
-    try { localStorage.setItem(labCacheKey(), JSON.stringify({ _pid: currentPatientId, reports: flat })); } catch(e) {}
-    localStorage.removeItem('advocate_lab_results');
-    return;
-  }
+  // 2b. Flat key — only migrate if _pid matches this patient (flat key IS shared)
+  try {
+    const raw = JSON.parse(localStorage.getItem('advocate_lab_results') || 'null');
+    if (raw) {
+      const pid = raw._pid || (Array.isArray(raw) && raw[0]?._pid) || null;
+      if (!pid || pid === currentPatientId) {
+        const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
+        if (applyLoadedLabs(reports)) {
+          reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
+          localStorage.removeItem('advocate_lab_results');
+          return;
+        }
+      }
+    }
+  } catch(e) {}
   // No data found — show empty state (normal for a new patient)
 }
 
