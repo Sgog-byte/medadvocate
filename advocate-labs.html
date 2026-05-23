@@ -908,51 +908,36 @@ async function loadLabs() {
     if (dbReports.length) { applyLoadedLabs(dbReports); return; }
   } catch(e) {}
 
-  // 2. All advocate_lab_results* localStorage keys (handles any format)
-  const keysToTry = new Set([labCacheKey(), 'advocate_lab_results']);
+  // 2. Current patient's namespaced localStorage key ONLY — never read another patient's key
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('advocate_lab_results')) keysToTry.add(k);
-    }
-  } catch(e) {}
-  for (const key of keysToTry) {
-    try {
-      const raw = JSON.parse(localStorage.getItem(key) || 'null');
-      if (!raw) continue;
+    const raw = JSON.parse(localStorage.getItem(labCacheKey()) || 'null');
+    if (raw) {
       const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
       if (applyLoadedLabs(saved)) {
         saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
-        try { localStorage.setItem(labCacheKey(), JSON.stringify(saved)); } catch(e) {}
-        return;
-      }
-    } catch(e) {}
-  }
-
-  // 3. Recovery: scan every patient ID — handles reports saved under wrong patient_id
-  try {
-    const allPatients = await DB.getPatients();
-    for (const pt of allPatients) {
-      if (pt.id === currentPatientId) continue;
-      const { data: rows } = await _supa
-        .from('lab_results').select('id, lab_date, notes')
-        .eq('patient_id', pt.id).eq('test_name', '__report__')
-        .order('lab_date', { ascending: true });
-      const recovered = [];
-      for (const row of (rows || [])) {
-        try {
-          const blob = JSON.parse(row.notes);
-          const rpts = _extractReports(blob);
-          rpts.forEach(r => recovered.push({ dbId: row.id, ...r }));
-        } catch {}
-      }
-      if (recovered.length && applyLoadedLabs(recovered)) {
-        recovered.forEach(r => { const { dbId, ...rd } = r; DB.saveLabReport(rd).catch(() => {}); });
-        try { localStorage.setItem(labCacheKey(), JSON.stringify(recovered)); } catch(e) {}
         return;
       }
     }
-  } catch(e) { console.warn('[Labs] Recovery scan failed:', e); }
+  } catch(e) {}
+
+  // 2b. Flat key migration — only if it carries this patient's _pid tag
+  try {
+    const raw = JSON.parse(localStorage.getItem('advocate_lab_results') || 'null');
+    if (raw) {
+      // Reject flat key if it's tagged to a different patient
+      const pid = raw._pid || (Array.isArray(raw) ? raw[0]?._pid : null);
+      if (!pid || pid === currentPatientId) {
+        const saved = _extractReports(raw).filter(r => r.date && r.results?.length);
+        if (applyLoadedLabs(saved)) {
+          saved.forEach(r => DB.saveLabReport(r).catch(() => {}));
+          try { localStorage.setItem(labCacheKey(), JSON.stringify(saved)); } catch(e) {}
+          localStorage.removeItem('advocate_lab_results');
+          return;
+        }
+      }
+    }
+  } catch(e) {}
+  // No data found — show empty state (normal for a new patient)
 }
 
 // ─────────────────────────────────
