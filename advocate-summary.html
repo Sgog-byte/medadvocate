@@ -318,18 +318,6 @@ const SOURCES=[
       const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
       if(arr.length>0)return true;
     }catch{}
-    // 3. Any advocate_lab_results_* namespaced keys — handles both array and {_pid,reports:[]} formats
-    try{
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        if(k&&k.startsWith('advocate_lab_results_')){
-          const raw=JSON.parse(localStorage.getItem(k)||'null');
-          if(!raw)continue;
-          const arr=Array.isArray(raw)?raw:(raw?.reports||[]);
-          if(arr.length>0)return true;
-        }
-      }
-    }catch{}
     return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>{
@@ -399,17 +387,9 @@ async function buildData(){
   try{meds=lsRead('advocate_medications');}catch{}
   // Flat key fallback — medications entered before namespacing was deployed
   if(!meds.length){try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch{}}
-  // Labs: Supabase first (patient-scoped), then patient-specific localStorage cache
+  // Labs: Supabase only — patient_id scoped via RLS
   let labReports=[];
   try{labReports=await DB.getLabReports();}catch{}
-  if(!labReports.length){
-    try{
-      // advocate-labs.html writes to the flat key (not patient-namespaced) — read directly
-      const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
-      if(Array.isArray(rawLabs)) labReports=rawLabs;
-      else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
-    }catch{}
-  }
   const timeline=(await DB.getTimelineEvents());
   const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
   const symEntries=(await DB.getSymptomEntries());
