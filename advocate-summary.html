@@ -42,7 +42,6 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .pt-card.pt-active .pt-check{opacity:1}
 .audit-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;background:var(--sage-pale);font-size:13px}
 .audit-row.empty{background:#f5f5f2;opacity:.6}
-.audit-row.contam{background:#fff3e0;border:1px solid #f0c060}
 .sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:18px}
 .source-chip{display:flex;align-items:center;gap:8px;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;background:var(--white);transition:all .2s;user-select:none}
 .source-chip.has-data{border-color:var(--sage-light);background:var(--sage-pale)}
@@ -711,34 +710,19 @@ async function runDataAudit(pid,gen){
   // A newer selectPatient() call happened while we were querying — discard stale results
   if(gen!==undefined&&gen!==_selectGen)return;
 
-  const lsMeds=lsRead('advocate_medications');
-  const lsTests=lsRead('advocate_testing');
-
-  // Flag tables that have DB data but empty local tool — sign of contamination
-  const medsContam=cMeds>0&&lsMeds.length===0;
-  const testsContam=cTests>0&&lsTests.length===0;
-
   const rows=[
-    {label:'Medications',dbCount:cMeds,lsCount:lsMeds.length,table:'medications',contam:medsContam,icon:'💊',note:medsContam?`DB has ${cMeds} rows but your Medications tool is empty — these are likely another patient's data`:''},
-    {label:'Diagnostic Tests',dbCount:cTests,lsCount:lsTests.length,table:'diagnostic_tests',contam:testsContam,icon:'🔬',note:testsContam?`DB has ${cTests} rows but your Testing tool is empty — these are likely another patient's data`:''},
-    {label:'Timeline Events',dbCount:cTimeline,table:'timeline_events',contam:false,icon:'📅',note:''},
-    {label:'Lab Reports',dbCount:cLabs,table:'lab_results',contam:false,icon:'🧪',note:''},
-    {label:'Symptom Entries',dbCount:cSymptoms,table:'symptom_entries',contam:false,icon:'📊',note:''},
+    {label:'Medications',dbCount:cMeds,icon:'💊'},
+    {label:'Diagnostic Tests',dbCount:cTests,icon:'🔬'},
+    {label:'Timeline Events',dbCount:cTimeline,icon:'📅'},
+    {label:'Lab Reports',dbCount:cLabs,icon:'🧪'},
+    {label:'Symptom Entries',dbCount:cSymptoms,icon:'📊'},
   ];
 
-  const anyContam=rows.some(r=>r.contam);
-
-  auditList.innerHTML=(anyContam?`
-    <div style="background:#fff3e0;border:1px solid #f0c060;border-radius:9px;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#7a4500">
-      <strong>⚠️ Contaminated data detected.</strong> Some database rows for this patient appear to belong to a different patient (data was saved under the wrong ID during an earlier sync). Use the 🗑️ Wipe buttons to remove them — your data entered in each tool is not affected.
-    </div>`:'') +
-  rows.map(r=>`
-    <div class="audit-row${r.dbCount===0?' empty':''}${r.contam?' contam':''}">
+  auditList.innerHTML=rows.map(r=>`
+    <div class="audit-row${r.dbCount===0?' empty':''}">
       <span style="font-size:15px">${r.icon}</span>
       <span style="flex:1;font-weight:${r.dbCount>0?'500':'400'}">${r.label}</span>
-      <span style="font-weight:600;color:${r.dbCount>0?(r.contam?'var(--amber)':'var(--sage-deep)'):'#aaa'}">${r.dbCount} in DB</span>
-      ${r.contam?`<button onclick="purgeTable('${r.table}','${escH(pid)}','${r.label}',this)" style="padding:4px 10px;background:#fff3e0;border:1px solid #f0c060;border-radius:6px;font-size:11px;font-weight:600;color:#7a4500;cursor:pointer">🗑️ Wipe from DB</button>`:''}
-      ${r.note&&!r.contam?`<span style="font-size:11px;color:var(--ink-muted)">${r.note}</span>`:''}
+      <span style="font-weight:600;color:${r.dbCount>0?'var(--sage-deep)':'#aaa'}">${r.dbCount} in DB</span>
     </div>`).join('');
 }
 
