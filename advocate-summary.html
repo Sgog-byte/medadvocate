@@ -330,16 +330,6 @@ const SOURCES=[
         }
       }
     }catch{}
-    // 4. Scan every patient ID for this user — handles reports saved under wrong patient_id.
-    // DB.getPatients() returns all patients for the current user, so this is always user-scoped.
-    try{
-      const pts=await DB.getPatients();
-      for(const pt of pts){
-        const {count}=await _supa.from('lab_results').select('*',{count:'exact',head:true})
-          .eq('patient_id',pt.id).eq('test_name','__report__');
-        if(count>0)return true;
-      }
-    }catch{}
     return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>{
@@ -418,18 +408,6 @@ async function buildData(){
       const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       if(Array.isArray(rawLabs)) labReports=rawLabs;
       else if(rawLabs?.reports&&Array.isArray(rawLabs.reports)) labReports=rawLabs.reports;
-    }catch{}
-  }
-  // Last resort: scan every patient ID for this user — finds reports saved under wrong patient_id
-  if(!labReports.length){
-    try{
-      const pts=await DB.getPatients();
-      for(const pt of pts){
-        const {data:ptLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
-          .eq('patient_id',pt.id).eq('test_name','__report__').order('lab_date',{ascending:true});
-        for(const row of(ptLabs||[])){try{labReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}}
-      }
-      labReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
     }catch{}
   }
   const timeline=(await DB.getTimelineEvents());
@@ -531,19 +509,6 @@ async function generateSummary(){
       const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
       const lsLabs=Array.isArray(rawLabs)?rawLabs:(rawLabs?.reports&&Array.isArray(rawLabs.reports)?rawLabs.reports:[]);
       if(lsLabs.length){summaryLabReports=lsLabs;labSource='localStorage';}
-    }catch{}
-  }
-  // Last resort: scan every patient ID — finds reports saved under wrong patient_id
-  if(!summaryLabReports.length){
-    try{
-      const pts=await DB.getPatients();
-      for(const pt of pts){
-        const {data:ptLabs}=await _supa.from('lab_results').select('id,lab_date,notes')
-          .eq('patient_id',pt.id).eq('test_name','__report__').order('lab_date',{ascending:true});
-        for(const row of(ptLabs||[])){try{summaryLabReports.push({dbId:row.id,...JSON.parse(row.notes)});}catch{}}
-      }
-      summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
-      if(summaryLabReports.length)labSource='supabase-scan';
     }catch{}
   }
   summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
