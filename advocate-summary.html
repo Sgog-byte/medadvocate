@@ -382,11 +382,8 @@ async function buildData(){
   if(!_pid){try{_pid=await DB.patientId();}catch{}}
   DB._patientId=_pid;
   const p=(await DB.getProfile());
-  // Medications: localStorage only — the meds tool never writes to Supabase.
   let meds=[];
-  try{meds=lsRead('advocate_medications');}catch{}
-  // Flat key fallback — medications entered before namespacing was deployed
-  if(!meds.length){try{meds=JSON.parse(localStorage.getItem('advocate_medications')||'[]');}catch{}}
+  try{meds=await DB.getMedications();}catch{}
   // Labs: Supabase only — patient_id scoped via RLS
   let labReports=[];
   try{labReports=await DB.getLabReports();}catch{}
@@ -483,14 +480,6 @@ async function generateSummary(){
     const dbLabs=await DB.getLabReports();
     if(dbLabs.length){summaryLabReports=dbLabs;labSource='supabase';}
   }catch(e){console.warn('[Summary] Labs DB error:',e);}
-  if(!summaryLabReports.length){
-    try{
-      // advocate-labs.html writes to the flat key (not patient-namespaced) — read directly
-      const rawLabs=JSON.parse(localStorage.getItem('advocate_lab_results')||'null');
-      const lsLabs=Array.isArray(rawLabs)?rawLabs:(rawLabs?.reports&&Array.isArray(rawLabs.reports)?rawLabs.reports:[]);
-      if(lsLabs.length){summaryLabReports=lsLabs;labSource='localStorage';}
-    }catch{}
-  }
   summaryLabReports.sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
 
   // Visible debug strip — shown in summary header so data issues are immediately obvious
