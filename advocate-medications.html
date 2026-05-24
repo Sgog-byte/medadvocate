@@ -230,13 +230,19 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
-// ── STORAGE ──
-let MED_KEY='advocate_medications';
+// ── LOG STORAGE (localStorage, namespaced by patient) ──
 let LOG_KEY='advocate_med_logs';
-function getMeds(){return JSON.parse(localStorage.getItem(MED_KEY)||'[]')}
-function saveMeds(meds){localStorage.setItem(MED_KEY,JSON.stringify(meds))}
 function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
 function saveLogs(logs){localStorage.setItem(LOG_KEY,JSON.stringify(logs))}
+
+// ── NORMALIZE Supabase med → local field names ──
+// Supabase uses: frequency, start_date, notes (stores JSON {reason,notes})
+// Render/report code uses: freq, start, reason, notes
+function normalizeMed(m){
+  let reason='',notes=m.notes||'';
+  try{if(notes.startsWith('{')){const p=JSON.parse(notes);reason=p.reason||'';notes=p.notes||'';}}catch{}
+  return{...m,freq:m.frequency||'',start:m.start_date||'',reason,notes};
+}
 
 // ── TABS ──
 function switchTab(tab){
@@ -244,52 +250,57 @@ function switchTab(tab){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   event.target.classList.add('active');
   document.getElementById('panel-'+tab).classList.add('active');
-  if(tab==='log')populateLogSelect();
+  if(tab==='log'){populateLogSelect();renderLogs();}
   if(tab==='report')prefillReport();
   if(tab==='medications')renderMeds();
-  if(tab==='log')renderLogs();
 }
 
 // ── MEDICATIONS ──
-function addMedication(){
+async function addMedication(){
   const name=document.getElementById('med_name').value.trim();
   if(!name){showToast('Please enter a medication name');return;}
-  const meds=getMeds();
-  meds.push({
-    id:Date.now(),
-    name,
-    dose:document.getElementById('med_dose').value.trim(),
-    freq:document.getElementById('med_freq').value.trim(),
-    type:document.getElementById('med_type').value,
-    doctor:document.getElementById('med_doctor').value.trim(),
-    start:document.getElementById('med_start').value,
-    reason:document.getElementById('med_reason').value.trim(),
-    notes:document.getElementById('med_notes').value.trim(),
-    status:'active'
-  });
-  saveMeds(meds);
-  // Clear form
-  ['med_name','med_dose','med_freq','med_doctor','med_start','med_reason','med_notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('med_type').value='prescription';
-  renderMeds();
-  showToast('Medication added ✓');
+  const reason=document.getElementById('med_reason').value.trim();
+  const notes=document.getElementById('med_notes').value.trim();
+  try{
+    await DB.saveMedication({
+      name,
+      dose:document.getElementById('med_dose').value.trim(),
+      frequency:document.getElementById('med_freq').value.trim(),
+      type:document.getElementById('med_type').value,
+      doctor:document.getElementById('med_doctor').value.trim(),
+      start_date:document.getElementById('med_start').value||null,
+      status:'active',
+      notes:JSON.stringify({reason,notes})
+    });
+    ['med_name','med_dose','med_freq','med_doctor','med_start','med_reason','med_notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('med_type').value='prescription';
+    await renderMeds();
+    showToast('Medication added ✓');
+  }catch(e){showToast('Error saving medication');console.error(e);}
 }
 
-function updateMedStatus(id,status){
-  const meds=getMeds().map(m=>m.id===id?{...m,status}:m);
-  saveMeds(meds);renderMeds();
-  showToast('Status updated ✓');
+async function updateMedStatus(id,status){
+  try{
+    await DB.saveMedication({id,status});
+    await renderMeds();
+    showToast('Status updated ✓');
+  }catch(e){showToast('Error updating status');console.error(e);}
 }
 
-function deleteMed(id){
+async function deleteMed(id){
   if(!confirm('Remove this medication?'))return;
-  saveMeds(getMeds().filter(m=>m.id!==id));
-  renderMeds();showToast('Removed');
+  try{
+    await DB.deleteMedication(id);
+    await renderMeds();
+    showToast('Removed');
+  }catch(e){showToast('Error removing medication');console.error(e);}
 }
 
-function renderMeds(){
-  const meds=getMeds();
+async function renderMeds(){
   const el=document.getElementById('med_list');
+  el.innerHTML='<div class="load-wrap"><div class="load-ring"></div></div>';
+  let meds=[];
+  try{meds=(await DB.getMedications()).map(normalizeMed);}catch(e){console.error('renderMeds:',e);}
   if(!meds.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">💊</div><div class="empty-title">No medications yet</div><div class="empty-sub">Add your first medication above to start tracking.</div></div>`;
     return;
@@ -305,7 +316,7 @@ function renderMeds(){
           <div class="med-name">${escH(m.name)}</div>
           <div class="med-dose">${m.dose?escH(m.dose)+' · ':''}${m.freq?escH(m.freq):''}${m.reason?' · For: '+escH(m.reason):''}</div>
         </div>
-        <button class="btn-danger" onclick="deleteMed(${m.id})">✕</button>
+        <button class="btn-danger" onclick="deleteMed('${m.id}')">✕</button>
       </div>
       <div class="med-tags">
         <span class="med-tag ${statusTag[m.status]||'tag-active'}">${statusLabel[m.status]||'Active'}</span>
@@ -315,22 +326,23 @@ function renderMeds(){
       </div>
       ${m.notes?`<div class="med-notes">${escH(m.notes)}</div>`:''}
       <div class="med-actions">
-        ${m.status!=='active'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus(${m.id},'active')">Mark Active</button>`:''}
-        ${m.status!=='paused'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus(${m.id},'paused')">Pause</button>`:''}
-        ${m.status!=='stopped'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus(${m.id},'stopped')">Mark Stopped</button>`:''}
+        ${m.status!=='active'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus('${m.id}','active')">Mark Active</button>`:''}
+        ${m.status!=='paused'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus('${m.id}','paused')">Pause</button>`:''}
+        ${m.status!=='stopped'?`<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="updateMedStatus('${m.id}','stopped')">Mark Stopped</button>`:''}
       </div>
     </div>`).join('');
 }
 
 // ── LOG ──
-function populateLogSelect(){
+async function populateLogSelect(){
   const sel=document.getElementById('log_med');
-  const meds=getMeds();
+  let meds=[];
+  try{meds=await DB.getMedications();}catch(e){}
   sel.innerHTML='<option value="">Select medication…</option>'+meds.map(m=>`<option value="${m.id}">${escH(m.name)}</option>`).join('');
 }
 
 function addLogEntry(){
-  const medId=parseInt(document.getElementById('log_med').value);
+  const medId=document.getElementById('log_med').value;
   const note=document.getElementById('log_note').value.trim();
   if(!medId||!note){showToast('Please select a medication and add a note');return;}
   const logs=getLogs();
@@ -351,19 +363,21 @@ function addLogEntry(){
   showToast('Log entry saved ✓');
 }
 
-function renderLogs(){
+async function renderLogs(){
   const logs=getLogs();
-  const meds=getMeds();
   const el=document.getElementById('log_list');
   if(!logs.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No log entries yet</div><div class="empty-sub">Start logging side effects, improvements, and dosage changes here.</div></div>`;
     return;
   }
+  let meds=[];
+  try{meds=await DB.getMedications();}catch(e){}
   const typeColors={side_effect:'var(--red)',improvement:'var(--sage)',dose_change:'var(--amber)',started:'var(--sage)',stopped:'var(--red)',note:'var(--ink-muted)'};
   const typeLabels={side_effect:'Side effect',improvement:'Improvement',dose_change:'Dose change',started:'Started',stopped:'Stopped',note:'Note'};
   const grouped={};
   logs.forEach(l=>{
-    const med=meds.find(m=>m.id===l.medId);
+    // Match by string comparison — log medId may be old numeric id or UUID
+    const med=meds.find(m=>String(m.id)===String(l.medId));
     const key=med?med.name:'Unknown';
     if(!grouped[key])grouped[key]=[];
     grouped[key].push(l);
@@ -399,24 +413,20 @@ async function prefillReport(){
   }
   try{
     const profile=await DB.getProfile();
-    if(profile.name && !document.getElementById('rpt_name').value){
-      document.getElementById('rpt_name').value=profile.name;
-    }
-    if(profile.diagnoses && !document.getElementById('rpt_diagnoses').value){
-      document.getElementById('rpt_diagnoses').value=profile.diagnoses;
-    }
+    if(profile.name&&!document.getElementById('rpt_name').value)document.getElementById('rpt_name').value=profile.name;
+    if(profile.diagnoses&&!document.getElementById('rpt_diagnoses').value)document.getElementById('rpt_diagnoses').value=profile.diagnoses;
   }catch(e){}
 }
 
 async function generateReport(){
-  const meds=getMeds();
+  let meds=[];
+  try{meds=(await DB.getMedications()).map(normalizeMed);}catch(e){}
   if(!meds.length){showToast('Add medications first');return;}
   const logs=getLogs();
   const name=document.getElementById('rpt_name').value.trim()||'Patient';
   const date=document.getElementById('rpt_date').value;
   const doctor=document.getElementById('rpt_doctor').value.trim();
   const diagnoses=document.getElementById('rpt_diagnoses').value.trim();
-
   const sec={
     summary:document.getElementById('sec_summary').checked,
     active:document.getElementById('sec_active').checked,
@@ -425,23 +435,20 @@ async function generateReport(){
     redflags:document.getElementById('sec_redflags').checked,
     questions:document.getElementById('sec_questions').checked,
   };
-
   const out=document.getElementById('report_out');
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Generating your medication report…</p></div>`;
-
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,
         system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Use ONLY the confirmed diagnoses provided — never speculate, suggest possible diagnoses, or use language like "could have" or "may indicate". Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary referencing the confirmed diagnoses and current medication picture","concerns":["2-4 notable considerations or interactions based on confirmed conditions and medications"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns given the confirmed diagnoses, or empty array if none"]}',
-        messages:[{role:'user',content:`Patient: ${name}\nConfirmed diagnoses: ${diagnoses||'Not specified'}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
+        messages:[{role:'user',content:`Patient: ${name}\nConfirmed diagnoses: ${diagnoses||'Not specified'}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>String(m.id)===String(l.medId));return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
     });
     const d=await r.json();
     const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
     const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     const activeMeds=meds.filter(m=>m.status==='active');
     const stoppedMeds=meds.filter(m=>m.status!=='active');
-
     out.innerHTML=`
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
         <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
@@ -474,24 +481,9 @@ document.getElementById('log_effectiveness').addEventListener('input',function()
 });
 document.getElementById('log_date').value=new Date().toISOString().split('T')[0];
 
-// Namespace storage keys by patient so data never bleeds between profiles
+// Namespace log key by patient then load
 (async()=>{
-  try{
-    const pid=await DB.patientId();
-    if(pid){
-      const newMedKey=`advocate_medications_${pid}`;
-      const newLogKey=`advocate_med_logs_${pid}`;
-      // One-time migration: copy old flat key data into the namespaced key
-      if(!localStorage.getItem(newMedKey)&&localStorage.getItem('advocate_medications')){
-        localStorage.setItem(newMedKey,localStorage.getItem('advocate_medications'));
-      }
-      if(!localStorage.getItem(newLogKey)&&localStorage.getItem('advocate_med_logs')){
-        localStorage.setItem(newLogKey,localStorage.getItem('advocate_med_logs'));
-      }
-      MED_KEY=newMedKey;
-      LOG_KEY=newLogKey;
-    }
-  }catch(e){}
+  try{const pid=await DB.patientId();if(pid)LOG_KEY=`advocate_med_logs_${pid}`;}catch(e){}
   renderMeds();
   renderLogs();
 })();
