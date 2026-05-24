@@ -230,7 +230,13 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
-// ── LOG STORAGE (localStorage, namespaced by patient) ──
+// ── STORAGE ──
+// getMeds() returns the in-memory cache populated by renderMeds() from Supabase.
+// This lets generateReport() call getMeds() synchronously without any changes.
+let _medsCache=[];
+function getMeds(){return _medsCache;}
+
+// Logs stay in localStorage, namespaced by patient
 let LOG_KEY='advocate_med_logs';
 function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
 function saveLogs(logs){localStorage.setItem(LOG_KEY,JSON.stringify(logs))}
@@ -299,8 +305,8 @@ async function deleteMed(id){
 async function renderMeds(){
   const el=document.getElementById('med_list');
   el.innerHTML='<div class="load-wrap"><div class="load-ring"></div></div>';
-  let meds=[];
-  try{meds=(await DB.getMedications()).map(normalizeMed);}catch(e){console.error('renderMeds:',e);}
+  try{_medsCache=(await DB.getMedications()).map(normalizeMed);}catch(e){_medsCache=[];console.error('renderMeds:',e);}
+  const meds=_medsCache;
   if(!meds.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">💊</div><div class="empty-title">No medications yet</div><div class="empty-sub">Add your first medication above to start tracking.</div></div>`;
     return;
@@ -419,14 +425,14 @@ async function prefillReport(){
 }
 
 async function generateReport(){
-  let meds=[];
-  try{meds=(await DB.getMedications()).map(normalizeMed);}catch(e){}
+  const meds=getMeds();
   if(!meds.length){showToast('Add medications first');return;}
   const logs=getLogs();
   const name=document.getElementById('rpt_name').value.trim()||'Patient';
   const date=document.getElementById('rpt_date').value;
   const doctor=document.getElementById('rpt_doctor').value.trim();
   const diagnoses=document.getElementById('rpt_diagnoses').value.trim();
+
   const sec={
     summary:document.getElementById('sec_summary').checked,
     active:document.getElementById('sec_active').checked,
@@ -435,20 +441,23 @@ async function generateReport(){
     redflags:document.getElementById('sec_redflags').checked,
     questions:document.getElementById('sec_questions').checked,
   };
+
   const out=document.getElementById('report_out');
   out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Generating your medication report…</p></div>`;
+
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,
         system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Use ONLY the confirmed diagnoses provided — never speculate, suggest possible diagnoses, or use language like "could have" or "may indicate". Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary referencing the confirmed diagnoses and current medication picture","concerns":["2-4 notable considerations or interactions based on confirmed conditions and medications"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns given the confirmed diagnoses, or empty array if none"]}',
-        messages:[{role:'user',content:`Patient: ${name}\nConfirmed diagnoses: ${diagnoses||'Not specified'}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>String(m.id)===String(l.medId));return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
+        messages:[{role:'user',content:`Patient: ${name}\nConfirmed diagnoses: ${diagnoses||'Not specified'}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
     });
     const d=await r.json();
     const result=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
     const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     const activeMeds=meds.filter(m=>m.status==='active');
     const stoppedMeds=meds.filter(m=>m.status!=='active');
+
     out.innerHTML=`
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
         <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
