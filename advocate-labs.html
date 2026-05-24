@@ -930,11 +930,16 @@ async function loadLabs() {
   } catch(e) {}
 
   // 2b. Flat key — only migrate if _pid matches this patient (flat key IS shared)
+  // If a patient is active and the flat key has NO _pid, it's ambiguous — delete it to prevent bleed.
+  // Both Sarah and Kira already have properly tagged namespaced keys with all their data.
   try {
     const raw = JSON.parse(localStorage.getItem('advocate_lab_results') || 'null');
     if (raw) {
       const pid = raw._pid || (Array.isArray(raw) && raw[0]?._pid) || null;
-      if (!pid || pid === currentPatientId) {
+      if (!pid && currentPatientId) {
+        // No _pid tag and a patient IS active — this blob is ambiguous, remove to prevent cross-patient bleed
+        localStorage.removeItem('advocate_lab_results');
+      } else if (!pid || pid === currentPatientId) {
         const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
         if (applyLoadedLabs(reports)) {
           reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
