@@ -140,7 +140,7 @@ select.parse-val:focus{border-color:var(--sage)}
   <div class="page-header">
     <div style="font-size:44px;margin-bottom:10px">🎙️</div>
     <h1 class="page-title">Voice <em>Symptom Log</em></h1>
-    <p class="page-sub">Say what's happening and AI will extract the symptom, severity, and time — then log it directly to the Symptom Tracker.</p>
+    <p class="page-sub">Say what's happening and AI will extract the symptom, severity, and time — then log it directly to the Symptom & Medical Event Tracker.</p>
   </div>
 
   <div class="warn" id="compatWarn"></div>
@@ -210,7 +210,7 @@ select.parse-val:focus{border-color:var(--sage)}
     <div class="success-flash-icon">✅</div>
     <div class="success-flash-text">
       <strong id="successMsg">Logged!</strong><br>
-      <span style="font-size:12px">Saved to Symptom Tracker. <a href="advocate-symptoms.html" style="color:var(--sage);text-decoration:none;font-weight:500">View all entries →</a></span>
+      <span style="font-size:12px">Saved to Symptom & Medical Event Tracker. <a href="advocate-symptoms.html" style="color:var(--sage);text-decoration:none;font-weight:500">View all entries →</a></span>
     </div>
   </div>
 
@@ -218,7 +218,7 @@ select.parse-val:focus{border-color:var(--sage)}
   <div class="btn-row" id="actionBtns" style="display:none">
     <button class="btn-primary" id="saveBtn" onclick="saveLog()">
       <div class="spinner" id="saveSpinner"></div>
-      <span id="saveBtnText">💾 Save to Symptom Tracker</span>
+      <span id="saveBtnText">💾 Save to Symptom & Medical Event Tracker</span>
     </button>
     <button class="btn-secondary" onclick="retryVoice()">🎤 Re-record</button>
     <button class="btn-danger" onclick="resetAll()">✕ Discard</button>
@@ -456,7 +456,7 @@ function selectSev(n) {
   }
 }
 
-// ── Save to Symptom Tracker ────────────────────────────────────
+// ── Save to Symptom & Medical Event Tracker ────────────────────────────────────
 async function saveLog() {
   const symptom = document.getElementById('f_symptom').value.trim();
   if (!symptom) { toast('Please enter a symptom'); return; }
@@ -512,7 +512,7 @@ async function saveLog() {
     document.getElementById('txText').className = 'tx-text empty';
     document.getElementById('txText').textContent = 'Your words will appear here as you speak...';
 
-    toast('Saved to Symptom Tracker ✓');
+    toast('Saved to Symptom & Medical Event Tracker ✓');
     await loadRecentLogs();
 
   } catch(e) {
@@ -521,7 +521,7 @@ async function saveLog() {
   } finally {
     btn.disabled = false;
     spinner.style.display = 'none';
-    document.getElementById('saveBtnText').textContent = '💾 Save to Symptom Tracker';
+    document.getElementById('saveBtnText').textContent = '💾 Save to Symptom & Medical Event Tracker';
   }
 }
 
