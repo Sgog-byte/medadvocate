@@ -443,7 +443,7 @@ function buildTestObj(extracted){
   return{
     id:Date.now(),
     type:selectedType||'other',
-    date:document.getElementById('test_date').value||new Date().toISOString().split('T')[0],
+    date:extracted?.date||document.getElementById('test_date').value||new Date().toISOString().split('T')[0],
     status:document.getElementById('test_status').value,
     doctor:document.getElementById('test_doctor').value.trim(),
     facility:document.getElementById('test_facility').value.trim(),
@@ -496,7 +496,7 @@ async function extractAndSave(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:1500,
-        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
+        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
         messages:msgs
       })
     });
