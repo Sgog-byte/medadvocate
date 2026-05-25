@@ -1205,7 +1205,7 @@ Extract all lab results and provide ${hasProfile ? 'PERSONALIZED contextual insi
 
 Return ONLY valid JSON (no markdown, no backticks):
 {
-  "reportDate": "YYYY-MM-DD or today if not found",
+  "reportDate": "YYYY-MM-DD as printed on the document, or null if not clearly visible",
   "patientName": "patient name if found, else null",
   "results": [
     {
@@ -1333,7 +1333,7 @@ async function extractLabsFromText(text) {
 function renderLabResults(data, fileName, fileKey) {
   // Store
   const entry = {
-    date: data.reportDate || new Date().toISOString().split('T')[0],
+    date: data.reportDate || '',
     fileName,
     fileKey: fileKey || null,
     patientName: data.patientName,
@@ -1845,15 +1845,21 @@ function updateHistory() {
   // Use index-based onclick — avoids JSON-in-attribute corruption for large reports
   list.innerHTML = [...allLabDates].reverse().map((entry, revIdx) => {
     const idx = allLabDates.length - 1 - revIdx;
-    const d = new Date(entry.date + 'T12:00:00');
-    const label = d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+    const d = entry.date ? new Date(entry.date + 'T12:00:00') : null;
+    const label = d ? d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '⚠️ Date unknown';
     const flagCount = (entry.results || []).filter(r => r.status !== 'normal').length;
     return `<div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
       <div style="cursor:pointer; flex:1; min-width:0;" onclick="showLabEntry(${idx}); goTo('labs')">
         <div style="font-family:'Fraunces',serif; font-size:16px; font-weight:400;">${label}</div>
         <div style="font-size:13px; color:var(--ink-muted); margin-top:2px;">${entry.fileName} · ${(entry.results||[]).length} tests</div>
       </div>
-      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0; flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-muted)" class="no-print">
+          <label style="white-space:nowrap">📅 Date:</label>
+          <input type="date" value="${entry.date||''}" title="Correct the report date"
+            style="font-size:12px;padding:3px 7px;border:1px solid #ccc;border-radius:6px;color:var(--ink)"
+            onchange="updateLabDate(${idx}, this.value)">
+        </div>
         ${flagCount > 0 ? `<span class="tile-status status-high">${flagCount} flagged</span>` : `<span class="tile-status status-normal">All normal</span>`}
         <button onclick="deleteLabEntry(${idx})" title="Delete this report"
           style="background:none;border:1px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#c0392b;line-height:1;" class="no-print">🗑️</button>
@@ -1906,6 +1912,18 @@ async function clearAllLabs() {
 }
 
 // ─────────────────────────────────
+// UPDATE DATE FOR A SINGLE LAB REPORT
+// ─────────────────────────────────
+function updateLabDate(idx, newDate) {
+  if (!newDate || !allLabDates[idx]) return;
+  allLabDates[idx].date = newDate;
+  saveLabs();
+  DB.saveLabReport(allLabDates[idx]).catch(() => {});
+  updateHistory();
+  updateDateStrip();
+  showToast('Date updated ✓');
+}
+
 // DELETE SINGLE LAB REPORT
 // ─────────────────────────────────
 async function deleteLabEntry(idx) {
