@@ -76,129 +76,73 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media print{
-  /* ── Page setup — tighter margins ── */
+  /* ── Page setup ── */
   @page{size:letter;margin:10mm 12mm}
 
-  /* ── Hide all UI chrome ── */
-  nav,
-  .page-header,
-  .fcard,
-  .action-row,
-  #howToUseBtn,
-  .toast,
-  #tourCard,
-  .sum-remove-btn,
-  .sum-item-remove,
-  .load-wrap{display:none!important}
+  /* ── Hide UI chrome ── */
+  nav,.page-header,.fcard,.action-row,#howToUseBtn,.toast,#tourCard,.sum-remove-btn,.sum-item-remove,.load-wrap{display:none!important}
 
-  /* ── Reset body & shell ── */
-  html,body{background:#fff!important;color:#000!important;font-size:9.5pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  /* ── Reset ── */
+  html,body{background:#fff!important;color:#000!important;font-size:9pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .shell{max-width:100%!important;padding:0!important;margin:0!important}
-
-  /* ── Outer document card ── */
   .summary-doc{border:none!important;border-radius:0!important;box-shadow:none!important}
 
-  /* ── Green header — compact ── */
-  .sum-header{
-    background:#1b4332!important;
-    color:#fff!important;
-    padding:9pt 14pt!important;
-    -webkit-print-color-adjust:exact!important;
-    print-color-adjust:exact!important
-  }
-  .sum-patient{font-size:16pt!important;font-weight:400!important;margin-bottom:2pt!important}
-  .sum-meta{font-size:8pt!important;color:rgba(255,255,255,.8)!important}
+  /* ── Compact header ── */
+  .sum-header{background:#1b4332!important;color:#fff!important;padding:8pt 14pt!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .sum-patient{font-size:15pt!important;font-weight:400!important;margin-bottom:1pt!important}
+  .sum-meta{font-size:7.5pt!important;color:rgba(255,255,255,.8)!important}
 
-  /* ── Two-column body ── */
+  /* ── 2-column grid body — more reliable than CSS columns in print ── */
   .sum-body{
     padding:10pt 14pt!important;
-    column-count:2!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
     column-gap:18pt!important;
-    column-fill:balance!important
+    row-gap:0!important;
+    align-items:start!important
   }
 
-  /* ── Sections — avoid breaking mid-section ── */
+  /* ── All sections: avoid page breaks within ── */
   .sum-sec{
     break-inside:avoid;
     page-break-inside:avoid;
-    margin-bottom:9pt!important;
-    padding-bottom:9pt!important;
-    border-bottom:0.5pt solid #ccc!important;
-    display:inline-block;        /* forces column layout to treat each as a unit */
-    width:100%
+    margin-bottom:8pt!important;
+    padding-bottom:8pt!important;
+    border-bottom:0.5pt solid #ddd!important
   }
   .sum-sec:last-child{border-bottom:none!important;margin-bottom:0!important;padding-bottom:0!important}
 
-  /* Snapshot and Questions span the full width */
-  .sum-sec:first-child,
-  .sum-sec:last-child{
-    column-span:all!important;
-    display:block!important
-  }
+  /* ── Snapshot (first) and Questions (last) span both columns ── */
   .sum-sec:first-child{
+    grid-column:1 / -1!important;
     border-bottom:1pt solid #2d6a4f!important;
-    margin-bottom:10pt!important;
-    padding-bottom:10pt!important
+    padding-bottom:9pt!important;
+    margin-bottom:9pt!important
   }
   .sum-sec:last-child{
-    border-top:0.5pt solid #ccc!important;
-    padding-top:9pt!important;
-    margin-top:4pt!important
+    grid-column:1 / -1!important;
+    border-top:0.5pt solid #ddd!important;
+    padding-top:8pt!important;
+    margin-top:2pt!important
   }
 
   /* ── Section title labels ── */
-  .sum-sec-title{
-    font-size:6.5pt!important;
-    letter-spacing:.14em!important;
-    color:#1b4332!important;
-    font-weight:700!important;
-    margin-bottom:5pt!important;
-    padding-bottom:2pt!important;
-    border-bottom:0.75pt solid #2d6a4f!important;
-    -webkit-print-color-adjust:exact!important;
-    print-color-adjust:exact!important
-  }
+  .sum-sec-title{font-size:6.5pt!important;letter-spacing:.13em!important;color:#1b4332!important;font-weight:700!important;margin-bottom:5pt!important;padding-bottom:2pt!important;border-bottom:0.5pt solid #2d6a4f!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 
   /* ── Items ── */
-  .sum-item{
-    background:none!important;
-    border-radius:0!important;
-    border:none!important;
-    border-left:none!important;
-    padding:2pt 0 2pt 10pt!important;
-    margin-bottom:3pt!important;
-    font-size:9pt!important;
-    line-height:1.4!important;
-    color:#000!important;
-    position:relative
-  }
-  .sum-item::before{content:'•';position:absolute;left:0;top:2pt;color:#2d6a4f;font-size:9pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .sum-item{background:none!important;border:none!important;border-left:none!important;border-radius:0!important;padding:1.5pt 0 1.5pt 10pt!important;margin-bottom:2.5pt!important;font-size:8.5pt!important;line-height:1.35!important;color:#000!important;position:relative}
+  .sum-item::before{content:'•';position:absolute;left:0;top:1.5pt;color:#2d6a4f;font-size:8.5pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .sum-item.red::before{content:'!';color:#c0392b!important;font-weight:700}
   .sum-item.amber::before{content:'→';color:#c9923a!important}
 
-  /* ── Clinical snapshot quote block ── */
-  .sum-body > .sum-sec:first-child [style*="border-left"]{
-    background:none!important;
-    border-left:2pt solid #2d6a4f!important;
-    padding:5pt 10pt!important;
-    font-size:10pt!important;
-    color:#000!important;
-    font-style:italic;
-    -webkit-print-color-adjust:exact!important;
-    print-color-adjust:exact!important
-  }
+  /* ── Snapshot italic quote ── */
+  .sum-body>.sum-sec:first-child [style*="border-left"]{background:none!important;border-left:2pt solid #2d6a4f!important;padding:5pt 10pt!important;font-size:9.5pt!important;line-height:1.5!important;color:#000!important;font-style:italic;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 
-  /* ── Lab results header line ── */
-  .sum-body [style*="font-size:11px"]{font-size:7.5pt!important;margin-bottom:5pt!important}
+  /* ── Lab meta line ── */
+  .sum-body [style*="font-size:11px"]{font-size:7pt!important;margin-bottom:4pt!important}
 
   /* ── Footer ── */
-  .sum-footer{
-    background:none!important;
-    border-top:0.5pt solid #999!important;
-    padding:5pt 14pt!important;
-    font-size:7pt!important;
-    color:#666!important
-  }
+  .sum-footer{background:none!important;border-top:0.5pt solid #aaa!important;padding:5pt 14pt!important;font-size:7pt!important;color:#666!important}
 }
 @media(max-width:640px){.two-col{grid-template-columns:1fr}.sum-body,.sum-header{padding:16px}}
 .hidden{display:none!important}
