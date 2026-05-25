@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MedAdvocate — Symptom Tracker</title>
+<title>MedAdvocate — Symptom &amp; Medical Event Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.8.2/css/pikaday.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.8.2/pikaday.min.js"></script>
 <style>
   :root {
     --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
@@ -337,7 +339,7 @@
 
   <div class="page-header">
     <div>
-      <h1 class="page-title">Symptom <em>Tracker</em></h1>
+      <h1 class="page-title">Symptom &amp; Medical Event <em>Tracker</em></h1>
       <div class="page-sub">Log daily. See patterns. Show the doctor what words can't.</div>
       <div id="patientBadge" style="display:none;margin-top:8px;align-items:center;gap:6px;padding:4px 12px 4px 8px;background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:100px;font-size:12px;font-weight:500;color:var(--sage-deep)">
         <span style="font-size:13px">👤</span>
@@ -390,8 +392,9 @@
       <div class="log-date-header">
         <div class="log-date-nav">
           <button class="date-nav-btn" onclick="changeLogDate(-1)">‹</button>
-          <div>
-            <div class="log-date-label" id="logDateLabel">Today</div>
+          <div style="position:relative">
+            <div class="log-date-label" id="logDateLabel" style="cursor:pointer" onclick="pikadayPicker&&pikadayPicker.show()" title="Click to pick a date">Today</div>
+            <input type="text" id="pikadayAnchor" style="position:absolute;top:100%;left:0;width:0;height:0;opacity:0;pointer-events:none;border:none;padding:0" tabindex="-1" readonly>
           </div>
           <button class="date-nav-btn" onclick="changeLogDate(1)" id="nextDateBtn">›</button>
         </div>
@@ -488,7 +491,7 @@
   <!-- ══ HISTORY PANEL ══ -->
   <div class="panel" id="panel-history">
     <div class="print-header" style="display:none">
-      <div class="print-header-title">MedAdvocate — Symptom Tracker · Log History</div>
+      <div class="print-header-title">MedAdvocate — Symptom &amp; Medical Event Tracker · Log History</div>
       <div class="print-header-date" id="printHeaderDate"></div>
     </div>
     <div class="card">
@@ -1771,7 +1774,7 @@ async function vlSaveLog() {
     document.getElementById('vl_txText').className = 'vl-tx-text empty';
     document.getElementById('vl_txText').textContent = 'Your words will appear here as you speak...';
 
-    showToast('Saved to Symptom Tracker ✓');
+    showToast('Saved to Symptom &amp; Medical Event Tracker ✓');
     await vlLoadRecentLogs();
 
   } catch(e) {
@@ -1932,5 +1935,51 @@ function vlResetAll() {
   </div>
 </div>
 
+<script>
+// ── PIKADAY DATE PICKER ──
+// Initialise after DOM + Pikaday script are ready.
+// Attaches to the hidden #pikadayAnchor input; clicking the date label triggers it.
+let pikadayPicker = null;
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof Pikaday === 'undefined') return; // CDN blocked — arrows still work
+
+  pikadayPicker = new Pikaday({
+    field: document.getElementById('pikadayAnchor'),
+    defaultDate: new Date(),
+    setDefaultDate: true,
+    maxDate: new Date(), // no future dates
+    showYearSelect: true, // enable year dropdown
+    showMonthSelect: true, // enable month dropdown
+    yearRange: [new Date().getFullYear() - 10, new Date().getFullYear()],
+    toString: function(date) {
+      // Keep internal value as YYYY-MM-DD
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    },
+    parse: function(str) {
+      const parts = str.split('-');
+      return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    },
+    onSelect: function(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const selected = y + '-' + m + '-' + d;
+      if (selected > todayStr()) return; // guard — no future dates
+      logDate = selected;
+      renderLog();
+    }
+  });
+
+  // Keep picker's selected date in sync when arrows are used
+  const origChangeLogDate = changeLogDate;
+  window.changeLogDate = function(dir) {
+    origChangeLogDate(dir);
+    if (pikadayPicker) pikadayPicker.setDate(new Date(logDate + 'T12:00:00'), true);
+  };
+});
+</script>
 </body>
 </html>
