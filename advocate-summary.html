@@ -495,7 +495,7 @@ async function generateSummary(){
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1400,
         system:`Create a clinical summary. Return ONLY this JSON (no markdown, no extra text):
 {"snapshot":"2 sentence clinical overview","concerns":["up to 4 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"history":["up to 3 key events"],"questions":["3 questions"]}
-Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data.`,
+Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data. CRITICAL: Never use relative time words like "recent", "recently", "current", "latest", or "new" — always reference the actual date from the data (e.g. "March 2024 EEG showed…"). If no date is available, describe the finding without any time qualifier.`,
         messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,4000)}${goals?'\nPatient goals: '+goals:''}`}]})
     });
     const responseText=await r.text();
