@@ -409,11 +409,33 @@ async function buildData(){
     if(stopped.length) parts.push(`STOPPED/PAUSED: ${stopped.map(m=>m.name).join(', ')}`);
   }
   if(sel.has('symptoms')&&symEntries.length){
-    const latest=symEntries[symEntries.length-1];
     const tracked=symState.trackedSymptoms||[];
     const DOD={3:'Sometimes distracts',4:'Distracts, can function',5:'Interrupts activities',6:'Hard to ignore',7:'Prevents daily activities',8:'Awful',9:"Can't bear it",10:'Worst possible'};
-    const active=tracked.filter(s=>latest.symptoms?.[s.id]>=3).sort((a,b)=>(latest.symptoms[b.id]||0)-(latest.symptoms[a.id]||0));
-    if(active.length) parts.push(`CURRENT SYMPTOMS (${fmtD(latest.date)}):\n${active.map(s=>`- ${s.label}: ${latest.symptoms[s.id]}/10 — ${DOD[latest.symptoms[s.id]]||'Severe'}`).join('\n')}`);
+    const symLines=[];
+
+    // Latest entry — snapshot of current state
+    const latest=symEntries[symEntries.length-1];
+    const activeNow=tracked.filter(s=>latest.symptoms?.[s.id]>=3).sort((a,b)=>(latest.symptoms[b.id]||0)-(latest.symptoms[a.id]||0));
+    if(activeNow.length) symLines.push(`Current (${fmtD(latest.date)}):\n${activeNow.map(s=>`- ${s.label}: ${latest.symptoms[s.id]}/10 — ${DOD[latest.symptoms[s.id]]||'Severe'}`).join('\n')}`);
+
+    // Symptom history — scan ALL entries, find any symptom that scored ≥3 in the last 90 days
+    const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-90);
+    const hist={};
+    for(const entry of symEntries){
+      if(!entry.symptoms) continue;
+      const eDate=new Date(entry.date||'0');
+      for(const sym of tracked){
+        const sc=entry.symptoms[sym.id]||0;
+        if(sc<1) continue;
+        if(!hist[sym.id]) hist[sym.id]={label:sym.label,max:0,recent:[]};
+        if(sc>hist[sym.id].max) hist[sym.id].max=sc;
+        if(sc>=3&&eDate>=cutoff) hist[sym.id].recent.push(entry.date);
+      }
+    }
+    const notable=Object.values(hist).filter(s=>s.recent.length>0).sort((a,b)=>b.max-a.max);
+    if(notable.length) symLines.push(`Symptom history (last 90 days):\n${notable.map(s=>`- ${s.label}: ${s.recent.length}x occurrence${s.recent.length>1?'s':''}, peak ${s.max}/10, most recent ${fmtD(s.recent[s.recent.length-1])}`).join('\n')}`);
+
+    if(symLines.length) parts.push(`SYMPTOMS:\n${symLines.join('\n\n')}`);
   }
   if(sel.has('labs')&&labReports.length){
     // Each report: {date, fileName, results:[{name, value, unit, status, note, low, high}]}
