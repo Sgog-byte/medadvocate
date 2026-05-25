@@ -401,15 +401,13 @@ async function buildData(){
 
   if(sel.has('profile')&&p.name) parts.push(`PATIENT: ${p.name}${p.age?', age '+p.age:''}`);
   if(sel.has('diagnoses')&&p.diagnoses) parts.push(`DIAGNOSES: ${p.diagnoses}`);
-  // RECENT EVENTS — timeline events in the last 60 days, surfaced early so the AI treats them as current, not historical
+  // ALL MEDICAL EVENTS — sorted most recent first so the AI sees current events before old history
   if(timeline.length){
     const EVT_R={er_visit:'ER/Urgent Care',hospitalization:'Hospitalization',appointment:'Doctor Appointment',procedure:'Procedure/Surgery',diagnosis:'Diagnosis',medication_change:'Medication Change',test:'Test/Imaging',other:'Event'};
-    const cutoff60=new Date(); cutoff60.setDate(cutoff60.getDate()-60);
-    const recent=timeline
+    const allEvts=timeline
       .map(e=>({...e,date:e.event_date||e.date,cat:(e.category||e.cat||'other').toLowerCase()}))
-      .filter(e=>e.date&&new Date(e.date)>=cutoff60)
-      .sort((a,b)=>new Date(b.date)-new Date(a.date));
-    if(recent.length) parts.push(`⚠️ RECENT CLINICAL EVENTS (last 60 days — include in snapshot):\n${recent.map(e=>`- ${fmtD(e.date)}: [${EVT_R[e.cat]||e.cat}] ${e.title||''}${e.description?' — '+e.description.substring(0,120):''}`).join('\n')}`);
+      .sort((a,b)=>new Date(b.date||'0')-new Date(a.date||'0'));
+    parts.push(`MEDICAL EVENTS — ALL (most recent first; populate the events[] array with every ER visit, seizure, hospitalization, and significant event listed here):\n${allEvts.map(e=>`- ${fmtD(e.date)||'(no date)'}: [${EVT_R[e.cat]||e.cat}] ${e.title||''}${e.description?' — '+e.description.substring(0,120):''}`).join('\n')}`);
   }
 
   if(sel.has('medications')&&meds.length){
@@ -459,14 +457,7 @@ async function buildData(){
     const abnormal=tests.filter(t=>t.status==='abnormal');
     parts.push(`TESTS & IMAGING (${tests.length} total):\n${tests.slice(0,6).map(t=>`- ${t.type} (${fmtD(t.date)}): ${t.status}${t.results?' — '+t.results.substring(0,80):''}`).join('\n')}${abnormal.length?'\nABNORMAL: '+abnormal.map(t=>t.type).join(', '):''}`);
   }
-  if(sel.has('timeline')&&timeline.length){
-    // Include ALL medical events — normalize Supabase cols (event_date, category)
-    const EVT_LABELS={er_visit:'ER/Urgent Care',hospitalization:'Hospitalization',appointment:'Doctor Appointment',procedure:'Procedure/Surgery',diagnosis:'Diagnosis',medication_change:'Medication Change',test:'Test/Imaging',other:'Event'};
-    const norm=timeline.map(e=>({...e,date:e.event_date||e.date,cat:(e.category||e.cat||'other').toLowerCase()}));
-    const sorted=[...norm].sort((a,b)=>new Date(a.date||'0')-new Date(b.date||'0'));
-    const lines=sorted.map(e=>`- ${fmtD(e.date)||'(no date)'}: [${EVT_LABELS[e.cat]||e.cat}] ${e.title||''}${e.description?' — '+e.description.substring(0,120):''}`);
-    parts.push(`MEDICAL EVENTS & HISTORY (${sorted.length} total):\n${lines.join('\n')}`);
-  }
+  // (timeline handled above — all events sent recent-first)
   return parts.join('\n\n');
 }
 
@@ -527,8 +518,8 @@ async function generateSummary(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1400,
         system:`Create a clinical summary. Return ONLY this JSON (no markdown, no extra text):
-{"snapshot":"2 sentence clinical overview","concerns":["up to 4 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"history":["up to 3 key events"],"questions":["3 questions"]}
-Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data. CRITICAL: Never use relative time words like "recent", "recently", "current", "latest", or "new" — always reference the actual date from the data (e.g. "March 2024 EEG showed…"). If no date is available, describe the finding without any time qualifier. CRITICAL: If the data contains a "RECENT CLINICAL EVENTS" section, those events MUST be mentioned in the snapshot — they represent the current clinical situation, not background history. Do not bury them in the history array.`,
+{"snapshot":"2 sentence clinical overview","concerns":["up to 5 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"events":["every ER visit, seizure episode, hospitalization, and significant medical event with its date — include ALL of them, do not summarize or cap"],"history":["up to 3 diagnostic milestones or background context items"],"questions":["3 questions"]}
+Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data. CRITICAL: Never use relative time words like "recent", "recently", "current", "latest", or "new" — always reference the actual date from the data (e.g. "March 2024 EEG showed…"). If no date is available, describe the finding without any time qualifier. CRITICAL: The events[] array must contain every single ER visit, seizure, hospitalization, and significant medical event from the MEDICAL EVENTS data — list them all with dates. Do not skip any. The snapshot must reflect the most recent events, not just the historical diagnosis.`,
         messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,4000)}${goals?'\nPatient goals: '+goals:''}`}]})
     });
     const responseText=await r.text();
@@ -567,6 +558,7 @@ Rules: Include ALL medications — do not skip any. The "questions" must be spec
           ${diagnosisEvents.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔴 Diagnoses</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${diagnosisEvents.map(e=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(e.title)}</strong>${e._date?' — diagnosed '+escH(fmtD(e._date)):''}${e._doctor?' · '+escH(e._doctor):''}</span><button class="sum-item-remove" onclick="deleteDiagnosis(${e.id},this)" title="Delete from timeline">✕</button></div>`).join('')}</div>`:''}
           ${res.meds?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>💊 Current Medications</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.meds.map(m=>`<div class="sum-item"><span class="sum-item-text"><strong>${escH(m.name)}</strong>${m.dose?' — '+escH(m.dose):''}${m.for?' · '+escH(m.for):''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${summaryLabReports.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🧪 Lab Results</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${(()=>{const latest=summaryLabReports[summaryLabReports.length-1];const allAbnormal=summaryLabReports.flatMap(r=>(r.results||[]).filter(t=>t.status&&t.status!=='normal'));const lines=(latest.results||[]).slice(0,20).map(r=>`<div class="sum-item${r.status&&r.status!=='normal'?' amber':''}"><span class="sum-item-text"><strong>${escH(r.name||r.test_name||'')}</strong>${r.value||r.result_value?' '+escH(String(r.value||r.result_value)):''}${r.unit?' '+escH(r.unit):''}${r.low&&r.high?' (ref: '+escH(r.low)+'–'+escH(r.high)+')':''}${r.status&&r.status!=='normal'?' <span style="color:var(--amber);font-weight:600">['+escH(r.status)+']</span>':''}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`);return`<div style="font-size:11px;color:var(--ink-muted);margin-bottom:8px">Latest panel: ${escH(fmtD(latest.date))} · ${summaryLabReports.length} report${summaryLabReports.length>1?'s':''} on file${allAbnormal.length?' · <span style="color:var(--amber);font-weight:600">'+allAbnormal.length+' abnormal</span>':''}</div>${lines.join('')}`;})()}</div>`:''}
+          ${res.events?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🚨 Significant Medical Events</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.events.map(e=>`<div class="sum-item"><span class="sum-item-text">${escH(e)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.findings?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>🔬 AI Findings</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.findings.map(f=>`<div class="sum-item amber"><span class="sum-item-text">→ ${escH(f)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.history?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>📅 Medical History</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.history.map(h=>`<div class="sum-item"><span class="sum-item-text">${escH(h)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
           ${res.questions?.length?`<div class="sum-sec"><div class="sum-sec-title"><span>❓ Questions for the Doctor</span><button class="sum-remove-btn" onclick="this.closest('.sum-sec').remove()">✕ Section</button></div>${res.questions.map(q=>`<div class="sum-item"><span class="sum-item-text">? ${escH(q)}</span><button class="sum-item-remove" onclick="this.closest('.sum-item').remove()" title="Remove">✕</button></div>`).join('')}</div>`:''}
