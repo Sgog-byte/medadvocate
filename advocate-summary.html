@@ -404,8 +404,8 @@ async function buildData(){
 
   // Medications go first — before events — so they are never cut off by the data slice
   if(sel.has('medications')&&meds.length){
-    const active=meds.filter(m=>m.status==='active');
-    const stopped=meds.filter(m=>m.status!=='active');
+    const active=meds.filter(m=>m.status==='active'||!m.status);
+    const stopped=meds.filter(m=>m.status==='stopped'||m.status==='paused');
     const medLines=active.map(m=>`- ${m.name}${m.dose?' '+m.dose:''}${(m.freq||m.frequency)?' '+(m.freq||m.frequency):''}${m.reason?' — '+m.reason:''}`);
     const stoppedNames=stopped.map(m=>m.name).join(', ');
     let medBlock=`CURRENT MEDICATIONS — copy these exactly into meds[], do not add or remove any:\n${active.length?medLines.join('\n'):'(none on file)'}`;
