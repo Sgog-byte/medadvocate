@@ -83,6 +83,19 @@
   .btn-red{background:transparent;border:1.5px solid var(--red-border);color:var(--red)}
   .btn-red:hover{background:var(--red-pale)}
 
+  /* MEDICAL EVENTS */
+  .flabel{display:block;font-size:11px;font-weight:600;color:var(--sage-deep);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+  .finput{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:var(--white);transition:border-color .2s}
+  .finput:focus{outline:none;border-color:var(--sage)}
+  .evt-item{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:12px;background:var(--warm);border:1px solid var(--border);margin-bottom:10px}
+  .evt-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+  .evt-body{flex:1;min-width:0}
+  .evt-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:2px}
+  .evt-meta{font-size:12px;color:var(--ink-muted)}
+  .evt-notes{font-size:12px;color:var(--ink-muted);font-style:italic;margin-top:4px}
+  .evt-del{background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-muted);padding:2px 4px;opacity:.5;transition:opacity .15s;flex-shrink:0}
+  .evt-del:hover{opacity:1}
+
   /* DAILY LOG */
   .log-date-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
   .log-date-nav{display:flex;align-items:center;gap:10px}
@@ -349,6 +362,7 @@
 
   <div class="tab-bar">
     <button class="tab active" onclick="switchTab('log')" id="tab-log">📅 Today's Log</button>
+    <button class="tab" onclick="switchTab('events')" id="tab-events">🏥 Medical Events</button>
     <button class="tab" onclick="switchTab('history')" id="tab-history">📋 History</button>
     <button class="tab" onclick="switchTab('trends')" id="tab-trends">📈 Trends</button>
     <button class="tab" onclick="switchTab('setup')" id="tab-setup">⚙️ Setup</button>
@@ -634,6 +648,55 @@
 
   </div>
 
+  <!-- ══ MEDICAL EVENTS PANEL ══ -->
+  <div class="panel" id="panel-events">
+
+    <div class="card">
+      <div class="card-title">Log a Medical Event</div>
+      <div class="card-sub">ER visits, hospitalizations, procedures, diagnoses, medication changes — anything significant. These are pulled into your Medical Summary under Medical History.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+        <div>
+          <label class="flabel">Date</label>
+          <input type="date" class="finput" id="evt_date">
+        </div>
+        <div>
+          <label class="flabel">Event Type</label>
+          <select class="finput" id="evt_type">
+            <option value="er_visit">🚨 ER / Urgent Care Visit</option>
+            <option value="hospitalization">🏥 Hospitalization</option>
+            <option value="appointment">👨‍⚕️ Doctor Appointment</option>
+            <option value="procedure">🔬 Procedure / Surgery</option>
+            <option value="diagnosis">📋 New Diagnosis</option>
+            <option value="medication_change">💊 Medication Change</option>
+            <option value="test">🧪 Test / Imaging</option>
+            <option value="other">📌 Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="flabel">Title <span style="font-weight:300;color:var(--ink-muted)">(brief description)</span></label>
+        <input type="text" class="finput" id="evt_title" placeholder="e.g. Admitted to ER with chest pain, Started methotrexate…">
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="flabel">Notes <span style="font-weight:300;color:var(--ink-muted)">(optional — outcome, doctor seen, follow-up needed)</span></label>
+        <textarea class="finput" id="evt_notes" rows="3" placeholder="e.g. Discharged after 6 hours. CT showed no clot. Referred to cardiology." style="resize:vertical;min-height:72px"></textarea>
+      </div>
+
+      <button class="btn btn-sage" style="width:100%;justify-content:center;margin-top:16px;padding:14px" onclick="saveEvent()">
+        + Save Medical Event
+      </button>
+    </div>
+
+    <div class="card" id="eventsListCard">
+      <div class="card-title">Past Medical Events</div>
+      <div id="eventsList"><div class="empty" style="padding:24px 0"><div class="empty-icon">🏥</div><div class="empty-title">No events logged yet</div><div class="empty-sub">Add your first medical event above.</div></div></div>
+    </div>
+
+  </div>
+
 </div><!-- shell -->
 
 <!-- ── PRINT DATE RANGE MODAL ── -->
@@ -799,6 +862,7 @@ function switchTab(tab) {
   if (tab === 'setup') renderSetup();
   if (tab === 'log') renderLog();
   if (tab === 'voice') vlInit();
+  if (tab === 'events') { loadEvents(); const d = document.getElementById('evt_date'); if(d&&!d.value) d.value = todayStr(); }
   // Only show print button on tabs that have printable content
   const printBtn = document.querySelector('.nav-print');
   if (printBtn) printBtn.style.display = (tab === 'history' || tab === 'trends') ? 'flex' : 'none';
@@ -1170,6 +1234,85 @@ function renderHistory() {
 function jumpToDate(date) {
   logDate = date;
   switchTab('log');
+}
+
+// ── MEDICAL EVENTS ──────────────────────────────────────────────────────────
+
+const EVT_TYPE_META = {
+  er_visit:         { label: 'ER / Urgent Care Visit',  icon: '🚨' },
+  hospitalization:  { label: 'Hospitalization',          icon: '🏥' },
+  appointment:      { label: 'Doctor Appointment',       icon: '👨‍⚕️' },
+  procedure:        { label: 'Procedure / Surgery',      icon: '🔬' },
+  diagnosis:        { label: 'New Diagnosis',            icon: '📋' },
+  medication_change:{ label: 'Medication Change',        icon: '💊' },
+  test:             { label: 'Test / Imaging',           icon: '🧪' },
+  other:            { label: 'Other',                    icon: '📌' },
+};
+
+let _medEvents = [];
+
+async function loadEvents() {
+  try { _medEvents = await DB.getTimelineEvents(); } catch(e) { _medEvents = []; }
+  renderEventsList();
+}
+
+function renderEventsList() {
+  const el = document.getElementById('eventsList');
+  if (!el) return;
+  if (!_medEvents.length) {
+    el.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-icon">🏥</div><div class="empty-title">No events logged yet</div><div class="empty-sub">Add your first medical event above.</div></div>';
+    return;
+  }
+  const sorted = [..._medEvents].sort((a,b) => (b.event_date||'') > (a.event_date||'') ? 1 : -1);
+  el.innerHTML = sorted.map(evt => {
+    const meta = EVT_TYPE_META[evt.category] || EVT_TYPE_META.other;
+    const dateStr = evt.event_date ? new Date(evt.event_date + 'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) : (evt.event_year || '');
+    return `<div class="evt-item">
+      <div class="evt-icon">${meta.icon}</div>
+      <div class="evt-body">
+        <div class="evt-title">${escH(evt.title || meta.label)}</div>
+        <div class="evt-meta">${meta.label} · ${dateStr}</div>
+        ${evt.description ? `<div class="evt-notes">${escH(evt.description)}</div>` : ''}
+      </div>
+      <button class="evt-del no-print" onclick="deleteEvent('${evt.id}')" title="Delete">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+async function saveEvent() {
+  const title = document.getElementById('evt_title').value.trim();
+  if (!title) { showToast('Please enter a title for this event'); return; }
+  const date = document.getElementById('evt_date').value;
+  const category = document.getElementById('evt_type').value;
+  const notes = document.getElementById('evt_notes').value.trim();
+  try {
+    await DB.saveTimelineEvent({
+      date: date || null,
+      title,
+      description: notes || null,
+      category,
+    });
+    document.getElementById('evt_title').value = '';
+    document.getElementById('evt_notes').value = '';
+    document.getElementById('evt_date').value = todayStr();
+    await loadEvents();
+    showToast('Medical event saved ✓');
+  } catch(e) {
+    showToast('Error saving event');
+    console.error(e);
+  }
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Remove this medical event?')) return;
+  try {
+    await DB.deleteTimelineEvent(id);
+    _medEvents = _medEvents.filter(e => String(e.id) !== String(id));
+    renderEventsList();
+    showToast('Event removed');
+  } catch(e) {
+    showToast('Error removing event');
+  }
 }
 
 function deleteEntry(date) {
