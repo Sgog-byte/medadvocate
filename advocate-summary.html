@@ -416,7 +416,9 @@ async function buildData(){
     // support both localStorage (freq, reason) and Supabase (frequency) field names
     const medLines=active.map(m=>`- ${m.name}${m.dose?' '+m.dose:''}${(m.freq||m.frequency)?' '+(m.freq||m.frequency):''}${m.reason?' — '+m.reason:''}`);
     const stoppedNames=stopped.map(m=>m.name).join(', ');
-    parts.push(`===BEGIN AUTHORITATIVE MEDICATION LIST===\nCURRENT MEDICATIONS (meds[] must contain EXACTLY these and nothing else):\n${active.length?medLines.join('\n'):'(none)'}\n${stoppedNames?`DISCONTINUED — must NOT appear in meds[] or snapshot: ${stoppedNames}`:''}===END MEDICATION LIST — any medication mentioned elsewhere in this data (event notes, visit descriptions, labs) is historical only and must NOT be added to meds[]===`);
+    let medBlock=`CURRENT MEDICATIONS — copy these exactly into meds[], do not add or remove any:\n${active.length?medLines.join('\n'):'(none on file)'}`;
+    if(stoppedNames) medBlock+=`\nDISCONTINUED (historical only — must NOT appear in meds[] or snapshot as current): ${stoppedNames}`;
+    parts.push(medBlock);
   }
   if(sel.has('symptoms')&&symEntries.length){
     const tracked=symState.trackedSymptoms||[];
