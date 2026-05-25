@@ -126,6 +126,10 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
     margin-top:2pt!important
   }
 
+  /* ── Column assignments set by balancing algorithm ── */
+  .sum-sec[data-col="1"]{grid-column:1!important}
+  .sum-sec[data-col="2"]{grid-column:2!important}
+
   /* ── Section title labels ── */
   .sum-sec-title{font-size:6.5pt!important;letter-spacing:.13em!important;color:#1b4332!important;font-weight:700!important;margin-bottom:5pt!important;padding-bottom:2pt!important;border-bottom:0.5pt solid #2d6a4f!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 
@@ -540,6 +544,20 @@ Rules: The meds[] array must contain EXACTLY the medications listed between ===B
       </div>`;
 
     window._sumText=`MEDICAL SUMMARY — ${name}\n${today}${purpose?'\n'+purpose:''}\n\n${res.clinicalSnapshot||''}\n\nPRIMARY CONCERNS:\n${(res.primaryConcerns||[]).map(c=>'• '+c).join('\n')}\n\nMEDICATIONS:\n${(res.currentMedications||[]).map(m=>'• '+m.name+' '+m.dose).join('\n')}\n\nQUESTIONS FOR DOCTOR:\n${(res.questionsForDoctor||[]).map(q=>'? '+q).join('\n')}`;
+
+    // Balance print columns: assign data-col="1" or "2" to each middle section
+    // based on item count so longer sections go left, shorter ones right.
+    requestAnimationFrame(()=>{
+      const secs=Array.from(out.querySelectorAll('.sum-sec'));
+      if(secs.length<3) return;
+      const middle=secs.slice(1,secs.length-1); // exclude snapshot (first) and questions (last)
+      let lh=0,rh=0;
+      middle.forEach(sec=>{
+        const h=sec.querySelectorAll('.sum-item').length+2; // +2 for title weight
+        if(lh<=rh){sec.setAttribute('data-col','1');lh+=h;}
+        else{sec.setAttribute('data-col','2');rh+=h;}
+      });
+    });
   }catch(e){
     out.innerHTML=`<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:16px;color:var(--red)"><strong>Something went wrong.</strong><br><span style="font-size:12px;opacity:.8">${escH(e.message||String(e))}</span></div>`;
     console.error(e);
