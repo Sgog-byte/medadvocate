@@ -427,13 +427,12 @@ async function buildData(){
     parts.push(`TESTS & IMAGING (${tests.length} total):\n${tests.slice(0,6).map(t=>`- ${t.type} (${fmtD(t.date)}): ${t.status}${t.results?' — '+t.results.substring(0,80):''}`).join('\n')}${abnormal.length?'\nABNORMAL: '+abnormal.map(t=>t.type).join(', '):''}`);
   }
   if(sel.has('timeline')&&timeline.length){
-    // DB returns raw Supabase cols: event_date, category (normalize for use here)
+    // Include ALL medical events — normalize Supabase cols (event_date, category)
+    const EVT_LABELS={er_visit:'ER/Urgent Care',hospitalization:'Hospitalization',appointment:'Doctor Appointment',procedure:'Procedure/Surgery',diagnosis:'Diagnosis',medication_change:'Medication Change',test:'Test/Imaging',other:'Event'};
     const norm=timeline.map(e=>({...e,date:e.event_date||e.date,cat:(e.category||e.cat||'other').toLowerCase()}));
-    const sorted=[...norm].sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
-    ['diagnosis','hospitalization','procedure'].forEach(cat=>{
-      const evts=sorted.filter(e=>e.cat===cat);
-      if(evts.length) parts.push(`${cat.toUpperCase()}S:\n${evts.map(e=>`- ${fmtD(e.date)}: ${e.title}${e.doctor?' ('+e.doctor+')':''}`).join('\n')}`);
-    });
+    const sorted=[...norm].sort((a,b)=>new Date(a.date||'0')-new Date(b.date||'0'));
+    const lines=sorted.map(e=>`- ${fmtD(e.date)||'(no date)'}: [${EVT_LABELS[e.cat]||e.cat}] ${e.title||''}${e.description?' — '+e.description.substring(0,120):''}`);
+    parts.push(`MEDICAL EVENTS & HISTORY (${sorted.length} total):\n${lines.join('\n')}`);
   }
   return parts.join('\n\n');
 }
@@ -634,29 +633,30 @@ async function runDataAudit(pid,gen){
   const auditList=document.getElementById('auditList');
   auditList.innerHTML='<div style="font-size:12px;color:var(--ink-muted)">Scanning database…</div>';
 
-  // Query Supabase counts directly for this patient_id — no caching, no inference
-  const [cMeds,cTests,cTimeline,cLabs]=await Promise.all([
+  // Query counts — tests use getDiagnosticTests() which falls back to localStorage
+  const [cMeds,cTimeline,cLabs,testsAll]=await Promise.all([
     dbCount('medications',pid),
-    dbCount('diagnostic_tests',pid),
     dbCount('timeline_events',pid),
     dbCount('lab_results',pid),
+    DB.getDiagnosticTests().catch(()=>[]),
   ]);
+  const cTests=testsAll.length;
 
   // A newer selectPatient() call happened while we were querying — discard stale results
   if(gen!==undefined&&gen!==_selectGen)return;
 
   const rows=[
-    {label:'Medications',dbCount:cMeds,icon:'💊'},
-    {label:'Diagnostic Tests',dbCount:cTests,icon:'🔬'},
-    {label:'Medical Events',dbCount:cTimeline,icon:'🏥'},
-    {label:'Lab Reports',dbCount:cLabs,icon:'🧪'},
+    {label:'Medications',count:cMeds,icon:'💊',label2:'in DB'},
+    {label:'Diagnostic Tests',count:cTests,icon:'🔬',label2:cTests>0?'found':'in DB'},
+    {label:'Medical Events',count:cTimeline,icon:'🏥',label2:'in DB'},
+    {label:'Lab Reports',count:cLabs,icon:'🧪',label2:'in DB'},
   ];
 
   auditList.innerHTML=rows.map(r=>`
-    <div class="audit-row${r.dbCount===0?' empty':''}">
+    <div class="audit-row${r.count===0?' empty':''}">
       <span style="font-size:15px">${r.icon}</span>
-      <span style="flex:1;font-weight:${r.dbCount>0?'500':'400'}">${r.label}</span>
-      <span style="font-weight:600;color:${r.dbCount>0?'var(--sage-deep)':'#aaa'}">${r.dbCount} in DB</span>
+      <span style="flex:1;font-weight:${r.count>0?'500':'400'}">${r.label}</span>
+      <span style="font-weight:600;color:${r.count>0?'var(--sage-deep)':'#aaa'}">${r.count} ${r.label2}</span>
     </div>`).join('');
 }
 
