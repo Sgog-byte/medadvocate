@@ -76,8 +76,8 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media print{
-  /* ── Page setup ── */
-  @page{size:letter;margin:18mm 20mm}
+  /* ── Page setup — tighter margins ── */
+  @page{size:letter;margin:10mm 12mm}
 
   /* ── Hide all UI chrome ── */
   nav,
@@ -92,90 +92,112 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   .load-wrap{display:none!important}
 
   /* ── Reset body & shell ── */
-  html,body{background:#fff!important;color:#000!important;font-size:11pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:#fff!important;color:#000!important;font-size:9.5pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .shell{max-width:100%!important;padding:0!important;margin:0!important}
 
-  /* ── Outer document card — simple bordered box ── */
+  /* ── Outer document card ── */
   .summary-doc{border:none!important;border-radius:0!important;box-shadow:none!important}
 
-  /* ── Green header bar ── */
+  /* ── Green header — compact ── */
   .sum-header{
     background:#1b4332!important;
     color:#fff!important;
-    padding:14pt 18pt!important;
+    padding:9pt 14pt!important;
     -webkit-print-color-adjust:exact!important;
-    print-color-adjust:exact!important;
-    border-bottom:2pt solid #1b4332!important
+    print-color-adjust:exact!important
   }
-  .sum-patient{font-size:20pt!important;font-weight:400!important;margin-bottom:3pt!important}
-  .sum-meta{font-size:9pt!important;color:rgba(255,255,255,.8)!important}
+  .sum-patient{font-size:16pt!important;font-weight:400!important;margin-bottom:2pt!important}
+  .sum-meta{font-size:8pt!important;color:rgba(255,255,255,.8)!important}
 
-  /* ── Body padding ── */
-  .sum-body{padding:14pt 18pt!important}
+  /* ── Two-column body ── */
+  .sum-body{
+    padding:10pt 14pt!important;
+    column-count:2!important;
+    column-gap:18pt!important;
+    column-fill:balance!important
+  }
 
-  /* ── Sections — keep together, rule between them ── */
+  /* ── Sections — avoid breaking mid-section ── */
   .sum-sec{
-    page-break-inside:avoid;
     break-inside:avoid;
-    margin-bottom:12pt!important;
-    padding-bottom:12pt!important;
-    border-bottom:0.5pt solid #ccc!important
+    page-break-inside:avoid;
+    margin-bottom:9pt!important;
+    padding-bottom:9pt!important;
+    border-bottom:0.5pt solid #ccc!important;
+    display:inline-block;        /* forces column layout to treat each as a unit */
+    width:100%
   }
   .sum-sec:last-child{border-bottom:none!important;margin-bottom:0!important;padding-bottom:0!important}
 
+  /* Snapshot and Questions span the full width */
+  .sum-sec:first-child,
+  .sum-sec:last-child{
+    column-span:all!important;
+    display:block!important
+  }
+  .sum-sec:first-child{
+    border-bottom:1pt solid #2d6a4f!important;
+    margin-bottom:10pt!important;
+    padding-bottom:10pt!important
+  }
+  .sum-sec:last-child{
+    border-top:0.5pt solid #ccc!important;
+    padding-top:9pt!important;
+    margin-top:4pt!important
+  }
+
   /* ── Section title labels ── */
   .sum-sec-title{
-    font-size:7.5pt!important;
-    letter-spacing:.15em!important;
+    font-size:6.5pt!important;
+    letter-spacing:.14em!important;
     color:#1b4332!important;
     font-weight:700!important;
-    margin-bottom:7pt!important;
-    padding-bottom:3pt!important;
-    border-bottom:1pt solid #2d6a4f!important;
+    margin-bottom:5pt!important;
+    padding-bottom:2pt!important;
+    border-bottom:0.75pt solid #2d6a4f!important;
     -webkit-print-color-adjust:exact!important;
     print-color-adjust:exact!important
   }
 
-  /* ── Strip coloured boxes from items — use plain lines ── */
+  /* ── Items ── */
   .sum-item{
     background:none!important;
     border-radius:0!important;
     border:none!important;
     border-left:none!important;
-    padding:3pt 0 3pt 12pt!important;
-    margin-bottom:4pt!important;
-    font-size:10.5pt!important;
-    line-height:1.5!important;
+    padding:2pt 0 2pt 10pt!important;
+    margin-bottom:3pt!important;
+    font-size:9pt!important;
+    line-height:1.4!important;
     color:#000!important;
     position:relative
   }
-  /* Bullet dot for all items */
-  .sum-item::before{content:'•';position:absolute;left:0;top:3pt;color:#2d6a4f;font-size:10pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  /* Red items — small accent */
-  .sum-item.red{color:#000!important}
+  .sum-item::before{content:'•';position:absolute;left:0;top:2pt;color:#2d6a4f;font-size:9pt;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .sum-item.red::before{content:'!';color:#c0392b!important;font-weight:700}
-  /* Amber items */
   .sum-item.amber::before{content:'→';color:#c9923a!important}
 
   /* ── Clinical snapshot quote block ── */
   .sum-body > .sum-sec:first-child [style*="border-left"]{
     background:none!important;
     border-left:2pt solid #2d6a4f!important;
-    padding:6pt 12pt!important;
-    font-size:11pt!important;
+    padding:5pt 10pt!important;
+    font-size:10pt!important;
     color:#000!important;
     font-style:italic;
     -webkit-print-color-adjust:exact!important;
     print-color-adjust:exact!important
   }
 
+  /* ── Lab results header line ── */
+  .sum-body [style*="font-size:11px"]{font-size:7.5pt!important;margin-bottom:5pt!important}
+
   /* ── Footer ── */
   .sum-footer{
     background:none!important;
     border-top:0.5pt solid #999!important;
-    padding:6pt 18pt!important;
-    font-size:8pt!important;
-    color:#555!important
+    padding:5pt 14pt!important;
+    font-size:7pt!important;
+    color:#666!important
   }
 }
 @media(max-width:640px){.two-col{grid-template-columns:1fr}.sum-body,.sum-header{padding:16px}}
