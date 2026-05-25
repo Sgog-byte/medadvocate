@@ -516,9 +516,9 @@ async function generateSummary(){
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1400,
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
         system:`Create a clinical summary. Return ONLY this JSON (no markdown, no extra text):
-{"snapshot":"2 sentence clinical overview","concerns":["up to 5 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"events":["every ER visit, seizure episode, hospitalization, and significant medical event with its date — include ALL of them, do not summarize or cap"],"history":["up to 3 diagnostic milestones or background context items"],"questions":["3 questions"]}
+{"snapshot":"2 sentence clinical overview","concerns":["up to 5 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"events":["every ER visit, seizure, hospitalization, and significant medical event with its date — up to 15 items"],"history":["up to 3 diagnostic milestones or background context items"],"questions":["3 questions"]}
 Rules: Include ALL medications — do not skip any. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data. CRITICAL: Never use relative time words like "recent", "recently", "current", "latest", or "new" — always reference the actual date from the data (e.g. "March 2024 EEG showed…"). If no date is available, describe the finding without any time qualifier. CRITICAL: The events[] array must contain every single ER visit, seizure, hospitalization, and significant medical event from the MEDICAL EVENTS data — list them all with dates. Do not skip any. The snapshot must reflect the most recent events, not just the historical diagnosis.`,
         messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,4000)}${goals?'\nPatient goals: '+goals:''}`}]})
     });
