@@ -548,6 +548,28 @@ async function extractAndSave(){
     if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal||inputIsAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
       testObj.status='abnormal';
     }
+
+    // For PDF uploads that still come back "normal": do a targeted second check focused only
+    // on the Impressions/Assessment section — the AI often misses it on the first pass
+    if(curFileType==='application/pdf'&&(testObj.status==='normal'||testObj.status==='pending')){
+      try{
+        const vr=await fetch('/.netlify/functions/claude-proxy',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            model:'claude-sonnet-4-6',max_tokens:50,
+            system:'You are reviewing a diagnostic report. Respond with only a single word: "abnormal" or "normal". No other text.',
+            messages:[{role:'user',content:[
+              {type:'document',source:{type:'base64',media_type:'application/pdf',data:curFileData}},
+              {type:'text',text:'Find the Impressions, Assessment, or Conclusion section of this report. Ignore all individual WNL/within-normal-limits table entries — look only at the overall summary conclusion. Does that conclusion section describe ANY abnormal findings, instability, ligament laxity, loss of curvature, kyphosis, subluxation, herniation, or any measurement exceeding established normal ranges? Respond with only "abnormal" or "normal".'}
+            ]}]
+          })
+        });
+        const vd=await vr.json();
+        const vt=(vd.content?.[0]?.text||'').trim().toLowerCase();
+        if(vt.startsWith('abnormal')) testObj.status='abnormal';
+      }catch(e){/* ignore validation errors — proceed with first-pass status */}
+    }
+
     document.getElementById('test_status').value=testObj.status;
     tests.unshift(testObj);
     saveTests(tests);
