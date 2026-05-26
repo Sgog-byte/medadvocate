@@ -465,6 +465,20 @@ function saveTest(extracted){
   clearUpload();
 }
 
+// Override status on a saved test (e.g. when AI returns wrong status for complex PDF)
+function overrideTestStatus(idx,newStatus){
+  const tests=getTests();
+  if(!tests[idx]) return;
+  tests[idx].status=newStatus;
+  saveTests(tests);
+  document.getElementById('test_status').value=newStatus;
+  // Update button to confirmation
+  const btn=document.querySelector('[onclick^="overrideTestStatus"]');
+  if(btn) btn.outerHTML='<span style="font-size:12px;color:var(--green);font-weight:500">✓ Marked as '+newStatus+'</span>';
+  renderHistory();
+  toast('Status updated to '+newStatus+' ✓');
+}
+
 // ── AI EXTRACTION ──
 async function extractAndSave(){
   if(!selectedType){toast('Please select a test type first');return;}
@@ -549,36 +563,39 @@ async function extractAndSave(){
       testObj.status='abnormal';
     }
 
-    // For PDF uploads that still come back "normal": do a targeted second check focused only
-    // on the Impressions/Assessment section — the AI often misses it on the first pass
+    // For PDF uploads that still come back "normal": extract the Impressions/Assessment
+    // section text and scan it client-side — more reliable than asking AI to judge status
     if(curFileType==='application/pdf'&&(testObj.status==='normal'||testObj.status==='pending')){
       try{
         const vr=await fetch('/.netlify/functions/claude-proxy',{
           method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
-            model:'claude-sonnet-4-6',max_tokens:50,
-            system:'You are reviewing a diagnostic report. Respond with only a single word: "abnormal" or "normal". No other text.',
+            model:'claude-sonnet-4-6',max_tokens:400,
+            system:'You are extracting text from a medical report. Return ONLY the verbatim text of the Impressions, Assessment, or Conclusion section — do not include any WNL table rows or individual measurement entries. If none exists, return the text of the final summary paragraph.',
             messages:[{role:'user',content:[
               {type:'document',source:{type:'base64',media_type:'application/pdf',data:curFileData}},
-              {type:'text',text:'Find the Impressions, Assessment, or Conclusion section of this report. Ignore all individual WNL/within-normal-limits table entries — look only at the overall summary conclusion. Does that conclusion section describe ANY abnormal findings, instability, ligament laxity, loss of curvature, kyphosis, subluxation, herniation, or any measurement exceeding established normal ranges? Respond with only "abnormal" or "normal".'}
+              {type:'text',text:'Return only the exact text from the Impressions, Assessment, or Conclusion section of this report. No table rows, no WNL entries — only the conclusion/impressions narrative.'}
             ]}]
           })
         });
         const vd=await vr.json();
-        const vt=(vd.content?.[0]?.text||'').trim().toLowerCase();
-        if(vt.startsWith('abnormal')) testObj.status='abnormal';
-      }catch(e){/* ignore validation errors — proceed with first-pass status */}
+        const impressionsText=(vd.content?.[0]?.text||'').trim();
+        if(impressionsText&&abnormalPhrases.test(impressionsText)) testObj.status='abnormal';
+      }catch(e){/* ignore — proceed with first-pass status */}
     }
 
     document.getElementById('test_status').value=testObj.status;
     tests.unshift(testObj);
     saveTests(tests);
 
+    // Save the test index so the override button can update it
+    const savedIdx=0;
     out.innerHTML='<div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink-soft);line-height:1.7">'
       +'<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px">🧠 AI Analysis</div>'
       +(res.summary?'<div style="font-family:Fraunces,serif;font-style:italic;margin-bottom:10px">'+esc(res.summary)+'</div>':'')
       +(res.redFlags&&res.redFlags.length?'<div style="background:var(--red-pale);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;color:var(--red)"><strong>⚠️ Red flags:</strong> '+res.redFlags.map(f=>esc(f)).join(' · ')+'</div>':'')
       +(res.whatItMeans?'<div>'+esc(res.whatItMeans)+'</div>':'')
+      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(0,\'abnormal\')" style="font-size:12px;padding:5px 12px;background:var(--red-pale);border:1.5px solid var(--red-border);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:500">⚠️ AI got it wrong — mark as Abnormal</button></div>':'')
       +'</div>';
 
     toast('Saved with AI analysis ✓');
