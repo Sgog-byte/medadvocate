@@ -444,7 +444,7 @@ async function generateScripts(){
     const r = await fetch('/.netlify/functions/claude-proxy',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-6', max_tokens:1500,
+        model:'claude-sonnet-4-6', max_tokens:2500,
         system:`You write powerful, real-world advocacy scripts for medical advocates. These are the exact words someone says out loud in a doctor's office, IEP meeting, or ER. 
 
 CRITICAL RULES:
@@ -485,7 +485,22 @@ Write one focused script per situation (max 3). Keep each script concise — 2-3
       })
     });
     const d = await r.json();
-    const res = JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const rawText = (d.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    let res;
+    try {
+      res = JSON.parse(rawText);
+    } catch(parseErr) {
+      // JSON truncated — extract scripts array from partial response
+      const scriptsMatch = rawText.match(/"scripts"\s*:\s*(\[[\s\S]*)/);
+      if (scriptsMatch) {
+        // Try to close the array/object cleanly
+        let partial = scriptsMatch[1];
+        const lastComplete = partial.lastIndexOf('},');
+        if (lastComplete > 0) partial = partial.slice(0, lastComplete + 1) + ']';
+        try { res = { scripts: JSON.parse(partial), intro: '', closingNote: '' }; } catch(e2) {}
+      }
+      if (!res) throw new Error('Response was cut off — please try again');
+    }
     const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     const patientLabel = name ? (role==='myself'?name:`${name}'s scripts`) : 'Your Scripts';
 
