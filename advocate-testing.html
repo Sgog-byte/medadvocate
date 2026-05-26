@@ -496,7 +496,7 @@ async function extractAndSave(){
     const r=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:1500,
+        model:'claude-sonnet-4-6',max_tokens:2500,
         system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation >15mm, lordosis loss >30%, or instability findings = abnormal',
         messages:msgs
       })
@@ -507,8 +507,18 @@ async function extractAndSave(){
     try{
       res=JSON.parse(rawText);
     }catch(parseErr){
-      // AI returned text instead of JSON — wrap it as a summary
-      res={summary:rawText.slice(0,400)||'Could not extract structured data from this report.',status:'pending',findings:[],whatItMeans:'Please paste the Impression or Findings section from the report for better results.',redFlags:[],questionsToAsk:[]};
+      // JSON truncated (hit token limit) — extract what we can from raw text
+      const truncatedSummary=rawText.match(/"summary"\s*:\s*"([^"]{10,})"/)?.[1]||rawText.slice(0,500);
+      const truncatedStatus=rawText.match(/"status"\s*:\s*"(normal|abnormal|borderline|pending)"/)?.[1]||'pending';
+      const rawHasAbnormal=/abnormal|instabilit|loss|exceed|deficit|damage|laxity|instability/i.test(rawText);
+      res={
+        summary:truncatedSummary||'Report analysis was cut off — try pasting the Impressions section as text for best results.',
+        status:rawHasAbnormal&&truncatedStatus==='pending'?'abnormal':truncatedStatus,
+        findings:[],
+        whatItMeans:'Analysis was incomplete due to report length. Key findings may be above.',
+        redFlags:[],
+        questionsToAsk:[]
+      };
     }
 
     // Save with extracted data
@@ -522,7 +532,8 @@ async function extractAndSave(){
     // (the AI sometimes misclassifies status even when its own findings show abnormal results)
     const hasFlaggedFindings=res.findings?.some(f=>f.flagged);
     const hasRedFlags=res.redFlags?.length>0;
-    const summaryHasAbnormal=/abnormal|instabilit|loss|exceed|deficit|damage|laxity|reduced|compression|narrowing|stenosis/i.test(res.summary||'');
+    const abnormalPattern=/abnormal|instabilit|loss|exceed|deficit|damage|laxity|reduced|compression|narrowing|stenosis|possible instability|possible damage/i;
+    const summaryHasAbnormal=abnormalPattern.test(res.summary||'')||abnormalPattern.test(rawText.slice(0,1000));
     if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
       testObj.status='abnormal';
     }
