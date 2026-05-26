@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Document Interpreter</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;
+  --border:#b7d9c4;--white:#ffffff;
+  --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+  --red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;
+  --blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;
+  --green:#27ae60;--green-pale:#eafaf1;--green-border:#a9dfbf;
+  --shadow-sm:0 2px 12px rgba(28,43,34,.06);
+  --shadow:0 4px 24px rgba(28,43,34,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+
+/* LAYOUT */
+.shell{max-width:860px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--blue)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:520px;margin:0 auto}
+
+/* CARDS */
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300;line-height:1.6}
+
+/* FORMS */
+.field{margin-bottom:12px}.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.finput,.ftextarea,.fselect{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.ftextarea{min-height:140px;line-height:1.6;resize:vertical}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab{padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;color:var(--ink-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--blue);font-weight:600;border-bottom-color:var(--blue)}
+
+/* BUTTONS */
+.btn-primary{padding:12px 22px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover:not(:disabled){background:var(--ink)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{padding:9px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn-blue{padding:12px 22px;background:var(--blue);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-blue:hover:not(:disabled){background:#2d6ab5}
+.btn-blue:disabled{opacity:.5;cursor:not-allowed}
+
+/* DROP ZONE */
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--warm)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--sage);background:var(--sage-pale)}
+.drop-zone-icon{font-size:32px;margin-bottom:10px}
+.drop-zone-title{font-size:15px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.drop-zone-sub{font-size:13px;color:var(--ink-muted);margin-bottom:14px}
+
+/* SUMMARY CARD */
+.summary-card{background:var(--sage-deep);color:white;border-radius:16px;padding:22px 26px;margin-bottom:16px}
+.summary-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;margin-bottom:4px}
+.summary-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px}
+.summary-text{font-size:14px;line-height:1.8;color:rgba(255,255,255,.88);font-weight:300}
+
+/* FINDING CARDS */
+.finding-card{border-radius:13px;margin-bottom:10px;overflow:hidden;border:1.5px solid}
+.finding-card.status-normal{border-color:var(--green-border);background:var(--green-pale)}
+.finding-card.status-borderline{border-color:var(--amber-light);background:var(--amber-pale)}
+.finding-card.status-abnormal{border-color:var(--red-border);background:var(--red-pale)}
+.finding-card.status-notable{border-color:var(--blue-border);background:var(--blue-pale)}
+.finding-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none}
+.finding-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.status-normal .finding-dot{background:var(--green)}
+.status-borderline .finding-dot{background:var(--amber)}
+.status-abnormal .finding-dot{background:var(--red)}
+.status-notable .finding-dot{background:var(--blue)}
+.finding-name{font-size:14px;font-weight:500;color:var(--ink);flex:1}
+.finding-value{font-size:12px;font-weight:500;color:var(--ink-muted)}
+.finding-badge{padding:2px 10px;border-radius:100px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+.status-normal .finding-badge{background:var(--green-pale);color:var(--green);border:1px solid var(--green-border)}
+.status-borderline .finding-badge{background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber-light)}
+.status-abnormal .finding-badge{background:var(--red-pale);color:var(--red);border:1px solid var(--red-border)}
+.status-notable .finding-badge{background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border)}
+.finding-chevron{font-size:12px;color:var(--ink-muted);transition:transform .2s;flex-shrink:0}
+.finding-body{padding:0 16px 14px;border-top:1px solid rgba(0,0,0,.07)}
+.finding-row{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;margin-bottom:10px;margin-top:12px;font-size:13px}
+.finding-row-label{font-weight:600;color:var(--ink-muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;padding-top:1px}
+.finding-row-val{color:var(--ink);line-height:1.55;font-weight:300}
+.finding-context{margin-top:8px;padding:10px 12px;background:rgba(255,255,255,.65);border-radius:8px;font-size:12px;color:var(--ink-soft);line-height:1.6;border-left:3px solid}
+.status-normal .finding-context{border-color:var(--green)}
+.status-borderline .finding-context{border-color:var(--amber)}
+.status-abnormal .finding-context{border-color:var(--red)}
+.status-notable .finding-context{border-color:var(--blue)}
+
+/* RESULTS SECTIONS */
+.results-section-title{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:var(--ink);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.checklist{list-style:none;display:flex;flex-direction:column;gap:8px}
+.checklist li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink-soft);line-height:1.55;font-weight:300}
+.checklist li::before{content:'□';font-size:16px;color:var(--sage);flex-shrink:0;margin-top:-1px}
+.questions-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.questions-list li{padding:10px 14px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--ink-soft);line-height:1.55;font-weight:300;display:flex;gap:10px}
+.questions-list li::before{content:'?';font-size:14px;font-weight:700;color:var(--blue);flex-shrink:0}
+
+/* DISCLAIMER / CONFIDENCE */
+.disclaimer-bar{background:rgba(58,123,200,.07);border:1.5px solid var(--blue-border);border-radius:12px;padding:14px 18px;margin-bottom:14px;font-size:13px;color:var(--ink-soft);line-height:1.65}
+.disclaimer-bar strong{color:var(--blue)}
+.confidence-card{background:var(--warm);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;margin-top:14px;font-size:13px;color:var(--ink-muted);line-height:1.65;font-weight:300}
+.confidence-card strong{color:var(--ink-soft)}
+
+/* PATIENT SELECTOR */
+.patient-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 12px 3px 3px;border-radius:100px;font-size:13px;font-weight:500;color:var(--sage-deep);background:var(--sage-pale);border:1.5px solid var(--sage-light);margin-top:6px}
+.patient-pill-avatar{width:24px;height:24px;background:var(--sage);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;font-weight:600}
+.med-pill{display:inline-flex;padding:2px 9px;background:var(--blue-pale);border:1px solid var(--blue-border);border-radius:100px;font-size:11px;color:var(--blue);margin:2px;font-weight:400}
+
+/* LOADER */
+.load-wrap{text-align:center;padding:48px 24px}
+.load-ring{width:44px;height:44px;margin:0 auto 16px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--blue);animation:spin 1s linear infinite}
+.load-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px}
+.load-sub{font-size:13px;color:var(--ink-muted);font-weight:300}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* PRINT */
+@media print{
+  body{background:white}
+  nav,.no-print{display:none!important}
+  .shell{max-width:100%;padding:0}
+  .fcard{display:none!important}
+  #results_section{display:block!important}
+  .summary-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .finding-body{display:block!important}
+  .finding-card{break-inside:avoid;margin-bottom:8px}
+  @page{margin:12mm}
+}
+
+@media(max-width:640px){
+  .finding-row{grid-template-columns:1fr}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+</head>
+<body>
+
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+  </div>
+  <div id="nav_auth"></div>
+</nav>
+
+<div class="shell">
+
+  <div class="page-header">
+    <div class="page-icon">🔍</div>
+    <h1 class="page-title">Document <em>Interpreter</em></h1>
+    <p class="page-sub">Upload or paste a medical document. Document Interpreter reads it in the context of your patient's confirmed diagnoses and active medications — finding what matters and flagging what needs follow-up.</p>
+  </div>
+
+  <!-- Top disclaimer -->
+  <div class="disclaimer-bar no-print">
+    <strong>Document Interpreter</strong> analyzes your records in the context of your confirmed diagnoses and medications. It is interpretive support only — not a diagnosis and not a substitute for your healthcare team.
+  </div>
+
+  <!-- Patient selector -->
+  <div class="fcard" id="patient_card">
+    <div class="fcard-title">Who is this document for?</div>
+    <div class="fcard-sub">Select the patient before analyzing. Document Interpreter will apply their diagnoses and active medications as context.</div>
+
+    <div class="field">
+      <label class="flabel">Patient</label>
+      <select class="fselect" id="patient_select" onchange="onPatientChange(this.value)">
+        <option value="">Loading patients…</option>
+      </select>
+    </div>
+
+    <div id="patient_context" style="display:none;margin-top:14px">
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        <div style="flex:1;min-width:180px">
+          <div class="flabel" style="margin-bottom:6px">Diagnoses</div>
+          <div id="ctx_diagnoses" style="font-size:13px;color:var(--ink-soft);line-height:1.65;font-weight:300"></div>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <div class="flabel" style="margin-bottom:6px">Active Medications</div>
+          <div id="ctx_meds" style="font-size:13px;color:var(--ink-soft);line-height:1.65;font-weight:300"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="patient_loading" style="display:none;font-size:13px;color:var(--ink-muted);margin-top:10px">
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--sage);border-radius:50%;animation:spin 1s linear infinite"></span>
+        Loading patient data…
+      </span>
+    </div>
+  </div>
+
+  <!-- Document input -->
+  <div class="fcard" id="input_card">
+    <div class="fcard-title">Upload or Paste Document</div>
+    <div class="fcard-sub">Paste text from the document, or upload a PDF or image. For lab reports with complex tables, pasting the Summary or Impressions section alongside the file gives the best results.</div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab_paste" onclick="switchTab('paste',this)">📋 Paste Text</button>
+      <button class="tab" id="tab_upload" onclick="switchTab('upload',this)">📄 Upload File</button>
+    </div>
+
+    <div id="panel_paste">
+      <textarea class="ftextarea" id="paste_text" style="min-height:160px"
+        placeholder="Paste the document text here — lab results, discharge summary, imaging report, specialist letter, test results…
+
+For lab panels: paste the full result table including reference ranges.
+For imaging reports: paste the Impressions and Findings sections."></textarea>
+    </div>
+
+    <div id="panel_upload" style="display:none">
+      <div class="drop-zone" id="drop_zone"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="onDrop(event)">
+        <input type="file" id="file_input" accept=".pdf,.png,.jpg,.jpeg,.heic,.tiff,.txt"
+          onchange="onFileSelect(event)" style="display:none">
+        <div class="drop-zone-icon">📄</div>
+        <div class="drop-zone-title" id="drop_title">Drop your document here</div>
+        <div class="drop-zone-sub">PDF, image, or text file — 20 MB max</div>
+        <button class="btn-outline" onclick="document.getElementById('file_input').click()">Choose File</button>
+      </div>
+      <div id="file_name_display" style="font-size:13px;color:var(--sage-deep);margin-top:8px;font-weight:500"></div>
+
+      <div style="margin-top:12px">
+        <label class="flabel">Also paste key sections (optional — improves accuracy for complex reports)</label>
+        <textarea class="ftextarea" id="paste_supplement" style="min-height:80px"
+          placeholder="Paste the Impressions, Assessment, or Summary section here alongside the uploaded file…"></textarea>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn-blue" id="analyze_btn" onclick="analyze()" disabled>🔍 Interpret Document</button>
+      <span id="analyze_hint" style="font-size:12px;color:var(--ink-muted)">Select a patient first</span>
+    </div>
+
+    <div id="analyze_out" style="margin-top:14px"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results_section" style="display:none">
+
+    <!-- Overall picture -->
+    <div class="summary-card" id="result_summary">
+      <div class="summary-title">Clinical Overview</div>
+      <div class="summary-sub" id="result_patient_label"></div>
+      <div class="summary-text" id="result_overview"></div>
+    </div>
+
+    <!-- Findings -->
+    <div id="findings_section">
+      <div class="results-section-title">
+        📋 Individual Findings
+        <span id="findings_count" style="font-size:12px;font-weight:400;color:var(--ink-muted)"></span>
+        <button class="btn-outline no-print" style="margin-left:auto;font-size:11px;padding:4px 12px" onclick="toggleAllFindings()">Expand all</button>
+      </div>
+      <div id="findings_list"></div>
+    </div>
+
+    <!-- Follow-up -->
+    <div id="followup_section" style="display:none">
+      <div class="results-section-title">✅ Follow-up Needed</div>
+      <div class="fcard" style="padding:18px 20px">
+        <ul class="checklist" id="followup_list"></ul>
+      </div>
+    </div>
+
+    <!-- Questions -->
+    <div id="questions_section" style="display:none">
+      <div class="results-section-title">💬 Questions for Your Doctor</div>
+      <div class="fcard" style="padding:18px 20px">
+        <ul class="questions-list" id="questions_list"></ul>
+      </div>
+    </div>
+
+    <!-- Print button -->
+    <div class="no-print" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn-outline" onclick="window.print()">🖨️ Print Report</button>
+      <button class="btn-outline" onclick="resetAnalysis()">↩ Analyze Another Document</button>
+    </div>
+
+    <!-- Confidence + disclaimer -->
+    <div class="confidence-card" id="result_confidence"></div>
+    <div class="confidence-card" style="margin-top:8px;color:var(--ink-muted);font-size:12px" id="result_disclaimer"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let selectedPatient = null;  // full patient row from DB
+let activeMeds = [];          // active medications for selected patient
+let uploadFileData = null;    // base64
+let uploadFileType = null;    // MIME
+let currentTab = 'paste';
+let allExpanded = false;
+
+// ── INIT ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await Auth.requireAuth();
+  renderAuthBar('nav_auth');
+  await loadPatients();
+});
+
+// ── PATIENTS ───────────────────────────────────────────────────
+async function loadPatients() {
+  const sel = document.getElementById('patient_select');
+  try {
+    const patients = await DB.getPatients();
+    if (!patients.length) {
+      sel.innerHTML = '<option value="">No patients found</option>';
+      return;
+    }
+    const activePid = await DB.patientId();
+    sel.innerHTML = '<option value="">— Select patient —</option>'
+      + patients.map(p =>
+          `<option value="${p.id}" ${p.id === activePid ? 'selected' : ''}>${esc(p.name)}${p.is_default ? ' (default)' : ''}</option>`
+        ).join('');
+
+    // Auto-select active patient
+    if (activePid) {
+      sel.value = activePid;
+      await onPatientChange(activePid);
+    }
+  } catch(e) {
+    sel.innerHTML = '<option value="">Error loading patients</option>';
+    console.error(e);
+  }
+}
+
+async function onPatientChange(patientId) {
+  if (!patientId) {
+    selectedPatient = null;
+    activeMeds = [];
+    document.getElementById('patient_context').style.display = 'none';
+    updateAnalyzeBtn();
+    return;
+  }
+
+  const loading = document.getElementById('patient_loading');
+  loading.style.display = 'block';
+  document.getElementById('patient_context').style.display = 'none';
+
+  try {
+    // Fetch full patient row
+    const { data: pat } = await _supa.from('patients').select('*').eq('id', patientId).single();
+    selectedPatient = pat;
+
+    // Fetch active medications for this specific patient
+    const { data: meds } = await _supa
+      .from('medications')
+      .select('*')
+      .eq('patient_id', patientId)
+      .eq('status', 'active')
+      .order('name');
+    activeMeds = meds || [];
+
+    renderPatientContext();
+    document.getElementById('patient_context').style.display = 'block';
+  } catch(e) {
+    console.error('Failed to load patient data:', e);
+    toast('Could not load patient data');
+  } finally {
+    loading.style.display = 'none';
+    updateAnalyzeBtn();
+  }
+}
+
+function renderPatientContext() {
+  const p = selectedPatient;
+  // Diagnoses
+  const dxEl = document.getElementById('ctx_diagnoses');
+  dxEl.textContent = p.diagnoses || 'None on file';
+  dxEl.style.color = p.diagnoses ? 'var(--ink-soft)' : 'var(--ink-muted)';
+
+  // Medications
+  const medsEl = document.getElementById('ctx_meds');
+  if (activeMeds.length) {
+    medsEl.innerHTML = activeMeds.map(m =>
+      `<span class="med-pill">${esc(m.name)}${m.dose ? ' · ' + esc(m.dose) : ''}</span>`
+    ).join('');
+  } else {
+    medsEl.textContent = 'No active medications on file';
+    medsEl.style.color = 'var(--ink-muted)';
+  }
+}
+
+// ── TABS ───────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel_paste').style.display = tab === 'paste' ? 'block' : 'none';
+  document.getElementById('panel_upload').style.display = tab === 'upload' ? 'block' : 'none';
+}
+
+// ── FILE UPLOAD ────────────────────────────────────────────────
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop_zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+
+function onFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  if (file.size > 20 * 1024 * 1024) { toast('File too large — 20 MB max'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    uploadFileData = dataUrl.split(',')[1]; // base64
+    uploadFileType = file.type || 'application/pdf';
+    document.getElementById('drop_title').textContent = '✓ ' + file.name;
+    document.getElementById('file_name_display').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── ANALYZE BTN STATE ──────────────────────────────────────────
+function updateAnalyzeBtn() {
+  const btn = document.getElementById('analyze_btn');
+  const hint = document.getElementById('analyze_hint');
+  const ready = !!selectedPatient;
+  btn.disabled = !ready;
+  hint.textContent = ready
+    ? `Analyzing as ${selectedPatient.name}${activeMeds.length ? ' · ' + activeMeds.length + ' active med' + (activeMeds.length !== 1 ? 's' : '') + ' loaded' : ''}`
+    : 'Select a patient first';
+  hint.style.color = ready ? 'var(--sage)' : 'var(--ink-muted)';
+}
+
+// ── BUILD PATIENT CONTEXT STRING ───────────────────────────────
+function buildPatientContext() {
+  const p = selectedPatient;
+  const name = p.name || 'Unknown';
+  const age = p.age ? String(p.age) : 'unknown age';
+  const diagnoses = p.diagnoses || 'None documented';
+  const medsList = activeMeds.length
+    ? activeMeds.map(m => {
+        let s = m.name;
+        if (m.dose) s += ' ' + m.dose;
+        if (m.frequency) s += ' ' + m.frequency;
+        if (m.doctor) s += ' (prescribed by ' + m.doctor + ')';
+        return s;
+      }).join('; ')
+    : 'No active medications on file';
+  return { name, age, diagnoses, medsList };
+}
+
+// ── ANALYZE ────────────────────────────────────────────────────
+async function analyze() {
+  if (!selectedPatient) { toast('Please select a patient first'); return; }
+
+  const pasteText = document.getElementById('paste_text').value.trim();
+  const supplement = document.getElementById('paste_supplement')?.value.trim() || '';
+
+  if (currentTab === 'paste' && !pasteText) {
+    toast('Please paste document text first');
+    return;
+  }
+  if (currentTab === 'upload' && !uploadFileData && !supplement) {
+    toast('Please upload a file or paste text');
+    return;
+  }
+
+  const btn = document.getElementById('analyze_btn');
+  const out = document.getElementById('analyze_out');
+  btn.disabled = true;
+  document.getElementById('results_section').style.display = 'none';
+
+  out.innerHTML = `<div class="load-wrap">
+    <div class="load-ring"></div>
+    <div class="load-title">Interpreting document…</div>
+    <div class="load-sub">Reading in the context of ${esc(selectedPatient.name)}'s diagnoses and medications</div>
+  </div>`;
+
+  const { name, age, diagnoses, medsList } = buildPatientContext();
+
+  const systemPrompt = `You are a clinical document analyst for a medical advocacy platform. You are analyzing a medical report for ${name}, age ${age}, with the following confirmed diagnoses: ${diagnoses}. Their current active medications are: ${medsList}.
+
+Analyze this document with the following rules:
+- Never render a single global normal or abnormal verdict
+- Assess each finding individually against established reference ranges
+- Apply age-appropriate reference ranges — this patient may be a child or adolescent
+- Flag when findings are significant specifically because of this patient's underlying conditions — for example a QTc of 415ms means something different in a patient on medications that affect QT interval
+- Cross-reference all findings against known diagnoses and current medications for interactions and context
+- Identify every value outside normal limits and explain clinical significance in plain language a non-medical person can understand
+- Distinguish clearly between a value being outside reference range versus being clinically significant
+- State specifically what requires follow-up and why
+- Never be falsely reassuring about findings that warrant attention
+- Never over-alarm about findings that are genuinely benign given full context
+- End with a confidence note about limitations of document analysis without physical examination
+
+Return valid JSON only, no markdown:
+{
+  "overall_picture": "2-3 sentence clinical summary",
+  "findings": [
+    {
+      "finding": "name of finding",
+      "value": "patient value",
+      "normal_range": "established normal",
+      "status": "normal|borderline|abnormal|notable",
+      "plain_language": "what this means in plain English",
+      "patient_context": "why this matters specifically for this patient given their diagnoses and medications"
+    }
+  ],
+  "follow_up_needed": ["specific action items"],
+  "questions_for_doctor": ["3-5 questions this report raises"],
+  "confidence_note": "limitations of this analysis",
+  "disclaimer": "This analysis is interpretive support only and does not constitute medical advice. Always verify findings with your healthcare provider."
+}`;
+
+  try {
+    let messages;
+
+    if (currentTab === 'paste' || (currentTab === 'upload' && !uploadFileData)) {
+      // Text only
+      const text = pasteText || supplement;
+      messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
+
+    } else if (uploadFileType === 'application/pdf') {
+      const content = [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: uploadFileData } }
+      ];
+      let instruction = `Analyze this medical document for ${name}.`;
+      if (supplement) instruction += ` The following text was also pasted from the document — use it to ensure the Impressions/Assessment section is read correctly:\n\n${supplement}`;
+      content.push({ type: 'text', text: instruction });
+      messages = [{ role: 'user', content }];
+
+    } else if (uploadFileType && uploadFileType.startsWith('image/')) {
+      const content = [
+        { type: 'image', source: { type: 'base64', media_type: uploadFileType, data: uploadFileData } }
+      ];
+      let instruction = `Analyze this medical document image for ${name}.`;
+      if (supplement) instruction += ` The following text was also provided:\n\n${supplement}`;
+      content.push({ type: 'text', text: instruction });
+      messages = [{ role: 'user', content }];
+
+    } else {
+      // Text fallback
+      const decoded = atob(uploadFileData).slice(0, 8000);
+      const text = (supplement ? supplement + '\n\n' : '') + decoded;
+      messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
+    }
+
+    const r = await fetch('/.netlify/functions/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages
+      })
+    });
+
+    const d = await r.json();
+    const rawText = (d.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+
+    let res;
+    try {
+      res = JSON.parse(rawText);
+    } catch(parseErr) {
+      // Try to recover partial JSON
+      const partial = rawText.match(/\{[\s\S]*/)?.[0];
+      if (partial) {
+        try { res = JSON.parse(partial + (partial.endsWith('}') ? '' : '}')); } catch(e2) {}
+      }
+      if (!res) throw new Error('Could not parse response');
+    }
+
+    out.innerHTML = '';
+    renderResults(res);
+
+  } catch(e) {
+    out.innerHTML = `<div style="background:var(--red-pale);border:1.5px solid var(--red-border);border-radius:12px;padding:16px 18px;color:var(--red);font-size:13px">
+      <strong>Analysis failed.</strong> Please check your connection and try again.
+      ${e.message ? '<br><span style="opacity:.7;font-size:11px">' + esc(e.message) + '</span>' : ''}
+    </div>`;
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── RENDER RESULTS ─────────────────────────────────────────────
+function renderResults(res) {
+  const section = document.getElementById('results_section');
+  section.style.display = 'block';
+
+  // Summary
+  document.getElementById('result_overview').textContent = res.overall_picture || '';
+  document.getElementById('result_patient_label').textContent =
+    (selectedPatient?.name || 'Patient') +
+    (selectedPatient?.age ? ', age ' + selectedPatient.age : '') +
+    ' · Document Interpreter';
+
+  // Findings
+  const findings = res.findings || [];
+  document.getElementById('findings_count').textContent =
+    findings.length ? `${findings.length} finding${findings.length !== 1 ? 's' : ''}` : '';
+
+  const list = document.getElementById('findings_list');
+  // Order: abnormal first, then notable, borderline, normal
+  const order = { abnormal: 0, notable: 1, borderline: 2, normal: 3 };
+  const sorted = [...findings].sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+
+  list.innerHTML = sorted.map((f, i) => {
+    const st = ['abnormal', 'notable', 'borderline', 'normal'].includes(f.status) ? f.status : 'normal';
+    const label = { abnormal: 'Abnormal', notable: 'Notable', borderline: 'Borderline', normal: 'Normal' }[st];
+    const expanded = st === 'abnormal' || st === 'notable'; // open by default
+    return `
+      <div class="finding-card status-${st}" id="finding_${i}">
+        <div class="finding-header" onclick="toggleFinding(${i})">
+          <div class="finding-dot"></div>
+          <div class="finding-name">${esc(f.finding)}</div>
+          ${f.value ? `<div class="finding-value">${esc(f.value)}</div>` : ''}
+          <div class="finding-badge">${label}</div>
+          <div class="finding-chevron" id="chev_${i}">${expanded ? '▲' : '▼'}</div>
+        </div>
+        <div class="finding-body" id="fbody_${i}" style="display:${expanded ? 'block' : 'none'}">
+          <div class="finding-row">
+            ${f.value ? `<div class="finding-row-label">Result</div><div class="finding-row-val">${esc(f.value)}</div>` : ''}
+            ${f.normal_range ? `<div class="finding-row-label">Normal range</div><div class="finding-row-val">${esc(f.normal_range)}</div>` : ''}
+            ${f.plain_language ? `<div class="finding-row-label">What it means</div><div class="finding-row-val">${esc(f.plain_language)}</div>` : ''}
+          </div>
+          ${f.patient_context ? `<div class="finding-context"><strong>For ${esc(selectedPatient?.name || 'this patient')}:</strong> ${esc(f.patient_context)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Follow-up
+  const followup = res.follow_up_needed || [];
+  const fuSection = document.getElementById('followup_section');
+  if (followup.length) {
+    fuSection.style.display = 'block';
+    document.getElementById('followup_list').innerHTML =
+      followup.map(item => `<li>${esc(item)}</li>`).join('');
+  } else {
+    fuSection.style.display = 'none';
+  }
+
+  // Questions
+  const questions = res.questions_for_doctor || [];
+  const qSection = document.getElementById('questions_section');
+  if (questions.length) {
+    qSection.style.display = 'block';
+    document.getElementById('questions_list').innerHTML =
+      questions.map(q => `<li>${esc(q)}</li>`).join('');
+  } else {
+    qSection.style.display = 'none';
+  }
+
+  // Confidence + disclaimer
+  if (res.confidence_note) {
+    document.getElementById('result_confidence').innerHTML =
+      `<strong>ℹ️ Analysis notes:</strong> ${esc(res.confidence_note)}`;
+  }
+  if (res.disclaimer) {
+    document.getElementById('result_disclaimer').textContent = res.disclaimer;
+  }
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── FINDING TOGGLE ─────────────────────────────────────────────
+function toggleFinding(i) {
+  const body = document.getElementById('fbody_' + i);
+  const chev = document.getElementById('chev_' + i);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chev.textContent = open ? '▼' : '▲';
+}
+
+function toggleAllFindings() {
+  allExpanded = !allExpanded;
+  document.querySelectorAll('[id^="fbody_"]').forEach((el, i) => {
+    el.style.display = allExpanded ? 'block' : 'none';
+    const chev = document.getElementById('chev_' + i);
+    if (chev) chev.textContent = allExpanded ? '▲' : '▼';
+  });
+  document.querySelector('[onclick="toggleAllFindings()"]').textContent =
+    allExpanded ? 'Collapse all' : 'Expand all';
+}
+
+// ── RESET ──────────────────────────────────────────────────────
+function resetAnalysis() {
+  document.getElementById('results_section').style.display = 'none';
+  document.getElementById('analyze_out').innerHTML = '';
+  document.getElementById('paste_text').value = '';
+  if (document.getElementById('paste_supplement')) document.getElementById('paste_supplement').value = '';
+  uploadFileData = null;
+  uploadFileType = null;
+  document.getElementById('drop_title').textContent = 'Drop your document here';
+  document.getElementById('file_name_display').textContent = '';
+  document.getElementById('file_input').value = '';
+  allExpanded = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── UTILS ──────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
