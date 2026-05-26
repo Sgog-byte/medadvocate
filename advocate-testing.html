@@ -480,17 +480,28 @@ async function extractAndSave(){
   const prof=(await DB.getProfile());
   const ctx=prof.diagnoses?'Patient context: '+(prof.name||'Patient')+', diagnoses: '+prof.diagnoses:'';
 
+  // Pre-scan input for abnormal keywords — before AI call, so we have ground truth
+  const abnormalPattern=/abnormal|instabilit|loss|exceed|deficit|damage|laxity|reduced|compression|narrowing|stenosis|possible instabilit|possible damage|spinal stenosis|herniati|subluxation|kyphosis|spondylosis/i;
+  const inputPreScanText=pasteText||(curFileData?atob(curFileData).slice(0,5000):'');
+  const inputIsAbnormal=abnormalPattern.test(inputPreScanText);
+
   try{
     let msgs;
-    const analyzeInstruction='Analyze this '+meta.label+' report. Read the full document including the Impressions and Assessment section before setting status — individual WNL labels in tables do not override the overall Impressions conclusion. If ANY findings exceed normal values or the Impressions describe abnormal findings, set status to abnormal. '+ctx;
+    // For text paste: extract the Impressions/Assessment section if present — that's what matters
+    let textToAnalyze=pasteText;
     if(pasteText){
-      msgs=[{role:'user',content:'Analyze this '+meta.label+' report and extract findings. Read the full text including the Impressions and Assessment section before setting status — individual WNL labels do not override the overall conclusion.\n\n'+pasteText+'\n\n'+ctx}];
+      const impressionMatch=pasteText.match(/Impressions?\s+and\s+Assessment([\s\S]{200,}?)(?:References?|$)/i);
+      if(impressionMatch) textToAnalyze='IMPRESSIONS AND ASSESSMENT (the authoritative conclusion):\n'+impressionMatch[0]+'\n\nFULL REPORT EXCERPT:\n'+pasteText.slice(0,2000);
+    }
+    const analyzeInstruction='Analyze this '+meta.label+' report. The Impressions and Assessment section is the authoritative conclusion — it overrides individual WNL table entries. Set status to abnormal if the Impressions describe ANY abnormal findings, instability, loss, or pathology. '+ctx;
+    if(pasteText){
+      msgs=[{role:'user',content:analyzeInstruction+'\n\n'+textToAnalyze}];
     } else if(curFileType==='application/pdf'){
       msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:curFileData}},{type:'text',text:analyzeInstruction}]}];
     } else if(curFileType&&curFileType.startsWith('image/')){
       msgs=[{role:'user',content:[{type:'image',source:{type:'base64',media_type:curFileType,data:curFileData}},{type:'text',text:analyzeInstruction}]}];
     } else {
-      msgs=[{role:'user',content:analyzeInstruction+'\n\n'+atob(curFileData)}];
+      msgs=[{role:'user',content:analyzeInstruction+'\n\n'+atob(curFileData).slice(0,4000)}];
     }
 
     const r=await fetch('/.netlify/functions/claude-proxy',{
@@ -532,9 +543,8 @@ async function extractAndSave(){
     // (the AI sometimes misclassifies status even when its own findings show abnormal results)
     const hasFlaggedFindings=res.findings?.some(f=>f.flagged);
     const hasRedFlags=res.redFlags?.length>0;
-    const abnormalPattern=/abnormal|instabilit|loss|exceed|deficit|damage|laxity|reduced|compression|narrowing|stenosis|possible instability|possible damage/i;
     const summaryHasAbnormal=abnormalPattern.test(res.summary||'')||abnormalPattern.test(rawText.slice(0,1000));
-    if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
+    if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal||inputIsAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
       testObj.status='abnormal';
     }
     document.getElementById('test_status').value=testObj.status;
