@@ -496,7 +496,7 @@ async function extractAndSave(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:1500,
-        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}',
+        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation >15mm, lordosis loss >30%, or instability findings = abnormal',
         messages:msgs
       })
     });
@@ -513,9 +513,10 @@ async function extractAndSave(){
     // Save with extracted data
     const tests=getTests();
     const testObj=buildTestObj(res);
-    // Auto-update status from AI if not manually set
-    if(res.status&&document.getElementById('test_status').value==='normal'&&res.status!=='normal'){
+    // Always apply AI-determined status — AI has read the full report
+    if(res.status&&['normal','abnormal','borderline','pending'].includes(res.status)){
       testObj.status=res.status;
+      document.getElementById('test_status').value=res.status;
     }
     tests.unshift(testObj);
     saveTests(tests);
