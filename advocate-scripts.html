@@ -326,9 +326,13 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 
 // ─── LAB INSIGHTS FROM LAB TRACKER ───
+// Key is namespaced per patient so Sarah's labs don't appear in Kira's scripts
+let _scriptLabsKey = 'advocate_script_labs';
+function scriptLabsKey() { return _scriptLabsKey; }
+
 function loadLabInsights() {
   let saved = [];
-  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
   const empty = document.getElementById('labInsightsEmpty');
   const list = document.getElementById('labInsightsList');
   const clearBtn = document.getElementById('clearLabsBtn');
@@ -351,25 +355,31 @@ function loadLabInsights() {
 
 function removeLabInsight(i) {
   let saved = [];
-  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
   saved.splice(i, 1);
-  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
   loadLabInsights();
 }
 
 function clearLabInsights() {
-  localStorage.removeItem('advocate_script_labs');
+  localStorage.removeItem(scriptLabsKey());
   loadLabInsights();
 }
 
 function getLabInsightsText() {
   try {
-    const saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]');
+    const saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]');
     return saved.length ? '\n\nRecent lab findings to reference in scripts:\n' + saved.join('\n') : '';
   } catch(e) { return ''; }
 }
 
-document.addEventListener('DOMContentLoaded', loadLabInsights);
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const pid = await DB.patientId();
+    if (pid) _scriptLabsKey = `advocate_script_labs_${pid}`;
+  } catch(e) {}
+  loadLabInsights();
+});
 
 let currentTone = 'firm';
 function setTone(t, btn){

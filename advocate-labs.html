@@ -2003,6 +2003,11 @@ function printPage() {
 // ─────────────────────────────────
 // LAB → VISIT SCRIPT
 // ─────────────────────────────────
+// Returns the patient-namespaced key for script labs (mirrors advocate-scripts.html)
+function scriptLabsKey() {
+  return currentPatientId ? `advocate_script_labs_${currentPatientId}` : 'advocate_script_labs';
+}
+
 function addInsightToScript(entryIdx, insightIdx) {
   const entry = allLabDates[entryIdx];
   if (!entry) return;
@@ -2012,11 +2017,11 @@ function addInsightToScript(entryIdx, insightIdx) {
   const dateLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const text = `[Lab ${dateLabel}] ${ins.text}`;
 
-  // Store as an array so multiple insights can be added
+  // Store as an array so multiple insights can be added — namespaced by patient
   let saved = [];
-  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
   if (!saved.includes(text)) saved.push(text);
-  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
 
   // Visual feedback on the button
   const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
@@ -2030,9 +2035,9 @@ function addTrendInsightToScript(i) {
   if (!rawText) return;
   const text = `[Lab trend] ${rawText}`;
   let saved = [];
-  try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
   if (!saved.includes(text)) saved.push(text);
-  localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
   const btn = document.getElementById(`trend-btn-${i}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
   showToast('✓ Trend insight saved — open Visit Script to use it');
