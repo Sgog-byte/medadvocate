@@ -432,7 +432,8 @@ function clearUpload(){
   document.getElementById('upload_detail').style.display='none';
   document.getElementById('file_in').value='';
   document.getElementById('paste_text').value='';
-  document.getElementById('extract_out').innerHTML='';
+  // Note: extract_out is intentionally NOT cleared here so the AI analysis
+  // and override button remain visible after saving
   document.getElementById('drop_zone').querySelector('.upload-zone-title').textContent='Drop the report here';
   document.getElementById('drop_zone').style.borderColor='';
 }
@@ -558,9 +559,12 @@ async function extractAndSave(){
     const hasFlaggedFindings=res.findings?.some(f=>f.flagged);
     const hasRedFlags=res.redFlags?.length>0;
     const impressionsText=res.impressionsText||'';
+    // Broad pattern for AI's own response text (lower false-positive risk since AI is describing a real report)
+    const broadAbnormal=/abnormal|instabilit|laxity|kyphosis|lordosis|listhesis|anterior\s+translation|subluxat|herniati|stenosis|cord\s+compress|nerve\s+compress|spondylolis|dysfunction|loss\s+of\s+(curve|lordosis|curvature|height)|significant\s+find|exceed.{0,20}normal|outside.{0,20}normal/i;
     const summaryHasAbnormal=abnormalPhrases.test(res.summary||'')
       ||abnormalPhrases.test(impressionsText)
-      ||abnormalPhrases.test(rawText);
+      ||broadAbnormal.test(impressionsText)
+      ||broadAbnormal.test(rawText);
     if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal||inputIsAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
       testObj.status='abnormal';
     }
@@ -569,18 +573,21 @@ async function extractAndSave(){
     tests.unshift(testObj);
     saveTests(tests);
 
-    // Save the test index so the override button can update it
-    const savedIdx=0;
+    const statusColor=testObj.status==='abnormal'?'var(--red)':testObj.status==='borderline'?'var(--amber)':'var(--green)';
+    const statusLabel=testObj.status==='abnormal'?'🔴 Abnormal':testObj.status==='borderline'?'🟡 Borderline':testObj.status==='normal'?'🟢 Normal':'⬜ Pending';
     out.innerHTML='<div style="background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink-soft);line-height:1.7">'
-      +'<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px">🧠 AI Analysis</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep)">🧠 AI Analysis</div>'
+      +'<div style="font-size:12px;font-weight:700;color:'+statusColor+'">'+statusLabel+'</div>'
+      +'</div>'
       +(res.summary?'<div style="font-family:Fraunces,serif;font-style:italic;margin-bottom:10px">'+esc(res.summary)+'</div>':'')
       +(res.redFlags&&res.redFlags.length?'<div style="background:var(--red-pale);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;color:var(--red)"><strong>⚠️ Red flags:</strong> '+res.redFlags.map(f=>esc(f)).join(' · ')+'</div>':'')
-      +(res.whatItMeans?'<div>'+esc(res.whatItMeans)+'</div>':'')
-      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(0,\'abnormal\')" style="font-size:12px;padding:5px 12px;background:var(--red-pale);border:1.5px solid var(--red-border);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:500">⚠️ AI got it wrong — mark as Abnormal</button></div>':'')
+      +(res.whatItMeans?'<div style="margin-bottom:8px">'+esc(res.whatItMeans)+'</div>':'')
+      +(impressionsText?'<details style="margin-top:6px"><summary style="font-size:11px;color:var(--ink-muted);cursor:pointer">Extracted Impressions section</summary><div style="font-size:11px;color:var(--ink-muted);margin-top:6px;padding:8px;background:var(--white);border-radius:6px;border:1px solid var(--border);white-space:pre-wrap">'+esc(impressionsText)+'</div></details>':'')
+      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(0,\'abnormal\')" style="font-size:13px;padding:8px 16px;background:var(--red-pale);border:1.5px solid var(--red);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;width:100%">⚠️ AI classified this wrong — click to mark as Abnormal</button></div>':'')
       +'</div>';
 
-    toast('Saved with AI analysis ✓');
-    setTimeout(()=>{clearUpload();},1500);
+    toast('Saved ✓');
 
   }catch(e){
     out.innerHTML='<div style="color:var(--red);font-size:13px">Extraction failed. Saving without analysis.</div>';
