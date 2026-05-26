@@ -495,8 +495,7 @@ async function extractAndSave(){
   const ctx=prof.diagnoses?'Patient context: '+(prof.name||'Patient')+', diagnoses: '+prof.diagnoses:'';
 
   // Specific medical phrases that unambiguously indicate abnormal — used to override AI status
-  // (broad words like "loss" or "abnormal" alone risk false positives in normal reports)
-  const abnormalPhrases=/instabilit|ligament laxity|laxity|predictive of chronic|loss from.{0,30}normal|exceeds.{0,30}normal|possible damage|possible instabilit|subluxation|herniati|spinal stenosis|kyphosis|spondylosis|disc protrusion|cord compression|nerve.{0,10}compress/i;
+  const abnormalPhrases=/instabilit|ligament laxity|laxity|predictive of chronic|loss from.{0,30}normal|exceeds.{0,30}normal|possible damage|possible instabilit|subluxation|herniati|spinal stenosis|kyphosis|spondylosis|disc protrusion|cord compression|nerve.{0,10}compress|loss of lordosis|lordosis loss|lordosis.{0,20}reduc|anterior translation|listhesis|retrolisthesis|anterolisthesis|segmental.{0,20}dysfunction|abnormal.{0,20}find|significant.{0,20}find/i;
   // Pre-scan pasted text only (PDF binary can't be keyword-scanned)
   const inputIsAbnormal=pasteText?abnormalPhrases.test(pasteText):false;
 
@@ -523,7 +522,7 @@ async function extractAndSave(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:2500,
-        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation >15mm, lordosis loss >30%, or instability findings = abnormal',
+        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","impressionsText":"Copy the EXACT verbatim text from the Impressions, Assessment, or Conclusion section of this report — not WNL table rows, only the narrative conclusion paragraph(s). Empty string if none found.","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology; any loss of lordosis, anterior translation, listhesis, or ligament laxity is noted\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation, lordosis loss, ligament laxity, instability, or kyphosis findings = abnormal',
         messages:msgs
       })
     });
@@ -554,34 +553,16 @@ async function extractAndSave(){
     if(res.status&&['normal','abnormal','borderline','pending'].includes(res.status)){
       testObj.status=res.status;
     }
-    // Override: if AI flagged any findings or listed red flags, status must be at least abnormal
-    // (the AI sometimes misclassifies status even when its own findings show abnormal results)
+    // Override checks — run against: flagged findings, red flags, impressionsText field,
+    // summary/rawText phrases, and the client-side pre-scan of pasted text
     const hasFlaggedFindings=res.findings?.some(f=>f.flagged);
     const hasRedFlags=res.redFlags?.length>0;
-    const summaryHasAbnormal=abnormalPhrases.test(res.summary||'')||abnormalPhrases.test(rawText);
+    const impressionsText=res.impressionsText||'';
+    const summaryHasAbnormal=abnormalPhrases.test(res.summary||'')
+      ||abnormalPhrases.test(impressionsText)
+      ||abnormalPhrases.test(rawText);
     if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal||inputIsAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
       testObj.status='abnormal';
-    }
-
-    // For PDF uploads that still come back "normal": extract the Impressions/Assessment
-    // section text and scan it client-side — more reliable than asking AI to judge status
-    if(curFileType==='application/pdf'&&(testObj.status==='normal'||testObj.status==='pending')){
-      try{
-        const vr=await fetch('/.netlify/functions/claude-proxy',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            model:'claude-sonnet-4-6',max_tokens:400,
-            system:'You are extracting text from a medical report. Return ONLY the verbatim text of the Impressions, Assessment, or Conclusion section — do not include any WNL table rows or individual measurement entries. If none exists, return the text of the final summary paragraph.',
-            messages:[{role:'user',content:[
-              {type:'document',source:{type:'base64',media_type:'application/pdf',data:curFileData}},
-              {type:'text',text:'Return only the exact text from the Impressions, Assessment, or Conclusion section of this report. No table rows, no WNL entries — only the conclusion/impressions narrative.'}
-            ]}]
-          })
-        });
-        const vd=await vr.json();
-        const impressionsText=(vd.content?.[0]?.text||'').trim();
-        if(impressionsText&&abnormalPhrases.test(impressionsText)) testObj.status='abnormal';
-      }catch(e){/* ignore — proceed with first-pass status */}
     }
 
     document.getElementById('test_status').value=testObj.status;
