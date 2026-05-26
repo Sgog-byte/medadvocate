@@ -480,10 +480,11 @@ async function extractAndSave(){
   const prof=(await DB.getProfile());
   const ctx=prof.diagnoses?'Patient context: '+(prof.name||'Patient')+', diagnoses: '+prof.diagnoses:'';
 
-  // Pre-scan input for abnormal keywords — before AI call, so we have ground truth
-  const abnormalPattern=/abnormal|instabilit|loss|exceed|deficit|damage|laxity|reduced|compression|narrowing|stenosis|possible instabilit|possible damage|spinal stenosis|herniati|subluxation|kyphosis|spondylosis/i;
-  const inputPreScanText=pasteText||(curFileData?atob(curFileData).slice(0,5000):'');
-  const inputIsAbnormal=abnormalPattern.test(inputPreScanText);
+  // Specific medical phrases that unambiguously indicate abnormal — used to override AI status
+  // (broad words like "loss" or "abnormal" alone risk false positives in normal reports)
+  const abnormalPhrases=/instabilit|ligament laxity|laxity|predictive of chronic|loss from.{0,30}normal|exceeds.{0,30}normal|possible damage|possible instabilit|subluxation|herniati|spinal stenosis|kyphosis|spondylosis|disc protrusion|cord compression|nerve.{0,10}compress/i;
+  // Pre-scan pasted text only (PDF binary can't be keyword-scanned)
+  const inputIsAbnormal=pasteText?abnormalPhrases.test(pasteText):false;
 
   try{
     let msgs;
@@ -543,7 +544,7 @@ async function extractAndSave(){
     // (the AI sometimes misclassifies status even when its own findings show abnormal results)
     const hasFlaggedFindings=res.findings?.some(f=>f.flagged);
     const hasRedFlags=res.redFlags?.length>0;
-    const summaryHasAbnormal=abnormalPattern.test(res.summary||'')||abnormalPattern.test(rawText.slice(0,1000));
+    const summaryHasAbnormal=abnormalPhrases.test(res.summary||'')||abnormalPhrases.test(rawText);
     if((hasFlaggedFindings||hasRedFlags||summaryHasAbnormal||inputIsAbnormal)&&(testObj.status==='normal'||testObj.status==='pending')){
       testObj.status='abnormal';
     }
