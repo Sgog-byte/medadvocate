@@ -543,8 +543,8 @@ async function analyze() {
 
   out.innerHTML = `<div class="load-wrap">
     <div class="load-ring"></div>
-    <div class="load-title">Interpreting document…</div>
-    <div class="load-sub">Reading in the context of ${esc(selectedPatient.name)}'s diagnoses and medications</div>
+    <div class="load-title">Reading your document…</div>
+    <div class="load-sub">Extracting findings from the report</div>
   </div>`;
 
   const { name, age, diagnoses, medsList } = buildPatientContext();
@@ -649,35 +649,75 @@ Return valid JSON only, no markdown, no text before or after the JSON:
       messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
     }
 
-    const r = await fetch('/.netlify/functions/claude-proxy', {
+    // ── CALL 1: EXTRACTION ──────────────────────────────────────
+    const r1 = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
-        system: systemPrompt,
+        max_tokens: 600,
+        system: `Extract all findings from this medical document. Return ONLY valid JSON, no markdown:
+{
+  "document_type": "string",
+  "findings": [{
+    "name": "string",
+    "value": "string",
+    "reference_range": "string",
+    "status": "normal|borderline|abnormal|notable"
+  }]
+}`,
         messages
       })
     });
 
-    if (r.status === 504) {
-      throw new Error('Analysis timed out — please try pasting the text instead of uploading a file, or paste only the Impressions and Findings section of the report');
+    if (r1.status === 504 || !r1.ok) {
+      throw new Error('Could not extract findings — please try pasting just the Impressions section');
     }
-    if (!r.ok) {
-      const errBody = await r.text();
-      throw new Error(`Proxy error ${r.status}: ${errBody.slice(0, 200)}`);
+    const d1 = await r1.json();
+    const rawExtract = (d1.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+    console.log('[DocInterpreter] Call 1 stop_reason:', d1.stop_reason, '| raw:', rawExtract.slice(0, 200));
+
+    let extraction;
+    try { extraction = JSON.parse(rawExtract); }
+    catch(e) {
+      const p = rawExtract.match(/\{[\s\S]*/)?.[0];
+      if (p) try { extraction = JSON.parse(repairJson(p)); } catch(e2) {}
+      if (!extraction) throw new Error('Could not extract findings — please try pasting just the Impressions section');
     }
 
-    const d = await r.json();
-    const rawText = (d.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
-    console.log('[DocInterpreter] stop_reason:', d.stop_reason, '| raw length:', rawText.length);
-    console.log('[DocInterpreter] raw response (first 500):', rawText.slice(0, 500));
+    // ── CALL 2: INTERPRETATION ───────────────────────────────────
+    out.innerHTML = `<div class="load-wrap">
+      <div class="load-ring"></div>
+      <div class="load-title">Interpreting findings for ${esc(selectedPatient.name)}…</div>
+      <div class="load-sub">Applying ${esc(name)}'s diagnoses and medications as context</div>
+    </div>`;
+
+    const r2 = await fetch('/.netlify/functions/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1200,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: `These findings were extracted from ${name}'s ${extraction.document_type || 'medical document'}. Interpret each finding for this patient:\n\n${JSON.stringify(extraction.findings || [], null, 2)}`
+        }]
+      })
+    });
+
+    if (r2.status === 504 || !r2.ok) {
+      throw new Error('Could not complete interpretation — please try again');
+    }
+    const d2 = await r2.json();
+    const rawText = (d2.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+    console.log('[DocInterpreter] Call 2 stop_reason:', d2.stop_reason, '| raw length:', rawText.length);
+    console.log('[DocInterpreter] Call 2 raw response (first 500):', rawText.slice(0, 500));
 
     let res;
     try {
       res = JSON.parse(rawText);
     } catch(parseErr) {
-      // Try to repair truncated JSON by balancing brackets
       const partial = rawText.match(/\{[\s\S]*/)?.[0];
       if (partial) {
         try {
@@ -688,7 +728,7 @@ Return valid JSON only, no markdown, no text before or after the JSON:
           console.warn('[DocInterpreter] Full raw text:', rawText);
         }
       }
-      if (!res) throw new Error(`Could not parse response (stop: ${d.stop_reason || '?'}) — try pasting just the Impressions/Findings section`);
+      if (!res) throw new Error(`Could not complete interpretation (stop: ${d2.stop_reason || '?'}) — please try again`);
     }
 
     out.innerHTML = '';
