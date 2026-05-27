@@ -653,7 +653,7 @@ Return valid JSON only, no markdown:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
+        max_tokens: 1600,
         system: systemPrompt,
         messages
       })
@@ -674,12 +674,16 @@ Return valid JSON only, no markdown:
     try {
       res = JSON.parse(rawText);
     } catch(parseErr) {
-      // Try to recover partial JSON
+      // Try to repair truncated JSON by balancing brackets
       const partial = rawText.match(/\{[\s\S]*/)?.[0];
       if (partial) {
-        try { res = JSON.parse(partial + (partial.endsWith('}') ? '' : '}')); } catch(e2) {}
+        try {
+          res = JSON.parse(repairJson(partial));
+        } catch(e2) {
+          console.warn('JSON repair failed:', e2.message, '\nRaw:', rawText.slice(0, 300));
+        }
       }
-      if (!res) throw new Error('Could not parse response');
+      if (!res) throw new Error('Could not parse response — try pasting a shorter section of the document');
     }
 
     out.innerHTML = '';
@@ -866,6 +870,25 @@ function resetAnalysis() {
 }
 
 // ── UTILS ──────────────────────────────────────────────────────
+function repairJson(s) {
+  // Walk the string tracking open braces/brackets to close a truncated JSON object
+  let braces = 0, brackets = 0, inString = false, escape = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (escape) { escape = false; continue; }
+    if (c === '\\' && inString) { escape = true; continue; }
+    if (c === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (c === '{') braces++;
+    else if (c === '}') braces = Math.max(0, braces - 1);
+    else if (c === '[') brackets++;
+    else if (c === ']') brackets = Math.max(0, brackets - 1);
+  }
+  // Strip trailing comma and unclosed string if any, then close open structures
+  s = s.trimEnd().replace(/,\s*$/, '').replace(/"[^"]*$/, '"...');
+  return s + ']'.repeat(brackets) + '}'.repeat(braces);
+}
+
 function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
