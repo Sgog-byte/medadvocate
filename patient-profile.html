@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedAdvocate — Patient Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#2d6a4f;--sage-deep:#1b4332;--sage-light:#95d5b2;--sage-pale:#e8f5ee;
+  --warm:#fdfcf8;--ink:#0d1f15;--ink-soft:#1b4332;--ink-muted:#2d6a4f;
+  --border:#b7d9c4;--white:#ffffff;
+  --amber:#c9923a;--amber-pale:#fdf3e7;--amber-light:#f0d4a8;
+  --red:#c0392b;--red-pale:#fff5f5;--red-border:#fccaca;
+  --blue:#3a7bc8;--blue-pale:#eef4fc;--blue-border:#b8d4f0;
+  --violet:#7b68ee;--violet-pale:#f3f0ff;--violet-border:#d4d0ff;
+  --shadow-sm:0 2px 12px rgba(28,43,34,.06);
+  --shadow:0 4px 24px rgba(28,43,34,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--ink);min-height:100vh}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-filter:blur(16px);border-bottom:2px solid var(--sage-deep);padding:0 28px;display:flex;align-items:center;height:60px;gap:10px}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink-muted);padding:7px 14px;border:1.5px solid var(--border);border-radius:100px;transition:all .2s;cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.nav-back:hover{border-color:var(--sage);color:var(--sage-deep)}
+.nav-logo{display:flex;align-items:center;gap:9px;margin-right:auto}
+.nav-gem{width:30px;height:30px;background:var(--sage-deep);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-wordmark{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink)}
+.nav-wordmark .dot{display:inline-block;width:7px;height:7px;background:var(--sage-light);border-radius:50%;margin:0 3px 3px 2px;vertical-align:middle}
+.nav-wordmark .adv{color:var(--sage);font-weight:300}
+
+/* LAYOUT */
+.shell{max-width:920px;margin:0 auto;padding:0 22px 100px}
+.page-header{padding:28px 0 20px;text-align:center}
+.page-icon{font-size:40px;margin-bottom:10px}
+.page-title{font-family:'Fraunces',serif;font-size:30px;font-weight:300;color:var(--ink);margin-bottom:7px}
+.page-title em{font-style:italic;color:var(--sage)}
+.page-sub{font-size:14px;color:var(--ink-muted);font-weight:300;max-width:520px;margin:0 auto}
+
+/* IMPORTANCE BANNER */
+.importance-bar{background:var(--sage-deep);color:white;border-radius:14px;padding:16px 22px;margin-bottom:18px;display:flex;align-items:flex-start;gap:14px;line-height:1.6}
+.importance-bar-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+.importance-bar-text{font-size:14px;font-weight:300}
+.importance-bar-text strong{font-weight:600}
+
+/* CARDS */
+.fcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.fcard-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.fcard-sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;font-weight:300;line-height:1.6}
+.section-title{font-family:'Fraunces',serif;font-size:15px;font-weight:400;color:var(--ink);margin-bottom:3px}
+.section-sub{font-size:12px;color:var(--ink-muted);font-weight:300;margin-bottom:12px}
+
+/* PATIENT LIST */
+.patient-list{display:flex;flex-direction:column;gap:8px}
+.patient-card{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--warm);cursor:pointer;transition:all .2s}
+.patient-card:hover{border-color:var(--sage);background:var(--sage-pale)}
+.patient-card.selected{border-color:var(--sage-deep);background:var(--sage-pale);box-shadow:0 0 0 2px var(--sage-pale)}
+.patient-avatar{width:36px;height:36px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:15px;color:white;font-weight:600;flex-shrink:0}
+.patient-card.selected .patient-avatar{background:var(--sage-deep)}
+.patient-info{flex:1;min-width:0}
+.patient-name{font-size:14px;font-weight:500;color:var(--ink)}
+.patient-meta{font-size:11px;color:var(--ink-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.default-badge{padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.05em;background:var(--sage-pale);border:1px solid var(--sage-light);color:var(--sage-deep);flex-shrink:0}
+
+/* FORMS */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.finput,.ftextarea,.fselect{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.finput:focus,.ftextarea:focus,.fselect:focus{border-color:var(--sage);background:var(--white)}
+.finput::placeholder,.ftextarea::placeholder{color:#a0b8aa}
+.ftextarea{line-height:1.6;resize:vertical}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* BUTTONS */
+.btn-primary{padding:12px 24px;background:var(--sage-deep);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary:hover:not(:disabled){background:var(--ink)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{padding:9px 18px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn-link{background:none;border:none;color:var(--blue);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:0}
+.btn-link:hover{color:var(--sage-deep)}
+
+/* READ-ONLY MED SECTION */
+.med-readonly{background:var(--warm);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px}
+.med-readonly-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.med-readonly-row:last-child{border-bottom:none;padding-bottom:0}
+.med-dot{width:8px;height:8px;border-radius:50%;background:var(--violet);flex-shrink:0}
+.med-name{font-size:14px;font-weight:400;color:var(--ink);flex:1}
+.med-detail{font-size:12px;color:var(--ink-muted);font-weight:300}
+.med-empty{font-size:13px;color:var(--ink-muted);font-weight:300;font-style:italic;padding:4px 0}
+.readonly-notice{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-muted);background:var(--warm);border:1px solid var(--border);border-radius:100px;padding:3px 10px;margin-bottom:10px}
+
+/* SUBSECTION DIVIDER */
+.subsection{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+
+/* TIMESTAMP */
+.timestamp-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:16px}
+.timestamp-label{font-size:11px;color:var(--ink-muted);font-weight:300}
+.save-success{font-size:12px;color:var(--sage);font-weight:500;display:none}
+
+/* LOADER */
+.load-wrap{text-align:center;padding:40px 24px}
+.load-ring{width:36px;height:36px;margin:0 auto 14px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* SYNC BADGE */
+.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--sage-deep);background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:100px;padding:3px 10px}
+
+@media(max-width:640px){
+  .two-col,.three-col{grid-template-columns:1fr}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+</head>
+<body>
+
+<nav>
+  <button class="nav-back" onclick="window.location.href='index.html'">← Home</button>
+  <div class="nav-logo">
+    <div class="nav-gem">🌿</div>
+    <div class="nav-wordmark">Med<span class="dot"></span><span class="adv">Advocate</span></div>
+  </div>
+  <div id="nav_auth"></div>
+</nav>
+
+<div class="shell">
+
+  <div class="page-header">
+    <div class="page-icon">👤</div>
+    <h1 class="page-title">Patient <em>Profile</em></h1>
+    <p class="page-sub">The single source of truth for patient data. Every MedAdvocate tool reads from here.</p>
+  </div>
+
+  <!-- Importance banner -->
+  <div class="importance-bar">
+    <div class="importance-bar-icon">🎯</div>
+    <div class="importance-bar-text">
+      <strong>Keep this profile complete and accurate</strong> — every MedAdvocate tool uses this information to personalize your results. The more complete the profile, the more meaningful the insights.
+    </div>
+  </div>
+
+  <!-- Patient selector -->
+  <div class="fcard">
+    <div class="fcard-title">Patients</div>
+    <div class="fcard-sub">Select a patient to view or edit their profile.</div>
+    <div id="patient_list">
+      <div class="load-wrap"><div class="load-ring"></div></div>
+    </div>
+  </div>
+
+  <!-- Profile editor — shown when a patient is selected -->
+  <div id="profile_editor" style="display:none">
+
+    <!-- Core identity -->
+    <div class="fcard" id="card_identity">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px">
+        <div>
+          <div class="fcard-title">Core Information</div>
+          <div class="fcard-sub" style="margin-bottom:0">Name, age, and diagnoses used by every MedAdvocate tool.</div>
+        </div>
+        <div id="default_badge_wrap"></div>
+      </div>
+
+      <div style="margin-top:18px">
+        <div class="two-col">
+          <div class="field">
+            <label class="flabel">Full Name</label>
+            <input class="finput" id="f_name" type="text" placeholder="e.g. Kira">
+          </div>
+          <div class="field">
+            <label class="flabel">Age</label>
+            <input class="finput" id="f_age" type="text" placeholder="e.g. 14">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="flabel">Diagnoses
+            <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:11px;margin-left:6px">— one per line or comma-separated</span>
+          </label>
+          <textarea class="ftextarea" id="f_diagnoses" style="min-height:100px"
+            placeholder="POTS&#10;hEDS&#10;MCAS&#10;Autoimmune encephalitis&#10;..."></textarea>
+          <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">List every confirmed diagnosis. This is used to personalize all AI-generated insights.</div>
+        </div>
+
+        <div class="field">
+          <label class="flabel">Additional Context & Notes</label>
+          <textarea class="ftextarea" id="f_notes" style="min-height:80px"
+            placeholder="Any additional context helpful for personalizing insights — e.g. history of reactions, school situation, relevant family history…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medications — READ ONLY -->
+    <div class="fcard">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
+        <div>
+          <div class="fcard-title">Active Medications</div>
+          <div class="fcard-sub" style="margin-bottom:0">Pulled live from the Medication Tracker. Read-only here to keep one source of truth.</div>
+        </div>
+        <a href="advocate-medications.html" class="btn-outline" style="white-space:nowrap;flex-shrink:0;font-size:12px;padding:7px 14px;text-decoration:none">
+          ✏️ Edit Medications
+        </a>
+      </div>
+
+      <div class="readonly-notice">🔒 Read-only — edit in Medication Tracker</div>
+
+      <div class="med-readonly" id="meds_readonly">
+        <div class="load-wrap" style="padding:16px"><div class="load-ring" style="width:24px;height:24px;margin-bottom:8px"></div></div>
+      </div>
+
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div id="meds_sync_badge" class="sync-badge" style="display:none">✓ Synced with profile</div>
+        <button class="btn-link" onclick="syncMedsNow()" id="sync_btn">↻ Sync to profile now</button>
+      </div>
+    </div>
+
+    <!-- Insurance -->
+    <div class="fcard">
+      <div class="fcard-title">Insurance Information</div>
+      <div class="fcard-sub">Stored locally on this device. Not shared or sent to any server.</div>
+
+      <div class="two-col">
+        <div class="field">
+          <label class="flabel">Insurance Provider</label>
+          <input class="finput" id="f_ins_provider" type="text" placeholder="e.g. Blue Cross Blue Shield">
+        </div>
+        <div class="field">
+          <label class="flabel">Member ID</label>
+          <input class="finput" id="f_ins_member" type="text" placeholder="e.g. XYZ123456789">
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label class="flabel">Group ID</label>
+          <input class="finput" id="f_ins_group" type="text" placeholder="e.g. 12345">
+        </div>
+        <div class="field">
+          <label class="flabel">Insurance Phone</label>
+          <input class="finput" id="f_ins_phone" type="tel" placeholder="e.g. 1-800-123-4567">
+        </div>
+      </div>
+      <div class="field">
+        <label class="flabel">Patient Portal URL</label>
+        <input class="finput" id="f_ins_portal" type="url" placeholder="e.g. https://member.bcbs.com">
+      </div>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div class="fcard">
+      <div class="fcard-title">Emergency Contact</div>
+      <div class="fcard-sub">Stored locally on this device.</div>
+
+      <div class="three-col">
+        <div class="field">
+          <label class="flabel">Contact Name</label>
+          <input class="finput" id="f_ec_name" type="text" placeholder="e.g. James Chen">
+        </div>
+        <div class="field">
+          <label class="flabel">Relationship</label>
+          <input class="finput" id="f_ec_rel" type="text" placeholder="e.g. Father, Spouse">
+        </div>
+        <div class="field">
+          <label class="flabel">Phone Number</label>
+          <input class="finput" id="f_ec_phone" type="tel" placeholder="e.g. 404-555-0123">
+        </div>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <div class="fcard" style="border-color:var(--sage-light)">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <button class="btn-primary" id="save_btn" onclick="saveProfile()">💾 Save Profile</button>
+        <div class="save-success" id="save_success">✓ Saved</div>
+      </div>
+      <div class="timestamp-row">
+        <div class="timestamp-label" id="last_updated">Last updated: never</div>
+      </div>
+    </div>
+
+  </div><!-- /profile_editor -->
+
+</div><!-- /shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let allPatients = [];
+let selectedPid = null;
+let activeMeds = [];
+
+// ── INIT ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await Auth.requireAuth();
+  renderAuthBar('nav_auth');
+  await loadPatients();
+});
+
+// ── LOAD PATIENTS ──────────────────────────────────────────────
+async function loadPatients() {
+  try {
+    allPatients = await DB.getPatients();
+    const activePid = await DB.patientId();
+    renderPatientList();
+    if (activePid) await selectPatient(activePid);
+    else if (allPatients.length) await selectPatient(allPatients[0].id);
+  } catch(e) {
+    document.getElementById('patient_list').innerHTML =
+      '<p style="font-size:13px;color:var(--red)">Could not load patients. Please refresh.</p>';
+    console.error(e);
+  }
+}
+
+function renderPatientList() {
+  const el = document.getElementById('patient_list');
+  if (!allPatients.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--ink-muted)">No patients found. Create one from the main app.</p>';
+    return;
+  }
+  el.innerHTML = '<div class="patient-list">' +
+    allPatients.map(p => `
+      <div class="patient-card ${p.id === selectedPid ? 'selected' : ''}"
+           id="pcard_${p.id}" onclick="selectPatient('${p.id}')">
+        <div class="patient-avatar">${esc(p.name||'?').charAt(0).toUpperCase()}</div>
+        <div class="patient-info">
+          <div class="patient-name">${esc(p.name || 'Unnamed patient')}</div>
+          <div class="patient-meta">${p.age ? 'Age ' + esc(String(p.age)) + ' · ' : ''}${p.diagnoses ? esc(p.diagnoses.split(/[,\n]/)[0].trim()) : 'No diagnoses on file'}</div>
+        </div>
+        ${p.is_default ? '<div class="default-badge">Default</div>' : ''}
+      </div>`).join('') +
+    '</div>';
+}
+
+// ── SELECT PATIENT ─────────────────────────────────────────────
+async function selectPatient(pid) {
+  selectedPid = pid;
+
+  // Update selected state in list
+  document.querySelectorAll('.patient-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('pcard_' + pid);
+  if (card) card.classList.add('selected');
+
+  document.getElementById('profile_editor').style.display = 'block';
+
+  const pat = allPatients.find(p => p.id === pid);
+  if (!pat) return;
+
+  // Populate core fields from DB
+  document.getElementById('f_name').value = pat.name || '';
+  document.getElementById('f_age').value = pat.age || '';
+  document.getElementById('f_diagnoses').value = pat.diagnoses || '';
+  document.getElementById('f_notes').value = pat.notes || '';
+
+  // Default badge
+  document.getElementById('default_badge_wrap').innerHTML =
+    pat.is_default ? '<div class="default-badge">Default patient</div>' : '';
+
+  // Extended fields from localStorage
+  const ext = getExt(pid);
+  document.getElementById('f_ins_provider').value = ext.insurance?.provider || '';
+  document.getElementById('f_ins_member').value = ext.insurance?.member_id || '';
+  document.getElementById('f_ins_group').value = ext.insurance?.group_id || '';
+  document.getElementById('f_ins_phone').value = ext.insurance?.phone || '';
+  document.getElementById('f_ins_portal').value = ext.insurance?.portal || '';
+  document.getElementById('f_ec_name').value = ext.emergency?.name || '';
+  document.getElementById('f_ec_rel').value = ext.emergency?.relationship || '';
+  document.getElementById('f_ec_phone').value = ext.emergency?.phone || '';
+
+  // Last updated
+  const updKey = `advocate_profile_updated_${pid}`;
+  const upd = localStorage.getItem(updKey);
+  document.getElementById('last_updated').textContent = upd
+    ? 'Last updated: ' + new Date(upd).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : 'Last updated: never';
+
+  // Load medications
+  await loadActiveMeds(pid);
+
+  // Scroll to editor
+  document.getElementById('profile_editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── ACTIVE MEDICATIONS ─────────────────────────────────────────
+async function loadActiveMeds(pid) {
+  const el = document.getElementById('meds_readonly');
+  el.innerHTML = '<div class="load-wrap" style="padding:16px"><div class="load-ring" style="width:24px;height:24px;margin-bottom:0"></div></div>';
+  try {
+    const { data } = await _supa
+      .from('medications')
+      .select('name, dose, frequency, type, doctor, status')
+      .eq('patient_id', pid)
+      .eq('status', 'active')
+      .order('name');
+    activeMeds = data || [];
+    renderMedsReadonly();
+  } catch(e) {
+    el.innerHTML = '<div class="med-empty">Could not load medications.</div>';
+    console.error(e);
+  }
+}
+
+function renderMedsReadonly() {
+  const el = document.getElementById('meds_readonly');
+  if (!activeMeds.length) {
+    el.innerHTML = '<div class="med-empty">No active medications on file. Add them in the Medication Tracker.</div>';
+    document.getElementById('meds_sync_badge').style.display = 'none';
+    return;
+  }
+  el.innerHTML = activeMeds.map(m => `
+    <div class="med-readonly-row">
+      <div class="med-dot"></div>
+      <div class="med-name">${esc(m.name)}</div>
+      <div class="med-detail">${[m.dose, m.frequency].filter(Boolean).map(esc).join(' · ')}</div>
+      ${m.doctor ? `<div class="med-detail" style="opacity:.65">Dr. ${esc(m.doctor)}</div>` : ''}
+    </div>`).join('');
+  document.getElementById('meds_sync_badge').style.display = 'inline-flex';
+}
+
+// ── SYNC MEDS TO PROFILE ───────────────────────────────────────
+// Builds a plain-text medication string from active meds and writes
+// it to patients.meds so all tools that read the profile get current data.
+async function syncActiveMedsToProfile(pid) {
+  try {
+    const { data: meds } = await _supa
+      .from('medications')
+      .select('name, dose, frequency')
+      .eq('patient_id', pid)
+      .eq('status', 'active')
+      .order('name');
+
+    const medsStr = (meds || [])
+      .map(m => [m.name, m.dose, m.frequency].filter(Boolean).join(' '))
+      .join('; ');
+
+    await _supa.from('patients').update({ meds: medsStr }).eq('id', pid);
+
+    // Update local cache
+    const idx = allPatients.findIndex(p => p.id === pid);
+    if (idx >= 0) allPatients[idx].meds = medsStr;
+
+    return medsStr;
+  } catch(e) {
+    console.warn('syncActiveMedsToProfile failed:', e.message);
+  }
+}
+
+async function syncMedsNow() {
+  if (!selectedPid) return;
+  const btn = document.getElementById('sync_btn');
+  btn.textContent = '↻ Syncing…';
+  btn.disabled = true;
+  await loadActiveMeds(selectedPid);
+  await syncActiveMedsToProfile(selectedPid);
+  btn.textContent = '↻ Sync to profile now';
+  btn.disabled = false;
+  toast('Medications synced to profile ✓');
+}
+
+// ── SAVE PROFILE ───────────────────────────────────────────────
+async function saveProfile() {
+  if (!selectedPid) return;
+  const btn = document.getElementById('save_btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const name = document.getElementById('f_name').value.trim();
+    const age = document.getElementById('f_age').value.trim();
+    // Normalize diagnoses: accept newlines or commas, store as comma-separated
+    const rawDx = document.getElementById('f_diagnoses').value;
+    const diagnoses = rawDx
+      .split(/[\n,]+/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .join(', ');
+    const notes = document.getElementById('f_notes').value.trim();
+
+    // Save core fields to Supabase patients table
+    const { error } = await _supa.from('patients').update({
+      name: name || null,
+      age: age ? (isNaN(Number(age)) ? age : Number(age)) : null,
+      diagnoses: diagnoses || null,
+      notes: notes || null
+    }).eq('id', selectedPid);
+
+    if (error) throw error;
+
+    // Sync active meds string into patients.meds
+    await syncActiveMedsToProfile(selectedPid);
+
+    // Save insurance + emergency to patient-namespaced localStorage
+    saveExt(selectedPid, {
+      insurance: {
+        provider: document.getElementById('f_ins_provider').value.trim(),
+        member_id: document.getElementById('f_ins_member').value.trim(),
+        group_id: document.getElementById('f_ins_group').value.trim(),
+        phone: document.getElementById('f_ins_phone').value.trim(),
+        portal: document.getElementById('f_ins_portal').value.trim()
+      },
+      emergency: {
+        name: document.getElementById('f_ec_name').value.trim(),
+        relationship: document.getElementById('f_ec_rel').value.trim(),
+        phone: document.getElementById('f_ec_phone').value.trim()
+      }
+    });
+
+    // Timestamp
+    const now = new Date().toISOString();
+    localStorage.setItem(`advocate_profile_updated_${selectedPid}`, now);
+    document.getElementById('last_updated').textContent =
+      'Last updated: ' + new Date(now).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+    // Update local cache
+    const idx = allPatients.findIndex(p => p.id === selectedPid);
+    if (idx >= 0) Object.assign(allPatients[idx], { name, age, diagnoses, notes });
+
+    // Re-render patient list to reflect name change
+    renderPatientList();
+
+    // Flash success
+    const succ = document.getElementById('save_success');
+    succ.style.display = 'block';
+    setTimeout(() => { succ.style.display = 'none'; }, 3000);
+
+    toast('Profile saved ✓');
+  } catch(e) {
+    toast('Save failed — ' + (e.message || 'please try again'));
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Save Profile';
+  }
+}
+
+// ── EXTENDED FIELDS (localStorage, patient-namespaced) ─────────
+function getExt(pid) {
+  try { return JSON.parse(localStorage.getItem(`advocate_profile_ext_${pid}`) || '{}'); }
+  catch { return {}; }
+}
+
+function saveExt(pid, data) {
+  localStorage.setItem(`advocate_profile_ext_${pid}`, JSON.stringify(data));
+}
+
+// ── UTILS ──────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
