@@ -486,6 +486,34 @@ function buildPatientContext() {
   return { name, age, diagnoses, medsList };
 }
 
+// ── PDF TEXT EXTRACTION ────────────────────────────────────────
+async function loadPdfJs() {
+  if (window.pdfjsLib) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function extractPdfText(base64) {
+  await loadPdfJs();
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const pdfDoc = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+  let text = '';
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
 // ── ANALYZE ────────────────────────────────────────────────────
 async function analyze() {
   if (!selectedPatient) { toast('Please select a patient first'); return; }
@@ -553,18 +581,39 @@ Return valid JSON only, no markdown:
     let messages;
 
     if (currentTab === 'paste' || (currentTab === 'upload' && !uploadFileData)) {
-      // Text only
-      const text = pasteText || supplement;
+      // Text only — truncate if over 8000 chars
+      let text = pasteText || supplement;
+      if (text.length > 8000) text = text.slice(0, 8000) + '\n[truncated for length]';
       messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
 
     } else if (uploadFileType === 'application/pdf') {
-      const content = [
-        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: uploadFileData } }
-      ];
-      let instruction = `Analyze this medical document for ${name}.`;
-      if (supplement) instruction += ` The following text was also pasted from the document — use it to ensure the Impressions/Assessment section is read correctly:\n\n${supplement}`;
-      content.push({ type: 'text', text: instruction });
-      messages = [{ role: 'user', content }];
+      // Extract text client-side with pdf.js — avoids sending large base64 payload
+      let pdfText = '';
+      try {
+        const loadSub = out.querySelector('.load-sub');
+        if (loadSub) loadSub.textContent = 'Extracting text from PDF…';
+        pdfText = await extractPdfText(uploadFileData);
+        if (loadSub) loadSub.textContent = `Interpreting in the context of ${esc(selectedPatient.name)}'s diagnoses and medications…`;
+      } catch(pdfErr) {
+        console.warn('PDF text extraction failed:', pdfErr.message);
+      }
+
+      if (pdfText) {
+        // Truncate extracted text if needed
+        if (pdfText.length > 8000) pdfText = pdfText.slice(0, 8000) + '\n[truncated for length]';
+        let instruction = `Analyze this medical document for ${name}:\n\n${pdfText}`;
+        if (supplement) instruction += `\n\nAdditional context provided by user:\n${supplement}`;
+        messages = [{ role: 'user', content: instruction }];
+      } else {
+        // Fallback: send as base64 document block if text extraction failed
+        const content = [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: uploadFileData } }
+        ];
+        let instruction = `Analyze this medical document for ${name}.`;
+        if (supplement) instruction += ` Additional context:\n\n${supplement}`;
+        content.push({ type: 'text', text: instruction });
+        messages = [{ role: 'user', content }];
+      }
 
     } else if (uploadFileType && uploadFileType.startsWith('image/')) {
       const content = [
@@ -576,8 +625,8 @@ Return valid JSON only, no markdown:
       messages = [{ role: 'user', content }];
 
     } else {
-      // Text fallback
-      const decoded = atob(uploadFileData).slice(0, 8000);
+      // Text fallback for other file types
+      let decoded = atob(uploadFileData).slice(0, 8000);
       const text = (supplement ? supplement + '\n\n' : '') + decoded;
       messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
     }
@@ -587,11 +636,19 @@ Return valid JSON only, no markdown:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 1500,
         system: systemPrompt,
         messages
       })
     });
+
+    if (r.status === 504) {
+      throw new Error('Analysis timed out — please try pasting the text instead of uploading a file, or paste only the Impressions and Findings section of the report');
+    }
+    if (!r.ok) {
+      const errBody = await r.text();
+      throw new Error(`Proxy error ${r.status}: ${errBody.slice(0, 200)}`);
+    }
 
     const d = await r.json();
     const rawText = (d.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
@@ -613,8 +670,7 @@ Return valid JSON only, no markdown:
 
   } catch(e) {
     out.innerHTML = `<div style="background:var(--red-pale);border:1.5px solid var(--red-border);border-radius:12px;padding:16px 18px;color:var(--red);font-size:13px">
-      <strong>Analysis failed.</strong> Please check your connection and try again.
-      ${e.message ? '<br><span style="opacity:.7;font-size:11px">' + esc(e.message) + '</span>' : ''}
+      <strong>Analysis failed.</strong> ${esc(e.message) || 'Please check your connection and try again.'}
     </div>`;
     console.error(e);
   } finally {
