@@ -281,6 +281,7 @@ async function addMedication(){
     ['med_name','med_dose','med_freq','med_doctor','med_start','med_reason','med_notes'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('med_type').value='prescription';
     await renderMeds();
+    syncActiveMedsToProfile(_syncPid);
     showToast('Medication added ✓');
   }catch(e){showToast('Error saving medication');console.error(e);}
 }
@@ -289,6 +290,7 @@ async function updateMedStatus(id,status){
   try{
     await DB.saveMedication({id,status});
     await renderMeds();
+    syncActiveMedsToProfile(_syncPid);
     showToast('Status updated ✓');
   }catch(e){showToast('Error updating status');console.error(e);}
 }
@@ -298,6 +300,7 @@ async function deleteMed(id){
   try{
     await DB.deleteMedication(id);
     await renderMeds();
+    syncActiveMedsToProfile(_syncPid);
     showToast('Removed');
   }catch(e){showToast('Error removing medication');console.error(e);}
 }
@@ -484,6 +487,25 @@ async function generateReport(){
   }
 }
 
+// ── SYNC ACTIVE MEDS TO PROFILE ──
+// Keeps patients.meds mirroring the active medications table for this patient.
+let _syncPid=null;
+async function syncActiveMedsToProfile(pid){
+  if(!pid)return;
+  try{
+    const{data:meds}=await _supa
+      .from('medications')
+      .select('name,dose,frequency')
+      .eq('patient_id',pid)
+      .eq('status','active')
+      .order('name');
+    const medsStr=(meds||[])
+      .map(m=>[m.name,m.dose,m.frequency].filter(Boolean).join(' '))
+      .join('; ');
+    await _supa.from('patients').update({meds:medsStr}).eq('id',pid);
+  }catch(e){console.warn('syncActiveMedsToProfile failed:',e.message);}
+}
+
 // ── INIT ──
 document.getElementById('log_effectiveness').addEventListener('input',function(){
   document.getElementById('log_eff_label').textContent=this.value;
@@ -492,7 +514,7 @@ document.getElementById('log_date').value=new Date().toISOString().split('T')[0]
 
 // Namespace log key by patient then load
 (async()=>{
-  try{const pid=await DB.patientId();if(pid)LOG_KEY=`advocate_med_logs_${pid}`;}catch(e){}
+  try{const pid=await DB.patientId();if(pid){LOG_KEY=`advocate_med_logs_${pid}`;_syncPid=pid;}}catch(e){}
   renderMeds();
   renderLogs();
 })();
