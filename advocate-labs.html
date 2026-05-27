@@ -1143,8 +1143,9 @@ async function loadProfile() {
   try {
     const local = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
     // Only use local name/diagnoses if DB returned nothing (offline fallback)
+    // Never overwrite fresh DB data with stale localStorage values
     if (!profile.name && local.name) profile = { ...local };
-    else if (local.notes) profile.notes = local.notes;
+    else if (local.notes && !profile.notes) profile.notes = local.notes;
   } catch(e) {}
   // Save the validated profile back to the namespaced key
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
@@ -1215,7 +1216,7 @@ Return ONLY valid JSON (no markdown, no backticks):
       "low": 4.0,
       "high": 11.0,
       "status": "normal | high | low | critical",
-      "note": "For ABNORMAL results only: one short plain-English phrase (10 words max). Empty string for normal results."
+      "note": "One short plain-English phrase (10 words max). Write empty string for clearly normal results UNLESS the result is notable given the patient's specific diagnoses — for example a low-normal IgG in a patient with hypogammaglobulinemia, or a borderline sodium in a patient with POTS or dysautonomia."
     }
   ],
   "insights": [
@@ -1235,6 +1236,7 @@ Rules:
 - insights: generate one item per abnormal result, plus 1-2 info items for notable normal results; aim for 5-10 items total
 - level "urgent" = critical or significantly abnormal, "watch" = mildly abnormal or trending, "info" = reassuring normal or context
 - Keep language parent-friendly — no jargon without explanation
+- For any result within 10% of the reference range limit, assess whether it is clinically significant given this patient's specific diagnoses and medications before marking it as simply normal.
 - Today's date: ${new Date().toISOString().split('T')[0]}`;
 }
 
@@ -1632,7 +1634,7 @@ async function refreshInsights() {
 
   try {
     const data = await callProxy({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 5000,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: `Here are the already-extracted lab values from a report dated ${latest.date}. Do NOT re-extract — instead generate rich insights and a contextual summary.\n\nLab values:\n${labSummary}${trendSection}\n\nReturn JSON with only these keys:\n{"insights":[{"level":"urgent|watch|info","text":"..."}],"trendInsights":[{"level":"urgent|watch|info","text":"..."}],"contextualSummary":"..."}` }]
