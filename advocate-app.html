@@ -949,6 +949,8 @@
 
 <script>
   let selectedSpecialist = '';
+  let _profileDiagnoses = '';
+  let _profileMeds = '';
 
   // Specialist selection
   document.querySelectorAll('.specialist-btn').forEach(btn => {
@@ -992,6 +994,8 @@
   // ── PRE-FILL FROM SHARED PROFILE & SYMPTOM TRACKER ──
   (async function prefillFromProfile() {
     const profile = (await DB.getProfile());
+    if (profile.diagnoses) _profileDiagnoses = profile.diagnoses;
+    if (profile.meds) _profileMeds = profile.meds;
     if (profile.name) {
       const nameField = document.getElementById('patientName');
       if (nameField && !nameField.value) nameField.value = profile.name;
@@ -1085,10 +1089,14 @@ Rules:
 - Use plain, warm language — not medical jargon
 - Make the script feel natural to say out loud, not clinical
 - The questionsToAsk should be things the specialist can actually answer or act on today
-- Keep everything actionable and doable in 15 minutes`;
+- Keep everything actionable and doable in 15 minutes
+- When confirmed diagnoses and medications are provided, tailor every talking point and question specifically to those conditions — do not give generic advice
+- For complex multi-system patients (multiple diagnoses, rare conditions, autoimmune conditions, connective tissue disorders, dysautonomia), prioritize talking points that connect symptoms across systems and help the specialist see the full picture`;
 
     const userMessage = `Patient: ${patientName}
 Specialist: ${specialist}
+Confirmed diagnoses: ${_profileDiagnoses || 'not specified'}
+Current medications: ${_profileMeds || 'not specified'}
 Symptoms and concerns: ${symptoms}
 ${goals ? `Goals for this visit: ${goals}` : ''}${getLabInsightsText()}
 
@@ -1447,9 +1455,10 @@ Please create a focused visit script for this appointment.`;
   // ── END READ ALOUD ─────────────────────────────────────────────
 
   // ── LAB INSIGHTS ────────────────────────────────────────────────
+  let _appScriptLabsKey = 'advocate_script_labs';
   function loadLabInsights() {
     let saved = [];
-    try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+    try { saved = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]'); } catch(e) {}
     const empty = document.getElementById('labInsightsEmpty');
     const list = document.getElementById('labInsightsList');
     const clearBtn = document.getElementById('clearLabsBtn');
@@ -1471,22 +1480,28 @@ Please create a focused visit script for this appointment.`;
   }
   function removeLabInsight(i) {
     let saved = [];
-    try { saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]'); } catch(e) {}
+    try { saved = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]'); } catch(e) {}
     saved.splice(i, 1);
-    localStorage.setItem('advocate_script_labs', JSON.stringify(saved));
+    localStorage.setItem(_appScriptLabsKey, JSON.stringify(saved));
     loadLabInsights();
   }
   function clearLabInsights() {
-    localStorage.removeItem('advocate_script_labs');
+    localStorage.removeItem(_appScriptLabsKey);
     loadLabInsights();
   }
   function getLabInsightsText() {
     try {
-      const saved = JSON.parse(localStorage.getItem('advocate_script_labs') || '[]');
+      const saved = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]');
       return saved.length ? '\n\nRecent lab findings to reference:\n' + saved.join('\n') : '';
     } catch(e) { return ''; }
   }
-  document.addEventListener('DOMContentLoaded', loadLabInsights);
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const pid = await DB.patientId();
+      if (pid) _appScriptLabsKey = `advocate_script_labs_${pid}`;
+    } catch(e) {}
+    loadLabInsights();
+  });
 
   // ── COPY / PRINT / EDIT ─────────────────────────────────────────
   function showToastApp(msg) {
