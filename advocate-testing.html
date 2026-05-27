@@ -349,7 +349,15 @@ const FLAT_KEY='advocate_testing';
 let _testingPid=null;
 function testingKey(){return _testingPid?`advocate_testing_${_testingPid}`:FLAT_KEY;}
 function getTests(){return JSON.parse(localStorage.getItem(testingKey())||'[]')}
-function saveTests(d){localStorage.setItem(testingKey(),JSON.stringify(d));}
+async function saveTests(d, skipDb) {
+  localStorage.setItem(testingKey(), JSON.stringify(d));
+  if (skipDb || !_testingPid) return;
+  try {
+    for (const t of d) {
+      await DB.saveDiagnosticTest(t);
+    }
+  } catch(e) { console.warn('saveTests DB sync failed:', e.message); }
+}
 
 const TYPE_META={
   eeg:{label:'EEG',icon:'🧠',color:'var(--violet)',pale:'var(--violet-pale)',border:'var(--violet-border)'},
@@ -480,6 +488,17 @@ function overrideTestStatus(idx,newStatus){
   toast('Status updated to '+newStatus+' ✓');
 }
 
+// ── PATIENT CONTEXT ──
+async function getPatientContext() {
+  const prof = await DB.getProfile();
+  if (!prof || (!prof.name && !prof.diagnoses)) return '';
+  let ctx = 'Patient: ' + (prof.name || 'Patient');
+  if (prof.age) ctx += ', age ' + prof.age;
+  if (prof.diagnoses) ctx += '\nDiagnoses: ' + prof.diagnoses;
+  if (prof.meds) ctx += '\nCurrent medications: ' + prof.meds;
+  return ctx;
+}
+
 // ── AI EXTRACTION ──
 async function extractAndSave(){
   if(!selectedType){toast('Please select a test type first');return;}
@@ -492,11 +511,9 @@ async function extractAndSave(){
   out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Analyzing report...</p></div>';
 
   const meta=TYPE_META[selectedType]||TYPE_META.other;
-  const prof=(await DB.getProfile());
-  const ctx=prof.diagnoses?'Patient context: '+(prof.name||'Patient')+', diagnoses: '+prof.diagnoses:'';
 
   // Specific medical phrases that unambiguously indicate abnormal — used to override AI status
-  const abnormalPhrases=/instabilit|ligament laxity|laxity|predictive of chronic|loss from.{0,30}normal|exceeds.{0,30}normal|possible damage|possible instabilit|subluxation|herniati|spinal stenosis|kyphosis|spondylosis|disc protrusion|cord compression|nerve.{0,10}compress|loss of lordosis|lordosis loss|lordosis.{0,20}reduc|anterior translation|listhesis|retrolisthesis|anterolisthesis|segmental.{0,20}dysfunction|abnormal.{0,20}find|significant.{0,20}find/i;
+  const abnormalPhrases=/(?<!(?:no|without|denies|negative for|absence of)\s+)(instabilit|ligament laxity|laxity|predictive of chronic|loss from.{0,30}normal|exceeds.{0,30}normal|possible damage|possible instabilit|subluxation|herniati|spinal stenosis|kyphosis|spondylosis|disc protrusion|cord compression|nerve.{0,10}compress|loss of lordosis|lordosis loss|lordosis.{0,20}reduc|anterior translation|listhesis|retrolisthesis|anterolisthesis|segmental.{0,20}dysfunction|abnormal.{0,20}find|significant.{0,20}find)/i;
   // Pre-scan pasted text only (PDF binary can't be keyword-scanned)
   const inputIsAbnormal=pasteText?abnormalPhrases.test(pasteText):false;
 
@@ -508,7 +525,7 @@ async function extractAndSave(){
       const impressionMatch=pasteText.match(/Impressions?\s+and\s+Assessment([\s\S]{200,}?)(?:References?|$)/i);
       if(impressionMatch) textToAnalyze='IMPRESSIONS AND ASSESSMENT (the authoritative conclusion):\n'+impressionMatch[0]+'\n\nFULL REPORT EXCERPT:\n'+pasteText.slice(0,2000);
     }
-    const analyzeInstruction='Analyze this '+meta.label+' report. The Impressions and Assessment section is the authoritative conclusion — it overrides individual WNL table entries. Set status to abnormal if the Impressions describe ANY abnormal findings, instability, loss, or pathology. '+ctx;
+    const analyzeInstruction='Analyze this '+meta.label+' report. The Impressions and Assessment section is the authoritative conclusion — it overrides individual WNL table entries. Set status to abnormal if the Impressions describe ANY abnormal findings, instability, loss, or pathology. '+(await getPatientContext());
     if(pasteText){
       msgs=[{role:'user',content:analyzeInstruction+'\n\n'+textToAnalyze}];
     } else if(curFileType==='application/pdf'){
@@ -523,7 +540,7 @@ async function extractAndSave(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:2500,
-        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","impressionsText":"Copy the EXACT verbatim text from the Impressions, Assessment, or Conclusion section of this report — not WNL table rows, only the narrative conclusion paragraph(s). Empty string if none found.","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology; any loss of lordosis, anterior translation, listhesis, or ligament laxity is noted\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation, lordosis loss, ligament laxity, instability, or kyphosis findings = abnormal',
+        system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","impressionsText":"Copy the EXACT verbatim text from the Impressions, Assessment, or Conclusion section of this report — not WNL table rows, only the narrative conclusion paragraph(s). Empty string if none found.","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology; any loss of lordosis, anterior translation, listhesis, or ligament laxity is noted\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation, lordosis loss, ligament laxity, instability, or kyphosis findings = abnormal\n- For EKG reports: a QTc under 440ms in males or 460ms in females is normal. Do not flag borderline unless QTc exceeds these thresholds or the Impressions explicitly note an abnormality.\n- For any test on a patient with dysautonomia or POTS: note that heart rate variability findings, mild tachycardia, and positional changes may be expected and should be interpreted in that context.',
         messages:msgs
       })
     });
@@ -947,7 +964,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }));
       // Only overwrite localStorage if DB has more records (DB is authoritative)
       const local = getTests();
-      if (mapped.length >= local.length) saveTests(mapped);
+      if (mapped.length >= local.length) saveTests(mapped, true);
     }
   } catch(e) {}
 });
