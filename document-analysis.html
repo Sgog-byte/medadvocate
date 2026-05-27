@@ -566,8 +566,9 @@ Rules:
 - Never falsely reassure. Never over-alarm.
 - State confidence level per finding.
 - Flag medication interactions with findings.
+- CRITICAL: Always output a complete, valid JSON object. If space is limited, limit findings to the 6 most clinically significant — but ALWAYS close all brackets and braces.
 
-Return valid JSON only, no markdown:
+Return valid JSON only, no markdown, no text before or after the JSON:
 {
   "overall_picture": "2-3 sentence clinical summary",
   "document_type": "type of document",
@@ -653,7 +654,7 @@ Return valid JSON only, no markdown:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1600,
+        max_tokens: 2000,
         system: systemPrompt,
         messages
       })
@@ -669,6 +670,8 @@ Return valid JSON only, no markdown:
 
     const d = await r.json();
     const rawText = (d.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+    console.log('[DocInterpreter] stop_reason:', d.stop_reason, '| raw length:', rawText.length);
+    console.log('[DocInterpreter] raw response (first 500):', rawText.slice(0, 500));
 
     let res;
     try {
@@ -679,11 +682,13 @@ Return valid JSON only, no markdown:
       if (partial) {
         try {
           res = JSON.parse(repairJson(partial));
+          console.log('[DocInterpreter] JSON repaired successfully');
         } catch(e2) {
-          console.warn('JSON repair failed:', e2.message, '\nRaw:', rawText.slice(0, 300));
+          console.warn('[DocInterpreter] JSON repair failed:', e2.message);
+          console.warn('[DocInterpreter] Full raw text:', rawText);
         }
       }
-      if (!res) throw new Error('Could not parse response — try pasting a shorter section of the document');
+      if (!res) throw new Error(`Could not parse response (stop: ${d.stop_reason || '?'}) — try pasting just the Impressions/Findings section`);
     }
 
     out.innerHTML = '';
