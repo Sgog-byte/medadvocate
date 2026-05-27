@@ -497,6 +497,24 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
       <div class="tc-foot"><div class="tc-cta">View my testing history →</div><div class="tc-arr">→</div></div>
     </div>
 
+    <div class="tc" onclick="openTool('interpreter')" style="border-color:var(--blue)">
+      <div class="tc-body">
+        <div class="tc-icon i2">🔍</div>
+        <div class="tc-name">Document Interpreter</div>
+        <div class="tc-tag tg-blue">Understand what your reports actually mean</div>
+        <div class="tc-desc">Upload any medical report — EKG, MRI, lab panel, spinal X-ray. AI interprets every finding in the context of your confirmed diagnoses and medications.</div>
+        <div class="tc-feats">
+          <div class="tc-feat"><div class="fd"></div>Patient-specific interpretation</div>
+          <div class="tc-feat"><div class="fd"></div>Never falsely reassuring</div>
+          <div class="tc-feat"><div class="fd"></div>Questions to ask your doctor</div>
+        </div>
+      </div>
+      <div class="tc-foot">
+        <div class="tc-cta">Interpret a document →</div>
+        <div class="tc-arr">→</div>
+      </div>
+    </div>
+
 
   </div>
 </section>
@@ -645,6 +663,7 @@ const TOOLS = {
   medications: { title:'Medication Tracker',          src:'advocate-medications.html' },
   flare:       { title:'Flare Tracker',                src:'advocate-flare.html' },
   testing:     { title:'Diagnostic Testing',             src:'advocate-testing.html' },
+  interpreter: { title:'Document Interpreter',           src:'document-analysis.html' },
   concierge:   { title:'Care Concierge',               src:'advocate-concierge.html' },
   appointments:{ title:'Appointments',                 src:'advocate-appointments.html' },
   research:    { title:'Research Library',             src:'advocate-research.html' },
