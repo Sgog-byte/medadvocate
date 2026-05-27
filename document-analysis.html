@@ -229,11 +229,17 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
     </div>
 
     <div id="panel_paste">
+      <div style="font-size:12px;color:var(--blue);background:var(--blue-pale);border:1px solid var(--blue-border);border-radius:8px;padding:9px 12px;margin-bottom:10px;line-height:1.55">
+        💡 For best results paste only the Impressions, Assessment, or Findings section — not the full report. This improves speed and accuracy.
+      </div>
       <textarea class="ftextarea" id="paste_text" style="min-height:160px"
         placeholder="Paste the document text here — lab results, discharge summary, imaging report, specialist letter, test results…
 
 For lab panels: paste the full result table including reference ranges.
 For imaging reports: paste the Impressions and Findings sections."></textarea>
+      <div id="truncation_notice" style="display:none;font-size:12px;color:var(--amber);background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:8px;padding:9px 12px;margin-top:8px;line-height:1.55">
+        ⚠️ Report truncated to 6000 characters for processing — paste only the Impressions and Findings section for best results.
+      </div>
     </div>
 
     <div id="panel_upload" style="display:none">
@@ -543,36 +549,41 @@ async function analyze() {
 
   const { name, age, diagnoses, medsList } = buildPatientContext();
 
-  const systemPrompt = `You are a clinical document analyst for a medical advocacy platform. You are analyzing a medical report for ${name}, age ${age}, with the following confirmed diagnoses: ${diagnoses}. Their current active medications are: ${medsList}.
+  const systemPrompt = `You are a clinical document analyst. Analyze this medical report for ${name}, age ${age}.
 
-Analyze this document with the following rules:
-- Never render a single global normal or abnormal verdict
-- Assess each finding individually against established reference ranges
-- Apply age-appropriate reference ranges — this patient may be a child or adolescent
-- Flag when findings are significant specifically because of this patient's underlying conditions — for example a QTc of 415ms means something different in a patient on medications that affect QT interval
-- Cross-reference all findings against known diagnoses and current medications for interactions and context
-- Identify every value outside normal limits and explain clinical significance in plain language a non-medical person can understand
-- Distinguish clearly between a value being outside reference range versus being clinically significant
-- State specifically what requires follow-up and why
-- Never be falsely reassuring about findings that warrant attention
-- Never over-alarm about findings that are genuinely benign given full context
-- End with a confidence note about limitations of document analysis without physical examination
+Diagnoses: ${diagnoses}
+Medications: ${medsList}
+
+Rules:
+- Assess each finding individually — never a single global verdict
+- Age-appropriate reference ranges — pediatric patients need pediatric norms
+- Cross-reference findings against diagnoses and medications
+- Flag findings significant due to patient's specific conditions
+- Distinguish between outside reference range and clinically significant
+- WNL fields do not override abnormal Impressions section
+- EKG: QTc under 440ms males or 460ms females is normal
+- POTS/dysautonomia: mild tachycardia and HR variability may be expected
+- Never falsely reassure. Never over-alarm.
+- State confidence level per finding.
+- Flag medication interactions with findings.
 
 Return valid JSON only, no markdown:
 {
   "overall_picture": "2-3 sentence clinical summary",
+  "document_type": "type of document",
   "findings": [
     {
-      "finding": "name of finding",
+      "finding": "name",
       "value": "patient value",
       "normal_range": "established normal",
       "status": "normal|borderline|abnormal|notable",
-      "plain_language": "what this means in plain English",
-      "patient_context": "why this matters specifically for this patient given their diagnoses and medications"
+      "plain_language": "plain English explanation",
+      "patient_context": "why this matters for this patient specifically",
+      "confidence": "high|medium|low"
     }
   ],
-  "follow_up_needed": ["specific action items"],
-  "questions_for_doctor": ["3-5 questions this report raises"],
+  "follow_up_needed": ["action items"],
+  "questions_for_doctor": ["questions"],
   "confidence_note": "limitations of this analysis",
   "disclaimer": "This analysis is interpretive support only and does not constitute medical advice. Always verify findings with your healthcare provider."
 }`;
@@ -581,9 +592,15 @@ Return valid JSON only, no markdown:
     let messages;
 
     if (currentTab === 'paste' || (currentTab === 'upload' && !uploadFileData)) {
-      // Text only — truncate if over 8000 chars
+      // Text only — truncate if over 6000 chars
       let text = pasteText || supplement;
-      if (text.length > 8000) text = text.slice(0, 8000) + '\n[truncated for length]';
+      const truncNotice = document.getElementById('truncation_notice');
+      if (text.length > 6000) {
+        text = text.slice(0, 6000) + '\n[truncated for length]';
+        if (truncNotice) truncNotice.style.display = 'block';
+      } else {
+        if (truncNotice) truncNotice.style.display = 'none';
+      }
       messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
 
     } else if (uploadFileType === 'application/pdf') {
@@ -600,7 +617,7 @@ Return valid JSON only, no markdown:
 
       if (pdfText) {
         // Truncate extracted text if needed
-        if (pdfText.length > 8000) pdfText = pdfText.slice(0, 8000) + '\n[truncated for length]';
+        if (pdfText.length > 6000) pdfText = pdfText.slice(0, 6000) + '\n[truncated for length]';
         let instruction = `Analyze this medical document for ${name}:\n\n${pdfText}`;
         if (supplement) instruction += `\n\nAdditional context provided by user:\n${supplement}`;
         messages = [{ role: 'user', content: instruction }];
@@ -626,7 +643,7 @@ Return valid JSON only, no markdown:
 
     } else {
       // Text fallback for other file types
-      let decoded = atob(uploadFileData).slice(0, 8000);
+      let decoded = atob(uploadFileData).slice(0, 6000);
       const text = (supplement ? supplement + '\n\n' : '') + decoded;
       messages = [{ role: 'user', content: `Analyze this medical document for ${name}:\n\n${text}` }];
     }
@@ -636,7 +653,7 @@ Return valid JSON only, no markdown:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
+        max_tokens: 1200,
         system: systemPrompt,
         messages
       })
