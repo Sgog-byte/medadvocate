@@ -567,6 +567,7 @@ Rules:
 - State confidence level per finding.
 - Flag medication interactions with findings.
 - CRITICAL: Always output a complete, valid JSON object. If space is limited, limit findings to the 6 most clinically significant — but ALWAYS close all brackets and braces.
+- CRITICAL: You must always return complete valid JSON. If you are running low on space, reduce the detail in plain_language and patient_context fields but always close all JSON brackets properly. Never truncate mid-response.
 
 Return valid JSON only, no markdown, no text before or after the JSON:
 {
@@ -697,7 +698,7 @@ Return valid JSON only, no markdown, no text before or after the JSON:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
+        max_tokens: 1800,
         system: systemPrompt,
         messages: [{
           role: 'user',
