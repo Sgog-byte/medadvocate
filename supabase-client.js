@@ -765,6 +765,28 @@ const DB = {
     await _supa.from('research_library').delete().eq('id', id);
   },
 
+  // ── SCRIPT INSIGHTS ──────────────────────────────────────────
+
+  async saveInsight(patientId, source, insightText) {
+    const { data, error } = await _supa.from('script_insights').insert({
+      patient_id: patientId, source, insight_text: insightText
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async loadInsights(patientId) {
+    const { data } = await _supa.from('script_insights')
+      .select('*').eq('patient_id', patientId)
+      .order('created_at', { ascending: false });
+    return data || [];
+  },
+
+  async deleteInsight(id) {
+    const { error } = await _supa.from('script_insights').delete().eq('id', id);
+    return !error;
+  },
+
   // ── MIGRATION ────────────────────────────────────────────────
   /**
    * One-time migration: pull everything from localStorage and

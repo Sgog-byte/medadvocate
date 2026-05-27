@@ -333,6 +333,8 @@ function scriptLabsKey() { return _scriptLabsKey; }
 function loadLabInsights() {
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
+  // Normalize: handle both plain strings (old format) and {id, text} objects (new format)
+  saved = saved.map(x => typeof x === 'string' ? { id: null, text: x } : x);
   const empty = document.getElementById('labInsightsEmpty');
   const list = document.getElementById('labInsightsList');
   const clearBtn = document.getElementById('clearLabsBtn');
@@ -345,20 +347,25 @@ function loadLabInsights() {
   empty.style.display = 'none';
   list.style.display = 'flex';
   clearBtn.style.display = 'inline';
-  list.innerHTML = saved.map((txt, i) => `
+  list.innerHTML = saved.map((item, i) => `
     <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
       <span style="color:#2d6a4f;margin-top:1px">•</span>
-      <span style="flex:1">${escH(txt)}</span>
+      <span style="flex:1">${escH(item.text || '')}</span>
       <button onclick="removeLabInsight(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
     </div>`).join('');
 }
 
-function removeLabInsight(i) {
+async function removeLabInsight(i) {
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
+  saved = saved.map(x => typeof x === 'string' ? { id: null, text: x } : x);
+  const item = saved[i];
   saved.splice(i, 1);
   localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
   loadLabInsights();
+  if (item && item.id) {
+    try { await DB.deleteInsight(item.id); } catch(e) { console.warn('Insight delete failed:', e.message); }
+  }
 }
 
 function clearLabInsights() {
@@ -369,14 +376,38 @@ function clearLabInsights() {
 function getLabInsightsText() {
   try {
     const saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]');
-    return saved.length ? '\n\nRecent lab findings to reference in scripts:\n' + saved.join('\n') : '';
+    if (!saved.length) return '';
+    const texts = saved.map(x => typeof x === 'string' ? x : (x.text || ''));
+    return '\n\nRecent lab findings to reference in scripts:\n' + texts.join('\n');
   } catch(e) { return ''; }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const pid = await DB.patientId();
-    if (pid) _scriptLabsKey = `advocate_script_labs_${pid}`;
+    if (pid) {
+      _scriptLabsKey = `advocate_script_labs_${pid}`;
+      // Merge Supabase insights with localStorage
+      const dbInsights = await DB.loadInsights(pid);
+      if (dbInsights.length) {
+        let local = [];
+        try { local = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
+        // Normalize old string entries to objects
+        local = local.map(x => typeof x === 'string' ? { id: null, text: x } : x);
+        // Add DB rows not already present in local
+        const localTexts = new Set(local.map(x => x.text));
+        for (const row of dbInsights) {
+          if (!localTexts.has(row.insight_text)) {
+            local.push({ id: row.id, text: row.insight_text });
+          } else {
+            // Backfill id on matching entry that has no id yet
+            const entry = local.find(x => x.text === row.insight_text && !x.id);
+            if (entry) entry.id = row.id;
+          }
+        }
+        localStorage.setItem(scriptLabsKey(), JSON.stringify(local));
+      }
+    }
   } catch(e) {}
   loadLabInsights();
 });

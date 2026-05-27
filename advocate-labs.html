@@ -2010,7 +2010,7 @@ function scriptLabsKey() {
   return currentPatientId ? `advocate_script_labs_${currentPatientId}` : 'advocate_script_labs';
 }
 
-function addInsightToScript(entryIdx, insightIdx) {
+async function addInsightToScript(entryIdx, insightIdx) {
   const entry = allLabDates[entryIdx];
   if (!entry) return;
   const ins = (entry.insights || [])[insightIdx];
@@ -2025,13 +2025,18 @@ function addInsightToScript(entryIdx, insightIdx) {
   if (!saved.includes(text)) saved.push(text);
   localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
 
+  try {
+    const pid = await DB.patientId();
+    if (pid) { await DB.saveInsight(pid, `Lab ${dateLabel}`, text); }
+  } catch(e) { console.warn('Insight Supabase save failed:', e.message); }
+
   // Visual feedback on the button
   const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
   showToast('✓ Insight saved — open Visit Script to use it');
 }
 
-function addTrendInsightToScript(i) {
+async function addTrendInsightToScript(i) {
   const texts = window._trendTexts || [];
   const rawText = texts[i];
   if (!rawText) return;
@@ -2040,6 +2045,12 @@ function addTrendInsightToScript(i) {
   try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
   if (!saved.includes(text)) saved.push(text);
   localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
+
+  try {
+    const pid = await DB.patientId();
+    if (pid) { await DB.saveInsight(pid, 'Lab trend', text); }
+  } catch(e) { console.warn('Insight Supabase save failed:', e.message); }
+
   const btn = document.getElementById(`trend-btn-${i}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
   showToast('✓ Trend insight saved — open Visit Script to use it');

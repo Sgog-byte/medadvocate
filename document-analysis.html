@@ -182,7 +182,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 
   <!-- Top disclaimer -->
   <div class="disclaimer-bar no-print">
-    <strong>Document Interpreter</strong> analyzes your records in the context of your confirmed diagnoses and medications. It is interpretive support only — not a diagnosis and not a substitute for your healthcare team.
+    <strong>Document Interpreter</strong> analyzes your records using your confirmed diagnoses and medications as context. This is interpretive support only — not a diagnosis, not medical advice, and not a substitute for your healthcare team. Always review findings with your doctor.
   </div>
 
   <!-- Patient selector -->
@@ -241,11 +241,11 @@ For imaging reports: paste the Impressions and Findings sections."></textarea>
         ondragover="event.preventDefault();this.classList.add('drag')"
         ondragleave="this.classList.remove('drag')"
         ondrop="onDrop(event)">
-        <input type="file" id="file_input" accept=".pdf,.png,.jpg,.jpeg,.heic,.tiff,.txt"
+        <input type="file" id="file_input" accept=".pdf,.png,.jpg,.jpeg"
           onchange="onFileSelect(event)" style="display:none">
         <div class="drop-zone-icon">📄</div>
         <div class="drop-zone-title" id="drop_title">Drop your document here</div>
-        <div class="drop-zone-sub">PDF, image, or text file — 20 MB max</div>
+        <div class="drop-zone-sub">PDF, PNG, or JPG — 4 MB max</div>
         <button class="btn-outline" onclick="document.getElementById('file_input').click()">Choose File</button>
       </div>
       <div id="file_name_display" style="font-size:13px;color:var(--sage-deep);margin-top:8px;font-weight:500"></div>
@@ -267,6 +267,11 @@ For imaging reports: paste the Impressions and Findings sections."></textarea>
 
   <!-- Results -->
   <div id="results_section" style="display:none">
+
+    <!-- Disclaimer above results -->
+    <div class="disclaimer-bar" style="margin-bottom:16px">
+      <strong>Document Interpreter</strong> analyzes your records using your confirmed diagnoses and medications as context. This is interpretive support only — not a diagnosis, not medical advice, and not a substitute for your healthcare team. Always review findings with your doctor.
+    </div>
 
     <!-- Overall picture -->
     <div class="summary-card" id="result_summary">
@@ -301,10 +306,11 @@ For imaging reports: paste the Impressions and Findings sections."></textarea>
       </div>
     </div>
 
-    <!-- Print button -->
+    <!-- Action buttons -->
     <div class="no-print" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
       <button class="btn-outline" onclick="window.print()">🖨️ Print Report</button>
-      <button class="btn-outline" onclick="resetAnalysis()">↩ Analyze Another Document</button>
+      <button class="btn-outline" id="copy_btn" onclick="copyResults()">📋 Copy Results</button>
+      <button class="btn-outline" onclick="resetAnalysis()">↩ New Analysis</button>
     </div>
 
     <!-- Confidence + disclaimer -->
@@ -438,7 +444,7 @@ function onFileSelect(e) {
 }
 
 function processFile(file) {
-  if (file.size > 20 * 1024 * 1024) { toast('File too large — 20 MB max'); return; }
+  if (file.size > 4 * 1024 * 1024) { toast('File too large — 4 MB max'); return; }
   const reader = new FileReader();
   reader.onload = ev => {
     const dataUrl = ev.target.result;
@@ -714,6 +720,61 @@ function toggleAllFindings() {
   });
   document.querySelector('[onclick="toggleAllFindings()"]').textContent =
     allExpanded ? 'Collapse all' : 'Expand all';
+}
+
+// ── COPY RESULTS ───────────────────────────────────────────────
+async function copyResults() {
+  const lines = [];
+
+  // Header
+  const patientLabel = document.getElementById('result_patient_label').textContent;
+  lines.push(`Document Interpreter — ${patientLabel}`, '');
+
+  // Overall picture
+  const overview = document.getElementById('result_overview').textContent;
+  if (overview) { lines.push('CLINICAL OVERVIEW', overview, ''); }
+
+  // Findings
+  const findingCards = document.querySelectorAll('.finding-card');
+  if (findingCards.length) {
+    lines.push('FINDINGS');
+    findingCards.forEach(card => {
+      const badge = card.querySelector('.finding-badge')?.textContent || '';
+      const name = card.querySelector('.finding-name')?.textContent || '';
+      const value = card.querySelector('.finding-value')?.textContent || '';
+      const meaning = card.querySelector('.finding-row-val')?.textContent || '';
+      lines.push(`[${badge}] ${name}${value ? ' — ' + value : ''}${meaning ? '\n  ' + meaning : ''}`);
+    });
+    lines.push('');
+  }
+
+  // Follow-up
+  const followItems = document.querySelectorAll('#followup_list li');
+  if (followItems.length) {
+    lines.push('FOLLOW-UP NEEDED');
+    followItems.forEach(li => lines.push('☐ ' + li.textContent.trim()));
+    lines.push('');
+  }
+
+  // Questions
+  const qItems = document.querySelectorAll('#questions_list li');
+  if (qItems.length) {
+    lines.push('QUESTIONS FOR YOUR DOCTOR');
+    qItems.forEach((li, i) => lines.push(`${i + 1}. ${li.textContent.trim()}`));
+    lines.push('');
+  }
+
+  // Disclaimer
+  lines.push('—', 'Document Interpreter analyzes your records using your confirmed diagnoses and medications as context. This is interpretive support only — not a diagnosis, not medical advice, and not a substitute for your healthcare team. Always review findings with your doctor.');
+
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    const btn = document.getElementById('copy_btn');
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = '📋 Copy Results'; }, 2000);
+  } catch(e) {
+    toast('Copy failed — please use Print instead');
+  }
 }
 
 // ── RESET ──────────────────────────────────────────────────────
