@@ -479,9 +479,8 @@ const DB = {
       id: t.id,
       type: t.type || t.test_type,
       date: t.date || t.test_date,
-      status: t.status || t.result || 'pending',  // DB stores status as 'result' column
-      result: t.result || t.status || '',          // preserve raw value for compatibility
-      results: t.results || t.result || t.extracted?.summary || '',
+      result: t.result || '',
+      status: t.result || t.status || 'pending',
       doctor: t.doctor || t.ordering_doctor,
       facility: t.facility,
       notes: t.notes,
@@ -515,7 +514,8 @@ const DB = {
         test_type: test.type || test.test_type,
         test_date: test.date || test.test_date,
         result: test.result, ordering_doctor: test.doctor || test.ordering_doctor,
-        facility: test.facility, notes: test.notes
+        facility: test.facility, notes: test.notes,
+        extracted: test.extracted || null
       }).eq('id', test.id);
     } else {
       await _supa.from('diagnostic_tests').insert({
@@ -525,7 +525,9 @@ const DB = {
         test_date: test.date || test.test_date || null,
         result: test.result || null,
         ordering_doctor: test.doctor || test.ordering_doctor || null,
-        facility: test.facility || null, notes: test.notes || null
+        facility: test.facility || null,
+        notes: test.notes || null,
+        extracted: test.extracted || null
       });
     }
   },
