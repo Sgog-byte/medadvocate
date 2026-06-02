@@ -88,12 +88,13 @@ h1 strong{font-weight:600}
 .sec-sub{font-size:15px;color:var(--ink-muted);font-weight:300;max-width:500px;margin:0 auto}
 
 /* TOOL CARDS */
-.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 .tc{background:var(--white);border:2.5px solid var(--sage-deep);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm);transition:all .25s;display:flex;flex-direction:column;cursor:pointer;opacity:0;animation:fadeU .6s ease forwards}
 .tc:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px);border-color:var(--ink);background:#f7fdf9}
 .tc:nth-child(1){animation-delay:.05s}.tc:nth-child(2){animation-delay:.1s}.tc:nth-child(3){animation-delay:.15s}
 .tc:nth-child(4){animation-delay:.2s}.tc:nth-child(5){animation-delay:.25s}.tc:nth-child(6){animation-delay:.3s}
 .tc:nth-child(7){animation-delay:.35s}.tc:nth-child(8){animation-delay:.4s}
+.tc:nth-child(9){animation-delay:.45s;grid-column:2}.tc:nth-child(10){animation-delay:.5s;grid-column:3}
 @keyframes fadeU{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .tc-body{padding:24px 22px 16px;flex:1}
 .tc-icon{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;border:1.5px solid var(--border-light)}
@@ -189,13 +190,16 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 #toast.show{transform:translateX(-50%) translateY(0)}
 
 @media(max-width:960px){
-  @media(max-width:900px){.tools-grid{grid-template-columns:repeat(2,1fr)}} @media(max-width:580px){.tools-grid{grid-template-columns:1fr}}
   .for-grid,.coming-grid{grid-template-columns:repeat(2,1fr)}
   .tools-section,.for-sec,.coming-sec{padding-left:20px;padding-right:20px}
   nav{padding:0 16px}.nav-link{display:none}
   footer{padding:32px 20px}
   .mob-nav{display:grid}
   body{padding-bottom:72px}
+}
+@media(max-width:900px){
+  .tools-grid{grid-template-columns:repeat(2,1fr)}
+  .tc:nth-child(9),.tc:nth-child(10){grid-column:auto}
 }
 @media(max-width:560px){
   .tools-grid,.for-grid,.coming-grid{grid-template-columns:1fr}
@@ -234,8 +238,9 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 .pricing-note{font-size:11px;color:var(--ink-muted);line-height:1.6;font-weight:300}
 
 /* ── HELP / ASK A QUESTION ── */
-.help-fab{position:fixed;bottom:28px;right:28px;width:52px;height:52px;border-radius:50%;background:var(--sage-deep);border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 20px rgba(27,67,50,.4);z-index:400;transition:all .25s;display:flex;align-items:center;justify-content:center;color:white}
-.help-fab:hover{transform:scale(1.08);background:var(--ink)}
+.help-fab{position:fixed;bottom:28px;right:28px;height:48px;padding:0 20px;border-radius:100px;background:var(--sage-deep);border:none;cursor:pointer;font-size:18px;box-shadow:0 4px 20px rgba(27,67,50,.4);z-index:400;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;color:white;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.help-fab:hover{transform:translateY(-2px);background:var(--ink);box-shadow:0 6px 24px rgba(27,67,50,.45)}
+.help-fab-text{font-size:13px;font-weight:500;letter-spacing:.01em}
 .help-panel{position:fixed;bottom:90px;right:28px;width:360px;max-height:520px;background:var(--warm);border-radius:20px;box-shadow:0 16px 60px rgba(13,31,21,.25);border:2px solid var(--sage-deep);display:flex;flex-direction:column;z-index:450;overflow:hidden;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.34,1.56,.64,1);transform-origin:bottom right}
 .help-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
 .help-hdr{background:var(--sage-deep);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -257,6 +262,10 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   .help-fab{bottom:88px;right:16px}
   .help-panel{bottom:0;right:0;left:0;width:100%;max-height:68vh;border-radius:20px 20px 0 0;transform-origin:bottom center;transform:translateY(40px) scale(.97)}
   .help-panel.open{transform:translateY(0) scale(1)}
+}
+@media(max-width:400px){
+  .help-fab-text{display:none}
+  .help-fab{width:48px;height:48px;padding:0;border-radius:50%;justify-content:center}
 }
 </style>
   <!-- Supabase auth + data layer -->
@@ -617,6 +626,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 <!-- ── HELP / ASK A QUESTION ── -->
 <button class="help-fab" id="helpFab" onclick="toggleHelpPanel()" aria-label="Ask a question about MedAdvocate">
   <span id="helpFabIcon">💬</span>
+  <span class="help-fab-text" id="helpFabText">Ask me questions</span>
 </button>
 
 <div class="help-panel" id="helpPanel" role="dialog" aria-label="Ask MedAdvocate">
@@ -956,6 +966,8 @@ function toggleHelpPanel() {
   const isOpen = panel.classList.contains('open');
   panel.classList.toggle('open', !isOpen);
   document.getElementById('helpFabIcon').textContent = isOpen ? '💬' : '✕';
+  const fabText = document.getElementById('helpFabText');
+  if (fabText) fabText.textContent = isOpen ? 'Ask me questions' : 'Close';
   if (!isOpen) setTimeout(() => document.getElementById('helpInput').focus(), 250);
 }
 
