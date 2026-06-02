@@ -316,8 +316,10 @@ For imaging reports: paste the Impressions and Findings sections."></textarea>
     <div class="no-print" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
       <button class="btn-outline" onclick="window.print()">🖨️ Print Report</button>
       <button class="btn-outline" id="copy_btn" onclick="copyResults()">📋 Copy Results</button>
+      <button class="btn-outline" id="save_btn" onclick="saveToRecords()">💾 Save to My Records</button>
       <button class="btn-outline" onclick="resetAnalysis()">↩ New Analysis</button>
     </div>
+    <div id="save_status" style="display:none;margin-top:10px;padding:10px 14px;border:1.5px solid;border-radius:10px;font-size:13px;font-weight:500"></div>
 
     <!-- Confidence + disclaimer -->
     <div class="confidence-card" id="result_confidence"></div>
@@ -336,6 +338,7 @@ let uploadFileData = null;    // base64
 let uploadFileType = null;    // MIME
 let currentTab = 'paste';
 let allExpanded = false;
+let currentResult = null;   // holds last rendered result for saveToRecords()
 
 // ── INIT ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -783,6 +786,7 @@ Return valid JSON only, no markdown, no text before or after the JSON:
 
 // ── RENDER RESULTS ─────────────────────────────────────────────
 function renderResults(res) {
+  currentResult = res;
   const section = document.getElementById('results_section');
   section.style.display = 'block';
 
@@ -938,6 +942,9 @@ async function copyResults() {
 
 // ── RESET ──────────────────────────────────────────────────────
 function resetAnalysis() {
+  currentResult = null;
+  const ss = document.getElementById('save_status');
+  if (ss) { ss.style.display = 'none'; ss.textContent = ''; }
   document.getElementById('results_section').style.display = 'none';
   document.getElementById('analyze_out').innerHTML = '';
   document.getElementById('paste_text').value = '';
@@ -949,6 +956,127 @@ function resetAnalysis() {
   document.getElementById('file_input').value = '';
   allExpanded = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── SAVE TO RECORDS ────────────────────────────────────────────
+async function saveToRecords() {
+  if (!currentResult || !selectedPatient) { toast('No results to save'); return; }
+
+  const btn = document.getElementById('save_btn');
+  const statusEl = document.getElementById('save_status');
+  btn.disabled = true;
+  btn.textContent = '💾 Saving…';
+  statusEl.style.display = 'none';
+
+  // Pin DB to the correct patient before any save call
+  DB._patientId = selectedPatient.id;
+
+  const today = new Date().toISOString().split('T')[0];
+  const year  = String(new Date().getFullYear());
+  const docType  = currentResult.document_type || 'Document';
+  const overview = currentResult.overall_picture || '';
+  const findings = currentResult.findings || [];
+  const followUp = currentResult.follow_up_needed || [];
+
+  // Derive overall status from findings (worst wins)
+  const hasAbnormal   = findings.some(f => f.status === 'abnormal');
+  const hasBorderline = findings.some(f => f.status === 'borderline');
+  const overallStatus = hasAbnormal ? 'abnormal' : hasBorderline ? 'borderline' : 'normal';
+
+  // Map document_type string → test type key used by advocate-testing.html
+  const dtLower = docType.toLowerCase();
+  let testType = 'other';
+  if (/ekg|ecg/.test(dtLower))  testType = 'ekg';
+  else if (/mri/.test(dtLower)) testType = 'mri';
+  else if (/x.?ray/.test(dtLower)) testType = 'xray';
+  else if (/eeg/.test(dtLower)) testType = 'eeg';
+
+  let timelineOk = false;
+  let testOk     = false;
+
+  // ── SAVE 1: timeline_events ─────────────────────────────────
+  try {
+    await DB.saveTimelineEvent({
+      date:        today,
+      year:        year,
+      category:    'test',
+      title:       (docType + ' — ' + overview).slice(0, docType.length + 4 + 60),
+      description: JSON.stringify({
+        doctor: '',
+        notes:  followUp.slice(0, 3).join('; ')
+      })
+    });
+    timelineOk = true;
+  } catch(e) {
+    console.error('[DocInterpreter] Timeline save failed:', e.message);
+  }
+
+  // ── SAVE 2: diagnostic_tests (Supabase) ─────────────────────
+  try {
+    await DB.saveDiagnosticTest({
+      name:   docType,
+      type:   testType,
+      date:   today,
+      result: overallStatus,
+      notes:  overview
+    });
+    testOk = true;
+  } catch(e) {
+    console.error('[DocInterpreter] Diagnostic test save failed:', e.message);
+  }
+
+  // ── SAVE 3: localStorage for Medical Summary ─────────────────
+  // Uses same format as advocate-testing.html buildTestObj()
+  if (testOk) {
+    try {
+      const lsKey  = `advocate_testing_${selectedPatient.id}`;
+      const stored = JSON.parse(localStorage.getItem(lsKey) || '[]');
+      stored.unshift({
+        id:        Date.now(),
+        type:      testType,
+        date:      today,
+        status:    overallStatus,
+        doctor:    '',
+        facility:  '',
+        notes:     overview,
+        extracted: currentResult,
+        fileName:  null,
+        fileType:  null,
+        fileData:  null,
+        savedAt:   new Date().toISOString()
+      });
+      localStorage.setItem(lsKey, JSON.stringify(stored));
+    } catch(e) {
+      console.warn('[DocInterpreter] localStorage save failed:', e.message);
+    }
+  }
+
+  // ── STATUS MESSAGE ───────────────────────────────────────────
+  btn.disabled = false;
+  btn.textContent = '💾 Save to My Records';
+  statusEl.style.display = 'block';
+
+  if (timelineOk && testOk) {
+    statusEl.style.color       = 'var(--green)';
+    statusEl.style.background  = 'var(--green-pale)';
+    statusEl.style.borderColor = 'var(--green-border)';
+    statusEl.textContent = '✓ Saved to Medical Timeline and Diagnostic Testing';
+  } else if (timelineOk && !testOk) {
+    statusEl.style.color       = 'var(--amber)';
+    statusEl.style.background  = 'var(--amber-pale)';
+    statusEl.style.borderColor = 'var(--amber-light)';
+    statusEl.textContent = 'Timeline saved ✓ — Diagnostic Testing save failed, please try again';
+  } else if (!timelineOk && testOk) {
+    statusEl.style.color       = 'var(--amber)';
+    statusEl.style.background  = 'var(--amber-pale)';
+    statusEl.style.borderColor = 'var(--amber-light)';
+    statusEl.textContent = 'Diagnostic Testing saved ✓ — Timeline save failed, please try again';
+  } else {
+    statusEl.style.color       = 'var(--red)';
+    statusEl.style.background  = 'var(--red-pale)';
+    statusEl.style.borderColor = 'var(--red-border)';
+    statusEl.textContent = 'Save failed — please try again';
+  }
 }
 
 // ── UTILS ──────────────────────────────────────────────────────
