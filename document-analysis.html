@@ -338,7 +338,8 @@ let uploadFileData = null;    // base64
 let uploadFileType = null;    // MIME
 let currentTab = 'paste';
 let allExpanded = false;
-let currentResult = null;   // holds last rendered result for saveToRecords()
+let currentResult = null;      // holds last rendered result for saveToRecords()
+let currentExtraction = null;  // holds Call 1 extraction (document_type, date, findings)
 
 // ── INIT ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -663,6 +664,7 @@ Return valid JSON only, no markdown, no text before or after the JSON:
         system: `Extract all findings from this medical document. Return ONLY valid JSON, no markdown:
 {
   "document_type": "string",
+  "date": "YYYY-MM-DD if found in document or null",
   "findings": [{
     "name": "string",
     "value": "string",
@@ -688,6 +690,7 @@ Return valid JSON only, no markdown, no text before or after the JSON:
       if (p) try { extraction = JSON.parse(repairJson(p)); } catch(e2) {}
       if (!extraction) throw new Error('Could not extract findings — please try pasting just the Impressions section');
     }
+    currentExtraction = extraction;  // store at module level for saveToRecords()
 
     // ── CALL 2: BACKGROUND INTERPRETATION ───────────────────────
     // Insert job row — background function writes result back when done
@@ -943,6 +946,7 @@ async function copyResults() {
 // ── RESET ──────────────────────────────────────────────────────
 function resetAnalysis() {
   currentResult = null;
+  currentExtraction = null;
   const ss = document.getElementById('save_status');
   if (ss) { ss.style.display = 'none'; ss.textContent = ''; }
   document.getElementById('results_section').style.display = 'none';
@@ -959,20 +963,50 @@ function resetAnalysis() {
 }
 
 // ── SAVE TO RECORDS ────────────────────────────────────────────
-async function saveToRecords() {
+function saveToRecords() {
   if (!currentResult || !selectedPatient) { toast('No results to save'); return; }
+
+  const defaultDate = currentExtraction?.date || new Date().toISOString().split('T')[0];
+  const statusEl = document.getElementById('save_status');
+
+  statusEl.style.display    = 'block';
+  statusEl.style.color      = 'var(--ink-soft)';
+  statusEl.style.background = 'var(--blue-pale)';
+  statusEl.style.borderColor = 'var(--blue-border)';
+  statusEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:400">📅 Confirm test date:</span>
+      <input type="date" id="save_date_input" value="${esc(defaultDate)}"
+        style="padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:var(--warm);outline:none">
+      <button onclick="confirmAndSave()"
+        style="padding:8px 16px;background:var(--sage-deep);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">
+        Confirm &amp; Save
+      </button>
+      <button onclick="cancelSave()"
+        style="padding:8px 14px;background:transparent;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer">
+        Cancel
+      </button>
+    </div>`;
+}
+
+function cancelSave() {
+  const statusEl = document.getElementById('save_status');
+  if (statusEl) { statusEl.style.display = 'none'; statusEl.innerHTML = ''; }
+}
+
+async function confirmAndSave() {
+  const dateInput = document.getElementById('save_date_input');
+  const confirmedDate = dateInput?.value || new Date().toISOString().split('T')[0];
 
   const btn = document.getElementById('save_btn');
   const statusEl = document.getElementById('save_status');
   btn.disabled = true;
-  btn.textContent = '💾 Saving…';
-  statusEl.style.display = 'none';
+  statusEl.innerHTML = '<span style="color:var(--ink-muted);font-size:13px">Saving…</span>';
 
   // Pin DB to the correct patient before any save call
   DB._patientId = selectedPatient.id;
 
-  const today = new Date().toISOString().split('T')[0];
-  const year  = String(new Date().getFullYear());
+  const year     = confirmedDate.split('-')[0];
   const docType  = currentResult.document_type || 'Document';
   const overview = currentResult.overall_picture || '';
   const findings = currentResult.findings || [];
@@ -986,10 +1020,10 @@ async function saveToRecords() {
   // Map document_type string → test type key used by advocate-testing.html
   const dtLower = docType.toLowerCase();
   let testType = 'other';
-  if (/ekg|ecg/.test(dtLower))  testType = 'ekg';
-  else if (/mri/.test(dtLower)) testType = 'mri';
+  if (/ekg|ecg/.test(dtLower))     testType = 'ekg';
+  else if (/mri/.test(dtLower))    testType = 'mri';
   else if (/x.?ray/.test(dtLower)) testType = 'xray';
-  else if (/eeg/.test(dtLower)) testType = 'eeg';
+  else if (/eeg/.test(dtLower))    testType = 'eeg';
 
   let timelineOk = false;
   let testOk     = false;
@@ -997,7 +1031,7 @@ async function saveToRecords() {
   // ── SAVE 1: timeline_events ─────────────────────────────────
   try {
     await DB.saveTimelineEvent({
-      date:        today,
+      date:        confirmedDate,
       year:        year,
       category:    'test',
       title:       (docType + ' — ' + overview).slice(0, docType.length + 4 + 60),
@@ -1016,7 +1050,7 @@ async function saveToRecords() {
     await DB.saveDiagnosticTest({
       name:   docType,
       type:   testType,
-      date:   today,
+      date:   confirmedDate,
       result: overallStatus,
       notes:  overview
     });
@@ -1034,7 +1068,7 @@ async function saveToRecords() {
       stored.unshift({
         id:        Date.now(),
         type:      testType,
-        date:      today,
+        date:      confirmedDate,
         status:    overallStatus,
         doctor:    '',
         facility:  '',
@@ -1053,8 +1087,7 @@ async function saveToRecords() {
 
   // ── STATUS MESSAGE ───────────────────────────────────────────
   btn.disabled = false;
-  btn.textContent = '💾 Save to My Records';
-  statusEl.style.display = 'block';
+  statusEl.innerHTML = '';
 
   if (timelineOk && testOk) {
     statusEl.style.color       = 'var(--green)';
