@@ -179,6 +179,7 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
 
 .ib{position:fixed;bottom:82px;left:12px;right:12px;background:var(--sage-deep);color:white;border-radius:16px;padding:15px 17px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);z-index:300;transform:translateY(120px);opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);max-width:440px}
 @media(min-width:768px){.ib{bottom:22px;left:50%;right:auto;transform:translateX(-50%) translateY(120px);width:400px}.ib.show{transform:translateX(-50%) translateY(0)}}
+@media(max-width:768px){.ib{bottom:140px}}
 .ib.show{transform:translateY(0);opacity:1}
 .ib-ic{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
 .ib-t{font-size:13px;font-weight:500;color:white;margin-bottom:2px}
@@ -877,8 +878,13 @@ window.addEventListener('beforeinstallprompt', e => {
 });
 
 function showInstallBanner() {
+  // If already running as installed app, auto-suppress forever and bail
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) {
+    localStorage.setItem('pwa_dismissed', '1');
+    return;
+  }
   if (localStorage.getItem('pwa_dismissed') === '1') return;
-  if (window.matchMedia('(display-mode: standalone)').matches) return;
   const banner = document.getElementById('installBanner');
   if (banner) setTimeout(() => banner.classList.add('show'), 4000);
 }
