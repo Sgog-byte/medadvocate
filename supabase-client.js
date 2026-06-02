@@ -479,7 +479,8 @@ const DB = {
       id: t.id,
       type: t.type || t.test_type,
       date: t.date || t.test_date,
-      status: t.status || 'pending',
+      status: t.status || t.result || 'pending',  // DB stores status as 'result' column
+      result: t.result || t.status || '',          // preserve raw value for compatibility
       results: t.results || t.result || t.extracted?.summary || '',
       doctor: t.doctor || t.ordering_doctor,
       facility: t.facility,
