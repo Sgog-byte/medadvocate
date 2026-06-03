@@ -308,6 +308,7 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
         <button class="btn-b" id="view-compare-btn" onclick="setView('compare',this)">📊 Comparison Table</button>
         <button class="btn-o" onclick="window.print()" style="margin-left:auto">🖨️ Print this view</button>
         <button class="btn-o" onclick="copyHistoryText()">📋 Copy</button>
+        <button class="btn-o" id="backup-btn" onclick="backupTestsToCloud()">☁️ Backup to Cloud</button>
       </div>
       <div id="timeline_view"></div>
       <div id="compare_view" style="display:none"></div>
@@ -925,6 +926,24 @@ function copyHistoryText(){
     ?document.getElementById('timeline_view')
     :document.getElementById('compare_view');
   navigator.clipboard.writeText(el.innerText).then(()=>toast('Copied ✓'));
+}
+
+async function backupTestsToCloud() {
+  const tests = getTests();
+  if (!tests.length) { toast('No tests found in local storage'); return; }
+  const btn = document.getElementById('backup-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '☁️ Backing up…'; }
+  let saved = 0, failed = 0;
+  for (const t of tests) {
+    try { await DB.saveDiagnosticTest(t); saved++; }
+    catch(e) { console.warn('[backup]', e.message); failed++; }
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '☁️ Backup to Cloud'; }
+  if (failed === 0) {
+    toast(`✓ Backed up ${saved} test${saved !== 1 ? 's' : ''} to cloud`);
+  } else {
+    toast(`Backed up ${saved}, ${failed} failed — please try again`);
+  }
 }
 
 // Init
