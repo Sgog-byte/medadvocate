@@ -511,7 +511,7 @@ const DB = {
     // Numeric ids are localStorage timestamps (Date.now()), not Supabase uuids — always insert
     const hasSupabaseId = test.id && typeof test.id === 'string';
     if (hasSupabaseId) {
-      await _supa.from('diagnostic_tests').update({
+      const { error } = await _supa.from('diagnostic_tests').update({
         test_name: test.name || test.test_name,
         test_type: test.type || test.test_type,
         test_date: test.date || test.test_date,
@@ -520,8 +520,9 @@ const DB = {
         facility: test.facility, notes: test.notes,
         extracted: test.extracted || null
       }).eq('id', test.id);
+      if (error) throw error;
     } else {
-      await _supa.from('diagnostic_tests').insert({
+      const { error } = await _supa.from('diagnostic_tests').insert({
         patient_id: pid,
         test_name: test.name || test.test_name,
         test_type: test.type || test.test_type || null,
@@ -532,6 +533,7 @@ const DB = {
         notes: test.notes || null,
         extracted: test.extracted || null
       });
+      if (error) throw error;
     }
   },
 
