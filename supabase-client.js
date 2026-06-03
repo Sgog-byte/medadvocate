@@ -508,12 +508,15 @@ const DB = {
   async saveDiagnosticTest(test) {
     const pid = await DB.patientId();
     if (!pid) return;
-    if (test.id) {
+    // Numeric ids are localStorage timestamps (Date.now()), not Supabase uuids — always insert
+    const hasSupabaseId = test.id && typeof test.id === 'string';
+    if (hasSupabaseId) {
       await _supa.from('diagnostic_tests').update({
         test_name: test.name || test.test_name,
         test_type: test.type || test.test_type,
         test_date: test.date || test.test_date,
-        result: test.result, ordering_doctor: test.doctor || test.ordering_doctor,
+        result: test.status || test.result,
+        ordering_doctor: test.doctor || test.ordering_doctor,
         facility: test.facility, notes: test.notes,
         extracted: test.extracted || null
       }).eq('id', test.id);
@@ -523,7 +526,7 @@ const DB = {
         test_name: test.name || test.test_name,
         test_type: test.type || test.test_type || null,
         test_date: test.date || test.test_date || null,
-        result: test.result || null,
+        result: test.status || test.result || null,
         ordering_doctor: test.doctor || test.ordering_doctor || null,
         facility: test.facility || null,
         notes: test.notes || null,
