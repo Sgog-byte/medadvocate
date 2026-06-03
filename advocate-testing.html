@@ -350,14 +350,8 @@ const FLAT_KEY='advocate_testing';
 let _testingPid=null;
 function testingKey(){return _testingPid?`advocate_testing_${_testingPid}`:FLAT_KEY;}
 function getTests(){return JSON.parse(localStorage.getItem(testingKey())||'[]')}
-async function saveTests(d, skipDb) {
+function saveTests(d) {
   localStorage.setItem(testingKey(), JSON.stringify(d));
-  if (skipDb || !_testingPid) return;
-  try {
-    for (const t of d) {
-      await DB.saveDiagnosticTest(t);
-    }
-  } catch(e) { console.warn('saveTests DB sync failed:', e.message); }
 }
 
 const TYPE_META={
@@ -469,8 +463,10 @@ function buildTestObj(extracted){
 function saveTest(extracted){
   if(!selectedType){toast('Please select a test type first');return;}
   const tests=getTests();
-  tests.unshift(buildTestObj(extracted));
+  const newTest=buildTestObj(extracted);
+  tests.unshift(newTest);
   saveTests(tests);
+  DB.saveDiagnosticTest(newTest).catch(e=>console.warn('[testing] Cloud save failed:',e.message));
   toast('Test saved ✓');
   clearUpload();
 }
@@ -590,6 +586,7 @@ async function extractAndSave(){
     document.getElementById('test_status').value=testObj.status;
     tests.unshift(testObj);
     saveTests(tests);
+    DB.saveDiagnosticTest(testObj).catch(e=>console.warn('[testing] Cloud save failed:',e.message));
 
     const statusColor=testObj.status==='abnormal'?'var(--red)':testObj.status==='borderline'?'var(--amber)':'var(--green)';
     const statusLabel=testObj.status==='abnormal'?'🔴 Abnormal':testObj.status==='borderline'?'🟡 Borderline':testObj.status==='normal'?'🟢 Normal':'⬜ Pending';
