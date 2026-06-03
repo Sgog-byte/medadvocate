@@ -508,24 +508,35 @@ const DB = {
   async saveDiagnosticTest(test) {
     const pid = await DB.patientId();
     if (!pid) return;
+    const TYPE_LABELS = {
+      eeg:'EEG', ekg:'EKG / ECG', echo:'Echocardiogram', mri:'MRI',
+      ct:'CT Scan', xray:'X-Ray', tilt:'Tilt Table', holter:'Holter Monitor',
+      sleep:'Sleep Study', nerve:'Nerve Conduction', dexa:'DEXA Scan',
+      pulmonary:'Pulmonary Function', gastric:'Gastric Emptying',
+      ultrasound:'Ultrasound', autonomic:'Autonomic Testing', other:'Other'
+    };
+    const testType = test.type || test.test_type || null;
+    const testName = test.name || test.test_name
+      || TYPE_LABELS[test.type] || TYPE_LABELS[test.test_type]
+      || test.type || 'Unknown Test';
     // Numeric ids are localStorage timestamps (Date.now()), not Supabase uuids — always insert
     const hasSupabaseId = test.id && typeof test.id === 'string';
     if (hasSupabaseId) {
-      const { error } = await _supa.from('diagnostic_tests').update({
-        test_name: test.name || test.test_name,
-        test_type: test.type || test.test_type,
+      const { error: updateError } = await _supa.from('diagnostic_tests').update({
+        test_name: testName,
+        test_type: testType,
         test_date: test.date || test.test_date,
         result: test.status || test.result,
         ordering_doctor: test.doctor || test.ordering_doctor,
         facility: test.facility, notes: test.notes,
         extracted: test.extracted || null
       }).eq('id', test.id);
-      if (error) throw error;
+      if (updateError) throw updateError;
     } else {
-      const { error } = await _supa.from('diagnostic_tests').insert({
+      const { error: insertError } = await _supa.from('diagnostic_tests').insert({
         patient_id: pid,
-        test_name: test.name || test.test_name,
-        test_type: test.type || test.test_type || null,
+        test_name: testName,
+        test_type: testType,
         test_date: test.date || test.test_date || null,
         result: test.status || test.result || null,
         ordering_doctor: test.doctor || test.ordering_doctor || null,
@@ -533,7 +544,7 @@ const DB = {
         notes: test.notes || null,
         extracted: test.extracted || null
       });
-      if (error) throw error;
+      if (insertError) throw insertError;
     }
   },
 
