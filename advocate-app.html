@@ -1037,6 +1037,28 @@
     }
   }
 
+  function repairJson(s) {
+    // Close any truncated JSON by counting unclosed brackets/braces
+    let inStr = false, esc = false;
+    let curly = 0, square = 0;
+    for (const ch of s) {
+      if (esc) { esc = false; continue; }
+      if (ch === '\\' && inStr) { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === '{') curly++;
+      else if (ch === '}') curly--;
+      else if (ch === '[') square++;
+      else if (ch === ']') square--;
+    }
+    // If we're mid-string, close it
+    if (inStr) s += '"';
+    // Close arrays then objects
+    while (square > 0) { s += ']'; square--; }
+    while (curly > 0) { s += '}'; curly--; }
+    return s;
+  }
+
   async function generateScript() {
     const patientName = document.getElementById('patientName').value.trim() || 'this person';
     const symptoms = document.getElementById('symptoms').value.trim();
@@ -1108,7 +1130,7 @@ Please create a focused visit script for this appointment.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 1200,
+          max_tokens: 1800,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMessage }]
         })
@@ -1127,7 +1149,13 @@ Please create a focused visit script for this appointment.`;
       try {
         result = JSON.parse(rawText.replace(/```json[\s\S]*?```|```/g, '').trim());
       } catch {
-        throw new Error('Could not parse response — please try again.');
+        // Try to repair truncated JSON before giving up
+        const repaired = repairJson(rawText.replace(/```json[\s\S]*?```|```/g, '').trim());
+        try {
+          result = JSON.parse(repaired);
+        } catch {
+          throw new Error('Could not parse response — please try again.');
+        }
       }
 
       renderResult(result, specialist, patientName);
@@ -1151,6 +1179,16 @@ Please create a focused visit script for this appointment.`;
 
     const priorityColors = ['p1','p2','p3','p4','p5','p6'];
 
+    // Guard against truncated responses
+    if (!result.priorities?.length) {
+      document.getElementById('loadingSection').classList.add('hidden');
+      document.getElementById('formSection').classList.remove('hidden');
+      document.getElementById('errorBox').textContent = 'The response was incomplete — please try again.';
+      document.getElementById('errorBox').style.display = 'block';
+      updateProgress(2);
+      return;
+    }
+
     const prioritiesHtml = result.priorities.map((p, i) => `
       <div class="priority-item">
         <div class="priority-num ${priorityColors[i] || 'p4'}">${i + 1}</div>
@@ -1162,7 +1200,7 @@ Please create a focused visit script for this appointment.`;
       </div>
     `).join('');
 
-    const questionsHtml = result.questionsToAsk.map(q => `<li>${q}</li>`).join('');
+    const questionsHtml = (result.questionsToAsk || []).map(q => `<li>${q}</li>`).join('');
 
     const fullScriptText = [
       `ADVOCATE — Visit Script for ${patientName}'s ${specialist} Appointment`,
