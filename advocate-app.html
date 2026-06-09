@@ -790,77 +790,95 @@
   .toast, #progressBar, #howToUseBtn { display:none!important }
 
   body { background:white; }
-  .container { max-width:100%; padding:0 4mm; }
+  body::before { display:none!important; }
+  .container { max-width:100%; padding:0 6mm; }
 
-  /* ── Outer card: drop the single border that breaks across pages ── */
-  /* Instead we give each section its own contained box */
-  .result-card { box-shadow:none; border:none; border-radius:0; overflow:visible; }
+  /* ── Outer card wrapper: remove so border doesn't span pages ── */
+  .result-card { box-shadow:none; border:none; border-radius:0; overflow:visible; margin-bottom:0; }
 
-  /* ── Result header: dark green bar at top ── */
+  /* ── Result header: solid dark green bar ── */
   .result-header {
     background:#1b4332!important;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    border:2px solid #1b4332;
     border-radius:10px 10px 0 0;
-    border:none;
     padding:16px 22px;
-    break-inside:avoid;
+    page-break-inside:avoid; break-inside:avoid;
   }
   .result-title { font-size:18px!important; color:white!important; font-weight:500!important; }
-  .result-meta { color:rgba(255,255,255,.65)!important; font-size:12px!important; }
+  .result-meta { color:rgba(255,255,255,.75)!important; font-size:12px!important; }
   .time-badge {
-    background:rgba(255,255,255,.15)!important; color:white!important;
+    background:rgba(255,255,255,.2)!important; color:white!important;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
-    border-radius:100px; padding:4px 12px; font-size:11px; font-weight:600;
   }
 
-  /* ── Body ── */
+  /* ── Body: strong visible border ── */
   .result-body {
-    padding:18px 22px;
-    border:1.5px solid #c8ddd0;
+    padding:20px 22px 16px;
+    border:2px solid #2d6a4f;
     border-top:none;
     border-radius:0 0 10px 10px;
   }
 
-  /* ── Section labels ── */
-  .section-label { font-size:9px!important; letter-spacing:.12em; color:#4a5e50!important; margin-bottom:10px!important; }
-  .section-label::after { background:#c8ddd0; }
-
-  /* ── Opener box ── */
-  .opener-box {
-    background:#f0f7f2!important;
-    border-left:3px solid #2d6a4f!important;
-    -webkit-print-color-adjust:exact; print-color-adjust:exact;
-    border-radius:0 8px 8px 0!important;
-    padding:12px 16px!important;
-    font-size:15px!important;
-    margin-bottom:0;
-    break-inside:avoid;
+  /* ── Section labels: never orphaned from their content ── */
+  .section-label {
+    font-size:9px!important; letter-spacing:.12em;
+    color:#1b4332!important; font-weight:700!important;
+    margin-bottom:8px!important;
+    page-break-after:avoid; break-after:avoid;
   }
-  .opener-box::before { font-size:32px!important; vertical-align:-12px!important; }
+  .section-label::after { background:#4a7c59; }
 
   /* ── Script sections ── */
   .script-section { margin-bottom:18px!important; }
 
-  /* ── Priority items: each a self-contained box ── */
+  /* ── Opener box ── */
+  .opener-box {
+    background:#f0f7f2!important;
+    border-left:3px solid #1b4332!important;
+    border-top:none!important; border-right:none!important; border-bottom:none!important;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    border-radius:0 8px 8px 0!important;
+    padding:12px 16px!important;
+    font-size:14px!important;
+    page-break-inside:avoid; break-inside:avoid;
+  }
+  .opener-box::before { font-size:28px!important; vertical-align:-10px!important; }
+
+  /* ── Priority items ── */
+  /* Switch to block layout so break-inside works reliably */
   .priority-item {
-    break-inside:avoid;
-    padding:10px 14px!important;
+    display:block!important;
+    page-break-inside:avoid!important; break-inside:avoid!important;
+    padding:9px 13px!important;
     margin-bottom:7px!important;
-    border:1px solid #dde8e0!important;
+    border:1.5px solid #4a7c59!important;
     border-radius:8px!important;
     background:white!important;
+    overflow:hidden;
   }
+  /* Float the number badge so title text sits next to it */
   .priority-num {
+    float:left;
+    margin-right:10px;
+    margin-top:2px;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
-    width:22px!important; height:22px!important;
-    font-size:11px!important; flex-shrink:0;
+    width:22px!important; height:22px!important; font-size:11px!important;
   }
+  .priority-content {
+    overflow:hidden;
+    page-break-inside:avoid!important; break-inside:avoid!important;
+  }
+  /* Title must never be separated from the body text beneath it */
+  .priority-content h4 {
+    font-size:13px!important; margin-bottom:3px!important;
+    page-break-after:avoid!important; break-after:avoid!important;
+  }
+  .priority-content p { font-size:12px!important; line-height:1.5!important; }
   .p1 { background:#e8c4b0!important; color:#c9906e!important; }
   .p2 { background:#fef3e0!important; color:#b8860b!important; }
   .p3 { background:#f0f7f2!important; color:#2d6a4f!important; }
-  .p4,.p5,.p6 { background:#f5f5f5!important; color:#8a9e90!important; }
-  .priority-content h4 { font-size:13px!important; margin-bottom:3px!important; }
-  .priority-content p { font-size:12px!important; line-height:1.5!important; }
+  .p4,.p5,.p6 { background:#f5f5f5!important; color:#6a7e70!important; }
 
   /* ── Questions ── */
   .question-list { gap:5px!important; }
@@ -870,11 +888,11 @@
     border-radius:7px!important;
     font-size:12px!important;
     padding:8px 13px!important;
-    break-inside:avoid;
+    page-break-inside:avoid; break-inside:avoid;
   }
 
-  /* ── Tip + Remember: stack vertically so they don't get clipped ── */
-  .divider { margin:14px 0!important; }
+  /* ── Tip + Remember: stack vertically ── */
+  .divider { margin:12px 0!important; }
 
   #resultSection [style*="grid-template-columns:1fr 1fr"],
   .result-body > div[style*="grid"] {
@@ -885,7 +903,7 @@
     margin-bottom:8px!important;
     border-radius:8px!important;
     -webkit-print-color-adjust:exact; print-color-adjust:exact;
-    break-inside:avoid;
+    page-break-inside:avoid; break-inside:avoid;
   }
 
   /* ── Footer branding ── */
@@ -894,13 +912,13 @@
     display:block;
     text-align:center;
     font-size:10px;
-    color:#8a9e90;
-    padding-top:14px;
-    margin-top:14px;
-    border-top:1px solid #dde8e0;
+    color:#6a7e70;
+    padding-top:12px;
+    margin-top:12px;
+    border-top:1px solid #4a7c59;
   }
 
-  @page { margin:12mm; size:letter; }
+  @page { margin:14mm; size:letter; }
 }
 </style>
   <!-- Supabase auth + data layer -->
