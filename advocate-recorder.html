@@ -313,8 +313,10 @@ async function genSummary(){
   finally{btn.disabled=false;}
 }
 
-var p=(await DB.getProfile());
-if(p.name)document.getElementById('rec_patient').value=p.name;
+(async function(){
+  var p = await DB.getProfile();
+  if(p && p.name) document.getElementById('rec_patient').value = p.name;
+})();
 </script>
 </body>
 </html>
