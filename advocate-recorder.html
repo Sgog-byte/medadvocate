@@ -64,10 +64,8 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 @media print{nav,.fcard,.rec-center,.rec-controls{display:none!important}.shell{max-width:100%;padding:0}@page{margin:12mm}}
 @media(max-width:640px){.two{grid-template-columns:1fr}}
 </style>
-  <!-- Supabase auth + data layer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
-
 </head>
 <body>
 <nav>
@@ -127,28 +125,76 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
 <script>
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2800)}
+// ── Utilities ──────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3200);
+}
 
-var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-var recog=null,isRec=false,isPaused=false,timerInt=null,secs=0,fullTx='',interimTx='';
+// ── State ──────────────────────────────────────────────────────
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var recog = null;
+var isRec = false;
+var isPaused = false;
+var timerInt = null;
+var secs = 0;
+var fullTx = '';
+var interimTx = '';
+var mediaRecorder = null;
+var audioChunks = [];
+var audioBlob = null;
+var audioUrl = null;
 
-// ── Audio recording (saves actual audio file) ──────────────────
-var mediaRecorder=null, audioChunks=[], audioBlob=null, audioUrl=null;
+// ── Compatibility warning ──────────────────────────────────────
+(function() {
+  var warn = document.getElementById('compat_warn');
+  if (!SR) {
+    warn.style.display = 'block';
+    warn.innerHTML = '<strong>Live transcription requires Chrome or Edge.</strong> You can still record audio and add manual notes for an AI summary.';
+  } else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    warn.style.display = 'block';
+    warn.innerHTML = 'On iPhone, live transcription may stop periodically. Tap record again if it stops. Your notes are preserved.';
+  }
+})();
 
+// ── Audio file recording ───────────────────────────────────────
 function setupMediaRecorder(stream) {
   audioChunks = [];
-  audioBlob = null;
-  audioUrl = null;
-  try {
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-  } catch(e) {
-    try { mediaRecorder = new MediaRecorder(stream); } catch(e2) { mediaRecorder = null; return; }
+  var mimeType = '';
+  if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) {
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+      mimeType = 'audio/webm;codecs=opus';
+    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+      mimeType = 'audio/webm';
+    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+      mimeType = 'audio/mp4';
+    }
   }
-  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-  mediaRecorder.onstop = () => {
-    audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+  try {
+    mediaRecorder = mimeType
+      ? new MediaRecorder(stream, { mimeType: mimeType })
+      : new MediaRecorder(stream);
+  } catch(e) {
+    try {
+      mediaRecorder = new MediaRecorder(stream);
+    } catch(e2) {
+      mediaRecorder = null;
+      return;
+    }
+  }
+  mediaRecorder.ondataavailable = function(e) {
+    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+  };
+  mediaRecorder.onstop = function() {
+    var type = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+    audioBlob = new Blob(audioChunks, { type: type });
     audioUrl = URL.createObjectURL(audioBlob);
     showAudioPlayer();
   };
@@ -159,168 +205,338 @@ function showAudioPlayer() {
   if (existing) existing.remove();
   if (!audioUrl) return;
 
+  var dateStr = new Date().toISOString().split('T')[0];
   var wrap = document.createElement('div');
   wrap.id = 'audio_player_wrap';
   wrap.style.cssText = 'background:#fff;border:1.5px solid #b7d9c4;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(28,43,34,.06)';
-  wrap.innerHTML = '<div style="font-family:Fraunces,serif;font-size:16px;color:#0d1f15;margin-bottom:4px">🎙️ Recording saved</div>'
-    + '<div style="font-size:12px;color:#4a7c59;font-weight:300;margin-bottom:12px">Your full appointment audio is saved below. Download to keep permanently.</div>'
-    + '<audio controls style="width:100%;border-radius:8px;margin-bottom:10px" src="' + audioUrl + '"></audio>'
-    + '<div style="display:flex;gap:8px">'
-    + '<a href="' + audioUrl + '" download="appointment-recording-' + new Date().toISOString().split("T")[0] + '.webm" '
-    + 'style="padding:8px 16px;background:#1b4332;color:white;border-radius:9px;font-size:13px;font-weight:500;text-decoration:none">⬇ Download recording</a>'
-    + '</div>';
+
+  var titleEl = document.createElement('div');
+  titleEl.style.cssText = 'font-family:Fraunces,serif;font-size:16px;color:#0d1f15;margin-bottom:4px';
+  titleEl.textContent = 'Recording saved';
+
+  var subEl = document.createElement('div');
+  subEl.style.cssText = 'font-size:12px;color:#4a7c59;font-weight:300;margin-bottom:12px';
+  subEl.textContent = 'Your full appointment audio. Download to keep permanently.';
+
+  var audio = document.createElement('audio');
+  audio.controls = true;
+  audio.src = audioUrl;
+  audio.style.cssText = 'width:100%;border-radius:8px;margin-bottom:10px;display:block';
+
+  var dl = document.createElement('a');
+  dl.href = audioUrl;
+  dl.download = 'appointment-recording-' + dateStr + '.webm';
+  dl.style.cssText = 'padding:8px 16px;background:#1b4332;color:white;border-radius:9px;font-size:13px;font-weight:500;text-decoration:none;display:inline-block';
+  dl.textContent = 'Download recording';
+
+  wrap.appendChild(titleEl);
+  wrap.appendChild(subEl);
+  wrap.appendChild(audio);
+  wrap.appendChild(dl);
 
   var sumSection = document.getElementById('sum_section');
   sumSection.parentNode.insertBefore(wrap, sumSection);
 }
-// ──────────────────────────────────────────────────────────────
 
-if(!SR){
-  document.getElementById('compat_warn').style.display='block';
-  document.getElementById('compat_warn').innerHTML='<strong>Live transcription requires Chrome or Edge.</strong> You can still use this page to take manual notes and get an AI summary from your notes.';
-} else if(/iPad|iPhone|iPod/.test(navigator.userAgent)){
-  document.getElementById('compat_warn').style.display='block';
-  document.getElementById('compat_warn').innerHTML='On iPhone, live transcription may stop periodically. Tap record again if it stops. Your notes are preserved.';
-}
-
-function setupRecog(){
-  if(!SR)return;
-  recog=new SR();
-  recog.continuous=true;recog.interimResults=true;recog.lang='en-US';
-  recog.onresult=function(e){
-    interimTx='';
-    for(var i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal)fullTx+=e.results[i][0].transcript+' ';
-      else interimTx+=e.results[i][0].transcript;
+// ── Speech recognition ─────────────────────────────────────────
+function setupRecog() {
+  if (!SR) return;
+  recog = new SR();
+  recog.continuous = true;
+  recog.interimResults = true;
+  recog.lang = 'en-US';
+  recog.onresult = function(e) {
+    interimTx = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        fullTx += e.results[i][0].transcript + ' ';
+      } else {
+        interimTx += e.results[i][0].transcript;
+      }
     }
     updateTx();
   };
-  recog.onerror=function(e){if(e.error==='not-allowed'){toast('Microphone access denied');stopRec();}};
-  recog.onend=function(){if(isRec&&!isPaused)try{recog.start();}catch(e){}};
+  recog.onerror = function(e) {
+    if (e.error === 'not-allowed') {
+      toast('Microphone access denied');
+      stopRec();
+    }
+  };
+  recog.onend = function() {
+    if (isRec && !isPaused) {
+      try { recog.start(); } catch(e) {}
+    }
+  };
 }
 
-function updateTx(){
-  var box=document.getElementById('tx_box');
-  box.innerHTML=esc(fullTx)+(interimTx?'<span class="tx-live">'+esc(interimTx)+'</span>':'');
-  box.scrollTop=box.scrollHeight;
+function updateTx() {
+  var box = document.getElementById('tx_box');
+  box.innerHTML = esc(fullTx) + (interimTx ? '<span class="tx-live">' + esc(interimTx) + '</span>' : '');
+  box.scrollTop = box.scrollHeight;
 }
 
-function toggleRec(){if(!isRec)startRec();else stopRec();}
-
-async function startRec(){
-  var stream;
-  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
-  catch(e){toast('Microphone access required');return;}
-  isRec=true;isPaused=false;secs=0;fullTx='';interimTx='';
-  // Start actual audio recording
-  setupMediaRecorder(stream);
-  if(mediaRecorder) mediaRecorder.start();
-  var btn=document.getElementById('rec_btn');
-  btn.className='rec-btn recording';
-  document.getElementById('rec_ico').textContent='\u23FA';
-  document.getElementById('rec_lbl').textContent='Recording';
-  document.getElementById('rec_status').textContent='\uD83D\uDD34 Recording in progress - speak naturally';
-  document.getElementById('pause_btn').style.display='inline-flex';
-  document.getElementById('stop_btn').style.display='inline-flex';
-  document.getElementById('tx_box').innerHTML='<span style="color:var(--ink-muted);font-style:italic">Listening...</span>';
-  timerInt=setInterval(function(){secs++;var m=Math.floor(secs/60),s=secs%60;document.getElementById('rec_timer').textContent=m+':'+(s<10?'0'+s:s);},1000);
-  if(SR){setupRecog();try{recog.start();}catch(e){}}
-}
-
-function togglePause(){
-  if(!isRec)return;
-  isPaused=!isPaused;
-  var btn=document.getElementById('rec_btn'),pb=document.getElementById('pause_btn');
-  if(isPaused){
-    btn.className='rec-btn paused';
-    document.getElementById('rec_ico').textContent='\u23F8';
-    document.getElementById('rec_lbl').textContent='Paused';
-    document.getElementById('rec_status').textContent='\u23F8 Paused - tap to resume';
-    pb.textContent='\u25B6 Resume';
-    if(recog)try{recog.stop();}catch(e){}
-    if(mediaRecorder && mediaRecorder.state==='recording') try{mediaRecorder.pause();}catch(e){}
-    clearInterval(timerInt);
+// ── Recording controls ─────────────────────────────────────────
+function toggleRec() {
+  if (!isRec) {
+    startRec();
   } else {
-    btn.className='rec-btn recording';
-    document.getElementById('rec_ico').textContent='\u23FA';
-    document.getElementById('rec_lbl').textContent='Recording';
-    document.getElementById('rec_status').textContent='\uD83D\uDD34 Recording in progress';
-    pb.textContent='\u23F8 Pause';
-    if(recog)try{recog.start();}catch(e){}
-    if(mediaRecorder && mediaRecorder.state==='paused') try{mediaRecorder.resume();}catch(e){}
-    timerInt=setInterval(function(){secs++;var m=Math.floor(secs/60),s=secs%60;document.getElementById('rec_timer').textContent=m+':'+(s<10?'0'+s:s);},1000);
+    stopRec();
   }
 }
 
-function stopRec(){
-  isRec=false;isPaused=false;clearInterval(timerInt);
-  if(recog)try{recog.stop();}catch(e){}
-  if(mediaRecorder && mediaRecorder.state !== 'inactive') try{mediaRecorder.stop();}catch(e){}
-  var btn=document.getElementById('rec_btn');
-  btn.className='rec-btn idle';
-  document.getElementById('rec_ico').textContent='\uD83C\uDF99\uFE0F';
-  document.getElementById('rec_lbl').textContent='Record Again';
-  document.getElementById('rec_status').textContent='\u2713 Recording complete - generate your summary below';
-  document.getElementById('pause_btn').style.display='none';
-  document.getElementById('stop_btn').style.display='none';
-  document.getElementById('clear_btn').style.display='inline-flex';
-  document.getElementById('sum_section').style.display='block';
-  document.getElementById('sum_section').scrollIntoView({behavior:'smooth'});
+async function startRec() {
+  // Immediate visual feedback before mic prompt appears
+  var btn = document.getElementById('rec_btn');
+  btn.className = 'rec-btn recording';
+  document.getElementById('rec_lbl').textContent = 'Starting...';
+  document.getElementById('rec_status').textContent = 'Requesting microphone access...';
+
+  var stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    btn.className = 'rec-btn idle';
+    document.getElementById('rec_lbl').textContent = 'Record';
+    var errMsg = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
+      ? 'Microphone permission denied. Please allow access and try again.'
+      : 'Could not start recording: ' + e.message;
+    document.getElementById('rec_status').textContent = errMsg;
+    toast(errMsg);
+    return;
+  }
+
+  isRec = true;
+  isPaused = false;
+  secs = 0;
+  fullTx = '';
+  interimTx = '';
+
+  setupMediaRecorder(stream);
+  if (mediaRecorder) mediaRecorder.start(1000);
+
+  btn.className = 'rec-btn recording';
+  document.getElementById('rec_ico').innerHTML = '&#9210;';
+  document.getElementById('rec_lbl').textContent = 'Recording';
+  document.getElementById('rec_status').textContent = 'Recording in progress — speak naturally';
+  document.getElementById('pause_btn').style.display = 'inline-flex';
+  document.getElementById('stop_btn').style.display = 'inline-flex';
+  document.getElementById('tx_box').innerHTML = '<span style="color:var(--ink-muted);font-style:italic">Listening...</span>';
+
+  timerInt = setInterval(function() {
+    secs++;
+    var m = Math.floor(secs / 60);
+    var s = secs % 60;
+    document.getElementById('rec_timer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+
+  if (SR) {
+    setupRecog();
+    try { recog.start(); } catch(e) {}
+  }
 }
 
-function clearRec(){
-  fullTx='';interimTx='';secs=0;
-  document.getElementById('rec_timer').textContent='0:00';
-  document.getElementById('rec_status').textContent='Tap to start recording your appointment';
-  document.getElementById('tx_box').innerHTML='<span style="color:var(--ink-muted);font-style:italic">Recording will appear here in real time...</span>';
-  document.getElementById('clear_btn').style.display='none';
-  document.getElementById('sum_section').style.display='none';
-  document.getElementById('manual_notes').value='';
-  document.getElementById('sum_out').innerHTML='';
+function togglePause() {
+  if (!isRec) return;
+  isPaused = !isPaused;
+  var btn = document.getElementById('rec_btn');
+  var pb = document.getElementById('pause_btn');
+  if (isPaused) {
+    btn.className = 'rec-btn paused';
+    document.getElementById('rec_ico').innerHTML = '&#9208;';
+    document.getElementById('rec_lbl').textContent = 'Paused';
+    document.getElementById('rec_status').textContent = 'Paused — tap Resume to continue';
+    pb.textContent = 'Resume';
+    if (recog) try { recog.stop(); } catch(e) {}
+    if (mediaRecorder && mediaRecorder.state === 'recording') try { mediaRecorder.pause(); } catch(e) {}
+    clearInterval(timerInt);
+  } else {
+    btn.className = 'rec-btn recording';
+    document.getElementById('rec_ico').innerHTML = '&#9210;';
+    document.getElementById('rec_lbl').textContent = 'Recording';
+    document.getElementById('rec_status').textContent = 'Recording in progress';
+    pb.textContent = 'Pause';
+    if (recog) try { recog.start(); } catch(e) {}
+    if (mediaRecorder && mediaRecorder.state === 'paused') try { mediaRecorder.resume(); } catch(e) {}
+    timerInt = setInterval(function() {
+      secs++;
+      var m = Math.floor(secs / 60);
+      var s = secs % 60;
+      document.getElementById('rec_timer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+  }
 }
 
-function copyTx(){navigator.clipboard.writeText(fullTx+'\n\nNotes:\n'+(document.getElementById('manual_notes').value||'')).then(function(){toast('Copied \u2713')});}
-
-function copySum(){
-  var el=document.querySelector('.sum-doc');
-  if(el) navigator.clipboard.writeText(el.innerText).then(function(){toast('Copied \u2713');});
+function stopRec() {
+  isRec = false;
+  isPaused = false;
+  clearInterval(timerInt);
+  if (recog) try { recog.stop(); } catch(e) {}
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') try { mediaRecorder.stop(); } catch(e) {}
+  var btn = document.getElementById('rec_btn');
+  btn.className = 'rec-btn idle';
+  document.getElementById('rec_ico').innerHTML = '&#127897;&#65039;';
+  document.getElementById('rec_lbl').textContent = 'Record Again';
+  document.getElementById('rec_status').textContent = 'Recording complete — generate your summary below';
+  document.getElementById('pause_btn').style.display = 'none';
+  document.getElementById('stop_btn').style.display = 'none';
+  document.getElementById('clear_btn').style.display = 'inline-flex';
+  document.getElementById('sum_section').style.display = 'block';
+  document.getElementById('sum_section').scrollIntoView({ behavior: 'smooth' });
 }
 
-async function genSummary(){
-  var tx=fullTx.trim(),mn=document.getElementById('manual_notes').value.trim();
-  var combined=[tx,mn].filter(Boolean).join('\n\nAdditional notes:\n');
-  if(!combined){toast('No transcript or notes to summarize. Record your appointment or add manual notes.');return;}
-  var doc=document.getElementById('rec_doc').value.trim(),type=document.getElementById('rec_type').value.trim();
-  var prof=(await DB.getProfile());
-  var patient=document.getElementById('rec_patient').value.trim()||prof.name||'Patient';
-  var btn=document.getElementById('sum_btn'),out=document.getElementById('sum_out');
-  btn.disabled=true;
-  out.innerHTML='<div style="text-align:center;padding:28px"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Analyzing your appointment recording...</p></div>';
-  try{
-    var r=await fetch('/.netlify/functions/claude-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system:'You summarize medical appointment recordings. Return ONLY valid JSON no markdown: {"summary":"2-3 sentence overview","diagnoses":["diagnoses mentioned"],"medications":[{"name":"","change":"started/stopped/adjusted/continued","details":""}],"testsordered":["tests ordered"],"followup":["follow-up mentioned"],"instructions":["instructions given"],"actionItems":["patient action items"],"questionsNotAsked":["important unaddressed questions"],"urgentFlags":["urgent items or empty array"]}',messages:[{role:'user',content:'Appointment: '+(type||'Medical')+'\nDoctor: '+(doc||'Unknown')+'\nPatient: '+patient+'\n\nTranscript:\n'+combined}]})});
-    var d=await r.json();
-    var res=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
-    var today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    var dur=Math.floor(secs/60)+':'+(secs%60<10?'0':'')+secs%60;
-    out.innerHTML='<div class="sum-doc"><div class="sum-hdr"><div class="sum-hdr-title">Appointment Summary - '+esc(patient)+'</div><div class="sum-hdr-meta">'+(doc?esc(doc)+' · ':'')+today+' · '+dur+' recorded</div></div><div class="sum-body">'
-      +(res.summary?'<div class="sum-sec"><div class="sum-sec-title">What Was Discussed</div><div style="font-family:Fraunces,serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.7;padding:12px 16px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 10px 10px 0">'+esc(res.summary)+'</div></div>':'')
-      +(res.urgentFlags&&res.urgentFlags.length?'<div class="sum-sec"><div class="sum-sec-title" style="color:var(--red)">Urgent</div>'+res.urgentFlags.map(function(f){return'<div class="sum-item urg">'+esc(f)+'</div>'}).join('')+'</div>':'')
-      +(res.medications&&res.medications.length?'<div class="sum-sec"><div class="sum-sec-title">Medication Changes</div>'+res.medications.map(function(m){return'<div class="sum-item"><strong>'+esc(m.name)+'</strong> - '+esc(m.change)+(m.details?': '+esc(m.details):'')+'</div>'}).join('')+'</div>':'')
-      +(res.diagnoses&&res.diagnoses.length?'<div class="sum-sec"><div class="sum-sec-title">Diagnoses</div>'+res.diagnoses.map(function(d){return'<div class="sum-item">'+esc(d)+'</div>'}).join('')+'</div>':'')
-      +(res.testsordered&&res.testsordered.length?'<div class="sum-sec"><div class="sum-sec-title">Tests Ordered</div>'+res.testsordered.map(function(t){return'<div class="sum-item">'+esc(t)+'</div>'}).join('')+'</div>':'')
-      +(res.instructions&&res.instructions.length?'<div class="sum-sec"><div class="sum-sec-title">Instructions</div>'+res.instructions.map(function(i){return'<div class="sum-item">'+esc(i)+'</div>'}).join('')+'</div>':'')
-      +(res.followup&&res.followup.length?'<div class="sum-sec"><div class="sum-sec-title">Follow-up</div>'+res.followup.map(function(f){return'<div class="sum-item">'+esc(f)+'</div>'}).join('')+'</div>':'')
-      +(res.actionItems&&res.actionItems.length?'<div class="sum-sec"><div class="sum-sec-title">Your Action Items</div>'+res.actionItems.map(function(a){return'<div class="sum-item">&#9744; '+esc(a)+'</div>'}).join('')+'</div>':'')
-      +(res.questionsNotAsked&&res.questionsNotAsked.length?'<div class="sum-sec"><div class="sum-sec-title">Questions Still Needed</div>'+res.questionsNotAsked.map(function(q){return'<div class="sum-item amb">? '+esc(q)+'</div>'}).join('')+'</div>':'')
-      +'</div></div>'
-      +'<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn-o" onclick="window.print()">Print</button><button class="btn-o" onclick="copySum()">Copy Summary</button></div>';
-  }catch(e){out.innerHTML='<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>';console.error(e);}
-  finally{btn.disabled=false;}
+function clearRec() {
+  fullTx = '';
+  interimTx = '';
+  secs = 0;
+  document.getElementById('rec_timer').textContent = '0:00';
+  document.getElementById('rec_status').textContent = 'Tap to start recording your appointment';
+  document.getElementById('tx_box').innerHTML = '<span style="color:var(--ink-muted);font-style:italic">Recording will appear here in real time...</span>';
+  document.getElementById('clear_btn').style.display = 'none';
+  document.getElementById('sum_section').style.display = 'none';
+  document.getElementById('manual_notes').value = '';
+  document.getElementById('sum_out').innerHTML = '';
 }
 
-(async function(){
-  var p = await DB.getProfile();
-  if(p && p.name) document.getElementById('rec_patient').value = p.name;
+// ── Copy helpers ───────────────────────────────────────────────
+function copyTx() {
+  var text = fullTx + '\n\nNotes:\n' + (document.getElementById('manual_notes').value || '');
+  navigator.clipboard.writeText(text).then(function() { toast('Copied'); });
+}
+
+function copySum() {
+  var el = document.querySelector('.sum-doc');
+  if (el) navigator.clipboard.writeText(el.innerText).then(function() { toast('Copied'); });
+}
+
+// ── AI Summary ─────────────────────────────────────────────────
+async function genSummary() {
+  var tx = fullTx.trim();
+  var mn = document.getElementById('manual_notes').value.trim();
+  var combined = [tx, mn].filter(Boolean).join('\n\nAdditional notes:\n');
+  if (!combined) {
+    toast('No transcript or notes to summarize.');
+    return;
+  }
+
+  var doc = document.getElementById('rec_doc').value.trim();
+  var type = document.getElementById('rec_type').value.trim();
+  var prof = await DB.getProfile();
+  var patient = document.getElementById('rec_patient').value.trim() || (prof && prof.name) || 'Patient';
+
+  var btn = document.getElementById('sum_btn');
+  var out = document.getElementById('sum_out');
+  btn.disabled = true;
+  out.innerHTML = '<div style="text-align:center;padding:28px"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Analyzing your appointment recording...</p></div>';
+
+  try {
+    var sysPrompt = 'You summarize medical appointment recordings. Return ONLY valid JSON, no markdown: '
+      + '{"summary":"2-3 sentence overview",'
+      + '"diagnoses":["diagnoses mentioned"],'
+      + '"medications":[{"name":"","change":"started/stopped/adjusted/continued","details":""}],'
+      + '"testsordered":["tests ordered"],'
+      + '"followup":["follow-up mentioned"],'
+      + '"instructions":["instructions given"],'
+      + '"actionItems":["patient action items"],'
+      + '"questionsNotAsked":["important unaddressed questions"],'
+      + '"urgentFlags":["urgent items or empty array"]}';
+
+    var userMsg = 'Appointment: ' + (type || 'Medical')
+      + '\nDoctor: ' + (doc || 'Unknown')
+      + '\nPatient: ' + patient
+      + '\n\nTranscript:\n' + combined;
+
+    var r = await fetch('/.netlify/functions/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1200,
+        system: sysPrompt,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+    var d = await r.json();
+    var rawText = (d.content && d.content[0] && d.content[0].text) || '';
+    var res = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+    var today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    var dur = Math.floor(secs / 60) + ':' + (secs % 60 < 10 ? '0' : '') + (secs % 60);
+
+    var html = '<div class="sum-doc">'
+      + '<div class="sum-hdr">'
+      + '<div class="sum-hdr-title">Appointment Summary — ' + esc(patient) + '</div>'
+      + '<div class="sum-hdr-meta">' + (doc ? esc(doc) + ' &middot; ' : '') + today + ' &middot; ' + dur + ' recorded</div>'
+      + '</div><div class="sum-body">';
+
+    if (res.summary)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">What Was Discussed</div>'
+        + '<div style="font-family:Fraunces,serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.7;padding:12px 16px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 10px 10px 0">'
+        + esc(res.summary) + '</div></div>';
+
+    if (res.urgentFlags && res.urgentFlags.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl" style="color:var(--red)">Urgent</div>'
+        + res.urgentFlags.map(function(f) { return '<div class="sum-item urg">' + esc(f) + '</div>'; }).join('')
+        + '</div>';
+
+    if (res.medications && res.medications.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Medication Changes</div>'
+        + res.medications.map(function(m) {
+            return '<div class="sum-item"><strong>' + esc(m.name) + '</strong> — '
+              + esc(m.change) + (m.details ? ': ' + esc(m.details) : '') + '</div>';
+          }).join('')
+        + '</div>';
+
+    if (res.diagnoses && res.diagnoses.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Diagnoses</div>'
+        + res.diagnoses.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
+        + '</div>';
+
+    if (res.testsordered && res.testsordered.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Tests Ordered</div>'
+        + res.testsordered.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
+        + '</div>';
+
+    if (res.instructions && res.instructions.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Instructions</div>'
+        + res.instructions.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
+        + '</div>';
+
+    if (res.followup && res.followup.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Follow-up</div>'
+        + res.followup.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
+        + '</div>';
+
+    if (res.actionItems && res.actionItems.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Your Action Items</div>'
+        + res.actionItems.map(function(x) { return '<div class="sum-item">&#9744; ' + esc(x) + '</div>'; }).join('')
+        + '</div>';
+
+    if (res.questionsNotAsked && res.questionsNotAsked.length)
+      html += '<div class="sum-sec"><div class="sum-sec-ttl">Questions Still Needed</div>'
+        + res.questionsNotAsked.map(function(x) { return '<div class="sum-item amb">? ' + esc(x) + '</div>'; }).join('')
+        + '</div>';
+
+    html += '</div></div>'
+      + '<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap">'
+      + '<button class="btn-o" onclick="window.print()">Print</button>'
+      + '<button class="btn-o" onclick="copySum()">Copy Summary</button>'
+      + '</div>';
+
+    out.innerHTML = html;
+
+  } catch(e) {
+    out.innerHTML = '<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong: ' + esc(e.message) + '</div>';
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Pre-fill patient name ──────────────────────────────────────
+(async function() {
+  try {
+    var p = await DB.getProfile();
+    if (p && p.name) document.getElementById('rec_patient').value = p.name;
+  } catch(e) { /* ignore */ }
 })();
 </script>
 </body>
