@@ -281,6 +281,11 @@ function clearRec(){
 
 function copyTx(){navigator.clipboard.writeText(fullTx+'\n\nNotes:\n'+(document.getElementById('manual_notes').value||'')).then(function(){toast('Copied \u2713')});}
 
+function copySum(){
+  var el=document.querySelector('.sum-doc');
+  if(el) navigator.clipboard.writeText(el.innerText).then(function(){toast('Copied \u2713');});
+}
+
 async function genSummary(){
   var tx=fullTx.trim(),mn=document.getElementById('manual_notes').value.trim();
   var combined=[tx,mn].filter(Boolean).join('\n\nAdditional notes:\n');
@@ -308,7 +313,7 @@ async function genSummary(){
       +(res.actionItems&&res.actionItems.length?'<div class="sum-sec"><div class="sum-sec-title">Your Action Items</div>'+res.actionItems.map(function(a){return'<div class="sum-item">&#9744; '+esc(a)+'</div>'}).join('')+'</div>':'')
       +(res.questionsNotAsked&&res.questionsNotAsked.length?'<div class="sum-sec"><div class="sum-sec-title">Questions Still Needed</div>'+res.questionsNotAsked.map(function(q){return'<div class="sum-item amb">? '+esc(q)+'</div>'}).join('')+'</div>':'')
       +'</div></div>'
-      +'<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn-o" onclick="window.print()">Print</button><button class="btn-o" onclick="navigator.clipboard.writeText(document.querySelector('.sum-doc').innerText).then(function(){toast('Copied')})">Copy</button></div>';
+      +'<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn-o" onclick="window.print()">Print</button><button class="btn-o" onclick="copySum()">Copy Summary</button></div>';
   }catch(e){out.innerHTML='<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>';console.error(e);}
   finally{btn.disabled=false;}
 }
