@@ -44,8 +44,10 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .btn-p:hover{background:var(--ink)}.btn-p:disabled{opacity:.5;cursor:not-allowed}
 .btn-o{padding:9px 16px;background:transparent;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all .2s}
 .btn-o:hover{border-color:var(--sage);color:var(--sage-deep)}
-.btn-r{padding:9px 14px;background:transparent;border:1.5px solid var(--red-border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--red);cursor:pointer}
+.btn-r{padding:9px 14px;background:transparent;border:1.5px solid var(--red-border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--red);cursor:pointer;transition:all .2s}
+.btn-r:hover{background:var(--red-pale)}
 .warn{background:var(--amber-pale);border:1.5px solid var(--amber-light);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:var(--ink-soft);line-height:1.6}
+.restore-banner{background:#f0f7f2;border:1.5px solid var(--sage-light);border-radius:14px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sum-doc{background:var(--white);border:2px solid var(--sage-deep);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg)}
 .sum-hdr{background:var(--sage-deep);padding:18px 22px;color:white}
 .sum-hdr-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300;margin-bottom:3px}
@@ -53,19 +55,23 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 .sum-body{padding:20px 22px}
 .sum-sec{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
 .sum-sec:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.sum-sec-ttl{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px}
+.sum-sec-ttl{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px;display:block}
 .sum-item{padding:8px 12px;background:var(--sage-pale);border-radius:8px;margin-bottom:6px;font-size:13px;color:var(--ink-soft);line-height:1.6}
 .sum-item.urg{background:var(--red-pale);border-left:3px solid var(--red)}
 .sum-item.amb{background:var(--amber-pale);border-left:3px solid var(--amber)}
+.rec-hist-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.hist-sum{display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
 .load-ring{width:40px;height:40px;margin:0 auto 12px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--sage);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.saving-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sage-light);margin-left:6px;vertical-align:middle;animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;transition:transform .3s;z-index:9999}
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media print{nav,.fcard,.rec-center,.rec-controls{display:none!important}.shell{max-width:100%;padding:0}@page{margin:12mm}}
 @media(max-width:640px){.two{grid-template-columns:1fr}}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="supabase-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
 </head>
 <body>
 <nav>
@@ -73,10 +79,23 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   <div class="nav-logo"><div class="nav-gem">&#127807;</div><div class="nav-wm">Med<span class="nav-dot"></span><span class="nav-adv">Advocate</span></div></div>
 </nav>
 <div class="shell">
+
   <div class="page-header">
     <div style="font-size:40px;margin-bottom:10px">&#127897;&#65039;</div>
     <h1 class="page-title">Appointment <em>Recorder</em></h1>
     <p class="page-sub">Record your appointment and get an AI summary with every decision, medication change, follow-up, and question you forgot to ask.</p>
+  </div>
+
+  <!-- Restore draft banner -->
+  <div id="restore_banner" class="restore-banner" style="display:none">
+    <div>
+      <div style="font-size:14px;font-weight:600;color:var(--sage-deep);margin-bottom:3px">Unsaved session found</div>
+      <div id="restore_info" style="font-size:12px;color:var(--ink-muted)"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn-p" style="padding:8px 18px;font-size:13px" onclick="restoreDraft()">Restore session</button>
+      <button class="btn-o" style="padding:8px 14px;font-size:13px" onclick="dismissDraft()">Dismiss</button>
+    </div>
   </div>
 
   <div id="compat_warn" style="display:none" class="warn"></div>
@@ -106,12 +125,15 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
   </div>
 
   <div class="fcard" style="margin-bottom:18px">
-    <div style="font-family:'Fraunces',serif;font-size:16px;color:var(--ink);margin-bottom:4px">Live Transcript</div>
-    <div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;font-weight:300">Words appear as they're spoken. Add manual notes below.</div>
+    <div style="font-family:'Fraunces',serif;font-size:16px;color:var(--ink);margin-bottom:2px">
+      Live Transcript
+      <span id="autosave_dot" style="display:none" class="saving-dot" title="Auto-saving..."></span>
+    </div>
+    <div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;font-weight:300">Words appear as they are spoken. Add manual notes below.</div>
     <div class="tx-box" id="tx_box"><span style="color:var(--ink-muted);font-style:italic">Recording will appear here in real time...</span></div>
     <div style="margin-top:10px">
       <label class="flabel">Manual Notes</label>
-      <textarea id="manual_notes" class="fi" style="resize:none;min-height:70px;line-height:1.6" placeholder="Add anything the transcript missed - medications, follow-up dates, things to remember..."></textarea>
+      <textarea id="manual_notes" class="fi" style="resize:none;min-height:70px;line-height:1.6" placeholder="Add anything the transcript missed — medications, follow-up dates, things to remember..."></textarea>
     </div>
   </div>
 
@@ -123,6 +145,16 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
     </div>
     <div id="sum_out"></div>
   </div>
+
+  <!-- Past Recordings -->
+  <div id="past_recordings" style="display:none;margin-top:36px">
+    <div style="border-top:1.5px solid var(--border);padding-top:28px;margin-bottom:18px">
+      <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:4px">Past Appointments</div>
+      <div style="font-size:13px;color:var(--ink-muted);font-weight:300">Every recorded appointment is saved here. Tap any entry to view its summary.</div>
+    </div>
+    <div id="past_list"></div>
+  </div>
+
 </div>
 <div class="toast" id="toast"></div>
 
@@ -144,6 +176,7 @@ var recog = null;
 var isRec = false;
 var isPaused = false;
 var timerInt = null;
+var autoSaveInt = null;
 var secs = 0;
 var fullTx = '';
 var interimTx = '';
@@ -151,6 +184,8 @@ var mediaRecorder = null;
 var audioChunks = [];
 var audioBlob = null;
 var audioUrl = null;
+var currentRecordingId = null;
+var DRAFT_KEY = 'advocate_rec_draft';
 
 // ── Compatibility warning ──────────────────────────────────────
 (function() {
@@ -164,30 +199,86 @@ var audioUrl = null;
   }
 })();
 
+// ── Draft auto-save (localStorage safety net) ─────────────────
+function saveDraft() {
+  try {
+    var draft = {
+      transcript: fullTx,
+      manual_notes: document.getElementById('manual_notes').value,
+      doctor: document.getElementById('rec_doc').value,
+      appointment_type: document.getElementById('rec_type').value,
+      patient: document.getElementById('rec_patient').value,
+      secs: secs,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch(e) {}
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+}
+
+function checkForDraft() {
+  try {
+    var raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (!draft.transcript && !draft.manual_notes) { clearDraft(); return; }
+    var parts = [];
+    if (draft.doctor) parts.push('Dr. ' + draft.doctor);
+    else if (draft.appointment_type) parts.push(draft.appointment_type);
+    if (draft.savedAt) {
+      var d = new Date(draft.savedAt);
+      parts.push('saved ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+    }
+    document.getElementById('restore_info').textContent = parts.join(' · ') || 'Unsaved recording found';
+    document.getElementById('restore_banner').style.display = 'flex';
+  } catch(e) {}
+}
+
+function restoreDraft() {
+  try {
+    var raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (draft.transcript) fullTx = draft.transcript;
+    if (draft.manual_notes) document.getElementById('manual_notes').value = draft.manual_notes;
+    if (draft.doctor) document.getElementById('rec_doc').value = draft.doctor;
+    if (draft.appointment_type) document.getElementById('rec_type').value = draft.appointment_type;
+    if (draft.patient) document.getElementById('rec_patient').value = draft.patient;
+    if (draft.secs) secs = draft.secs;
+    updateTx();
+    var m = Math.floor(secs / 60), s = secs % 60;
+    document.getElementById('rec_timer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    document.getElementById('rec_status').textContent = 'Session restored — add notes or generate your summary below';
+    document.getElementById('clear_btn').style.display = 'inline-flex';
+    document.getElementById('sum_section').style.display = 'block';
+    document.getElementById('restore_banner').style.display = 'none';
+    toast('Session restored');
+    document.getElementById('sum_section').scrollIntoView({ behavior: 'smooth' });
+  } catch(e) {}
+}
+
+function dismissDraft() {
+  clearDraft();
+  document.getElementById('restore_banner').style.display = 'none';
+}
+
 // ── Audio file recording ───────────────────────────────────────
 function setupMediaRecorder(stream) {
   audioChunks = [];
   var mimeType = '';
   if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) {
-    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-      mimeType = 'audio/webm;codecs=opus';
-    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-      mimeType = 'audio/webm';
-    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-      mimeType = 'audio/mp4';
-    }
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+    else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+    else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
   }
   try {
-    mediaRecorder = mimeType
-      ? new MediaRecorder(stream, { mimeType: mimeType })
-      : new MediaRecorder(stream);
+    mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
   } catch(e) {
-    try {
-      mediaRecorder = new MediaRecorder(stream);
-    } catch(e2) {
-      mediaRecorder = null;
-      return;
-    }
+    try { mediaRecorder = new MediaRecorder(stream); } catch(e2) { mediaRecorder = null; return; }
   }
   mediaRecorder.ondataavailable = function(e) {
     if (e.data && e.data.size > 0) audioChunks.push(e.data);
@@ -204,38 +295,30 @@ function showAudioPlayer() {
   var existing = document.getElementById('audio_player_wrap');
   if (existing) existing.remove();
   if (!audioUrl) return;
-
   var dateStr = new Date().toISOString().split('T')[0];
   var wrap = document.createElement('div');
   wrap.id = 'audio_player_wrap';
   wrap.style.cssText = 'background:#fff;border:1.5px solid #b7d9c4;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(28,43,34,.06)';
-
   var titleEl = document.createElement('div');
   titleEl.style.cssText = 'font-family:Fraunces,serif;font-size:16px;color:#0d1f15;margin-bottom:4px';
   titleEl.textContent = 'Recording saved';
-
   var subEl = document.createElement('div');
   subEl.style.cssText = 'font-size:12px;color:#4a7c59;font-weight:300;margin-bottom:12px';
   subEl.textContent = 'Your full appointment audio. Download to keep permanently.';
-
   var audio = document.createElement('audio');
   audio.controls = true;
   audio.src = audioUrl;
   audio.style.cssText = 'width:100%;border-radius:8px;margin-bottom:10px;display:block';
-
   var dl = document.createElement('a');
   dl.href = audioUrl;
   dl.download = 'appointment-recording-' + dateStr + '.webm';
   dl.style.cssText = 'padding:8px 16px;background:#1b4332;color:white;border-radius:9px;font-size:13px;font-weight:500;text-decoration:none;display:inline-block';
   dl.textContent = 'Download recording';
-
   wrap.appendChild(titleEl);
   wrap.appendChild(subEl);
   wrap.appendChild(audio);
   wrap.appendChild(dl);
-
-  var sumSection = document.getElementById('sum_section');
-  sumSection.parentNode.insertBefore(wrap, sumSection);
+  document.getElementById('sum_section').parentNode.insertBefore(wrap, document.getElementById('sum_section'));
 }
 
 // ── Speech recognition ─────────────────────────────────────────
@@ -248,24 +331,16 @@ function setupRecog() {
   recog.onresult = function(e) {
     interimTx = '';
     for (var i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        fullTx += e.results[i][0].transcript + ' ';
-      } else {
-        interimTx += e.results[i][0].transcript;
-      }
+      if (e.results[i].isFinal) fullTx += e.results[i][0].transcript + ' ';
+      else interimTx += e.results[i][0].transcript;
     }
     updateTx();
   };
   recog.onerror = function(e) {
-    if (e.error === 'not-allowed') {
-      toast('Microphone access denied');
-      stopRec();
-    }
+    if (e.error === 'not-allowed') { toast('Microphone access denied'); stopRec(); }
   };
   recog.onend = function() {
-    if (isRec && !isPaused) {
-      try { recog.start(); } catch(e) {}
-    }
+    if (isRec && !isPaused) { try { recog.start(); } catch(e) {} }
   };
 }
 
@@ -277,15 +352,10 @@ function updateTx() {
 
 // ── Recording controls ─────────────────────────────────────────
 function toggleRec() {
-  if (!isRec) {
-    startRec();
-  } else {
-    stopRec();
-  }
+  if (!isRec) startRec(); else stopRec();
 }
 
 async function startRec() {
-  // Immediate visual feedback before mic prompt appears
   var btn = document.getElementById('rec_btn');
   btn.className = 'rec-btn recording';
   document.getElementById('rec_lbl').textContent = 'Starting...';
@@ -296,6 +366,7 @@ async function startRec() {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch(e) {
     btn.className = 'rec-btn idle';
+    document.getElementById('rec_ico').innerHTML = '&#127897;&#65039;';
     document.getElementById('rec_lbl').textContent = 'Record';
     var errMsg = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
       ? 'Microphone permission denied. Please allow access and try again.'
@@ -310,6 +381,7 @@ async function startRec() {
   secs = 0;
   fullTx = '';
   interimTx = '';
+  currentRecordingId = null;
 
   setupMediaRecorder(stream);
   if (mediaRecorder) mediaRecorder.start(1000);
@@ -321,18 +393,20 @@ async function startRec() {
   document.getElementById('pause_btn').style.display = 'inline-flex';
   document.getElementById('stop_btn').style.display = 'inline-flex';
   document.getElementById('tx_box').innerHTML = '<span style="color:var(--ink-muted);font-style:italic">Listening...</span>';
+  document.getElementById('autosave_dot').style.display = 'inline-block';
 
   timerInt = setInterval(function() {
     secs++;
-    var m = Math.floor(secs / 60);
-    var s = secs % 60;
+    var m = Math.floor(secs / 60), s = secs % 60;
     document.getElementById('rec_timer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
   }, 1000);
 
-  if (SR) {
-    setupRecog();
-    try { recog.start(); } catch(e) {}
-  }
+  // Auto-save draft every 10 seconds so a navigation accident loses nothing
+  autoSaveInt = setInterval(function() {
+    if (isRec && (fullTx || document.getElementById('manual_notes').value)) saveDraft();
+  }, 10000);
+
+  if (SR) { setupRecog(); try { recog.start(); } catch(e) {} }
 }
 
 function togglePause() {
@@ -359,8 +433,7 @@ function togglePause() {
     if (mediaRecorder && mediaRecorder.state === 'paused') try { mediaRecorder.resume(); } catch(e) {}
     timerInt = setInterval(function() {
       secs++;
-      var m = Math.floor(secs / 60);
-      var s = secs % 60;
+      var m = Math.floor(secs / 60), s = secs % 60;
       document.getElementById('rec_timer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
     }, 1000);
   }
@@ -370,8 +443,10 @@ function stopRec() {
   isRec = false;
   isPaused = false;
   clearInterval(timerInt);
+  clearInterval(autoSaveInt);
   if (recog) try { recog.stop(); } catch(e) {}
   if (mediaRecorder && mediaRecorder.state !== 'inactive') try { mediaRecorder.stop(); } catch(e) {}
+
   var btn = document.getElementById('rec_btn');
   btn.className = 'rec-btn idle';
   document.getElementById('rec_ico').innerHTML = '&#127897;&#65039;';
@@ -380,14 +455,22 @@ function stopRec() {
   document.getElementById('pause_btn').style.display = 'none';
   document.getElementById('stop_btn').style.display = 'none';
   document.getElementById('clear_btn').style.display = 'inline-flex';
+  document.getElementById('autosave_dot').style.display = 'none';
   document.getElementById('sum_section').style.display = 'block';
   document.getElementById('sum_section').scrollIntoView({ behavior: 'smooth' });
+
+  // Save to localStorage immediately as safety net
+  saveDraft();
+
+  // Save to Supabase (async, non-blocking)
+  saveRecordingToSupabase();
 }
 
 function clearRec() {
   fullTx = '';
   interimTx = '';
   secs = 0;
+  currentRecordingId = null;
   document.getElementById('rec_timer').textContent = '0:00';
   document.getElementById('rec_status').textContent = 'Tap to start recording your appointment';
   document.getElementById('tx_box').innerHTML = '<span style="color:var(--ink-muted);font-style:italic">Recording will appear here in real time...</span>';
@@ -395,6 +478,7 @@ function clearRec() {
   document.getElementById('sum_section').style.display = 'none';
   document.getElementById('manual_notes').value = '';
   document.getElementById('sum_out').innerHTML = '';
+  clearDraft();
 }
 
 // ── Copy helpers ───────────────────────────────────────────────
@@ -402,10 +486,34 @@ function copyTx() {
   var text = fullTx + '\n\nNotes:\n' + (document.getElementById('manual_notes').value || '');
   navigator.clipboard.writeText(text).then(function() { toast('Copied'); });
 }
-
 function copySum() {
   var el = document.querySelector('.sum-doc');
   if (el) navigator.clipboard.writeText(el.innerText).then(function() { toast('Copied'); });
+}
+
+// ── Save to Supabase ───────────────────────────────────────────
+async function saveRecordingToSupabase() {
+  try {
+    var doc = document.getElementById('rec_doc').value.trim();
+    var type = document.getElementById('rec_type').value.trim();
+    var mn = document.getElementById('manual_notes').value.trim();
+    var data = await DB.saveRecording({
+      doctor: doc || null,
+      appointment_type: type || null,
+      transcript: fullTx || null,
+      manual_notes: mn || null,
+      duration_secs: secs,
+      recorded_at: new Date().toISOString()
+    });
+    if (data && data.id) {
+      currentRecordingId = data.id;
+      clearDraft(); // Supabase has it — localStorage draft no longer needed
+    }
+    loadPastRecordings();
+  } catch(e) {
+    console.warn('Could not save to Supabase:', e.message);
+    // Draft stays in localStorage as fallback
+  }
 }
 
 // ── AI Summary ─────────────────────────────────────────────────
@@ -413,10 +521,7 @@ async function genSummary() {
   var tx = fullTx.trim();
   var mn = document.getElementById('manual_notes').value.trim();
   var combined = [tx, mn].filter(Boolean).join('\n\nAdditional notes:\n');
-  if (!combined) {
-    toast('No transcript or notes to summarize.');
-    return;
-  }
+  if (!combined) { toast('No transcript or notes to summarize.'); return; }
 
   var doc = document.getElementById('rec_doc').value.trim();
   var type = document.getElementById('rec_type').value.trim();
@@ -458,13 +563,14 @@ async function genSummary() {
     var d = await r.json();
     var rawText = (d.content && d.content[0] && d.content[0].text) || '';
     var res = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
     var today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     var dur = Math.floor(secs / 60) + ':' + (secs % 60 < 10 ? '0' : '') + (secs % 60);
 
     var html = '<div class="sum-doc">'
       + '<div class="sum-hdr">'
       + '<div class="sum-hdr-title">Appointment Summary — ' + esc(patient) + '</div>'
-      + '<div class="sum-hdr-meta">' + (doc ? esc(doc) + ' &middot; ' : '') + today + ' &middot; ' + dur + ' recorded</div>'
+      + '<div class="sum-hdr-meta">' + (doc ? esc(doc) + ' · ' : '') + today + ' · ' + dur + ' recorded</div>'
       + '</div><div class="sum-body">';
 
     if (res.summary)
@@ -474,46 +580,38 @@ async function genSummary() {
 
     if (res.urgentFlags && res.urgentFlags.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl" style="color:var(--red)">Urgent</div>'
-        + res.urgentFlags.map(function(f) { return '<div class="sum-item urg">' + esc(f) + '</div>'; }).join('')
-        + '</div>';
+        + res.urgentFlags.map(function(f) { return '<div class="sum-item urg">' + esc(f) + '</div>'; }).join('') + '</div>';
 
     if (res.medications && res.medications.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Medication Changes</div>'
         + res.medications.map(function(m) {
             return '<div class="sum-item"><strong>' + esc(m.name) + '</strong> — '
               + esc(m.change) + (m.details ? ': ' + esc(m.details) : '') + '</div>';
-          }).join('')
-        + '</div>';
+          }).join('') + '</div>';
 
     if (res.diagnoses && res.diagnoses.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Diagnoses</div>'
-        + res.diagnoses.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
-        + '</div>';
+        + res.diagnoses.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('') + '</div>';
 
     if (res.testsordered && res.testsordered.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Tests Ordered</div>'
-        + res.testsordered.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
-        + '</div>';
+        + res.testsordered.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('') + '</div>';
 
     if (res.instructions && res.instructions.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Instructions</div>'
-        + res.instructions.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
-        + '</div>';
+        + res.instructions.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('') + '</div>';
 
     if (res.followup && res.followup.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Follow-up</div>'
-        + res.followup.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('')
-        + '</div>';
+        + res.followup.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('') + '</div>';
 
     if (res.actionItems && res.actionItems.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Your Action Items</div>'
-        + res.actionItems.map(function(x) { return '<div class="sum-item">&#9744; ' + esc(x) + '</div>'; }).join('')
-        + '</div>';
+        + res.actionItems.map(function(x) { return '<div class="sum-item">&#9744; ' + esc(x) + '</div>'; }).join('') + '</div>';
 
     if (res.questionsNotAsked && res.questionsNotAsked.length)
       html += '<div class="sum-sec"><div class="sum-sec-ttl">Questions Still Needed</div>'
-        + res.questionsNotAsked.map(function(x) { return '<div class="sum-item amb">? ' + esc(x) + '</div>'; }).join('')
-        + '</div>';
+        + res.questionsNotAsked.map(function(x) { return '<div class="sum-item amb">? ' + esc(x) + '</div>'; }).join('') + '</div>';
 
     html += '</div></div>'
       + '<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap">'
@@ -523,6 +621,18 @@ async function genSummary() {
 
     out.innerHTML = html;
 
+    // Update Supabase record with the summary
+    if (currentRecordingId) {
+      try {
+        await DB.updateRecording(currentRecordingId, {
+          summary: res,
+          manual_notes: mn || null,
+          transcript: fullTx || null
+        });
+        loadPastRecordings();
+      } catch(e) { console.warn('Could not save summary to Supabase:', e.message); }
+    }
+
   } catch(e) {
     out.innerHTML = '<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong: ' + esc(e.message) + '</div>';
     console.error(e);
@@ -531,12 +641,132 @@ async function genSummary() {
   }
 }
 
-// ── Pre-fill patient name ──────────────────────────────────────
+// ── Past Recordings ────────────────────────────────────────────
+async function loadPastRecordings() {
+  var container = document.getElementById('past_recordings');
+  var list = document.getElementById('past_list');
+  try {
+    var recs = await DB.getRecordings(30);
+    if (!recs.length) { container.style.display = 'none'; return; }
+    container.style.display = 'block';
+    list.innerHTML = recs.map(function(r) { return buildRecCard(r); }).join('');
+  } catch(e) {
+    container.style.display = 'none';
+  }
+}
+
+function buildRecCard(r) {
+  var dateStr = r.recorded_at
+    ? new Date(r.recorded_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : 'Unknown date';
+  var dur = '';
+  if (r.duration_secs) {
+    var m = Math.floor(r.duration_secs / 60), s = r.duration_secs % 60;
+    dur = m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  var metaParts = [dateStr];
+  if (r.appointment_type) metaParts.push(esc(r.appointment_type));
+  if (dur) metaParts.push(dur);
+  var meta = metaParts.join(' · ');
+  var title = r.doctor ? 'Dr. ' + esc(r.doctor) : 'Appointment';
+
+  // Build expandable summary section
+  var sumSection = '';
+  if (r.summary) {
+    var sum = r.summary;
+    sumSection = '<div id="hist_sum_' + r.id + '" class="hist-sum">';
+    if (sum.summary) {
+      sumSection += '<div style="font-family:Fraunces,serif;font-style:italic;font-size:14px;color:var(--ink-soft);line-height:1.7;padding:10px 14px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;margin-bottom:10px">' + esc(sum.summary) + '</div>';
+    }
+    if (sum.urgentFlags && sum.urgentFlags.length) {
+      sumSection += '<span class="sum-sec-ttl" style="color:var(--red)">Urgent</span>';
+      sumSection += sum.urgentFlags.map(function(f) { return '<div class="sum-item urg">' + esc(f) + '</div>'; }).join('');
+    }
+    if (sum.medications && sum.medications.length) {
+      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Medication Changes</span>';
+      sumSection += sum.medications.map(function(med) {
+        return '<div class="sum-item"><strong>' + esc(med.name) + '</strong> — ' + esc(med.change) + (med.details ? ': ' + esc(med.details) : '') + '</div>';
+      }).join('');
+    }
+    if (sum.actionItems && sum.actionItems.length) {
+      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Action Items</span>';
+      sumSection += sum.actionItems.map(function(x) { return '<div class="sum-item">&#9744; ' + esc(x) + '</div>'; }).join('');
+    }
+    if (sum.followup && sum.followup.length) {
+      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Follow-up</span>';
+      sumSection += sum.followup.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('');
+    }
+    if (sum.questionsNotAsked && sum.questionsNotAsked.length) {
+      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Questions Still Needed</span>';
+      sumSection += sum.questionsNotAsked.map(function(x) { return '<div class="sum-item amb">? ' + esc(x) + '</div>'; }).join('');
+    }
+    sumSection += '</div>';
+  }
+
+  var toggleBtn = r.summary
+    ? '<button class="btn-o" style="font-size:12px;padding:5px 12px" id="histog_' + r.id + '" onclick="toggleHistSum(\'' + r.id + '\')">View summary</button>'
+    : '<span style="font-size:12px;color:var(--ink-muted);font-style:italic">No summary</span>';
+
+  return '<div class="rec-hist-card" id="rhc_' + r.id + '">'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">'
+    + '<div>'
+    + '<div style="font-family:Fraunces,serif;font-size:17px;color:var(--ink);margin-bottom:3px">' + title + '</div>'
+    + '<div style="font-size:12px;color:var(--ink-muted)">' + meta + '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:7px;align-items:center;flex-shrink:0">'
+    + toggleBtn
+    + '<button class="btn-r" style="font-size:12px;padding:5px 12px" onclick="deleteHistRec(\'' + r.id + '\')">Delete</button>'
+    + '</div>'
+    + '</div>'
+    + sumSection
+    + '</div>';
+}
+
+function toggleHistSum(id) {
+  var el = document.getElementById('hist_sum_' + id);
+  var btn = document.getElementById('histog_' + id);
+  if (!el || !btn) return;
+  var open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? 'View summary' : 'Hide summary';
+}
+
+async function deleteHistRec(id) {
+  if (!confirm('Delete this appointment recording and its summary?')) return;
+  try {
+    await DB.deleteRecording(id);
+    var card = document.getElementById('rhc_' + id);
+    if (card) card.remove();
+    var list = document.getElementById('past_list');
+    if (list && !list.children.length) document.getElementById('past_recordings').style.display = 'none';
+    toast('Recording deleted');
+  } catch(e) {
+    toast('Could not delete — please try again');
+  }
+}
+
+// ── Initialization ─────────────────────────────────────────────
 (async function() {
+  // Scope draft key to patient so two patients on same device never mix
+  try {
+    var pid = await DB.patientId();
+    if (pid) DRAFT_KEY = 'advocate_rec_draft_' + pid;
+  } catch(e) {}
+
+  // Pre-fill patient name from profile
   try {
     var p = await DB.getProfile();
-    if (p && p.name) document.getElementById('rec_patient').value = p.name;
-  } catch(e) { /* ignore */ }
+    if (p && p.name) {
+      var field = document.getElementById('rec_patient');
+      if (field && !field.value) field.value = p.name;
+    }
+  } catch(e) {}
+
+  // Check for unsaved draft from a previous session
+  checkForDraft();
+
+  // Load past recordings list
+  loadPastRecordings();
 })();
 </script>
 </body>

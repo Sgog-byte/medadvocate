@@ -806,6 +806,47 @@ const DB = {
     return !error;
   },
 
+  // ── APPOINTMENT RECORDINGS ───────────────────────────────────
+
+  async saveRecording(rec) {
+    const pid = await DB.patientId();
+    if (!pid) return null;
+    const { data, error } = await _supa.from('appointment_recordings').insert({
+      patient_id: pid,
+      doctor: rec.doctor || null,
+      appointment_type: rec.appointment_type || null,
+      transcript: rec.transcript || null,
+      manual_notes: rec.manual_notes || null,
+      summary: rec.summary || null,
+      duration_secs: rec.duration_secs || 0,
+      recorded_at: rec.recorded_at || new Date().toISOString()
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateRecording(id, fields) {
+    const { error } = await _supa.from('appointment_recordings').update(fields).eq('id', id);
+    if (error) throw error;
+  },
+
+  async getRecordings(limit) {
+    limit = limit || 50;
+    const pid = await DB.patientId();
+    if (!pid) return [];
+    const { data } = await _supa
+      .from('appointment_recordings')
+      .select('*')
+      .eq('patient_id', pid)
+      .order('recorded_at', { ascending: false })
+      .limit(limit);
+    return data || [];
+  },
+
+  async deleteRecording(id) {
+    await _supa.from('appointment_recordings').delete().eq('id', id);
+  },
+
   // ── MIGRATION ────────────────────────────────────────────────
   /**
    * One-time migration: pull everything from localStorage and
