@@ -1658,7 +1658,14 @@ function showToast(msg) {
     }
 
     // Sync with Supabase — Supabase is the source of truth when online.
-    const dbEntries = await DB.getSymptomEntries();
+    let dbEntries = [];
+    try {
+      dbEntries = await DB.getSymptomEntries();
+      console.log('[SymptomSync] Supabase returned', dbEntries.length, 'entries');
+    } catch(fetchErr) {
+      console.error('[SymptomSync] getSymptomEntries failed:', fetchErr);
+      throw fetchErr; // bubble to outer catch — use localStorage as-is
+    }
     const dbDates = new Set(dbEntries.map(function(e) { return e.date; }));
 
     if (dbEntries.length) {
@@ -1671,6 +1678,7 @@ function showToast(msg) {
       const offlineLocal = entries.filter(function(e) {
         return !dbDates.has(e.date) && (e.savedAt || '') > latestDbTime;
       });
+      console.log('[SymptomSync] replacing local with Supabase data;', offlineLocal.length, 'offline-only local entries kept');
 
       // Replace local cache with the Supabase set (removes stale/fake local entries)
       entries = dbEntries.slice();
@@ -1680,16 +1688,21 @@ function showToast(msg) {
 
       // Push any offline-only entries up to Supabase
       for (var ui = 0; ui < offlineLocal.length; ui++) {
-        try { await DB.upsertSymptomEntry(offlineLocal[ui]); } catch(ex) {}
+        try { await DB.upsertSymptomEntry(offlineLocal[ui]); }
+        catch(ex) { console.error('[SymptomSync] upload offline entry failed:', ex); }
       }
     } else {
       // Supabase is empty — upload all local entries (initial migration from
       // devices that saved data before Supabase sync existed).
+      console.log('[SymptomSync] Supabase empty — uploading', entries.length, 'local entries');
       for (var ui = 0; ui < entries.length; ui++) {
-        try { await DB.upsertSymptomEntry(entries[ui]); } catch(ex) {}
+        try { await DB.upsertSymptomEntry(entries[ui]); }
+        catch(ex) { console.error('[SymptomSync] upload failed for', entries[ui].date, ':', ex); }
       }
     }
-  } catch(e) { /* offline or not logged in — localStorage data is still valid */ }
+  } catch(e) {
+    console.error('[SymptomSync] sync block failed — using localStorage only:', e);
+  }
 
   if (window.location.hash === '#voice') switchTab('voice');
   else renderLog();
