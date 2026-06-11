@@ -1657,33 +1657,37 @@ function showToast(msg) {
       }
     }
 
-    // Merge Supabase entries — Supabase wins when its savedAt is more recent
+    // Sync with Supabase — Supabase is the source of truth when online.
     const dbEntries = await DB.getSymptomEntries();
     const dbDates = new Set(dbEntries.map(function(e) { return e.date; }));
-    if (dbEntries.length) {
-      let changed = false;
-      dbEntries.forEach(function(dbE) {
-        const idx = entries.findIndex(function(e) { return e.date === dbE.date; });
-        if (idx === -1) {
-          entries.push(dbE);
-          changed = true;
-        } else if ((dbE.savedAt || '') > (entries[idx].savedAt || '')) {
-          entries[idx] = dbE;
-          changed = true;
-        }
-      });
-      if (changed) {
-        entries.sort(function(a, b) { return a.date.localeCompare(b.date); });
-        save();
-      }
-    }
 
-    // Upload any local entries that Supabase doesn't already have.
-    // Runs every load but only sends genuinely missing dates — fully idempotent.
-    // This ensures real entries logged before sync existed reach Supabase.
-    const localOnly = entries.filter(function(e) { return !dbDates.has(e.date); });
-    for (var ui = 0; ui < localOnly.length; ui++) {
-      try { await DB.upsertSymptomEntry(localOnly[ui]); } catch(ex) {}
+    if (dbEntries.length) {
+      // Supabase has data: use it as the authoritative set.
+      // Preserve any local entry that was saved MORE RECENTLY than the newest
+      // Supabase entry — those are genuine offline saves not yet uploaded.
+      const latestDbTime = dbEntries.reduce(function(max, e) {
+        return (e.savedAt || '') > max ? (e.savedAt || '') : max;
+      }, '');
+      const offlineLocal = entries.filter(function(e) {
+        return !dbDates.has(e.date) && (e.savedAt || '') > latestDbTime;
+      });
+
+      // Replace local cache with the Supabase set (removes stale/fake local entries)
+      entries = dbEntries.slice();
+      offlineLocal.forEach(function(e) { entries.push(e); });
+      entries.sort(function(a, b) { return a.date.localeCompare(b.date); });
+      save();
+
+      // Push any offline-only entries up to Supabase
+      for (var ui = 0; ui < offlineLocal.length; ui++) {
+        try { await DB.upsertSymptomEntry(offlineLocal[ui]); } catch(ex) {}
+      }
+    } else {
+      // Supabase is empty — upload all local entries (initial migration from
+      // devices that saved data before Supabase sync existed).
+      for (var ui = 0; ui < entries.length; ui++) {
+        try { await DB.upsertSymptomEntry(entries[ui]); } catch(ex) {}
+      }
     }
   } catch(e) { /* offline or not logged in — localStorage data is still valid */ }
 
