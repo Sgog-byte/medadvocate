@@ -1693,13 +1693,9 @@ function showToast(msg) {
         catch(ex) { console.error('[SymptomSync] upload offline entry failed:', ex); }
       }
     } else {
-      // Supabase is empty — upload all local entries (initial migration from
-      // devices that saved data before Supabase sync existed).
-      console.log('[SymptomSync] Supabase empty — uploading', entries.length, 'local entries');
-      for (var ui = 0; ui < entries.length; ui++) {
-        try { await DB.upsertSymptomEntry(entries[ui]); }
-        catch(ex) { console.error('[SymptomSync] upload failed for', entries[ui].date, ':', ex); }
-      }
+      // Supabase is empty — keep local data as-is but do not auto-upload.
+      // Entries reach Supabase only when the user explicitly saves them.
+      console.log('[SymptomSync] Supabase empty — showing local data only');
     }
   } catch(e) {
     console.error('[SymptomSync] sync block failed — using localStorage only:', e);
