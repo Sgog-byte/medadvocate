@@ -28,6 +28,11 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 .nav-back:hover{border-color:var(--sage);color:var(--sage)}
 .nav-title{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--ink);margin-right:auto}
 #authBar{}
+@media(max-width:600px){
+  nav{height:auto;flex-wrap:wrap;padding:10px 14px;gap:6px 10px}
+  .nav-title{font-size:16px;margin-right:0}
+  #authBar{width:100%}
+}
 .shell{max-width:640px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
 h1{font-family:'Fraunces',serif;font-size:32px;font-weight:300;color:var(--ink);margin-bottom:6px}
 h1 em{font-style:italic;color:var(--sage)}

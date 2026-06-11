@@ -964,15 +964,23 @@ async function renderAuthBar(containerId) {
     `<option value="${p.id}" ${p.id === activePid ? 'selected' : ''}>${p.name}</option>`
   ).join('');
 
+  // Inject mobile-responsive styles once per page
+  if (!document.getElementById('auth-bar-styles')) {
+    const s = document.createElement('style');
+    s.id = 'auth-bar-styles';
+    s.textContent = '@media(max-width:600px){.auth-bar-email{display:none!important}.auth-bar-inner{gap:6px!important}}';
+    document.head.appendChild(s);
+  }
+
   container.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="auth-bar-inner" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       ${patients.length > 1 ? `
         <select onchange="DB.switchPatient(this.value).then(()=>window.location.reload())"
           style="font-size:12px;padding:5px 10px;border:1px solid var(--border,#dde);border-radius:8px;background:transparent;color:inherit">
           ${patientOptions}
         </select>` : `<span style="font-size:12px;color:var(--ink-muted,#888)">${patients[0]?.name || ''}</span>`
       }
-      <span style="font-size:11px;color:var(--ink-muted,#888)">${user.email}</span>
+      <span class="auth-bar-email" style="font-size:11px;color:var(--ink-muted,#888)">${user.email}</span>
       <button onclick="Auth.signOut()"
         style="font-size:12px;padding:5px 12px;border:1px solid var(--border,#dde);border-radius:100px;background:transparent;cursor:pointer;color:inherit">
         Sign out
