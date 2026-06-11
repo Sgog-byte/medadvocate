@@ -1659,6 +1659,7 @@ function showToast(msg) {
 
     // Merge Supabase entries — Supabase wins when its savedAt is more recent
     const dbEntries = await DB.getSymptomEntries();
+    const dbDates = new Set(dbEntries.map(function(e) { return e.date; }));
     if (dbEntries.length) {
       let changed = false;
       dbEntries.forEach(function(dbE) {
@@ -1675,6 +1676,18 @@ function showToast(msg) {
         entries.sort(function(a, b) { return a.date.localeCompare(b.date); });
         save();
       }
+    }
+
+    // One-time upload: push local entries that Supabase doesn't have yet.
+    // This migrates data that was saved before Supabase sync existed.
+    // The flag prevents this from running more than once per device.
+    const uploadFlagKey = ENTRIES_KEY + '_uploaded';
+    if (!localStorage.getItem(uploadFlagKey)) {
+      const localOnly = entries.filter(function(e) { return !dbDates.has(e.date); });
+      for (var ui = 0; ui < localOnly.length; ui++) {
+        try { await DB.upsertSymptomEntry(localOnly[ui]); } catch(ex) {}
+      }
+      localStorage.setItem(uploadFlagKey, '1');
     }
   } catch(e) { /* offline or not logged in — localStorage data is still valid */ }
 
