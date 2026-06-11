@@ -778,6 +778,22 @@ let selectedOverall = '';
 let rangeFilter = 14;
 let charts = {};
 
+// DoD/VA Pain Scale descriptors — top-level so renderLog, updateSlider,
+// and buildDoctorSummary can all reference it
+const DOD_SCALE = {
+  0:  { label: 'Not present',               detail: 'No symptoms',                                        color: 'var(--ink-muted)' },
+  1:  { label: 'Mild — hardly notice',      detail: 'Hardly notice it',                                   color: '#52b788' },
+  2:  { label: 'Mild — no interference',    detail: 'Notice it, does not interfere with activities',      color: '#52b788' },
+  3:  { label: 'Mild — distracts',          detail: 'Sometimes distracts me',                             color: 'var(--sage)' },
+  4:  { label: 'Moderate — distracts',      detail: 'Distracts me, can do usual activities',              color: '#c9923a' },
+  5:  { label: 'Moderate — interrupts',     detail: 'Interrupts some activities',                         color: 'var(--amber)' },
+  6:  { label: 'Moderate — hard to ignore', detail: 'Hard to ignore, avoiding usual activities',          color: '#e08030' },
+  7:  { label: 'Severe — prevents daily',   detail: 'Focus of attention, prevents doing daily activities',color: 'var(--red)' },
+  8:  { label: 'Severe — awful',            detail: 'Awful, hard to do anything',                         color: 'var(--red)' },
+  9:  { label: 'Severe — can\'t bear',      detail: 'Can\'t bear it, unable to do anything',              color: '#a93226' },
+  10: { label: 'Worst possible',            detail: 'As bad as it could be, nothing else matters',        color: '#7b1f1f' },
+};
+
 // Preset symptoms
 const PRESETS = [
   { id:'fatigue',        label:'Fatigue',                icon:'😴' },
@@ -1085,21 +1101,6 @@ function renderLog() {
   const saveBtn = document.getElementById('saveBtn');
   saveBtn.textContent = existing ? '✏️ Update Entry' : '💾 Save Today\'s Entry';
   saveBtn.className = 'save-entry-btn' + (existing ? ' saved' : '');
-
-  // DoD/VA Pain Scale descriptors (adapted from NeuraHealth.co)
-  const DOD_SCALE = {
-    0:  { label: 'Not present',           detail: 'No symptoms',                           color: 'var(--ink-muted)' },
-    1:  { label: 'Mild — hardly notice',  detail: 'Hardly notice it',                      color: '#52b788' },
-    2:  { label: 'Mild — no interference',detail: 'Notice it, does not interfere with activities', color: '#52b788' },
-    3:  { label: 'Mild — distracts',      detail: 'Sometimes distracts me',                color: 'var(--sage)' },
-    4:  { label: 'Moderate — distracts',  detail: 'Distracts me, can do usual activities', color: '#c9923a' },
-    5:  { label: 'Moderate — interrupts', detail: 'Interrupts some activities',            color: 'var(--amber)' },
-    6:  { label: 'Moderate — hard to ignore', detail: 'Hard to ignore, avoiding usual activities', color: '#e08030' },
-    7:  { label: 'Severe — prevents daily', detail: 'Focus of attention, prevents doing daily activities', color: 'var(--red)' },
-    8:  { label: 'Severe — awful',        detail: 'Awful, hard to do anything',            color: 'var(--red)' },
-    9:  { label: 'Severe — can\'t bear',  detail: 'Can\'t bear it, unable to do anything', color: '#a93226' },
-    10: { label: 'Worst possible',        detail: 'As bad as it could be, nothing else matters', color: '#7b1f1f' }
-  };
 
   // Render sliders
   logList.innerHTML = syms.map(s => {
