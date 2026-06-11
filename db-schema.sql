@@ -206,6 +206,24 @@ create table if not exists documents (
 create index if not exists documents_patient_idx on documents(patient_id, created_at desc);
 
 -- ============================================================
+-- APPOINTMENT RECORDINGS
+-- ============================================================
+create table if not exists appointment_recordings (
+  id               uuid primary key default uuid_generate_v4(),
+  patient_id       uuid not null references patients(id) on delete cascade,
+  doctor           text,
+  appointment_type text,
+  transcript       text,
+  manual_notes     text,
+  summary          jsonb,
+  duration_secs    integer default 0,
+  recorded_at      timestamptz default now() not null,
+  created_at       timestamptz default now() not null
+);
+
+create index if not exists appt_recordings_patient_idx on appointment_recordings(patient_id, recorded_at desc);
+
+-- ============================================================
 -- SAVED SCRIPTS (Visit prep scripts)
 -- ============================================================
 create table if not exists saved_scripts (
@@ -265,8 +283,9 @@ alter table timeline_events    enable row level security;
 alter table flare_log          enable row level security;
 alter table care_team          enable row level security;
 alter table documents          enable row level security;
-alter table saved_scripts      enable row level security;
-alter table research_library   enable row level security;
+alter table saved_scripts           enable row level security;
+alter table appointment_recordings  enable row level security;
+alter table research_library        enable row level security;
 alter table user_settings      enable row level security;
 
 -- Patients: owned by auth user
@@ -319,6 +338,11 @@ create policy "users own documents"
 create policy "users own saved_scripts"
   on saved_scripts for all
   using (patient_id in (select id from patients where user_id = auth.uid()));
+
+create policy "users own appointment_recordings"
+  on appointment_recordings for all
+  using (patient_id in (select id from patients where user_id = auth.uid()))
+  with check (patient_id in (select id from patients where user_id = auth.uid()));
 
 create policy "users own research_library"
   on research_library for all
