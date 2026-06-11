@@ -1678,16 +1678,12 @@ function showToast(msg) {
       }
     }
 
-    // One-time upload: push local entries that Supabase doesn't have yet.
-    // This migrates data that was saved before Supabase sync existed.
-    // The flag prevents this from running more than once per device.
-    const uploadFlagKey = ENTRIES_KEY + '_uploaded';
-    if (!localStorage.getItem(uploadFlagKey)) {
-      const localOnly = entries.filter(function(e) { return !dbDates.has(e.date); });
-      for (var ui = 0; ui < localOnly.length; ui++) {
-        try { await DB.upsertSymptomEntry(localOnly[ui]); } catch(ex) {}
-      }
-      localStorage.setItem(uploadFlagKey, '1');
+    // Upload any local entries that Supabase doesn't already have.
+    // Runs every load but only sends genuinely missing dates — fully idempotent.
+    // This ensures real entries logged before sync existed reach Supabase.
+    const localOnly = entries.filter(function(e) { return !dbDates.has(e.date); });
+    for (var ui = 0; ui < localOnly.length; ui++) {
+      try { await DB.upsertSymptomEntry(localOnly[ui]); } catch(ex) {}
     }
   } catch(e) { /* offline or not logged in — localStorage data is still valid */ }
 
