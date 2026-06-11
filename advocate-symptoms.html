@@ -1192,6 +1192,8 @@ function saveEntry() {
   save();
   renderLog();
   showToast('Entry saved ✓');
+  // Sync to Supabase so other devices see this entry
+  DB.upsertSymptomEntry(entry).catch(function(e) { console.warn('Symptom sync:', e.message); });
 }
 
 // ══ HISTORY ══
@@ -1321,6 +1323,8 @@ function deleteEntry(date) {
   save();
   renderHistory();
   showToast('Entry deleted');
+  // Sync delete to Supabase
+  DB.deleteSymptomEntry(date).catch(function(e) { console.warn('Symptom delete sync:', e.message); });
 }
 
 // ══ TRENDS ══
@@ -1569,44 +1573,6 @@ function showToast(msg) {
 }
 
 // ══ INIT ══
-// Load sample data for demo if empty
-if (!state.trackedSymptoms.length) {
-  state.trackedSymptoms = [
-    { id:'fatigue', label:'Fatigue', icon:'😴' },
-    { id:'pain', label:'Pain / Achiness', icon:'💢' },
-    { id:'brainfog', label:'Brain Fog', icon:'🌫️' },
-    { id:'dizziness', label:'Dizziness', icon:'💫' },
-    { id:'headache', label:'Headache', icon:'🤕' },
-  ];
-  save();
-}
-
-// Pre-populate some demo history if completely empty
-if (!entries.length) {
-  const today = new Date();
-  const ovOptions = ['great','ok','ok','hard','hard','worst','ok'];
-  for (let i = 20; i >= 1; i--) {
-    const d = new Date(today.getTime() - i * 86400000);
-    const dateStr = d.toISOString().split('T')[0];
-    const overall = ovOptions[Math.floor(Math.random()*ovOptions.length)];
-    entries.push({
-      date: dateStr,
-      symptoms: {
-        fatigue:   Math.floor(Math.random()*4)+4,
-        pain:      Math.floor(Math.random()*5)+2,
-        brainfog:  Math.floor(Math.random()*5)+1,
-        dizziness: Math.floor(Math.random()*6)+1,
-        headache:  Math.floor(Math.random()*5),
-      },
-      overall,
-      notes: '',
-      savedAt: new Date().toISOString()
-    });
-  }
-  entries.sort((a,b) => a.date.localeCompare(b.date));
-  save();
-}
-
 // Namespace keys by patient, migrate old data, then load state and render
 (async () => {
   try {
@@ -1654,6 +1620,63 @@ if (!entries.length) {
     return s;
   });
   if (labelsMigrated) save();
+
+  // ── Supabase sync ────────────────────────────────────────────────────────
+  try {
+    // If no symptoms configured on this device, load from Supabase (or seed defaults)
+    if (!state.trackedSymptoms.length) {
+      try {
+        const dbConfig = await DB.getSymptomConfig();
+        if (dbConfig.length) {
+          state.trackedSymptoms = dbConfig.map(function(row) {
+            return { id: row.symptom_id, label: row.label, icon: row.icon || '⚡', custom: !!row.is_custom };
+          });
+        } else {
+          // Truly new account — seed sensible defaults (no fake history)
+          state.trackedSymptoms = [
+            { id:'fatigue',   label:'Fatigue',         icon:'😴' },
+            { id:'pain',      label:'Pain / Achiness', icon:'💢' },
+            { id:'brainfog',  label:'Brain Fog',       icon:'🌫️' },
+            { id:'dizziness', label:'Dizziness',       icon:'💫' },
+            { id:'headache',  label:'Headache',        icon:'🤕' },
+          ];
+        }
+        save();
+      } catch(e) {
+        // Offline — seed defaults so the page is still usable
+        if (!state.trackedSymptoms.length) {
+          state.trackedSymptoms = [
+            { id:'fatigue',   label:'Fatigue',         icon:'😴' },
+            { id:'pain',      label:'Pain / Achiness', icon:'💢' },
+            { id:'brainfog',  label:'Brain Fog',       icon:'🌫️' },
+            { id:'dizziness', label:'Dizziness',       icon:'💫' },
+            { id:'headache',  label:'Headache',        icon:'🤕' },
+          ];
+          save();
+        }
+      }
+    }
+
+    // Merge Supabase entries — Supabase wins when its savedAt is more recent
+    const dbEntries = await DB.getSymptomEntries();
+    if (dbEntries.length) {
+      let changed = false;
+      dbEntries.forEach(function(dbE) {
+        const idx = entries.findIndex(function(e) { return e.date === dbE.date; });
+        if (idx === -1) {
+          entries.push(dbE);
+          changed = true;
+        } else if ((dbE.savedAt || '') > (entries[idx].savedAt || '')) {
+          entries[idx] = dbE;
+          changed = true;
+        }
+      });
+      if (changed) {
+        entries.sort(function(a, b) { return a.date.localeCompare(b.date); });
+        save();
+      }
+    }
+  } catch(e) { /* offline or not logged in — localStorage data is still valid */ }
 
   if (window.location.hash === '#voice') switchTab('voice');
   else renderLog();
