@@ -668,44 +668,67 @@ function buildRecCard(r) {
   if (r.appointment_type) metaParts.push(esc(r.appointment_type));
   if (dur) metaParts.push(dur);
   var meta = metaParts.join(' · ');
-  var title = r.doctor ? 'Dr. ' + esc(r.doctor) : 'Appointment';
+  // Use doctor name as entered (placeholder already says "e.g. Dr. Webb")
+  var title = r.doctor ? esc(r.doctor) : 'Appointment';
 
-  // Build expandable summary section
+  // Build expandable section — summary + transcript + notes
+  var hasContent = r.summary || r.transcript || r.manual_notes;
   var sumSection = '';
-  if (r.summary) {
-    var sum = r.summary;
+  if (hasContent) {
     sumSection = '<div id="hist_sum_' + r.id + '" class="hist-sum">';
-    if (sum.summary) {
-      sumSection += '<div style="font-family:Fraunces,serif;font-style:italic;font-size:14px;color:var(--ink-soft);line-height:1.7;padding:10px 14px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;margin-bottom:10px">' + esc(sum.summary) + '</div>';
+
+    // AI summary
+    if (r.summary) {
+      var sum = r.summary;
+      if (sum.summary) {
+        sumSection += '<div style="font-family:Fraunces,serif;font-style:italic;font-size:14px;color:var(--ink-soft);line-height:1.7;padding:10px 14px;background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;margin-bottom:10px">' + esc(sum.summary) + '</div>';
+      }
+      if (sum.urgentFlags && sum.urgentFlags.length) {
+        sumSection += '<span class="sum-sec-ttl" style="color:var(--red)">Urgent</span>';
+        sumSection += sum.urgentFlags.map(function(f) { return '<div class="sum-item urg">' + esc(f) + '</div>'; }).join('');
+      }
+      if (sum.medications && sum.medications.length) {
+        sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Medication Changes</span>';
+        sumSection += sum.medications.map(function(med) {
+          return '<div class="sum-item"><strong>' + esc(med.name) + '</strong> — ' + esc(med.change) + (med.details ? ': ' + esc(med.details) : '') + '</div>';
+        }).join('');
+      }
+      if (sum.actionItems && sum.actionItems.length) {
+        sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Action Items</span>';
+        sumSection += sum.actionItems.map(function(x) { return '<div class="sum-item">&#9744; ' + esc(x) + '</div>'; }).join('');
+      }
+      if (sum.followup && sum.followup.length) {
+        sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Follow-up</span>';
+        sumSection += sum.followup.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('');
+      }
+      if (sum.questionsNotAsked && sum.questionsNotAsked.length) {
+        sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Questions Still Needed</span>';
+        sumSection += sum.questionsNotAsked.map(function(x) { return '<div class="sum-item amb">? ' + esc(x) + '</div>'; }).join('');
+      }
     }
-    if (sum.urgentFlags && sum.urgentFlags.length) {
-      sumSection += '<span class="sum-sec-ttl" style="color:var(--red)">Urgent</span>';
-      sumSection += sum.urgentFlags.map(function(f) { return '<div class="sum-item urg">' + esc(f) + '</div>'; }).join('');
+
+    // Manual notes
+    if (r.manual_notes) {
+      sumSection += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">';
+      sumSection += '<span class="sum-sec-ttl">My Notes</span>';
+      sumSection += '<div style="font-size:13px;color:var(--ink-soft);line-height:1.7;white-space:pre-wrap">' + esc(r.manual_notes) + '</div>';
+      sumSection += '</div>';
     }
-    if (sum.medications && sum.medications.length) {
-      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Medication Changes</span>';
-      sumSection += sum.medications.map(function(med) {
-        return '<div class="sum-item"><strong>' + esc(med.name) + '</strong> — ' + esc(med.change) + (med.details ? ': ' + esc(med.details) : '') + '</div>';
-      }).join('');
+
+    // Transcript
+    if (r.transcript) {
+      sumSection += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">';
+      sumSection += '<span class="sum-sec-ttl">Full Transcript</span>';
+      sumSection += '<div style="font-size:12px;color:var(--ink-soft);line-height:1.8;max-height:220px;overflow-y:auto;white-space:pre-wrap;background:var(--warm);border-radius:8px;padding:10px 12px">' + esc(r.transcript) + '</div>';
+      sumSection += '</div>';
     }
-    if (sum.actionItems && sum.actionItems.length) {
-      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Action Items</span>';
-      sumSection += sum.actionItems.map(function(x) { return '<div class="sum-item">&#9744; ' + esc(x) + '</div>'; }).join('');
-    }
-    if (sum.followup && sum.followup.length) {
-      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Follow-up</span>';
-      sumSection += sum.followup.map(function(x) { return '<div class="sum-item">' + esc(x) + '</div>'; }).join('');
-    }
-    if (sum.questionsNotAsked && sum.questionsNotAsked.length) {
-      sumSection += '<span class="sum-sec-ttl" style="margin-top:10px">Questions Still Needed</span>';
-      sumSection += sum.questionsNotAsked.map(function(x) { return '<div class="sum-item amb">? ' + esc(x) + '</div>'; }).join('');
-    }
+
     sumSection += '</div>';
   }
 
-  var toggleBtn = r.summary
-    ? '<button class="btn-o" style="font-size:12px;padding:5px 12px" id="histog_' + r.id + '" onclick="toggleHistSum(\'' + r.id + '\')">View summary</button>'
-    : '<span style="font-size:12px;color:var(--ink-muted);font-style:italic">No summary</span>';
+  var toggleBtn = hasContent
+    ? '<button class="btn-o" style="font-size:12px;padding:5px 12px" id="histog_' + r.id + '" onclick="toggleHistSum(\'' + r.id + '\')">' + (r.summary ? 'View summary' : 'View details') + '</button>'
+    : '<span style="font-size:12px;color:var(--ink-muted);font-style:italic">No summary yet</span>';
 
   return '<div class="rec-hist-card" id="rhc_' + r.id + '">'
     + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">'
