@@ -202,6 +202,21 @@ footer{position:relative;z-index:1;background:var(--sage-deep);padding:48px 36px
   .tools-grid{grid-template-columns:repeat(2,1fr)}
   .tc:nth-child(9),.tc:nth-child(10){grid-column:auto}
 }
+@media(max-width:600px){
+  /* Nav wraps to two rows: logo on top, auth controls below */
+  nav{height:auto;flex-wrap:wrap;padding:10px 14px;gap:6px 10px;align-items:center}
+  .nav-spacer{display:none}
+  /* Auth row spans full width */
+  #navAuthArea{width:100%;flex-wrap:wrap;gap:6px}
+  /* Patient selector stretches to fill available space */
+  #navAuthArea select{flex:1;min-width:0;font-size:13px;padding:6px 10px}
+  #navAuthArea span{flex:1}
+  /* Compact action buttons */
+  #navAuthArea .nav-btn{font-size:11px;padding:5px 11px}
+  /* Tighten logged-in hero on mobile */
+  .is-logged-in .hero{padding:6px 14px 2px}
+  .is-logged-in h1{font-size:17px;margin-bottom:2px}
+}
 @media(max-width:560px){
   .tools-grid,.for-grid,.coming-grid{grid-template-columns:1fr}
   .hero{padding:48px 18px 32px}
