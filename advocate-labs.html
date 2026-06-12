@@ -1109,10 +1109,13 @@ function fileToBase64(file) {
 // ─────────────────────────────────
 // PATIENT PROFILE
 // ─────────────────────────────────
-const PROFILE_KEY = 'advocate_lab_profile'; // only used for user-typed extra notes; core data always from DB
+// Key is patient-scoped so Sarah's profile data can never bleed into Kira's view
+function profileCacheKey() {
+  return currentPatientId ? `advocate_lab_profile_${currentPatientId}` : 'advocate_lab_profile';
+}
 
 function getProfile() {
-  return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+  return JSON.parse(localStorage.getItem(profileCacheKey()) || '{}');
 }
 
 function saveProfile() {
@@ -1123,11 +1126,13 @@ function saveProfile() {
     meds: document.getElementById('profile_meds').value.trim(),
     notes: document.getElementById('profile_notes').value.trim()
   };
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  localStorage.setItem(profileCacheKey(), JSON.stringify(profile));
   updateProfileSummary(profile);
   document.getElementById('profileForm').classList.add('hidden');
   document.getElementById('profileToggleLabel').textContent = '▼ Edit Profile';
   showToast('Profile saved ✓');
+  // Sync to Supabase so profile is available on all devices
+  DB.saveProfile(profile).catch(function(e) { console.warn('Profile sync:', e.message); });
 }
 
 async function loadProfile() {
@@ -1140,15 +1145,16 @@ async function loadProfile() {
     }
   } catch(e) {}
   // Merge in any extra notes the user typed locally (only the notes field — not name/diagnoses)
+  // Use the SCOPED key — never the flat key — to prevent cross-patient bleed
   try {
-    const local = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+    const local = JSON.parse(localStorage.getItem(profileCacheKey()) || '{}');
     // Only use local name/diagnoses if DB returned nothing (offline fallback)
     // Never overwrite fresh DB data with stale localStorage values
     if (!profile.name && local.name) profile = { ...local };
     else if (local.notes && !profile.notes) profile.notes = local.notes;
   } catch(e) {}
-  // Save the validated profile back to the namespaced key
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  // Save the validated profile back to the scoped key
+  localStorage.setItem(profileCacheKey(), JSON.stringify(profile));
   if (profile.name) document.getElementById('profile_name').value = profile.name;
   if (profile.age) document.getElementById('profile_age').value = profile.age;
   if (profile.diagnoses) document.getElementById('profile_diagnoses').value = profile.diagnoses;
@@ -1404,7 +1410,7 @@ function showLabEntry(entryOrIndex) {
 
   const d = new Date(entry.date + 'T12:00:00');
   const label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  document.getElementById('labDateLabel').textContent = `Results from ${label}${entry.patientName ? ' · ' + entry.patientName : ''}`;
+  document.getElementById('labDateLabel').textContent = `Results from ${label}`;
 
   // Summary tiles — show flagged/watch first, then normal
   const grid = document.getElementById('summaryGrid');
@@ -2203,6 +2209,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pid = await DB.patientId();
     if (pid) currentPatientId = pid;
   } catch(e) {}
+
+  // One-time migration: move flat advocate_lab_profile key → patient-scoped key
+  // Prevents Sarah's profile data from bleeding into Kira's lab view
+  if (currentPatientId) {
+    try {
+      const flatKey = 'advocate_lab_profile';
+      const scopedKey = profileCacheKey();
+      const flatData = localStorage.getItem(flatKey);
+      const scopedData = localStorage.getItem(scopedKey);
+      if (flatData && !scopedData) {
+        // Only migrate if the scoped key doesn't exist yet — don't overwrite newer scoped data
+        localStorage.setItem(scopedKey, flatData);
+        console.log('[LabProfile] migrated flat profile key → scoped key for patient', currentPatientId);
+      }
+      // Always clean up the flat key to prevent future bleed
+      if (flatData) localStorage.removeItem(flatKey);
+    } catch(e) {}
+  }
 
   loadProfile();
   loadLabs();
