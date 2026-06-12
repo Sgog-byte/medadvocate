@@ -856,8 +856,10 @@ const PRESETS = [
 ];
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+  // State lives in memory only — Supabase is the persistent store.
+  // Entries are saved via DB.upsertSymptomEntry() / DB.deleteSymptomEntry().
+  // Symptom config is saved via DB.saveSymptomConfig().
+  // This function is intentionally a no-op; kept so callers don't need changing.
 }
 
 function todayStr() {
@@ -1029,7 +1031,7 @@ function togglePreset(id) {
     const preset = PRESETS.find(p => p.id === id);
     state.trackedSymptoms.push({ id, label: preset.label, icon: preset.icon });
   }
-  save();
+  DB.saveSymptomConfig(state.trackedSymptoms).catch(e => console.warn('[SymptomConfig] save failed:', e.message));
   renderSetup();
 }
 
@@ -1039,7 +1041,7 @@ function addCustomSym() {
   if (!val) return;
   const id = 'custom_' + Date.now();
   state.trackedSymptoms.push({ id, label: val, icon: '⚡', custom: true });
-  save();
+  DB.saveSymptomConfig(state.trackedSymptoms).catch(e => console.warn('[SymptomConfig] save failed:', e.message));
   inp.value = '';
   renderSetup();
   showToast('Added: ' + val);
@@ -1060,7 +1062,7 @@ function renderActiveSyms() {
 
 function removeSym(id) {
   state.trackedSymptoms = state.trackedSymptoms.filter(s => s.id !== id);
-  save();
+  DB.saveSymptomConfig(state.trackedSymptoms).catch(e => console.warn('[SymptomConfig] save failed:', e.message));
   renderSetup();
 }
 
@@ -1585,131 +1587,62 @@ function showToast(msg) {
 }
 
 // ══ INIT ══
-// Namespace keys by patient, migrate old data, then load state and render
+// Load everything from Supabase — no localStorage involved for data.
 (async () => {
+  const DEFAULT_SYMPTOMS = [
+    { id:'fatigue',   label:'Fatigue',         icon:'😴' },
+    { id:'pain',      label:'Pain / Achiness', icon:'💢' },
+    { id:'brainfog',  label:'Brain Fog',       icon:'🌫️' },
+    { id:'dizziness', label:'Dizziness',       icon:'💫' },
+    { id:'headache',  label:'Headache',        icon:'🤕' },
+  ];
+
   try {
-    const pid = await DB.patientId();
-    if (pid) {
-      const newSK = `advocate_symptoms_${pid}`;
-      const newEK = `advocate_entries_${pid}`;
-      // One-time migration: copy old flat key data into the namespaced key,
-      // then DELETE the flat key so it can't bleed into other patients' namespaces.
-      if (!localStorage.getItem(newSK) && localStorage.getItem('advocate_symptoms')) {
-        localStorage.setItem(newSK, localStorage.getItem('advocate_symptoms'));
-        localStorage.removeItem('advocate_symptoms');
-      }
-      if (!localStorage.getItem(newEK) && localStorage.getItem('advocate_entries')) {
-        localStorage.setItem(newEK, localStorage.getItem('advocate_entries'));
-        localStorage.removeItem('advocate_entries');
-      }
-      STORAGE_KEY = newSK;
-      ENTRIES_KEY = newEK;
-
-      // Show patient name badge so user knows which profile is active
-      try {
-        const profile = await DB.getProfile();
-        const name = profile?.name || '';
-        if (name) {
-          document.getElementById('patientBadgeName').textContent = name;
-          document.getElementById('patientBadge').style.display = 'inline-flex';
-        }
-      } catch(e) {}
-    }
-  } catch(e) {}
-  // Load data with the correct (possibly namespaced) keys
-  state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"trackedSymptoms":[]}');
-  entries = JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
-
-  // Refresh saved symptom labels/icons from current PRESETS so any renamed
-  // presets (e.g. 'Mood' → 'Low Mood') are picked up automatically.
-  let labelsMigrated = false;
-  state.trackedSymptoms = state.trackedSymptoms.map(s => {
-    const preset = PRESETS.find(p => p.id === s.id);
-    if (preset && (s.label !== preset.label || s.icon !== preset.icon)) {
-      labelsMigrated = true;
-      return { ...s, label: preset.label, icon: preset.icon };
-    }
-    return s;
-  });
-  if (labelsMigrated) save();
-
-  // ── Supabase sync ────────────────────────────────────────────────────────
-  try {
-    // If no symptoms configured on this device, load from Supabase (or seed defaults)
-    if (!state.trackedSymptoms.length) {
-      try {
-        const dbConfig = await DB.getSymptomConfig();
-        if (dbConfig.length) {
-          state.trackedSymptoms = dbConfig.map(function(row) {
-            return { id: row.symptom_id, label: row.label, icon: row.icon || '⚡', custom: !!row.is_custom };
-          });
-        } else {
-          // Truly new account — seed sensible defaults (no fake history)
-          state.trackedSymptoms = [
-            { id:'fatigue',   label:'Fatigue',         icon:'😴' },
-            { id:'pain',      label:'Pain / Achiness', icon:'💢' },
-            { id:'brainfog',  label:'Brain Fog',       icon:'🌫️' },
-            { id:'dizziness', label:'Dizziness',       icon:'💫' },
-            { id:'headache',  label:'Headache',        icon:'🤕' },
-          ];
-        }
-        save();
-      } catch(e) {
-        // Offline — seed defaults so the page is still usable
-        if (!state.trackedSymptoms.length) {
-          state.trackedSymptoms = [
-            { id:'fatigue',   label:'Fatigue',         icon:'😴' },
-            { id:'pain',      label:'Pain / Achiness', icon:'💢' },
-            { id:'brainfog',  label:'Brain Fog',       icon:'🌫️' },
-            { id:'dizziness', label:'Dizziness',       icon:'💫' },
-            { id:'headache',  label:'Headache',        icon:'🤕' },
-          ];
-          save();
-        }
-      }
-    }
-
-    // Sync with Supabase — Supabase is the source of truth when online.
-    let dbEntries = [];
+    // Show patient name badge
     try {
-      dbEntries = await DB.getSymptomEntries();
-      console.log('[SymptomSync] Supabase returned', dbEntries.length, 'entries');
-    } catch(fetchErr) {
-      console.error('[SymptomSync] getSymptomEntries failed:', fetchErr);
-      throw fetchErr; // bubble to outer catch — use localStorage as-is
-    }
-    const dbDates = new Set(dbEntries.map(function(e) { return e.date; }));
-
-    if (dbEntries.length) {
-      // Supabase has data: use it as the authoritative set.
-      // Preserve any local entry that was saved MORE RECENTLY than the newest
-      // Supabase entry — those are genuine offline saves not yet uploaded.
-      const latestDbTime = dbEntries.reduce(function(max, e) {
-        return (e.savedAt || '') > max ? (e.savedAt || '') : max;
-      }, '');
-      const offlineLocal = entries.filter(function(e) {
-        return !dbDates.has(e.date) && (e.savedAt || '') > latestDbTime;
-      });
-      console.log('[SymptomSync] replacing local with Supabase data;', offlineLocal.length, 'offline-only local entries kept');
-
-      // Replace local cache with the Supabase set (removes stale/fake local entries)
-      entries = dbEntries.slice();
-      offlineLocal.forEach(function(e) { entries.push(e); });
-      entries.sort(function(a, b) { return a.date.localeCompare(b.date); });
-      save();
-
-      // Push any offline-only entries up to Supabase
-      for (var ui = 0; ui < offlineLocal.length; ui++) {
-        try { await DB.upsertSymptomEntry(offlineLocal[ui]); }
-        catch(ex) { console.error('[SymptomSync] upload offline entry failed:', ex); }
+      const profile = await DB.getProfile();
+      const name = profile?.name || '';
+      if (name) {
+        document.getElementById('patientBadgeName').textContent = name;
+        document.getElementById('patientBadge').style.display = 'inline-flex';
       }
-    } else {
-      // Supabase is empty — keep local data as-is but do not auto-upload.
-      // Entries reach Supabase only when the user explicitly saves them.
-      console.log('[SymptomSync] Supabase empty — showing local data only');
+    } catch(e) {}
+
+    // Load symptom config from Supabase
+    try {
+      const dbConfig = await DB.getSymptomConfig();
+      if (dbConfig.length) {
+        state.trackedSymptoms = dbConfig.map(function(row) {
+          return { id: row.symptom_id, label: row.label, icon: row.icon || '⚡', custom: !!row.is_custom };
+        });
+      } else {
+        // New patient — seed defaults and save them to Supabase
+        state.trackedSymptoms = DEFAULT_SYMPTOMS.slice();
+        DB.saveSymptomConfig(state.trackedSymptoms).catch(e => console.warn('[SymptomConfig] seed failed:', e.message));
+      }
+    } catch(e) {
+      console.warn('[SymptomConfig] load failed — using defaults:', e.message);
+      if (!state.trackedSymptoms.length) state.trackedSymptoms = DEFAULT_SYMPTOMS.slice();
     }
+
+    // Refresh labels/icons from PRESETS in case any were renamed
+    state.trackedSymptoms = state.trackedSymptoms.map(s => {
+      const preset = PRESETS.find(p => p.id === s.id);
+      return (preset && (s.label !== preset.label || s.icon !== preset.icon))
+        ? { ...s, label: preset.label, icon: preset.icon } : s;
+    });
+
+    // Load symptom entries from Supabase
+    try {
+      entries = await DB.getSymptomEntries();
+      console.log('[Symptoms] loaded', entries.length, 'entries from Supabase');
+    } catch(e) {
+      console.error('[Symptoms] failed to load entries:', e.message);
+      showToast('⚠️ Could not load symptom history — check your connection');
+    }
+
   } catch(e) {
-    console.error('[SymptomSync] sync block failed — using localStorage only:', e);
+    console.error('[Symptoms] init failed:', e);
   }
 
   if (window.location.hash === '#voice') switchTab('voice');

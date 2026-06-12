@@ -832,145 +832,36 @@
 
 <script>
 // ─────────────────────────────────
-// STATE
+// STATE — Supabase is the only persistent store.
+// allLabDates and currentProfile live in memory while the page is open.
+// Nothing is written to localStorage for lab data.
 // ─────────────────────────────────
-const LAB_PID_KEY = 'advocate_labs_pid'; // legacy — kept for migration detection only
-let currentPatientId = null;             // set in DOMContentLoaded before any data load
+let currentPatientId = null;  // set in DOMContentLoaded before any data load
+let currentProfile   = {};    // active patient's profile (loaded from Supabase)
 
-// Always returns the namespaced key for the current patient, or the flat fallback
-function labCacheKey() {
-  return currentPatientId ? `advocate_lab_results_${currentPatientId}` : 'advocate_lab_results';
-}
-
-let allLabDates = []; // [{date, fileName, fileKey, results:[{name,value,unit,low,high,status,note}]}]
+let allLabDates = []; // [{date, fileName, fileKey, results:[…], insights:[…]}]
 let activeChartFilter = 'all';
-
-function saveLabs() {
-  // Embed _pid so we can detect cross-patient corruption on next load
-  try { localStorage.setItem(labCacheKey(), JSON.stringify({ _pid: currentPatientId, reports: allLabDates })); } catch(e) {}
-}
-
-function readLabCache(key) {
-  try {
-    const raw = JSON.parse(localStorage.getItem(key));
-    if (!raw) return [];
-    // New format: { _pid, reports }
-    if (raw._pid !== undefined) {
-      // Only reject on flat/shared key — namespaced keys are patient-isolated by key name
-      // so a stale _pid tag is not grounds for deletion (data is still this patient's)
-      const isNamespaced = currentPatientId && key.includes(currentPatientId);
-      if (!isNamespaced && currentPatientId && raw._pid !== currentPatientId) {
-        localStorage.removeItem(key);
-        return [];
-      }
-      return Array.isArray(raw.reports) ? raw.reports : [];
-    }
-    // Old format: plain array — accept as-is
-    return Array.isArray(raw) ? raw : [];
-  } catch(e) { return []; }
-}
 
 function applyLoadedLabs(reports) {
   if (!reports.length) return false;
   allLabDates = reports;
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
-  saveLabs();
   updateHistory();
   showLabEntry(allLabDates[allLabDates.length - 1]);
   document.getElementById('labResults').classList.remove('hidden');
   document.getElementById('emptyLabs').classList.add('hidden');
-  // Show warning banner if any report lacks _pid certification for this patient
-  const allCertified = currentPatientId &&
-    reports.every(r => r._pid === currentPatientId);
-  const banner = document.getElementById('wrongPatientBanner');
-  if (banner) banner.classList.toggle('hidden', !!allCertified);
   return true;
 }
 
-// Handles all 4 localStorage storage formats labs may have been saved in
-function _extractReports(raw) {
-  if (!raw) return [];
-  // Format A: {_pid, reports:[{date,fileName,results},…]}
-  if (!Array.isArray(raw) && Array.isArray(raw.reports)) return raw.reports;
-  // Format B: [{_pid, reports:[…]}, …]
-  if (Array.isArray(raw) && raw[0]?.reports) {
-    for (const blob of raw) { if (Array.isArray(blob.reports) && blob.reports.length) return blob.reports; }
-  }
-  // Format C: [{date,fileName,results},…]
-  if (Array.isArray(raw) && raw[0]?.date) return raw;
-  // Format D: single report object
-  if (raw && raw.date) return [raw];
-  return [];
-}
-
 async function loadLabs() {
-  // 1. Load from Supabase (patient-scoped via RLS)
-  let dbReports = [];
   try {
-    dbReports = await DB.getLabReports();
-  } catch(e) { console.warn('[Labs] Supabase load failed:', e.message); }
-
-  // 2. Load from localStorage namespaced key
-  let localReports = [];
-  try {
-    const raw = JSON.parse(localStorage.getItem(labCacheKey()) || 'null');
-    if (raw) {
-      const blobPid = raw._pid || (Array.isArray(raw) && raw[0]?._pid) || null;
-      const pidOk = !blobPid || !currentPatientId || blobPid === currentPatientId;
-      if (pidOk) {
-        localReports = _extractReports(raw).filter(r => r.date && r.results?.length);
-      } else {
-        console.warn('[Labs] Namespaced key has wrong _pid (' + blobPid?.slice(0,8) + ' ≠ ' + currentPatientId?.slice(0,8) + ') — skipping to prevent bleed');
-      }
-    }
-  } catch(e) {}
-
-  if (dbReports.length || localReports.length) {
-    // Merge: Supabase is the source of truth, but also include any local-only reports
-    // that failed to upload (e.g. network error on mobile) so data is never silently lost.
-    if (dbReports.length && localReports.length) {
-      const dbKeys = new Set(dbReports.map(r => r.fileKey || r.date));
-      const offlineOnly = localReports.filter(r => !dbKeys.has(r.fileKey || r.date));
-      if (offlineOnly.length) {
-        console.log('[Labs] Found', offlineOnly.length, 'local-only report(s) not in Supabase — merging and retrying upload');
-        const merged = [...dbReports, ...offlineOnly];
-        merged.sort((a, b) => new Date(a.date) - new Date(b.date));
-        applyLoadedLabs(merged);
-        // Retry upload of any reports that didn't make it to Supabase
-        offlineOnly.forEach(r => DB.saveLabReport(r).catch(e => console.warn('[Labs] retry upload failed:', e.message)));
-      } else {
-        applyLoadedLabs(dbReports);
-      }
-    } else if (dbReports.length) {
-      applyLoadedLabs(dbReports);
-    } else {
-      // Nothing in Supabase yet — use local data and upload it
-      applyLoadedLabs(localReports);
-      localReports.forEach(r => DB.saveLabReport(r).catch(() => {}));
-    }
-    return;
+    const reports = await DB.getLabReports();
+    if (reports.length) applyLoadedLabs(reports);
+    // No reports = empty state (normal for a new patient — emptyLabs div is already visible)
+  } catch(e) {
+    console.error('[Labs] Failed to load from Supabase:', e.message);
+    showToast('⚠️ Could not load labs — check your connection and refresh');
   }
-
-  // 3. Flat key — only migrate if _pid matches this patient (flat key IS shared)
-  // If a patient is active and the flat key has NO _pid, it's ambiguous — delete it to prevent bleed.
-  try {
-    const raw = JSON.parse(localStorage.getItem('advocate_lab_results') || 'null');
-    if (raw) {
-      const pid = raw._pid || (Array.isArray(raw) && raw[0]?._pid) || null;
-      if (!pid && currentPatientId) {
-        // No _pid tag and a patient IS active — this blob is ambiguous, remove to prevent cross-patient bleed
-        localStorage.removeItem('advocate_lab_results');
-      } else if (!pid || pid === currentPatientId) {
-        const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
-        if (applyLoadedLabs(reports)) {
-          reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
-          localStorage.removeItem('advocate_lab_results');
-          return;
-        }
-      }
-    }
-  } catch(e) {}
-  // No data found — show empty state (normal for a new patient)
 }
 
 // ─────────────────────────────────
@@ -1130,16 +1021,13 @@ function fileToBase64(file) {
 // ─────────────────────────────────
 // PATIENT PROFILE
 // ─────────────────────────────────
-// Key is patient-scoped so Sarah's profile data can never bleed into Kira's view
-function profileCacheKey() {
-  return currentPatientId ? `advocate_lab_profile_${currentPatientId}` : 'advocate_lab_profile';
-}
 
 function getProfile() {
-  return JSON.parse(localStorage.getItem(profileCacheKey()) || '{}');
+  // currentProfile is loaded from Supabase on page load — no localStorage involved
+  return currentProfile;
 }
 
-function saveProfile() {
+async function saveProfile() {
   const profile = {
     name: document.getElementById('profile_name').value.trim(),
     age: document.getElementById('profile_age').value.trim(),
@@ -1147,41 +1035,34 @@ function saveProfile() {
     meds: document.getElementById('profile_meds').value.trim(),
     notes: document.getElementById('profile_notes').value.trim()
   };
-  localStorage.setItem(profileCacheKey(), JSON.stringify(profile));
-  updateProfileSummary(profile);
-  document.getElementById('profileForm').classList.add('hidden');
-  document.getElementById('profileToggleLabel').textContent = '▼ Edit Profile';
-  showToast('Profile saved ✓');
-  // Sync to Supabase so profile is available on all devices
-  DB.saveProfile(profile).catch(function(e) { console.warn('Profile sync:', e.message); });
+  try {
+    await DB.saveProfile(profile);
+    currentProfile = profile;
+    updateProfileSummary(profile);
+    document.getElementById('profileForm').classList.add('hidden');
+    document.getElementById('profileToggleLabel').textContent = '▼ Edit Profile';
+    showToast('Profile saved ✓');
+  } catch(e) {
+    showToast('⚠️ Could not save profile — check your connection');
+    console.error('[Profile] save failed:', e.message);
+  }
 }
 
 async function loadProfile() {
-  // Always load base data from DB first (patient-scoped — never bleeds between profiles)
-  let profile = {};
   try {
     const dbp = await DB.getProfile();
     if (dbp && (dbp.name || dbp.diagnoses)) {
-      profile = { name: dbp.name||'', age: dbp.age||'', diagnoses: dbp.diagnoses||'', meds: dbp.meds||'', notes: dbp.notes||'' };
+      currentProfile = { name: dbp.name||'', age: dbp.age||'', diagnoses: dbp.diagnoses||'', meds: dbp.meds||'', notes: dbp.notes||'' };
     }
-  } catch(e) {}
-  // Merge in any extra notes the user typed locally (only the notes field — not name/diagnoses)
-  // Use the SCOPED key — never the flat key — to prevent cross-patient bleed
-  try {
-    const local = JSON.parse(localStorage.getItem(profileCacheKey()) || '{}');
-    // Only use local name/diagnoses if DB returned nothing (offline fallback)
-    // Never overwrite fresh DB data with stale localStorage values
-    if (!profile.name && local.name) profile = { ...local };
-    else if (local.notes && !profile.notes) profile.notes = local.notes;
-  } catch(e) {}
-  // Save the validated profile back to the scoped key
-  localStorage.setItem(profileCacheKey(), JSON.stringify(profile));
-  if (profile.name) document.getElementById('profile_name').value = profile.name;
-  if (profile.age) document.getElementById('profile_age').value = profile.age;
-  if (profile.diagnoses) document.getElementById('profile_diagnoses').value = profile.diagnoses;
-  if (profile.meds) document.getElementById('profile_meds').value = profile.meds;
-  if (profile.notes) document.getElementById('profile_notes').value = profile.notes;
-  updateProfileSummary(profile);
+  } catch(e) {
+    console.warn('[Profile] load failed:', e.message);
+  }
+  if (currentProfile.name)      document.getElementById('profile_name').value      = currentProfile.name;
+  if (currentProfile.age)       document.getElementById('profile_age').value       = currentProfile.age;
+  if (currentProfile.diagnoses) document.getElementById('profile_diagnoses').value = currentProfile.diagnoses;
+  if (currentProfile.meds)      document.getElementById('profile_meds').value      = currentProfile.meds;
+  if (currentProfile.notes)     document.getElementById('profile_notes').value     = currentProfile.notes;
+  updateProfileSummary(currentProfile);
 }
 
 function updateProfileSummary(profile) {
@@ -1406,7 +1287,6 @@ function renderLabResults(data, fileName, fileKey) {
 
   allLabDates.push(entry);
   allLabDates.sort((a, b) => new Date(a.date) - new Date(b.date));
-  saveLabs();
   DB.saveLabReport(entry).catch(function(e) {
     console.error('[Labs] Supabase save failed — lab is in local storage only:', e.message);
     showToast('⚠️ Saved locally — cloud sync failed. Try re-uploading on a better connection.');
@@ -1921,10 +1801,8 @@ function updateDateStrip() {
 // ─────────────────────────────────
 async function clearAllLabs() {
   if (!confirm('Delete all lab data for this patient? This cannot be undone. You can re-upload their labs afterwards.')) return;
-  // Clear Supabase
+  // Clear from Supabase
   try { await DB.deleteAllLabReports(); } catch(e) {}
-  // Clear localStorage (namespaced key for this patient)
-  try { localStorage.removeItem(labCacheKey()); } catch(e) {}
   // Reset in-memory state
   allLabDates = [];
   // Reset UI back to empty state
@@ -1938,8 +1816,6 @@ async function clearAllLabs() {
       <div class="empty-title">No history yet</div>
       <div class="empty-sub">Uploaded labs will appear here, sorted by date.</div>
     </div>`;
-  const banner = document.getElementById('wrongPatientBanner');
-  if (banner) banner.classList.add('hidden');
   showToast('All lab data cleared — you can now re-upload');
 }
 
@@ -1949,7 +1825,6 @@ async function clearAllLabs() {
 function updateLabDate(idx, newDate) {
   if (!newDate || !allLabDates[idx]) return;
   allLabDates[idx].date = newDate;
-  saveLabs();
   DB.saveLabReport(allLabDates[idx]).catch(() => {});
   updateHistory();
   updateDateStrip();
@@ -1972,9 +1847,6 @@ async function deleteLabEntry(idx) {
 
   // Remove from in-memory array
   allLabDates.splice(idx, 1);
-
-  // Persist updated list
-  saveLabs();
 
   if (allLabDates.length === 0) {
     // No labs left — show empty state
@@ -2152,105 +2024,40 @@ function loadDemo() {
   }, 800);
 }
 
-// Load demo on first visit if no data
+// Re-saves all in-memory labs to Supabase — useful if a previous upload failed
 async function forceRestoreLabs() {
-  const ordered = [];
-  if (currentPatientId) ordered.push('advocate_lab_results_' + currentPatientId);
-  ordered.push('advocate_lab_results');
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('advocate_lab_results') && !ordered.includes(k)) ordered.push(k);
-    }
-  } catch(e) {}
-
-  for (const k of ordered) {
-    try {
-      const raw = JSON.parse(localStorage.getItem(k) || 'null');
-      if (!raw) continue;
-      const reports = _extractReports(raw).filter(r => r.date && r.results?.length);
-      if (!reports.length) continue;
-      if (applyLoadedLabs(reports)) {
-        reports.forEach(r => DB.saveLabReport(r).catch(() => {}));
-        try { localStorage.setItem(labCacheKey(), JSON.stringify(reports)); } catch(e) {}
-        showToast('✓ Backed up ' + reports.length + ' lab report(s) to cloud');
-        return;
-      }
-    } catch(e) { console.error('[forceRestoreLabs]', k, e); }
+  if (!allLabDates.length) { showToast('No labs loaded to sync'); return; }
+  let ok = 0, fail = 0;
+  for (const r of allLabDates) {
+    try { await DB.saveLabReport(r); ok++; }
+    catch(e) { fail++; console.warn('[Sync]', r.fileName, e.message); }
   }
-  // If nothing in localStorage, push what's currently displayed
-  if (allLabDates && allLabDates.length) {
-    allLabDates.forEach(r => DB.saveLabReport(r).catch(() => {}));
-    showToast('✓ Backed up ' + allLabDates.length + ' lab report(s) to cloud');
-  } else {
-    showToast('No lab data found to back up');
-  }
+  showToast(fail ? `Synced ${ok} — ${fail} failed (check console)` : `✓ Synced ${ok} report(s) to cloud`);
 }
 
 async function diagnoseLabs() {
   const el = document.getElementById('labsDiagnostic');
   if (!el) return;
   el.style.display = 'block';
-  el.textContent = 'Scanning…\n';
-
-  el.textContent += `Current patient ID: ${currentPatientId || '(none)'}\n\n`;
-  el.textContent += '── localStorage keys ──\n';
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith('advocate_lab')) {
-      try {
-        const raw = JSON.parse(localStorage.getItem(k) || 'null');
-        const rpts = _extractReports(raw);
-        el.textContent += `${k}: ${rpts.length} report(s)\n`;
-      } catch { el.textContent += `${k}: (parse error)\n`; }
-    }
-  }
+  el.textContent = 'Checking Supabase…\n';
+  el.textContent += `Active patient: ${currentPatientId || '(none)'}\n`;
+  el.textContent += `In-memory reports: ${allLabDates.length}\n\n`;
   try {
     const pts = await DB.getPatients();
-    el.textContent += '\n── Supabase lab_results ──\n';
+    el.textContent += '── Supabase lab reports per patient ──\n';
     for (const pt of pts) {
       const { count } = await _supa.from('lab_results').select('*', { count: 'exact', head: true })
         .eq('patient_id', pt.id).eq('test_name', '__report__');
       el.textContent += `${pt.name} (${pt.id.slice(0,8)}): ${count || 0} report(s)\n`;
     }
   } catch(e) { el.textContent += 'Supabase check failed: ' + e.message + '\n'; }
-
-  // Add restore button dynamically
-  if (!document.getElementById('forceRestoreBtn')) {
-    const btn = document.createElement('button');
-    btn.id = 'forceRestoreBtn';
-    btn.className = 'btn btn-outline';
-    btn.style.cssText = 'margin-top:10px;display:inline-flex;gap:6px';
-    btn.textContent = '⚡ Force restore from any backup key';
-    btn.onclick = forceRestoreLabs;
-    el.after(btn);
-  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Set currentPatientId FIRST — loadLabs() and saveLabs() use it to namespace their key
   try {
     const pid = await DB.patientId();
     if (pid) currentPatientId = pid;
   } catch(e) {}
-
-  // One-time migration: move flat advocate_lab_profile key → patient-scoped key
-  // Prevents Sarah's profile data from bleeding into Kira's lab view
-  if (currentPatientId) {
-    try {
-      const flatKey = 'advocate_lab_profile';
-      const scopedKey = profileCacheKey();
-      const flatData = localStorage.getItem(flatKey);
-      const scopedData = localStorage.getItem(scopedKey);
-      if (flatData && !scopedData) {
-        // Only migrate if the scoped key doesn't exist yet — don't overwrite newer scoped data
-        localStorage.setItem(scopedKey, flatData);
-        console.log('[LabProfile] migrated flat profile key → scoped key for patient', currentPatientId);
-      }
-      // Always clean up the flat key to prevent future bleed
-      if (flatData) localStorage.removeItem(flatKey);
-    } catch(e) {}
-  }
 
   loadProfile();
   loadLabs();
