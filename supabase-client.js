@@ -367,6 +367,44 @@ const DB = {
     await _supa.from('medications').delete().eq('id', id);
   },
 
+  // ── MEDICATION LOGS ─────────────────────────────────────────
+
+  async getMedicationLogs(limit = 300) {
+    const pid = await DB.patientId();
+    if (!pid) return [];
+    const { data } = await _supa
+      .from('medication_logs')
+      .select('*')
+      .eq('patient_id', pid)
+      .order('log_date', { ascending: false })
+      .limit(limit);
+    return data || [];
+  },
+
+  async saveMedicationLog(entry) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    // Pack extra fields into notes JSON
+    const notesJson = JSON.stringify({
+      note: entry.note || entry.notes || '',
+      effectiveness: entry.effectiveness || 3,
+      type: entry.type || 'note'
+    });
+    const { data, error } = await _supa.from('medication_logs').insert({
+      patient_id: pid,
+      medication_id: entry.medId || entry.medication_id || null,
+      log_date: entry.date || entry.log_date || new Date().toISOString().split('T')[0],
+      taken: entry.taken !== undefined ? entry.taken : null,
+      notes: notesJson
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteMedicationLog(id) {
+    await _supa.from('medication_logs').delete().eq('id', id);
+  },
+
   // ── LAB RESULTS ─────────────────────────────────────────────
 
   async getLabResults() {
