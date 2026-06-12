@@ -195,10 +195,41 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 
-// ── STORAGE — shared key with myadvocate and concierge ──
-const CONTACTS_KEY='advocate_contacts';
-function getContacts(){return JSON.parse(localStorage.getItem(CONTACTS_KEY)||'[]')}
-function saveContacts(c){localStorage.setItem(CONTACTS_KEY,JSON.stringify(c))}
+// ── STATE ──
+let contacts=[];
+
+function toDBContact(c){
+  return {
+    id: c.id||undefined,
+    name: c.name,
+    role: c.specialty||c.role||null,
+    phone: c.phone||null,
+    email: c.email||null,
+    address: c.address||null,
+    notes: JSON.stringify({practice:c.practice||'',fax:c.fax||'',portal:c.portal||'',notes:c.notes||''})
+  };
+}
+
+function fromDBContact(row){
+  let extra={};
+  try{
+    const p=JSON.parse(row.notes||'{}');
+    if(typeof p==='object'&&p!==null) extra=p;
+  }catch(e){extra={notes:row.notes||''};}
+  return {
+    id: row.id,
+    name: row.name||'',
+    specialty: row.role||'',
+    practice: extra.practice||'',
+    fax: extra.fax||'',
+    portal: extra.portal||'',
+    phone: row.phone||'',
+    email: row.email||'',
+    address: row.address||'',
+    notes: extra.notes||'',
+    savedAt: row.created_at
+  };
+}
 
 // ── TABS ──
 function switchTab(tab,btn){
@@ -211,12 +242,11 @@ function switchTab(tab,btn){
 
 // ── CONTACTS ──
 function renderContacts(){
-  const contacts=getContacts();
   const grid=document.getElementById('contacts_grid');
   const empty=document.getElementById('contacts_empty');
   if(!contacts.length){empty.classList.remove('hidden');grid.innerHTML='';return;}
   empty.classList.add('hidden');
-  grid.innerHTML=contacts.map((c,i)=>`
+  grid.innerHTML=contacts.map((c)=>`
     <div class="contact-card">
       <div class="contact-card-top">
         ${c.specialty?`<div class="contact-specialty">${escH(c.specialty)}</div>`:''}
@@ -232,20 +262,19 @@ function renderContacts(){
         </div>
       </div>
       <div class="contact-actions">
-        <button class="cact-btn" onclick="openModal(${i})">✏️ Edit</button>
+        <button class="cact-btn" onclick="openModal('${c.id}')">✏️ Edit</button>
         ${c.phone?`<button class="cact-btn" onclick="window.location.href='tel:${escH(c.phone)}'">📞 Call</button>`:''}
         ${c.email?`<button class="cact-btn" onclick="window.location.href='mailto:${escH(c.email)}'">✉️ Email</button>`:''}
         ${c.address?`<button class="cact-btn" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(c.address)}','_blank')">📍 Map</button>`:''}
-        <button class="cact-btn danger" onclick="deleteContact(${i})">🗑</button>
+        <button class="cact-btn danger" onclick="deleteContact('${c.id}')">🗑</button>
       </div>
     </div>`).join('');
 }
 
-function openModal(idx){
-  const contacts=getContacts();
-  const c=idx!==undefined?contacts[idx]:{};
-  document.getElementById('modal_title').textContent=idx!==undefined?'Edit Contact':'Add Provider / Contact';
-  document.getElementById('edit_id').value=idx!==undefined?idx:'';
+function openModal(id){
+  const c=id?contacts.find(x=>x.id===id)||{}:{};
+  document.getElementById('modal_title').textContent=id?'Edit Contact':'Add Provider / Contact';
+  document.getElementById('edit_id').value=id||'';
   ['name','specialty','practice','address','phone','fax','email','portal','notes'].forEach(f=>{
     document.getElementById('c_'+f).value=c[f]||'';
   });
@@ -254,11 +283,12 @@ function openModal(idx){
 
 function closeModal(){document.getElementById('modal_overlay').classList.remove('open')}
 
-function saveContact(){
+async function saveContact(){
   const name=document.getElementById('c_name').value.trim();
   if(!name){showToast('Please enter a name');return;}
-  const contacts=getContacts();
-  const contact={
+  const id=document.getElementById('edit_id').value;
+  const appContact={
+    id:id||undefined,
     name,
     specialty:document.getElementById('c_specialty').value.trim(),
     practice:document.getElementById('c_practice').value.trim(),
@@ -267,25 +297,34 @@ function saveContact(){
     fax:document.getElementById('c_fax').value.trim(),
     email:document.getElementById('c_email').value.trim(),
     portal:document.getElementById('c_portal').value.trim(),
-    notes:document.getElementById('c_notes').value.trim(),
-    savedAt:new Date().toISOString()
+    notes:document.getElementById('c_notes').value.trim()
   };
-  const id=document.getElementById('edit_id').value;
-  if(id!=='') contacts[parseInt(id)]=contact;
-  else contacts.push(contact);
-  saveContacts(contacts);
-  closeModal();
-  renderContacts();
-  showToast(id!==''?'Updated ✓':'Contact saved ✓');
+  try{
+    if(id){
+      await DB.saveContact(toDBContact(appContact));
+      const idx=contacts.findIndex(c=>c.id===id);
+      if(idx>-1) contacts[idx]={...contacts[idx],...appContact};
+    }else{
+      const newRow=await DB.saveContact(toDBContact(appContact));
+      contacts.push(fromDBContact(newRow));
+    }
+    closeModal();
+    renderContacts();
+    showToast(id?'Updated ✓':'Contact saved ✓');
+  }catch(e){
+    showToast('⚠️ Could not save contact');
+    console.error(e);
+  }
 }
 
-function deleteContact(i){
+async function deleteContact(id){
   if(!confirm('Remove this contact?'))return;
-  const contacts=getContacts();
-  contacts.splice(i,1);
-  saveContacts(contacts);
-  renderContacts();
-  showToast('Removed');
+  try{
+    await DB.deleteContact(id);
+    contacts=contacts.filter(c=>c.id!==id);
+    renderContacts();
+    showToast('Removed');
+  }catch(e){showToast('⚠️ Could not remove contact');}
 }
 
 // ── SPECIALIST SEARCH ──
@@ -351,20 +390,29 @@ Generate 5 realistic results. Use real-sounding names. For rare disease speciali
   }finally{document.getElementById('spec_btn').disabled=false;}
 }
 
-function addSpecialistToTeam(s){
-  const contacts=getContacts();
-  contacts.push({
-    name:s.name,specialty:s.specialty,practice:s.practice,
-    address:s.address||'',phone:s.phone||'',fax:'',email:'',portal:'',
-    notes:`${s.waitTime?'Wait time: '+s.waitTime+'. ':''}${s.telehealth?'Telehealth available. ':''}${s.notes||''}`.trim(),
-    savedAt:new Date().toISOString()
-  });
-  saveContacts(contacts);
-  showToast(`${s.name} added to care team ✓`);
+async function addSpecialistToTeam(s){
+  const appContact={
+    name:s.name, specialty:s.specialty, practice:s.practice,
+    address:s.address||'', phone:s.phone||'', fax:'', email:'', portal:'',
+    notes:`${s.waitTime?'Wait time: '+s.waitTime+'. ':''}${s.telehealth?'Telehealth available. ':''}${s.notes||''}`.trim()
+  };
+  try{
+    const newRow=await DB.saveContact(toDBContact(appContact));
+    contacts.push(fromDBContact(newRow));
+    showToast(`${s.name} added to care team ✓`);
+  }catch(e){showToast('⚠️ Could not save contact');}
 }
 
 // ── INIT ──
-renderContacts();
+document.addEventListener('DOMContentLoaded', async()=>{
+  try{
+    const rows=await DB.getCareTeam();
+    contacts=rows.map(fromDBContact);
+  }catch(e){
+    showToast('⚠️ Could not load care team');
+  }
+  renderContacts();
+});
 </script>
 </body>
 </html>

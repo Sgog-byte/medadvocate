@@ -257,6 +257,44 @@ create table if not exists research_library (
 create index if not exists research_library_patient_idx on research_library(patient_id, created_at desc);
 
 -- ============================================================
+-- CONCIERGE TASKS
+-- ============================================================
+create table if not exists concierge_tasks (
+  id           uuid primary key default uuid_generate_v4(),
+  patient_id   uuid not null references patients(id) on delete cascade,
+  title        text not null,
+  contact      text,
+  category     text default 'other',
+  priority     text default 'normal',
+  due_date     date,
+  notes        text,
+  done         boolean default false,
+  done_at      timestamptz,
+  created_at   timestamptz default now()
+);
+
+create index if not exists concierge_tasks_patient_idx on concierge_tasks(patient_id, created_at desc);
+
+-- ============================================================
+-- CONCIERGE COMMUNICATION LOG
+-- ============================================================
+create table if not exists concierge_log (
+  id            uuid primary key default uuid_generate_v4(),
+  patient_id    uuid not null references patients(id) on delete cascade,
+  log_datetime  timestamptz default now(),
+  log_type      text,
+  contact       text,
+  person        text,
+  notes         text,
+  outcome       text default 'resolved',
+  ref_num       text,
+  followup_date date,
+  created_at    timestamptz default now()
+);
+
+create index if not exists concierge_log_patient_idx on concierge_log(patient_id, created_at desc);
+
+-- ============================================================
 -- USER PREFERENCES / SUBSCRIPTION
 -- ============================================================
 create table if not exists user_settings (
@@ -286,6 +324,8 @@ alter table documents          enable row level security;
 alter table saved_scripts           enable row level security;
 alter table appointment_recordings  enable row level security;
 alter table research_library        enable row level security;
+alter table concierge_tasks    enable row level security;
+alter table concierge_log      enable row level security;
 alter table user_settings      enable row level security;
 
 -- Patients: owned by auth user
@@ -346,6 +386,14 @@ create policy "users own appointment_recordings"
 
 create policy "users own research_library"
   on research_library for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
+create policy "users own concierge_tasks"
+  on concierge_tasks for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
+create policy "users own concierge_log"
+  on concierge_log for all
   using (patient_id in (select id from patients where user_id = auth.uid()));
 
 create policy "users own their settings"

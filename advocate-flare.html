@@ -236,10 +236,34 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch{return d}}
 
-// ── STORAGE ──
-const FLARE_KEY='advocate_flares';
-function getFlares(){return JSON.parse(localStorage.getItem(FLARE_KEY)||'[]')}
-function saveFlares(f){localStorage.setItem(FLARE_KEY,JSON.stringify(f))}
+// ── STATE ──
+let flares = [];
+
+function toDBFlare(f) {
+  return {
+    startDate: f.date,
+    severity: f.severity,
+    triggers: f.triggers || [],
+    symptoms: f.symptoms || [],
+    notes: JSON.stringify({duration:f.duration,helped:f.helped||'',severityLabel:f.severityLabel||'',notes:f.notes||''})
+  };
+}
+
+function fromDBFlare(row) {
+  let extra = {};
+  try { extra = JSON.parse(row.notes || '{}'); } catch(e) { extra = {notes: row.notes || ''}; }
+  return {
+    id: row.id,
+    date: row.start_date,
+    severity: row.severity || 5,
+    triggers: row.triggers || [],
+    symptoms: row.symptoms || [],
+    duration: extra.duration || 'full day',
+    helped: extra.helped || '',
+    severityLabel: extra.severityLabel || FLARE_DOD[row.severity]?.label || '',
+    notes: extra.notes || ''
+  };
+}
 
 // ── TABS ──
 function switchTab(tab){
@@ -290,7 +314,7 @@ function getChips(containerId){
 }
 
 // ── LOG FLARE ──
-function logFlare(){
+async function logFlare(){
   const date=document.getElementById('fl_date').value;
   if(!date){showToast('Please select a date');return;}
   const symptoms=[...getChips('symptom_chips')];
@@ -300,17 +324,26 @@ function logFlare(){
   const otherT=document.getElementById('fl_triggers_other').value.trim();
   if(otherT)triggers.push(otherT);
 
-  const flares=getFlares();
-  flares.unshift({
-    id:Date.now(),date,
+  const flare={
+    date,
     severity:currentSeverity,
     severityLabel:FLARE_DOD[currentSeverity]?.label||'',
     duration:document.getElementById('fl_duration').value,
     symptoms,triggers,
     helped:document.getElementById('fl_helped').value.trim(),
     notes:document.getElementById('fl_notes').value.trim()
-  });
-  saveFlares(flares);
+  };
+
+  try{
+    await DB.saveFlare(toDBFlare(flare));
+    // Reload from DB to get the real UUID id
+    const rows=await DB.getFlares();
+    flares=rows.map(fromDBFlare);
+  }catch(e){
+    showToast('⚠️ Could not save flare — check connection');
+    console.error(e);
+    return;
+  }
 
   // Reset form
   document.getElementById('fl_symptoms_other').value='';
@@ -320,13 +353,13 @@ function logFlare(){
   document.getElementById('fl_date').value=new Date().toISOString().split('T')[0];
   document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
   document.querySelectorAll('.sev-btn').forEach(b=>b.className='sev-btn');
-  currentSeverity=2;
+  currentSeverity=5;
+  updateFlareSeverity(5);
   showToast('Flare logged ✓');
 }
 
 // ── HISTORY ──
 function renderHistory(){
-  const flares=getFlares();
   const el=document.getElementById('history_list');
   if(!flares.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">No flares logged yet</div><div class="empty-sub">Start logging flare days to build your history and identify patterns.</div></div>`;
@@ -353,9 +386,12 @@ function renderHistory(){
     </div>`).join('');
 }
 
-function deleteFlare(id){
-  saveFlares(getFlares().filter(f=>f.id!==id));
-  renderHistory();showToast('Removed');
+async function deleteFlare(id){
+  try{
+    await DB.deleteFlare(id);
+    flares=flares.filter(f=>f.id!==id);
+    renderHistory();showToast('Removed');
+  }catch(e){showToast('⚠️ Could not remove flare');}
 }
 
 // ── PATTERNS ──
@@ -363,7 +399,6 @@ let freqChart=null;
 let sevChart=null;
 
 function renderPatterns(){
-  const flares=getFlares();
   const statsEl=document.getElementById('stats_section');
   const chartEl=document.getElementById('chart_section');
   const aiEl=document.getElementById('ai_patterns');
@@ -435,7 +470,6 @@ function renderPatterns(){
 }
 
 async function generateAIPatterns(){
-  const flares=getFlares();
   if(flares.length<3){showToast('Log at least 3 flares first');return;}
   const aiEl=document.getElementById('ai_patterns');
   aiEl.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="color:var(--ink-muted);font-size:14px">Analyzing your flare patterns…</p></div>`;
@@ -467,8 +501,16 @@ async function generateAIPatterns(){
 }
 
 // ── INIT ──
-document.getElementById('fl_date').value=new Date().toISOString().split('T')[0];
-updateFlareSeverity(5);
+document.addEventListener('DOMContentLoaded', async()=>{
+  document.getElementById('fl_date').value=new Date().toISOString().split('T')[0];
+  updateFlareSeverity(5);
+  try{
+    const rows=await DB.getFlares();
+    flares=rows.map(fromDBFlare);
+  }catch(e){
+    showToast('⚠️ Could not load flare history — check your connection');
+  }
+});
 </script>
 </body>
 </html>

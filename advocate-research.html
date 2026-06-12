@@ -202,12 +202,39 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 
-// ── STORAGE ──
-const LIB_KEY='advocate_research_library';
-function getLibrary(){return JSON.parse(localStorage.getItem(LIB_KEY)||'[]')}
-function saveLibrary(lib){localStorage.setItem(LIB_KEY,JSON.stringify(lib));updateBadge()}
-function updateBadge(){document.getElementById('lib_badge').textContent=getLibrary().length}
-function isPaperSaved(pmid){return getLibrary().some(p=>p.pmid===pmid)}
+// ── STATE ──
+let library=[];
+
+function toDBResearch(paper){
+  return {
+    id: paper.id||undefined,
+    title: paper.title,
+    content: paper.abstract||null,
+    source_url: paper.doi?'https://doi.org/'+paper.doi:(paper.pmid?'https://pubmed.ncbi.nlm.nih.gov/'+paper.pmid:null),
+    category: null,
+    notes: JSON.stringify({pmid:paper.pmid,journal:paper.journal,year:paper.year,authors:paper.authors,doi:paper.doi||'',aiSummary:paper.aiSummary||null})
+  };
+}
+
+function fromDBResearch(row){
+  let extra={};
+  try{extra=JSON.parse(row.notes||'{}');}catch(e){}
+  return {
+    id: row.id,
+    pmid: extra.pmid||'',
+    title: row.title||'',
+    journal: extra.journal||'',
+    year: extra.year||'',
+    abstract: row.content||'',
+    authors: extra.authors||'',
+    doi: extra.doi||'',
+    aiSummary: extra.aiSummary||null,
+    savedAt: row.created_at
+  };
+}
+
+function updateBadge(){document.getElementById('lib_badge').textContent=library.length}
+function isPaperSaved(pmid){return library.some(p=>p.pmid===pmid)}
 
 // ── SEARCH STATE ──
 let searchType='condition';
@@ -332,7 +359,7 @@ function parsePubMedXML(xml){
 // ── RENDER SEARCH RESULTS ──
 function renderSearchResults(papers,query){
   const el=document.getElementById('search_results');
-  const saved=getLibrary();
+  const saved=library;
 
   el.innerHTML=`
     <div class="results-header">
@@ -386,9 +413,11 @@ async function summarizePaper(idx){
     const summary=d.content?.[0]?.text||'';
     paper.aiSummary=summary;
     // Update saved copy if saved
-    const lib=getLibrary();
-    const saved=lib.find(p=>p.pmid===paper.pmid);
-    if(saved){saved.aiSummary=summary;saveLibrary(lib);}
+    const libEntry=library.find(p=>p.pmid===paper.pmid);
+    if(libEntry){
+      libEntry.aiSummary=summary;
+      DB.saveResearchItem(toDBResearch(libEntry)).catch(()=>{});
+    }
     summaryEl.innerHTML=`<div class="paper-ai-summary"><div class="paper-ai-summary-label">🧠 Plain-English Summary</div>${escH(summary)}</div>`;
   }catch(e){
     summaryEl.innerHTML=`<div style="color:var(--red);font-size:12px;padding:6px 0">Summary failed. Please try again.</div>`;
@@ -396,22 +425,27 @@ async function summarizePaper(idx){
 }
 
 // ── SAVE / UNSAVE ──
-function toggleSave(idx){
+async function toggleSave(idx){
   const paper=currentResults[idx];
   if(!paper) return;
-  const lib=getLibrary();
-  const existingIdx=lib.findIndex(p=>p.pmid===paper.pmid);
+  const existing=library.find(p=>p.pmid===paper.pmid);
 
-  if(existingIdx>-1){
-    lib.splice(existingIdx,1);
-    saveLibrary(lib);
-    updatePaperCardSaved(paper.pmid,false);
-    showToast('Removed from library');
+  if(existing){
+    try{
+      await DB.deleteResearchItem(existing.id);
+      library=library.filter(p=>p.pmid!==paper.pmid);
+      updateBadge();
+      updatePaperCardSaved(paper.pmid,false);
+      showToast('Removed from library');
+    }catch(e){showToast('⚠️ Could not remove');}
   }else{
-    lib.unshift({...paper,savedAt:new Date().toISOString()});
-    saveLibrary(lib);
-    updatePaperCardSaved(paper.pmid,true);
-    showToast('Saved to library ✓');
+    try{
+      const newRow=await DB.saveResearchItem(toDBResearch({...paper,savedAt:new Date().toISOString()}));
+      library.unshift(fromDBResearch(newRow));
+      updateBadge();
+      updatePaperCardSaved(paper.pmid,true);
+      showToast('Saved to library ✓');
+    }catch(e){showToast('⚠️ Could not save paper');}
   }
 }
 
@@ -422,23 +456,25 @@ function updatePaperCardSaved(pmid,saved){
   if(btn){btn.classList.toggle('saved',saved);btn.textContent=saved?'✓ Saved':'💾 Save to Library';}
 }
 
-function saveAllVisible(){
-  const lib=getLibrary();
+async function saveAllVisible(){
   let added=0;
-  currentResults.forEach(p=>{
-    if(!lib.find(l=>l.pmid===p.pmid)){
-      lib.unshift({...p,savedAt:new Date().toISOString()});
-      added++;
-      updatePaperCardSaved(p.pmid,true);
+  for(const p of currentResults){
+    if(!library.find(l=>l.pmid===p.pmid)){
+      try{
+        const newRow=await DB.saveResearchItem(toDBResearch({...p,savedAt:new Date().toISOString()}));
+        library.unshift(fromDBResearch(newRow));
+        added++;
+        updatePaperCardSaved(p.pmid,true);
+      }catch(e){/* skip failed */}
     }
-  });
-  saveLibrary(lib);
+  }
+  updateBadge();
   showToast(`${added} paper${added!==1?'s':''} saved to library ✓`);
 }
 
 // ── LIBRARY ──
 function renderLibrary(){
-  const lib=getLibrary();
+  const lib=library;
   const el=document.getElementById('library_content');
   updateBadge();
 
@@ -453,7 +489,7 @@ function renderLibrary(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <div style="font-size:13px;color:var(--ink-muted)">${lib.length} paper${lib.length!==1?'s':''} saved</div>
       <div style="display:flex;gap:8px">
-        <button class="abtn abtn-outline" onclick="if(confirm('Clear your entire library?')){saveLibrary([]);renderLibrary()}" style="font-size:12px;padding:7px 13px;color:var(--red);border-color:var(--red-border)">Clear All</button>
+        <button class="abtn abtn-outline" onclick="clearLibrary()" style="font-size:12px;padding:7px 13px;color:var(--red);border-color:var(--red-border)">Clear All</button>
       </div>
     </div>
     ${lib.map((p,i)=>`
@@ -481,16 +517,20 @@ function toggleLibAbstract(pmid){
   event.target.textContent=el.classList.contains('collapsed')?'Read Abstract':'Collapse';
 }
 
-function removeFromLib(pmid){
-  const lib=getLibrary().filter(p=>p.pmid!==pmid);
-  saveLibrary(lib);
-  renderLibrary();
-  showToast('Removed');
+async function removeFromLib(pmid){
+  const entry=library.find(p=>p.pmid===pmid);
+  if(!entry)return;
+  try{
+    await DB.deleteResearchItem(entry.id);
+    library=library.filter(p=>p.pmid!==pmid);
+    updateBadge();
+    renderLibrary();
+    showToast('Removed');
+  }catch(e){showToast('⚠️ Could not remove');}
 }
 
 async function summarizeLibPaper(idx){
-  const lib=getLibrary();
-  const paper=lib[idx];
+  const paper=library[idx];
   if(!paper)return;
 
   try{
@@ -501,11 +541,23 @@ async function summarizeLibPaper(idx){
         messages:[{role:'user',content:`Summarize in 3-4 plain-English sentences:\n\nTitle: ${paper.title}\nJournal: ${paper.journal} (${paper.year})\nAbstract: ${paper.abstract}`}]})
     });
     const d=await r.json();
-    lib[idx].aiSummary=d.content?.[0]?.text||'';
-    saveLibrary(lib);
+    library[idx].aiSummary=d.content?.[0]?.text||'';
+    await DB.saveResearchItem(toDBResearch(library[idx]));
     renderLibrary();
     showToast('Summary added ✓');
   }catch(e){showToast('Summary failed. Please try again.');}
+}
+
+async function clearLibrary(){
+  if(!confirm('Clear your entire library?'))return;
+  const toDelete=library.slice();
+  library=[];
+  updateBadge();
+  renderLibrary();
+  for(const p of toDelete){
+    try{await DB.deleteResearchItem(p.id);}catch(e){}
+  }
+  showToast('Library cleared');
 }
 
 // ── APPOINTMENT BRIEF ──
@@ -516,7 +568,7 @@ function prefillBrief(){
 }
 
 async function generateBrief(){
-  const lib=getLibrary();
+  const lib=library;
   if(!lib.length){showToast('Save some papers to your library first');return;}
   const name=document.getElementById('brief_name').value.trim()||'Patient';
   const doctor=document.getElementById('brief_doctor').value.trim();
@@ -593,7 +645,15 @@ function emailBrief(){
 }
 
 // ── INIT ──
-updateBadge();
+document.addEventListener('DOMContentLoaded', async()=>{
+  try{
+    const rows=await DB.getResearchLibrary();
+    library=rows.map(fromDBResearch);
+    updateBadge();
+  }catch(e){
+    showToast('⚠️ Could not load research library');
+  }
+});
 </script>
 </body>
 </html>

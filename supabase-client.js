@@ -262,7 +262,7 @@ const DB = {
     return data || [];
   },
 
-  async setSymptomConfig(symptoms) {
+  async saveSymptomConfig(symptoms) {
     // symptoms = [{ symptom_id, label, icon, is_custom }]
     const pid = await DB.patientId();
     if (!pid) return;
@@ -780,12 +780,14 @@ const DB = {
         category: item.category, notes: item.notes
       }).eq('id', item.id);
     } else {
-      await _supa.from('research_library').insert({
+      const { data, error } = await _supa.from('research_library').insert({
         patient_id: pid,
         title: item.title, content: item.content || null,
         source_url: item.url || item.source_url || null,
         category: item.category || null, notes: item.notes || null
-      });
+      }).select().single();
+      if (error) throw error;
+      return data;
     }
   },
 
@@ -854,6 +856,72 @@ const DB = {
 
   async deleteRecording(id) {
     await _supa.from('appointment_recordings').delete().eq('id', id);
+  },
+
+  // ── CONCIERGE TASKS ──────────────────────────────────────────
+
+  async getConciergeTasksAndLogs() {
+    const pid = await DB.patientId();
+    if (!pid) return { tasks: [], logs: [] };
+    const [tasksRes, logsRes] = await Promise.all([
+      _supa.from('concierge_tasks').select('*').eq('patient_id', pid).order('created_at', { ascending: false }),
+      _supa.from('concierge_log').select('*').eq('patient_id', pid).order('log_datetime', { ascending: false })
+    ]);
+    return { tasks: tasksRes.data || [], logs: logsRes.data || [] };
+  },
+
+  async saveConciergeTask(task) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    if (task.id) {
+      const { error } = await _supa.from('concierge_tasks').update({
+        title: task.title, contact: task.contact || null,
+        category: task.cat || task.category || 'other',
+        priority: task.priority || 'normal',
+        due_date: task.due || null,
+        notes: task.notes || null,
+        done: !!task.done, done_at: task.doneAt || task.done_at || null
+      }).eq('id', task.id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await _supa.from('concierge_tasks').insert({
+        patient_id: pid,
+        title: task.title, contact: task.contact || null,
+        category: task.cat || task.category || 'other',
+        priority: task.priority || 'normal',
+        due_date: task.due || null,
+        notes: task.notes || null,
+        done: false
+      }).select().single();
+      if (error) throw error;
+      return data;
+    }
+  },
+
+  async deleteConciergeTask(id) {
+    await _supa.from('concierge_tasks').delete().eq('id', id);
+  },
+
+  async saveConciergeLog(entry) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    const { data, error } = await _supa.from('concierge_log').insert({
+      patient_id: pid,
+      log_datetime: entry.datetime || new Date().toISOString(),
+      log_type: entry.type || null,
+      contact: entry.contact || null,
+      person: entry.person || null,
+      notes: entry.notes || null,
+      outcome: entry.outcome || 'resolved',
+      ref_num: entry.ref || null,
+      followup_date: entry.followup || null
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteConciergeLog(id) {
+    await _supa.from('concierge_log').delete().eq('id', id);
   },
 
   // ── MIGRATION ────────────────────────────────────────────────

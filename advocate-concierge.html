@@ -355,19 +355,44 @@ function fmtDate(d){if(!d)return '';try{return new Date(d+'T12:00:00').toLocaleD
 function fmtDT(d){if(!d)return '';try{return new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});}catch{return d}}
 function isOverdue(due){return due && new Date(due+'T23:59:59') < new Date()}
 
-// ── STORAGE ──
-const TASK_KEY='advocate_concierge_tasks';
-const LOG_KEY='advocate_concierge_log';
-function getTasks(){return JSON.parse(localStorage.getItem(TASK_KEY)||'[]')}
-function saveTasks(t){localStorage.setItem(TASK_KEY,JSON.stringify(t));updateBadge()}
-function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
-function saveLogs(l){localStorage.setItem(LOG_KEY,JSON.stringify(l))}
+// ── STATE ──
+let tasks=[];
+let logs=[];
+
+function fromDBTask(row){
+  return {
+    id: row.id,
+    title: row.title||'',
+    contact: row.contact||'',
+    cat: row.category||'other',
+    priority: row.priority||'normal',
+    due: row.due_date||'',
+    notes: row.notes||'',
+    done: !!row.done,
+    doneAt: row.done_at||null,
+    createdAt: row.created_at
+  };
+}
+
+function fromDBLog(row){
+  return {
+    id: row.id,
+    datetime: row.log_datetime||row.created_at,
+    type: row.log_type||'',
+    contact: row.contact||'',
+    person: row.person||'',
+    notes: row.notes||'',
+    outcome: row.outcome||'resolved',
+    ref: row.ref_num||'',
+    followup: row.followup_date||''
+  };
+}
 
 function updateBadge(){
-  const tasks=getTasks().filter(t=>!t.done);
-  const overdue=tasks.filter(t=>isOverdue(t.due)).length;
+  const open=tasks.filter(t=>!t.done);
+  const overdue=open.filter(t=>isOverdue(t.due)).length;
   const badge=document.getElementById('tasks_badge');
-  badge.textContent=tasks.length;
+  badge.textContent=open.length;
   badge.style.background=overdue>0?'var(--red)':'var(--sage-deep)';
 }
 
@@ -384,22 +409,22 @@ function switchTab(tab,btn){
 // ── TASKS ──
 let taskFilter='all';
 
-function addTask(){
+async function addTask(){
   const title=document.getElementById('task_title').value.trim();
   if(!title){showToast('Please enter a task description');return;}
-  const tasks=getTasks();
-  tasks.unshift({
-    id:Date.now(),
+  const taskData={
     title,
     contact:document.getElementById('task_contact').value.trim(),
     cat:document.getElementById('task_cat').value,
     priority:document.getElementById('task_priority').value,
-    due:document.getElementById('task_due').value,
-    notes:document.getElementById('task_notes').value.trim(),
-    done:false,
-    createdAt:new Date().toISOString()
-  });
-  saveTasks(tasks);
+    due:document.getElementById('task_due').value||null,
+    notes:document.getElementById('task_notes').value.trim()
+  };
+  try{
+    const newRow=await DB.saveConciergeTask(taskData);
+    tasks.unshift(fromDBTask(newRow));
+    updateBadge();
+  }catch(e){showToast('⚠️ Could not save task');console.error(e);return;}
   document.getElementById('task_title').value='';
   document.getElementById('task_contact').value='';
   document.getElementById('task_notes').value='';
@@ -408,14 +433,24 @@ function addTask(){
   showToast('Task added ✓');
 }
 
-function completeTask(id){
-  const tasks=getTasks().map(t=>t.id===id?{...t,done:!t.done,doneAt:!t.done?new Date().toISOString():null}:t);
-  saveTasks(tasks);renderTasks();
+async function completeTask(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
+  const newDone=!t.done;
+  const newDoneAt=newDone?new Date().toISOString():null;
+  try{
+    await DB.saveConciergeTask({id,title:t.title,contact:t.contact,cat:t.cat,priority:t.priority,due:t.due,notes:t.notes,done:newDone,doneAt:newDoneAt});
+    t.done=newDone;t.doneAt=newDoneAt;
+    updateBadge();renderTasks();
+  }catch(e){showToast('⚠️ Could not update task');}
 }
 
-function deleteTask(id){
-  saveTasks(getTasks().filter(t=>t.id!==id));
-  renderTasks();showToast('Removed');
+async function deleteTask(id){
+  try{
+    await DB.deleteConciergeTask(id);
+    tasks=tasks.filter(t=>t.id!==id);
+    updateBadge();renderTasks();showToast('Removed');
+  }catch(e){showToast('⚠️ Could not remove task');}
 }
 
 function filterTasks(filter,btn){
@@ -426,12 +461,12 @@ function filterTasks(filter,btn){
 }
 
 function renderTasks(){
-  let tasks=getTasks();
+  let taskList=tasks.slice();
   const el=document.getElementById('task_list');
   const statsEl=document.getElementById('task_stats');
   const filtersEl=document.getElementById('task_filters');
 
-  if(!tasks.length){
+  if(!taskList.length){
     statsEl.classList.add('hidden');
     filtersEl.classList.add('hidden');
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No tasks yet</div><div class="empty-sub">Add anything outstanding — follow-ups, prescriptions, referrals, callbacks. Never let anything fall through the cracks again.</div></div>`;
@@ -441,10 +476,10 @@ function renderTasks(){
   statsEl.classList.remove('hidden');
   filtersEl.classList.remove('hidden');
 
-  const total=tasks.filter(t=>!t.done).length;
-  const overdue=tasks.filter(t=>!t.done&&isOverdue(t.due)).length;
-  const urgent=tasks.filter(t=>!t.done&&t.priority==='urgent').length;
-  const done=tasks.filter(t=>t.done).length;
+  const total=taskList.filter(t=>!t.done).length;
+  const overdue=taskList.filter(t=>!t.done&&isOverdue(t.due)).length;
+  const urgent=taskList.filter(t=>!t.done&&t.priority==='urgent').length;
+  const done=taskList.filter(t=>t.done).length;
   document.getElementById('stat_row').innerHTML=`
     <div class="stat-box"><div class="stat-val">${total}</div><div class="stat-label">Open</div></div>
     <div class="stat-box" style="${overdue?'border-color:var(--red)':''}"><div class="stat-val" style="${overdue?'color:var(--red)':''}">${overdue}</div><div class="stat-label">Overdue</div></div>
@@ -452,18 +487,19 @@ function renderTasks(){
     <div class="stat-box"><div class="stat-val">${done}</div><div class="stat-label">Done</div></div>`;
 
   // Filter
-  if(taskFilter==='all') tasks=tasks.filter(t=>!t.done);
-  else if(taskFilter==='done') tasks=tasks.filter(t=>t.done);
-  else if(taskFilter==='urgent') tasks=tasks.filter(t=>!t.done&&t.priority==='urgent');
-  else tasks=tasks.filter(t=>!t.done&&t.cat===taskFilter);
+  let filtered;
+  if(taskFilter==='all') filtered=taskList.filter(t=>!t.done);
+  else if(taskFilter==='done') filtered=taskList.filter(t=>t.done);
+  else if(taskFilter==='urgent') filtered=taskList.filter(t=>!t.done&&t.priority==='urgent');
+  else filtered=taskList.filter(t=>!t.done&&t.cat===taskFilter);
 
-  if(!tasks.length){el.innerHTML=`<div class="empty-state" style="padding:24px"><div class="empty-sub">No tasks in this category.</div></div>`;return;}
+  if(!filtered.length){el.innerHTML=`<div class="empty-state" style="padding:24px"><div class="empty-sub">No tasks in this category.</div></div>`;return;}
 
   const catIcons={doctor:'🏥',pharmacy:'💊',insurance:'📋',school:'🏫',lab:'🧪',referral:'📨',prescription:'💊',other:'📌'};
   const priorityClass={urgent:'p-urgent',high:'p-high',normal:'p-normal'};
   const priorityLabel={urgent:'Urgent',high:'High',normal:'Normal'};
 
-  el.innerHTML=tasks.map(t=>`
+  el.innerHTML=filtered.map(t=>`
     <div class="task-card ${!t.done&&isOverdue(t.due)?'overdue':''} ${t.done?'done':''}">
       <div class="task-header">
         <div style="flex:1">
@@ -477,10 +513,10 @@ function renderTasks(){
         ${t.notes?`<span>💬 ${escH(t.notes)}</span>`:''}
       </div>
       <div class="task-actions">
-        <button class="btn-sm" style="background:${t.done?'var(--border)':'var(--sage-pale)'};border:1.5px solid ${t.done?'var(--border)':'var(--sage-light)'};color:${t.done?'var(--ink-muted)':'var(--sage-deep)'}" onclick="completeTask(${t.id})">${t.done?'↩ Reopen':'✓ Mark Done'}</button>
+        <button class="btn-sm" style="background:${t.done?'var(--border)':'var(--sage-pale)'};border:1.5px solid ${t.done?'var(--border)':'var(--sage-light)'};color:${t.done?'var(--ink-muted)':'var(--sage-deep)'}" onclick="completeTask('${t.id}')">${t.done?'↩ Reopen':'✓ Mark Done'}</button>
         <button class="btn-sm" style="background:var(--blue-pale);border:1.5px solid var(--blue-border);color:var(--blue)" onclick="quickDraft(${JSON.stringify(t.title).replace(/'/g,"&#39;")},${JSON.stringify(t.contact||'').replace(/'/g,"&#39;")})">✍️ Draft Follow-up</button>
         <button class="btn-sm" style="background:var(--violet-pale);border:1.5px solid var(--violet-border);color:var(--violet)" onclick="quickScript(${JSON.stringify(t.title).replace(/'/g,"&#39;")},${JSON.stringify(t.contact||'').replace(/'/g,"&#39;")})">📞 Phone Script</button>
-        <button class="btn-danger" onclick="deleteTask(${t.id})">✕</button>
+        <button class="btn-danger" onclick="deleteTask('${t.id}')">✕</button>
       </div>
     </div>`).join('');
 }
@@ -633,13 +669,11 @@ async function generateScript(){
 }
 
 // ── COMMUNICATION LOG ──
-function addLogEntry(){
+async function addLogEntry(){
   const contact=document.getElementById('log_contact').value.trim();
   const notes=document.getElementById('log_notes').value.trim();
   if(!contact||!notes){showToast('Please fill in who you contacted and what was discussed');return;}
-  const logs=getLogs();
-  logs.unshift({
-    id:Date.now(),
+  const entry={
     datetime:document.getElementById('log_datetime').value||new Date().toISOString(),
     type:document.getElementById('log_type').value,
     contact,
@@ -647,9 +681,12 @@ function addLogEntry(){
     notes,
     outcome:document.getElementById('log_outcome').value,
     ref:document.getElementById('log_ref').value.trim(),
-    followup:document.getElementById('log_followup').value
-  });
-  saveLogs(logs);
+    followup:document.getElementById('log_followup').value||null
+  };
+  try{
+    const newRow=await DB.saveConciergeLog(entry);
+    logs.unshift(fromDBLog(newRow));
+  }catch(e){showToast('⚠️ Could not save log entry');console.error(e);return;}
   ['log_contact','log_person','log_notes','log_ref','log_followup'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('log_outcome').value='resolved';
   renderLog();
@@ -657,7 +694,6 @@ function addLogEntry(){
 }
 
 function renderLog(){
-  const logs=getLogs();
   const el=document.getElementById('log_list');
   if(!logs.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No communications logged yet</div><div class="empty-sub">Start logging every call and email. This becomes your evidence trail and ensures nothing gets forgotten.</div></div>`;
@@ -678,13 +714,16 @@ function renderLog(){
         ${l.followup?`<div style="font-size:11px;color:var(--amber);margin-top:3px;font-weight:500">📅 Follow up by ${fmtDate(l.followup)}</div>`:''}
         <span class="log-outcome ${outcomeClass[l.outcome]||'out-pending'}">${outcomeLabel[l.outcome]||l.outcome}</span>
       </div>
-      <button class="btn-danger" onclick="deleteLog(${l.id})" style="flex-shrink:0;align-self:flex-start">✕</button>
+      <button class="btn-danger" onclick="deleteLog('${l.id}')" style="flex-shrink:0;align-self:flex-start">✕</button>
     </div>`).join('')}</div>`;
 }
 
-function deleteLog(id){
-  saveLogs(getLogs().filter(l=>l.id!==id));
-  renderLog();showToast('Removed');
+async function deleteLog(id){
+  try{
+    await DB.deleteConciergeLog(id);
+    logs=logs.filter(l=>l.id!==id);
+    renderLog();showToast('Removed');
+  }catch(e){showToast('⚠️ Could not remove log entry');}
 }
 
 // ── ESCALATION ──
@@ -734,42 +773,52 @@ async function generateEscalation(){
 }
 
 // ── INIT ──
-const now=new Date();
-document.getElementById('log_datetime').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
-document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).toISOString().split('T')[0];
+document.addEventListener('DOMContentLoaded', async()=>{
+  const now=new Date();
+  document.getElementById('log_datetime').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).toISOString().split('T')[0];
 
-// Load care team contacts into dropdowns
-function loadCareTeamContacts(){
-  // Auto-populate patient name in draft fields
-async function runPrefillConcierge() {
-  try {
-    const profile = await DB.getProfile();
-    if (profile && profile.name) {
-      const el = document.getElementById('draft_patient');
-      if (el && !el.value) el.value = profile.name;
+  // Load tasks and logs from Supabase
+  try{
+    const {tasks:dbTasks,logs:dbLogs}=await DB.getConciergeTasksAndLogs();
+    tasks=dbTasks.map(fromDBTask);
+    logs=dbLogs.map(fromDBLog);
+  }catch(e){
+    showToast('⚠️ Could not load tasks — check connection');
+  }
+
+  renderTasks();
+  renderLog();
+  updateBadge();
+  await loadCareTeamContacts();
+});
+
+// Load care team contacts into dropdowns and prefill patient name
+async function loadCareTeamContacts(){
+  try{
+    const profile=await DB.getProfile();
+    if(profile&&profile.name){
+      const el=document.getElementById('draft_patient');
+      if(el&&!el.value) el.value=profile.name;
+      const el2=document.getElementById('script_patient');
+      if(el2&&!el2.value) el2.value=profile.name;
+      const el3=document.getElementById('esc_patient');
+      if(el3&&!el3.value) el3.value=profile.name;
     }
-  } catch(e) {}
-} // draft_patient_prefill
-setTimeout(runPrefillConcierge, 800);
-const contacts=(await DB.getCareTeam());
-  if(!contacts.length) return;
-  const options=contacts.map(c=>`<option value="${c.name}${c.specialty?' ('+c.specialty+')':''}">${c.name}${c.specialty?' — '+c.specialty:''}${c.practice?' · '+c.practice:''}</option>`).join('');
-  const groupedOption=`<optgroup label="From My Care Team">${options}</optgroup>`;
+  }catch(e){}
 
-  // Add to task contact field as a datalist
-  let dl=document.getElementById('contact_datalist');
-  if(!dl){dl=document.createElement('datalist');dl.id='contact_datalist';document.body.appendChild(dl);}
-  dl.innerHTML=contacts.map(c=>`<option value="${c.name}${c.specialty?' ('+c.specialty+')':''}">`).join('');
-  document.getElementById('task_contact').setAttribute('list','contact_datalist');
-  document.getElementById('draft_recipient').setAttribute('list','contact_datalist');
-  document.getElementById('script_recipient').setAttribute('list','contact_datalist');
-  document.getElementById('log_contact').setAttribute('list','contact_datalist');
+  try{
+    const careTeam=await DB.getCareTeam();
+    if(!careTeam.length) return;
+    let dl=document.getElementById('contact_datalist');
+    if(!dl){dl=document.createElement('datalist');dl.id='contact_datalist';document.body.appendChild(dl);}
+    dl.innerHTML=careTeam.map(c=>`<option value="${escH(c.name)}${c.role?' ('+escH(c.role)+')':''}">`).join('');
+    ['task_contact','draft_recipient','script_recipient','log_contact'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.setAttribute('list','contact_datalist');
+    });
+  }catch(e){}
 }
-
-loadCareTeamContacts();
-renderTasks();
-renderLog();
-updateBadge();
 </script>
 </body>
 </html>
