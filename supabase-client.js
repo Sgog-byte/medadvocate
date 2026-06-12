@@ -444,17 +444,26 @@ const DB = {
     if (!pid) return;
     // Embed _pid inside the blob so cross-patient contamination can be auto-detected on load
     const blob = JSON.stringify({ ...report, _pid: pid });
-    const { data: existing } = await _supa
-      .from('lab_results').select('id')
-      .eq('patient_id', pid).eq('test_name', '__report__').eq('lab_date', report.date)
-      .maybeSingle();
+    // Use null for empty/missing dates — empty string '' is invalid for Postgres date column
+    const dateVal = report.date || null;
+    // Only check for an existing row if we have a date to match on
+    let existing = null;
+    if (dateVal) {
+      const { data } = await _supa
+        .from('lab_results').select('id')
+        .eq('patient_id', pid).eq('test_name', '__report__').eq('lab_date', dateVal)
+        .maybeSingle();
+      existing = data;
+    }
     if (existing?.id) {
-      await _supa.from('lab_results').update({ notes: blob }).eq('id', existing.id);
+      const { error } = await _supa.from('lab_results').update({ notes: blob }).eq('id', existing.id);
+      if (error) throw error;
     } else {
-      await _supa.from('lab_results').insert({
+      const { error } = await _supa.from('lab_results').insert({
         patient_id: pid, test_name: '__report__',
-        lab_date: report.date, status: 'report', notes: blob
+        lab_date: dateVal, notes: blob
       });
+      if (error) throw error;
     }
   },
 
