@@ -242,19 +242,28 @@ create table if not exists appointment_recordings (
 create index if not exists appt_recordings_patient_idx on appointment_recordings(patient_id, recorded_at desc);
 
 -- ============================================================
--- SAVED SCRIPTS (Visit prep scripts)
+-- SAVED SCRIPTS (Visit prep scripts + free-form saved content)
 -- ============================================================
 create table if not exists saved_scripts (
-  id           uuid primary key default uuid_generate_v4(),
-  patient_id   uuid not null references patients(id) on delete cascade,
-  specialist   text not null,
-  opener_line  text,
-  priorities   jsonb default '[]',
-  questions    jsonb default '[]',
-  timing_tip   text,
+  id             uuid primary key default uuid_generate_v4(),
+  patient_id     uuid not null references patients(id) on delete cascade,
+  title          text,              -- free-form script title
+  type           text,              -- visit, credibility, iep, lab, custom
+  content        text,              -- full free-form script text
+  specialist     text,              -- structured scripts: specialist name (was NOT NULL, now nullable)
+  opener_line    text,
+  priorities     jsonb default '[]',
+  questions      jsonb default '[]',
+  timing_tip     text,
   emotional_note text,
-  created_at   timestamptz default now()
+  created_at     timestamptz default now()
 );
+
+-- Migration for existing installations (run in Supabase SQL editor):
+-- alter table saved_scripts add column if not exists title text;
+-- alter table saved_scripts add column if not exists type text;
+-- alter table saved_scripts add column if not exists content text;
+-- alter table saved_scripts alter column specialist drop not null;
 
 create index if not exists saved_scripts_patient_idx on saved_scripts(patient_id, created_at desc);
 

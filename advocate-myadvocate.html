@@ -1017,10 +1017,11 @@ function copyScript(idx) {
     .then(() => showToast('Copied to clipboard ✓'));
 }
 
-function deleteScript(idx) {
+async function deleteScript(idx) {
   if (!confirm(`Delete "${scripts[idx].title}"? This can't be undone.`)) return;
+  const id = scripts[idx].id;
+  if (id) { try { await DB.deleteScript(id); } catch(e) { showToast('⚠️ Could not delete'); return; } }
   scripts.splice(idx, 1);
-  localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
   renderScripts();
   showToast('Deleted');
 }
@@ -1178,10 +1179,12 @@ function emailContact(i) {
 
 // ── GLOBAL SAVE (called from other tools via postMessage or direct) ──
 // Other tools can call: window.opener.advocateSave(type, title, content)
-window.advocateSave = function(type, title, content) {
-  const script = { type, title, content, savedAt: new Date().toISOString() };
+window.advocateSave = async function(type, title, content) {
+  let id = null;
+  try { const row = await DB.saveRawScript(type, title, content); if (row) id = row.id; }
+  catch(e) { console.warn('Script save failed:', e.message); }
+  const script = { id, type, title, content, savedAt: new Date().toISOString() };
   scripts.push(script);
-  localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
   renderScripts();
   showToast('Saved to My Advocate ✓');
 };
@@ -1308,8 +1311,6 @@ TIMING TIP: Lead with the ANA result — it's the most concrete item and will fo
     savedAt: new Date().toISOString()
   });
 
-  localStorage.setItem('advocate_scripts', JSON.stringify(scripts));
-  /* saved via DB.saveContact() */;
   localStorage.setItem('advocate_demo_loaded', '1');
 }
 

@@ -258,15 +258,7 @@ const SOURCES=[
     return false;
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>{
-    // 1. Supabase
     try{if((await DB.getSymptomEntries()).length>0)return true;}catch{}
-    // 2. Namespaced localStorage key
-    try{if(lsRead('advocate_symptoms').length>0)return true;}catch{}
-    // 3. Flat localStorage key
-    try{if(JSON.parse(localStorage.getItem('advocate_symptoms')||'[]').length>0)return true;}catch{}
-    // 4. Journal/entries key (namespaced and flat)
-    try{if(lsRead('advocate_entries').length>0)return true;}catch{}
-    try{if(JSON.parse(localStorage.getItem('advocate_entries')||'[]').length>0)return true;}catch{}
     return false;
   }},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
@@ -281,12 +273,7 @@ const SOURCES=[
     return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>{
-    // 1. Supabase — check DB first
     try{const db=await DB.getDiagnosticTests();if(db.length>0)return true;}catch{}
-    // 2. Namespaced localStorage key
-    try{if(lsRead('advocate_testing').length>0)return true;}catch{}
-    // 3. Flat localStorage key
-    try{if(JSON.parse(localStorage.getItem('advocate_testing')||'[]').length>0)return true;}catch{}
     return false;
   }},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>{
@@ -348,13 +335,10 @@ async function buildData(){
   let labReports=[];
   try{labReports=await DB.getLabReports();}catch{}
   const timeline=(await DB.getTimelineEvents());
-  const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
+  const symConfigRows=await DB.getSymptomConfig().catch(()=>[]);
   const symEntries=(await DB.getSymptomEntries());
-  // Tests: localStorage first (namespaced, then flat), then Supabase as fallback.
-  // Supabase is now included so tests show even if testing page not visited on this device.
-  let tests=lsRead('advocate_testing');
-  if(!tests.length){try{tests=JSON.parse(localStorage.getItem('advocate_testing')||'[]');}catch{}}
-  if(!tests.length){try{tests=await DB.getDiagnosticTests();}catch{}}
+  let tests=[];
+  try{tests=await DB.getDiagnosticTests();}catch{}
   const parts=[];
 
   if(sel.has('profile')&&p.name) parts.push(`PATIENT: ${p.name}${p.age?', age '+p.age:''}`);
@@ -380,7 +364,7 @@ async function buildData(){
     parts.push(`MEDICAL EVENTS — ALL (most recent first; populate the events[] array with every ER visit, seizure, hospitalization, and significant event listed here):\n${allEvts.map(e=>`- ${fmtD(e.date)||'(no date)'}: [${EVT_R[e.cat]||e.cat}] ${e.title||''}${e.description?' — '+e.description.substring(0,80):''}`).join('\n')}`);
   }
   if(sel.has('symptoms')&&symEntries.length){
-    const tracked=symState.trackedSymptoms||[];
+    const tracked=symConfigRows.map(r=>({id:r.symptom_id,label:r.label,icon:r.icon}));
     const DOD={3:'Sometimes distracts',4:'Distracts, can function',5:'Interrupts activities',6:'Hard to ignore',7:'Prevents daily activities',8:'Awful',9:"Can't bear it",10:'Worst possible'};
     const symLines=[];
 

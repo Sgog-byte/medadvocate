@@ -755,7 +755,29 @@ const DB = {
       .select('*')
       .eq('patient_id', pid)
       .order('created_at', { ascending: false });
-    return data || [];
+    return (data || []).map(row => ({
+      id: row.id,
+      type: row.type || 'visit',
+      title: row.title || row.specialist || 'Saved Script',
+      content: row.content || '',
+      savedAt: row.created_at,
+      specialist: row.specialist,
+      opener_line: row.opener_line,
+      priorities: row.priorities,
+      questions: row.questions,
+      timing_tip: row.timing_tip,
+      emotional_note: row.emotional_note
+    }));
+  },
+
+  async saveRawScript(type, title, content) {
+    const pid = await DB.patientId();
+    if (!pid) return null;
+    const { data, error } = await _supa.from('saved_scripts').insert({
+      patient_id: pid, type: type || 'custom', title: title || 'Script', content: content || ''
+    }).select().single();
+    if (error) throw error;
+    return data;
   },
 
   async saveScript(script) {
