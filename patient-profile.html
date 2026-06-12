@@ -364,22 +364,21 @@ async function selectPatient(pid) {
   document.getElementById('default_badge_wrap').innerHTML =
     pat.is_default ? '<div class="default-badge">Default patient</div>' : '';
 
-  // Extended fields from localStorage
-  const ext = getExt(pid);
-  document.getElementById('f_ins_provider').value = ext.insurance?.provider || '';
-  document.getElementById('f_ins_member').value = ext.insurance?.member_id || '';
-  document.getElementById('f_ins_group').value = ext.insurance?.group_id || '';
-  document.getElementById('f_ins_phone').value = ext.insurance?.phone || '';
-  document.getElementById('f_ins_portal').value = ext.insurance?.portal || '';
-  document.getElementById('f_ec_name').value = ext.emergency?.name || '';
-  document.getElementById('f_ec_rel').value = ext.emergency?.relationship || '';
-  document.getElementById('f_ec_phone').value = ext.emergency?.phone || '';
+  // Extended fields from DB (packed as JSON in patients columns)
+  let ins = {}; try { ins = JSON.parse(pat.insurance_id || '{}'); } catch(e) { ins = {}; }
+  let ec = {}; try { ec = JSON.parse(pat.emergency_contact || '{}'); } catch(e) { ec = {}; }
+  document.getElementById('f_ins_provider').value = ins.provider || '';
+  document.getElementById('f_ins_member').value = ins.member_id || '';
+  document.getElementById('f_ins_group').value = ins.group_id || '';
+  document.getElementById('f_ins_phone').value = ins.phone || '';
+  document.getElementById('f_ins_portal').value = ins.portal || '';
+  document.getElementById('f_ec_name').value = ec.name || '';
+  document.getElementById('f_ec_rel').value = ec.relationship || '';
+  document.getElementById('f_ec_phone').value = ec.phone || '';
 
   // Last updated
-  const updKey = `advocate_profile_updated_${pid}`;
-  const upd = localStorage.getItem(updKey);
-  document.getElementById('last_updated').textContent = upd
-    ? 'Last updated: ' + new Date(upd).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  document.getElementById('last_updated').textContent = pat.updated_at
+    ? 'Last updated: ' + new Date(pat.updated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
     : 'Last updated: never';
 
   // Load medications
@@ -484,12 +483,28 @@ async function saveProfile() {
       .join(', ');
     const notes = document.getElementById('f_notes').value.trim();
 
-    // Save core fields to Supabase patients table
+    // Pack insurance + emergency contact as JSON for storage in patients columns
+    const insJson = JSON.stringify({
+      provider: document.getElementById('f_ins_provider').value.trim(),
+      member_id: document.getElementById('f_ins_member').value.trim(),
+      group_id: document.getElementById('f_ins_group').value.trim(),
+      phone: document.getElementById('f_ins_phone').value.trim(),
+      portal: document.getElementById('f_ins_portal').value.trim()
+    });
+    const ecJson = JSON.stringify({
+      name: document.getElementById('f_ec_name').value.trim(),
+      relationship: document.getElementById('f_ec_rel').value.trim(),
+      phone: document.getElementById('f_ec_phone').value.trim()
+    });
+
+    // Save all fields to Supabase patients table
     const { error } = await _supa.from('patients').update({
       name: name || null,
       age: age ? (isNaN(Number(age)) ? age : Number(age)) : null,
       diagnoses: diagnoses || null,
-      notes: notes || null
+      notes: notes || null,
+      insurance_id: insJson,
+      emergency_contact: ecJson
     }).eq('id', selectedPid);
 
     if (error) throw error;
@@ -497,27 +512,12 @@ async function saveProfile() {
     // Sync active meds string into patients.meds
     await syncActiveMedsToProfile(selectedPid);
 
-    // Save insurance + emergency to patient-namespaced localStorage
-    saveExt(selectedPid, {
-      insurance: {
-        provider: document.getElementById('f_ins_provider').value.trim(),
-        member_id: document.getElementById('f_ins_member').value.trim(),
-        group_id: document.getElementById('f_ins_group').value.trim(),
-        phone: document.getElementById('f_ins_phone').value.trim(),
-        portal: document.getElementById('f_ins_portal').value.trim()
-      },
-      emergency: {
-        name: document.getElementById('f_ec_name').value.trim(),
-        relationship: document.getElementById('f_ec_rel').value.trim(),
-        phone: document.getElementById('f_ec_phone').value.trim()
-      }
-    });
-
-    // Timestamp
-    const now = new Date().toISOString();
-    localStorage.setItem(`advocate_profile_updated_${selectedPid}`, now);
-    document.getElementById('last_updated').textContent =
-      'Last updated: ' + new Date(now).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    // Timestamp from DB (updated_at is set by trigger) — read it back
+    const { data: updPat } = await _supa.from('patients').select('updated_at').eq('id', selectedPid).single();
+    if (updPat?.updated_at) {
+      document.getElementById('last_updated').textContent =
+        'Last updated: ' + new Date(updPat.updated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
 
     // Update local cache
     const idx = allPatients.findIndex(p => p.id === selectedPid);
@@ -539,16 +539,6 @@ async function saveProfile() {
     btn.disabled = false;
     btn.textContent = '💾 Save Profile';
   }
-}
-
-// ── EXTENDED FIELDS (localStorage, patient-namespaced) ─────────
-function getExt(pid) {
-  try { return JSON.parse(localStorage.getItem(`advocate_profile_ext_${pid}`) || '{}'); }
-  catch { return {}; }
-}
-
-function saveExt(pid, data) {
-  localStorage.setItem(`advocate_profile_ext_${pid}`, JSON.stringify(data));
 }
 
 // ── UTILS ──────────────────────────────────────────────────────

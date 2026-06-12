@@ -428,7 +428,7 @@ Rules: date format YYYY-MM-DD always; use approximate dates (2021-06-01 for June
     let added = 0;
     for (const ev of result.events) {
       if (ev.date && ev.title) {
-        await persistEvent({ id: Date.now() + Math.random(), date: ev.date, cat: ev.cat || 'other', title: ev.title, doctor: ev.doctor || '', notes: ev.notes || '' });
+        await persistEvent({ date: ev.date, cat: ev.cat || 'other', title: ev.title, doctor: ev.doctor || '', notes: ev.notes || '' });
         added++;
       }
     }
@@ -446,7 +446,7 @@ Rules: date format YYYY-MM-DD always; use approximate dates (2021-06-01 for June
     extractFileData = null;
     document.getElementById('extract_file_name').textContent = '';
 
-    await renderTimeline();
+    renderTimeline();
     document.getElementById('timeline_wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   } catch (e) {
@@ -507,10 +507,9 @@ function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return 
 function getYear(d){return d?d.substring(0,4):'Unknown'}
 
 // ── STORAGE ──
-const TL_KEY='advocate_timeline';
-let _useDB=false;
+let events = [];
 
-function eventToSupabase(ev){
+function toDBEvent(ev){
   let desc=null;
   const hasDoctor=ev.doctor&&ev.doctor.trim();
   const hasNotes=ev.notes&&ev.notes.trim();
@@ -518,7 +517,7 @@ function eventToSupabase(ev){
   return{event_date:ev.date||null,event_year:ev.date?ev.date.substring(0,4):null,title:ev.title,description:desc,category:ev.cat||'other'};
 }
 
-function supabaseToEvent(row){
+function fromDBEvent(row){
   let doctor='',notes='';
   try{
     const parsed=JSON.parse(row.description||'null');
@@ -528,40 +527,22 @@ function supabaseToEvent(row){
   return{id:row.id,date:row.event_date,cat:row.category||'other',title:row.title,doctor,notes};
 }
 
-async function initStorage(){
-  try{
-    const user=await Auth.user();
-    _useDB=!!user;
-    if(_useDB&&!localStorage.getItem('tl_migrated_v2')){
-      const local=JSON.parse(localStorage.getItem(TL_KEY)||'[]');
-      for(const ev of local){try{await DB.saveTimelineEvent(eventToSupabase(ev));}catch(e){}}
-      localStorage.setItem('tl_migrated_v2','1');
-    }
-  }catch(e){_useDB=false;}
-}
-
-async function getEvents(){
-  if(_useDB){
-    try{const rows=await DB.getTimelineEvents();return rows.map(supabaseToEvent).sort((a,b)=>new Date(a.date)-new Date(b.date));}
-    catch(e){console.error('DB read failed:',e);}
-  }
-  return JSON.parse(localStorage.getItem(TL_KEY)||'[]');
+function getEvents(){
+  return [...events].sort((a,b)=>new Date(a.date)-new Date(b.date));
 }
 
 async function persistEvent(ev){
-  if(_useDB){
-    try{const row=await DB.saveTimelineEvent(eventToSupabase(ev));return row?{...ev,id:row.id}:ev;}
-    catch(e){console.error('DB save failed:',e);}
-  }
-  const evs=JSON.parse(localStorage.getItem(TL_KEY)||'[]');
-  evs.push(ev);evs.sort((a,b)=>new Date(a.date)-new Date(b.date));
-  localStorage.setItem(TL_KEY,JSON.stringify(evs));return ev;
+  const row=await DB.saveTimelineEvent(toDBEvent(ev));
+  if(!row) throw new Error('No row returned from saveTimelineEvent');
+  const saved=fromDBEvent(row);
+  events.push(saved);
+  events.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  return saved;
 }
 
 async function removeEvent(id){
-  if(_useDB){try{await DB.deleteTimelineEvent(id);return;}catch(e){console.error('DB delete failed:',e);}}
-  const evs=JSON.parse(localStorage.getItem(TL_KEY)||'[]').filter(e=>e.id!==id);
-  localStorage.setItem(TL_KEY,JSON.stringify(evs));
+  await DB.deleteTimelineEvent(id);
+  events=events.filter(e=>e.id!==id);
 }
 
 // ── CATEGORY CONFIG ──
@@ -583,7 +564,6 @@ async function addEvent(){
   const date=document.getElementById('ev_date').value;
   if(!title||!date){showToast('Please enter a date and event description');return;}
   await persistEvent({
-    id:Date.now(),
     date,
     cat:document.getElementById('ev_cat').value,
     title,
@@ -613,8 +593,8 @@ function filterTimeline(cat,btn){
 }
 
 // ── RENDER ──
-async function renderTimeline(){
-  const allEvents=await getEvents();
+function renderTimeline(){
+  const allEvents=getEvents();
   const events=activeFilter==='all'?allEvents:allEvents.filter(e=>e.cat===activeFilter);
   const wrap=document.getElementById('timeline_wrap');
   const controls=document.getElementById('controls');
@@ -665,7 +645,7 @@ async function renderTimeline(){
 
 // ── AI SUMMARY ──
 async function generateSummary(){
-  const events=await getEvents();
+  const events=getEvents();
   if(!events.length){showToast('Add events first');return;}
   const summaryEl=document.getElementById('ai_summary');
   summaryEl.classList.remove('hidden');
@@ -702,7 +682,11 @@ async function generateSummary(){
 
 // ── INIT ──
 document.getElementById('ev_date').value=new Date().toISOString().split('T')[0];
-(async()=>{await initStorage();renderImportLog();await renderTimeline();})();
+(async()=>{
+  try{const rows=await DB.getTimelineEvents();events=rows.map(fromDBEvent);}catch(e){showToast('⚠️ Could not load timeline');}
+  renderImportLog();
+  renderTimeline();
+})();
 </script>
 
 <script>

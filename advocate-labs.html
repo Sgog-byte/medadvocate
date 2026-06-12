@@ -1907,10 +1907,6 @@ function printPage() {
 // ─────────────────────────────────
 // LAB → VISIT SCRIPT
 // ─────────────────────────────────
-// Returns the patient-namespaced key for script labs (mirrors advocate-scripts.html)
-function scriptLabsKey() {
-  return currentPatientId ? `advocate_script_labs_${currentPatientId}` : 'advocate_script_labs';
-}
 
 async function addInsightToScript(entryIdx, insightIdx) {
   const entry = allLabDates[entryIdx];
@@ -1921,16 +1917,10 @@ async function addInsightToScript(entryIdx, insightIdx) {
   const dateLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const text = `[Lab ${dateLabel}] ${ins.text}`;
 
-  // Store as an array so multiple insights can be added — namespaced by patient
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-  if (!saved.includes(text)) saved.push(text);
-  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
-
   try {
     const pid = await DB.patientId();
     if (pid) { await DB.saveInsight(pid, `Lab ${dateLabel}`, text); }
-  } catch(e) { console.warn('Insight Supabase save failed:', e.message); }
+  } catch(e) { console.warn('Insight save failed:', e.message); }
 
   // Visual feedback on the button
   const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
@@ -1943,15 +1933,11 @@ async function addTrendInsightToScript(i) {
   const rawText = texts[i];
   if (!rawText) return;
   const text = `[Lab trend] ${rawText}`;
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-  if (!saved.includes(text)) saved.push(text);
-  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
 
   try {
     const pid = await DB.patientId();
     if (pid) { await DB.saveInsight(pid, 'Lab trend', text); }
-  } catch(e) { console.warn('Insight Supabase save failed:', e.message); }
+  } catch(e) { console.warn('Insight save failed:', e.message); }
 
   const btn = document.getElementById(`trend-btn-${i}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }

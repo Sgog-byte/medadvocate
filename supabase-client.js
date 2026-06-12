@@ -522,39 +522,20 @@ const DB = {
   // ── DIAGNOSTIC TESTS ────────────────────────────────────────
 
   async getDiagnosticTests() {
-    const normalize = t => ({
-      id: t.id,
-      type: t.type || t.test_type,
-      date: t.date || t.test_date,
-      result: t.result || '',
-      status: t.result || t.status || 'pending',
-      doctor: t.doctor || t.ordering_doctor,
-      facility: t.facility,
-      notes: t.notes,
-      extracted: t.extracted || null,
-      fileName: t.fileName || null,
-      fileData: t.fileData || null,
-    });
     const pid = await DB.patientId();
-    if (pid) {
-      const { data } = await _supa
-        .from('diagnostic_tests')
-        .select('*')
-        .eq('patient_id', pid)
-        .order('test_date', { ascending: false });
-      if (data && data.length) return data.map(normalize);
-    }
-    // Fallback: use patient-namespaced key if pid is known (never read flat shared key)
-    try {
-      const lsKey = pid ? `advocate_testing_${pid}` : 'advocate_testing';
-      const local = JSON.parse(localStorage.getItem(lsKey) || '[]');
-      return local.map(normalize);
-    } catch { return []; }
+    if (!pid) return [];
+    const { data, error } = await _supa
+      .from('diagnostic_tests')
+      .select('*')
+      .eq('patient_id', pid)
+      .order('test_date', { ascending: false });
+    if (error) throw error;
+    return data || [];
   },
 
   async saveDiagnosticTest(test) {
     const pid = await DB.patientId();
-    if (!pid) return;
+    if (!pid) return null;
     const TYPE_LABELS = {
       eeg:'EEG', ekg:'EKG / ECG', echo:'Echocardiogram', mri:'MRI',
       ct:'CT Scan', xray:'X-Ray', tilt:'Tilt Table', holter:'Holter Monitor',
@@ -566,10 +547,9 @@ const DB = {
     const testName = test.name || test.test_name
       || TYPE_LABELS[test.type] || TYPE_LABELS[test.test_type]
       || test.type || 'Unknown Test';
-    // Numeric ids are localStorage timestamps (Date.now()), not Supabase uuids — always insert
     const hasSupabaseId = test.id && typeof test.id === 'string';
     if (hasSupabaseId) {
-      const { error: updateError } = await _supa.from('diagnostic_tests').update({
+      const { data, error } = await _supa.from('diagnostic_tests').update({
         test_name: testName,
         test_type: testType,
         test_date: test.date || test.test_date,
@@ -577,10 +557,11 @@ const DB = {
         ordering_doctor: test.doctor || test.ordering_doctor,
         facility: test.facility, notes: test.notes,
         extracted: test.extracted || null
-      }).eq('id', test.id);
-      if (updateError) throw updateError;
+      }).eq('id', test.id).select().single();
+      if (error) throw error;
+      return data;
     } else {
-      const { error: insertError } = await _supa.from('diagnostic_tests').insert({
+      const { data, error } = await _supa.from('diagnostic_tests').insert({
         patient_id: pid,
         test_name: testName,
         test_type: testType,
@@ -590,8 +571,9 @@ const DB = {
         facility: test.facility || null,
         notes: test.notes || null,
         extracted: test.extracted || null
-      });
-      if (insertError) throw insertError;
+      }).select().single();
+      if (error) throw error;
+      return data;
     }
   },
 
@@ -855,6 +837,12 @@ const DB = {
     return !error;
   },
 
+  async deleteAllInsights() {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    await _supa.from('script_insights').delete().eq('patient_id', pid);
+  },
+
   // ── APPOINTMENT RECORDINGS ───────────────────────────────────
 
   async saveRecording(rec) {
@@ -989,7 +977,7 @@ const DB = {
     // Symptom config
     const symState = get('advocate_symptoms');
     if (symState?.trackedSymptoms?.length) {
-      await DB.setSymptomConfig(symState.trackedSymptoms);
+      await DB.saveSymptomConfig(symState.trackedSymptoms);
     }
 
     // Symptom entries

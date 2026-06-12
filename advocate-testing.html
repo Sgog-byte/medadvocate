@@ -346,21 +346,24 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return d}}
 function fmtY(d){if(!d)return'';try{return new Date(d+'T12:00:00').getFullYear();}catch(e){return d}}
 
-const FLAT_KEY='advocate_testing';
-let _testingPid=null;
-function testingKey(){return _testingPid?`advocate_testing_${_testingPid}`:FLAT_KEY;}
-function getTests(){return JSON.parse(localStorage.getItem(testingKey())||'[]')}
-function saveTests(d) {
-  localStorage.setItem(testingKey(), JSON.stringify(d));
+let tests = [];
+
+function toDBTest(t) {
+  const notesJson = JSON.stringify({ notes: t.notes||'', fileName: t.fileName||null, fileData: t.fileData||null, fileType: t.fileType||null });
+  return { id: t.id, test_type: t.type||null, test_date: t.date||null,
+    result: t.status||'pending', ordering_doctor: t.doctor||null,
+    facility: t.facility||null, notes: notesJson, extracted: t.extracted||null };
 }
 
-async function saveNewTestToCloud(testObj) {
-  if (!_testingPid) return;
-  try {
-    await DB.saveDiagnosticTest(testObj);
-  } catch(e) {
-    console.warn('Cloud save failed:', e.message);
-  }
+function fromDBTest(row) {
+  let extra = {};
+  try { extra = JSON.parse(row.notes||'{}'); } catch(e) { extra = { notes: row.notes||'' }; }
+  return { id: row.id, type: row.test_type||'other', date: row.test_date||'',
+    status: row.result||'pending', doctor: row.ordering_doctor||'',
+    facility: row.facility||'', notes: extra.notes||'',
+    extracted: row.extracted||null, fileName: extra.fileName||null,
+    fileData: extra.fileData||null, fileType: extra.fileType||null,
+    savedAt: row.created_at||'' };
 }
 
 const TYPE_META={
@@ -454,7 +457,6 @@ function clearUpload(){
 function buildTestObj(extracted){
   const storeFile=curFileData&&curFileSize<=MAX_STORE_BYTES;
   return{
-    id:Date.now(),
     type:selectedType||'other',
     date:extracted?.date||document.getElementById('test_date').value||new Date().toISOString().split('T')[0],
     status:document.getElementById('test_status').value,
@@ -464,28 +466,27 @@ function buildTestObj(extracted){
     extracted:extracted||null,
     fileName:curFileName||null,
     fileType:curFileType||null,
-    fileData:storeFile?curFileData:null,
-    savedAt:new Date().toISOString()
+    fileData:storeFile?curFileData:null
   };
 }
 
 async function saveTest(extracted){
   if(!selectedType){toast('Please select a test type first');return;}
-  const tests=getTests();
   const newTest=buildTestObj(extracted);
-  tests.unshift(newTest);
-  saveTests(tests);
-  await saveNewTestToCloud(newTest);
+  try {
+    const row = await DB.saveDiagnosticTest(toDBTest(newTest));
+    if(row) tests.unshift(fromDBTest(row));
+  } catch(e) { toast('⚠️ Could not save test'); console.error(e); return; }
   toast('Test saved ✓');
   clearUpload();
 }
 
 // Override status on a saved test (e.g. when AI returns wrong status for complex PDF)
-function overrideTestStatus(idx,newStatus){
-  const tests=getTests();
-  if(!tests[idx]) return;
-  tests[idx].status=newStatus;
-  saveTests(tests);
+async function overrideTestStatus(id,newStatus){
+  const t=tests.find(x=>x.id===id);
+  if(!t) return;
+  t.status=newStatus;
+  try { await DB.saveDiagnosticTest(toDBTest(t)); } catch(e) { toast('⚠️ Could not save'); return; }
   document.getElementById('test_status').value=newStatus;
   // Update button to confirmation
   const btn=document.querySelector('[onclick^="overrideTestStatus"]');
@@ -571,7 +572,6 @@ async function extractAndSave(){
     }
 
     // Save with extracted data
-    const tests=getTests();
     const testObj=buildTestObj(res);
     // Apply AI-determined status
     if(res.status&&['normal','abnormal','borderline','pending'].includes(res.status)){
@@ -593,9 +593,8 @@ async function extractAndSave(){
     }
 
     document.getElementById('test_status').value=testObj.status;
-    tests.unshift(testObj);
-    saveTests(tests);
-    await saveNewTestToCloud(testObj);
+    const savedRow = await DB.saveDiagnosticTest(toDBTest(testObj));
+    if(savedRow) tests.unshift(fromDBTest(savedRow));
 
     const statusColor=testObj.status==='abnormal'?'var(--red)':testObj.status==='borderline'?'var(--amber)':'var(--green)';
     const statusLabel=testObj.status==='abnormal'?'🔴 Abnormal':testObj.status==='borderline'?'🟡 Borderline':testObj.status==='normal'?'🟢 Normal':'⬜ Pending';
@@ -608,14 +607,14 @@ async function extractAndSave(){
       +(res.redFlags&&res.redFlags.length?'<div style="background:var(--red-pale);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;color:var(--red)"><strong>⚠️ Red flags:</strong> '+res.redFlags.map(f=>esc(f)).join(' · ')+'</div>':'')
       +(res.whatItMeans?'<div style="margin-bottom:8px">'+esc(res.whatItMeans)+'</div>':'')
       +(impressionsText?'<details style="margin-top:6px"><summary style="font-size:11px;color:var(--ink-muted);cursor:pointer">Extracted Impressions section</summary><div style="font-size:11px;color:var(--ink-muted);margin-top:6px;padding:8px;background:var(--white);border-radius:6px;border:1px solid var(--border);white-space:pre-wrap">'+esc(impressionsText)+'</div></details>':'')
-      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(0,\'abnormal\')" style="font-size:13px;padding:8px 16px;background:var(--red-pale);border:1.5px solid var(--red);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;width:100%">⚠️ AI classified this wrong — click to mark as Abnormal</button></div>':'')
+      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(\''+(tests[0]?.id||'')+'\',\'abnormal\')" style="font-size:13px;padding:8px 16px;background:var(--red-pale);border:1.5px solid var(--red);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;width:100%">⚠️ AI classified this wrong — click to mark as Abnormal</button></div>':'')
       +'</div>';
 
     toast('Saved ✓');
 
   }catch(e){
     out.innerHTML='<div style="color:var(--red);font-size:13px">Extraction failed. Saving without analysis.</div>';
-    saveTest();
+    await saveTest();
     console.error(e);
   }finally{btn.disabled=false;}
 }
@@ -634,7 +633,6 @@ function setView(view,btn){
 }
 
 function renderHistory(){
-  const tests=getTests();
   const empty=document.getElementById('history_empty');
   const content=document.getElementById('history_content');
   if(!tests.length){empty.style.display='block';content.style.display='none';return;}
@@ -704,9 +702,9 @@ function renderTestCard(t){
         </div>`:''}
       </div>`:''}
       <div class="test-card-actions" style="padding:0 16px 12px">
-        <button class="tc-btn" onclick="editTest(${t.id})">✏️ Edit</button>
-        ${t.fileData?`<button class="tc-btn" onclick="viewFile(${t.id})">🖨️ View & Print</button>`:''}
-        <button class="tc-btn danger" onclick="deleteTest(${t.id})">🗑 Remove</button>
+        <button class="tc-btn" onclick="editTest('${t.id}')">✏️ Edit</button>
+        ${t.fileData?`<button class="tc-btn" onclick="viewFile('${t.id}')">🖨️ View & Print</button>`:''}
+        <button class="tc-btn danger" onclick="deleteTest('${t.id}')">🗑 Remove</button>
       </div>
     </div>
   </div>`;
@@ -782,7 +780,6 @@ function showComparison(type){
 }
 
 function editTest(id){
-  const tests=getTests();
   const t=tests.find(t=>t.id===id);
   if(!t)return;
   const meta=TYPE_META[t.type]||TYPE_META.other;
@@ -815,29 +812,28 @@ function editTest(id){
       <input type="text" class="fi" id="edit_notes" value="${esc(t.notes||'')}">
     </div>
     <div style="display:flex;gap:9px;margin-top:6px">
-      <button class="btn-p" onclick="saveEdit(${id})">💾 Save changes</button>
+      <button class="btn-p" onclick="saveEdit('${id}')">💾 Save changes</button>
       <button class="btn-o" onclick="document.getElementById('mod_ov').classList.remove('open')">Cancel</button>
     </div>`;
   document.getElementById('mod_ov').classList.add('open');
 }
 
-function saveEdit(id){
-  const tests=getTests();
-  const idx=tests.findIndex(t=>t.id===id);
-  if(idx===-1)return;
-  tests[idx].date=document.getElementById('edit_date').value;
-  tests[idx].status=document.getElementById('edit_status').value;
-  tests[idx].doctor=document.getElementById('edit_doctor').value.trim();
-  tests[idx].facility=document.getElementById('edit_facility').value.trim();
-  tests[idx].notes=document.getElementById('edit_notes').value.trim();
-  saveTests(tests);
+async function saveEdit(id){
+  const t=tests.find(x=>x.id===id);
+  if(!t) return;
+  t.date=document.getElementById('edit_date').value;
+  t.status=document.getElementById('edit_status').value;
+  t.doctor=document.getElementById('edit_doctor').value.trim();
+  t.facility=document.getElementById('edit_facility').value.trim();
+  t.notes=document.getElementById('edit_notes').value.trim();
+  try { await DB.saveDiagnosticTest(toDBTest(t)); } catch(e) { toast('⚠️ Could not save'); return; }
   document.getElementById('mod_ov').classList.remove('open');
   renderHistory();
   toast('Updated ✓');
 }
 
 function viewFile(id){
-  const t=getTests().find(t=>t.id===id);
+  const t=tests.find(t=>t.id===id);
   if(!t||!t.fileData)return;
   const dataUrl='data:'+t.fileType+';base64,'+t.fileData;
   const w=window.open();
@@ -849,16 +845,16 @@ function viewFile(id){
   w.document.title=t.fileName||'Report';
 }
 
-function deleteTest(id){
+async function deleteTest(id){
   if(!confirm('Remove this test?'))return;
-  saveTests(getTests().filter(t=>t.id!==id));
+  try { await DB.deleteDiagnosticTest(id); } catch(e) { toast('⚠️ Could not delete'); return; }
+  tests=tests.filter(t=>t.id!==id);
   renderHistory();
   toast('Removed');
 }
 
 // ── GENERATE APPOINTMENT SUMMARY ──
 async function genSummary(){
-  const tests=getTests();
   if(!tests.length){toast('No tests logged yet');return;}
 
   const appt=document.getElementById('sum_appt').value.trim();
@@ -934,64 +930,13 @@ function copyHistoryText(){
   navigator.clipboard.writeText(el.innerText).then(()=>toast('Copied ✓'));
 }
 
-async function backupTestsToCloud() {
-  const tests = getTests();
-  if (!tests.length) { toast('No tests found in local storage'); return; }
-  const btn = document.getElementById('backup-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '☁️ Backing up…'; }
-  let saved = 0, failed = 0;
-  for (const t of tests) {
-    try { await DB.saveDiagnosticTest(t); saved++; }
-    catch(e) { console.warn('[backup]', e.message); failed++; }
-  }
-  if (btn) { btn.disabled = false; btn.textContent = '☁️ Backup to Cloud'; }
-  if (failed === 0) {
-    toast(`✓ Backed up ${saved} test${saved !== 1 ? 's' : ''} to cloud`);
-  } else {
-    toast(`Backed up ${saved}, ${failed} failed — please try again`);
-  }
-}
-
 // Init
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('test_date').value = new Date().toISOString().split('T')[0];
-
-  // Get patient ID → namespace the storage key
   try {
-    const pid = await DB.patientId();
-    if (pid) {
-      _testingPid = pid;
-      // One-time migration: copy flat key data to namespaced key, then delete flat key
-      if (!localStorage.getItem(testingKey()) && localStorage.getItem(FLAT_KEY)) {
-        localStorage.setItem(testingKey(), localStorage.getItem(FLAT_KEY));
-        localStorage.removeItem(FLAT_KEY);
-      }
-    }
-  } catch(e) {}
-
-  // Try Supabase first, fall back to localStorage
-  try {
-    const dbTests = await DB.getDiagnosticTests();
-    if (dbTests.length) {
-      // Sync Supabase data into namespaced localStorage so the page can use getTests()
-      // Map DB field names back to local names
-      const mapped = dbTests.map(t => ({
-        id: t.id,
-        type: t.type || 'other',
-        date: t.date || '',
-        status: t.status || 'pending',
-        doctor: t.doctor || '',
-        facility: t.facility || '',
-        notes: t.notes || '',
-        extracted: t.extracted || null,
-        fileName: t.fileName || null,
-        savedAt: t.savedAt || ''
-      }));
-      // Only overwrite localStorage if DB has more records (DB is authoritative)
-      const local = getTests();
-      if (mapped.length >= local.length) saveTests(mapped, true);
-    }
-  } catch(e) {}
+    const rows = await DB.getDiagnosticTests();
+    tests = rows.map(fromDBTest);
+  } catch(e) { toast('⚠️ Could not load tests'); }
 });
 </script>
 </body>

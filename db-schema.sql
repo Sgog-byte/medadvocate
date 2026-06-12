@@ -206,6 +206,24 @@ create table if not exists documents (
 create index if not exists documents_patient_idx on documents(patient_id, created_at desc);
 
 -- ============================================================
+-- APPOINTMENTS (upcoming / past appointments calendar)
+-- ============================================================
+create table if not exists appointments (
+  id           uuid primary key default uuid_generate_v4(),
+  patient_id   uuid not null references patients(id) on delete cascade,
+  appt_date    date not null,
+  appt_time    time,
+  doctor       text not null,
+  specialty    text,
+  location     text,
+  notes        text,
+  patient_name text,
+  created_at   timestamptz default now()
+);
+
+create index if not exists appointments_patient_date_idx on appointments(patient_id, appt_date asc);
+
+-- ============================================================
 -- APPOINTMENT RECORDINGS
 -- ============================================================
 create table if not exists appointment_recordings (
@@ -239,6 +257,19 @@ create table if not exists saved_scripts (
 );
 
 create index if not exists saved_scripts_patient_idx on saved_scripts(patient_id, created_at desc);
+
+-- ============================================================
+-- SCRIPT INSIGHTS (lab / appointment notes pulled into visit scripts)
+-- ============================================================
+create table if not exists script_insights (
+  id           uuid primary key default uuid_generate_v4(),
+  patient_id   uuid not null references patients(id) on delete cascade,
+  source       text,              -- e.g. 'Lab 2024-01-15', 'Lab trend'
+  insight_text text not null,
+  created_at   timestamptz default now()
+);
+
+create index if not exists script_insights_patient_idx on script_insights(patient_id, created_at desc);
 
 -- ============================================================
 -- RESEARCH LIBRARY
@@ -322,7 +353,9 @@ alter table flare_log          enable row level security;
 alter table care_team          enable row level security;
 alter table documents          enable row level security;
 alter table saved_scripts           enable row level security;
+alter table appointments            enable row level security;
 alter table appointment_recordings  enable row level security;
+alter table script_insights        enable row level security;
 alter table research_library        enable row level security;
 alter table concierge_tasks    enable row level security;
 alter table concierge_log      enable row level security;
@@ -379,10 +412,18 @@ create policy "users own saved_scripts"
   on saved_scripts for all
   using (patient_id in (select id from patients where user_id = auth.uid()));
 
+create policy "users own appointments"
+  on appointments for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
 create policy "users own appointment_recordings"
   on appointment_recordings for all
   using (patient_id in (select id from patients where user_id = auth.uid()))
   with check (patient_id in (select id from patients where user_id = auth.uid()));
+
+create policy "users own script_insights"
+  on script_insights for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
 
 create policy "users own research_library"
   on research_library for all

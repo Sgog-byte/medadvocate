@@ -227,19 +227,18 @@ async function loadAppts() {
   try {
     const pid = await DB.patientId();
     if (!pid) return;
-    const { data } = await _supa
+    const { data, error } = await _supa
       .from('appointments')
       .select('*')
       .eq('patient_id', pid)
       .order('appt_date', { ascending: true })
       .order('appt_time', { ascending: true });
+    if (error) throw error;
     appointments = data || [];
     render();
   } catch(e) {
     console.warn('Could not load appointments:', e.message);
-    // Fallback to localStorage
-    appointments = JSON.parse(localStorage.getItem('advocate_appointments') || '[]');
-    render();
+    toast('⚠️ Could not load appointments');
   }
 }
 
@@ -340,24 +339,18 @@ async function saveAppt() {
   try {
     const pid = await DB.patientId();
     if (editingId) {
-      await _supa.from('appointments').update(record).eq('id', editingId);
+      const { error } = await _supa.from('appointments').update(record).eq('id', editingId);
+      if (error) throw error;
     } else {
-      await _supa.from('appointments').insert({ patient_id: pid, ...record });
+      const { error } = await _supa.from('appointments').insert({ patient_id: pid, ...record });
+      if (error) throw error;
     }
     closeModal();
     await loadAppts();
     toast(editingId ? 'Appointment updated ✓' : 'Appointment added ✓');
   } catch(e) {
-    // Fallback to localStorage
-    if (editingId) {
-      appointments = appointments.map(a => a.id === editingId ? { ...a, ...record } : a);
-    } else {
-      appointments.push({ id: 'local_' + Date.now(), ...record });
-    }
-    localStorage.setItem('advocate_appointments', JSON.stringify(appointments));
-    closeModal();
-    render();
-    toast('Saved locally ✓');
+    toast('⚠️ Could not save appointment');
+    console.error(e);
   } finally {
     btn.disabled = false; btn.textContent = 'Save appointment';
   }
@@ -380,11 +373,10 @@ async function saveNote(id) {
   try {
     await _supa.from('appointments').update({ notes: updated }).eq('id', id);
   } catch(e) {
-    // localStorage fallback
+    toast('⚠️ Could not save note'); return;
   }
 
   appt.notes = updated;
-  localStorage.setItem('advocate_appointments', JSON.stringify(appointments));
 
   const textEl = document.getElementById('notes_text_' + id);
   textEl.className = 'notes-text';
@@ -397,10 +389,10 @@ async function saveNote(id) {
 async function deleteAppt(id) {
   if (!confirm('Delete this appointment?')) return;
   try {
-    await _supa.from('appointments').delete().eq('id', id);
-  } catch(e) {}
+    const { error } = await _supa.from('appointments').delete().eq('id', id);
+    if (error) throw error;
+  } catch(e) { toast('⚠️ Could not delete'); return; }
   appointments = appointments.filter(a => a.id !== id);
-  localStorage.setItem('advocate_appointments', JSON.stringify(appointments));
   render();
   toast('Deleted');
 }
