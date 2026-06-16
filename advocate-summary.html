@@ -258,15 +258,7 @@ const SOURCES=[
     return false;
   }},
   {key:'symptoms',icon:'📊',label:'Symptoms',check:async()=>{
-    // 1. Supabase
     try{if((await DB.getSymptomEntries()).length>0)return true;}catch{}
-    // 2. Namespaced localStorage key
-    try{if(lsRead('advocate_symptoms').length>0)return true;}catch{}
-    // 3. Flat localStorage key
-    try{if(JSON.parse(localStorage.getItem('advocate_symptoms')||'[]').length>0)return true;}catch{}
-    // 4. Journal/entries key (namespaced and flat)
-    try{if(lsRead('advocate_entries').length>0)return true;}catch{}
-    try{if(JSON.parse(localStorage.getItem('advocate_entries')||'[]').length>0)return true;}catch{}
     return false;
   }},
   {key:'labs',icon:'🧪',label:'Lab Results',check:async()=>{
@@ -281,12 +273,7 @@ const SOURCES=[
     return false;
   }},
   {key:'tests',icon:'🔬',label:'Tests & Imaging',check:async()=>{
-    // 1. Supabase — check DB first
     try{const db=await DB.getDiagnosticTests();if(db.length>0)return true;}catch{}
-    // 2. Namespaced localStorage key
-    try{if(lsRead('advocate_testing').length>0)return true;}catch{}
-    // 3. Flat localStorage key
-    try{if(JSON.parse(localStorage.getItem('advocate_testing')||'[]').length>0)return true;}catch{}
     return false;
   }},
   {key:'timeline',icon:'📅',label:'Medical History',check:async()=>{
@@ -348,13 +335,10 @@ async function buildData(){
   let labReports=[];
   try{labReports=await DB.getLabReports();}catch{}
   const timeline=(await DB.getTimelineEvents());
-  const symState=lsRead('advocate_symptoms','{"trackedSymptoms":[]}');
+  const symConfigRows=await DB.getSymptomConfig().catch(()=>[]);
   const symEntries=(await DB.getSymptomEntries());
-  // Tests: localStorage first (namespaced, then flat), then Supabase as fallback.
-  // Supabase is now included so tests show even if testing page not visited on this device.
-  let tests=lsRead('advocate_testing');
-  if(!tests.length){try{tests=JSON.parse(localStorage.getItem('advocate_testing')||'[]');}catch{}}
-  if(!tests.length){try{tests=await DB.getDiagnosticTests();}catch{}}
+  let tests=[];
+  try{tests=await DB.getDiagnosticTests();}catch{}
   const parts=[];
 
   if(sel.has('profile')&&p.name) parts.push(`PATIENT: ${p.name}${p.age?', age '+p.age:''}`);
@@ -380,7 +364,7 @@ async function buildData(){
     parts.push(`MEDICAL EVENTS — ALL (most recent first; populate the events[] array with every ER visit, seizure, hospitalization, and significant event listed here):\n${allEvts.map(e=>`- ${fmtD(e.date)||'(no date)'}: [${EVT_R[e.cat]||e.cat}] ${e.title||''}${e.description?' — '+e.description.substring(0,80):''}`).join('\n')}`);
   }
   if(sel.has('symptoms')&&symEntries.length){
-    const tracked=symState.trackedSymptoms||[];
+    const tracked=symConfigRows.map(r=>({id:r.symptom_id,label:r.label,icon:r.icon}));
     const DOD={3:'Sometimes distracts',4:'Distracts, can function',5:'Interrupts activities',6:'Hard to ignore',7:'Prevents daily activities',8:'Awful',9:"Can't bear it",10:'Worst possible'};
     const symLines=[];
 
@@ -473,23 +457,16 @@ async function generateSummary(){
   const debugInfo=`Patient: ${escH(profile.name||'Unknown')} · PID: ${(_pid||'none').slice(0,8)}… · Labs: ${summaryLabReports.length} (${labSource}) · Diagnoses: ${diagnosisEvents.length}`;
   console.log('[Summary debug]',debugInfo);
 
-  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)">Synthesizing data from ${sel.size} sources</p></div>`;
+  out.innerHTML=`<div class="load-wrap"><div class="load-ring"></div><p style="font-family:'Fraunces',serif;font-size:18px;font-weight:300;color:var(--ink);margin-bottom:6px">Building your medical summary…</p><p style="font-size:13px;color:var(--ink-muted)" id="sumProgressSub">Synthesizing data from ${sel.size} sources — this may take a moment.</p></div>`;
 
   try{
-    const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,
+    const d=await DB.runBackgroundAI({model:'claude-sonnet-4-6',max_tokens:2000,
         system:`Create a clinical summary. Return ONLY this JSON (no markdown, no extra text):
 {"snapshot":"2 sentence clinical overview","concerns":["up to 5 concerns"],"meds":[{"name":"","dose":"","for":""}],"findings":["up to 3 notable findings"],"events":["every ER visit, seizure, hospitalization, and significant medical event with its date — up to 15 items"],"history":["up to 3 diagnostic milestones or background context items"],"questions":["3 questions"]}
 Rules: The meds[] array must contain EXACTLY the medications listed between ===BEGIN AUTHORITATIVE MEDICATION LIST=== and ===END MEDICATION LIST===. Do not add any medication mentioned in event notes, visit descriptions, lab results, or anywhere else — those are historical references only. Do not skip any medication from the authoritative list. The "questions" must be specific to the appointment specialty and doctor type stated by the user — not generic. If no specialty is given, base questions on the most pressing concerns in the data. CRITICAL: Never use relative time words like "recent", "recently", "current", "latest", or "new" — always reference the actual date from the data (e.g. "March 2024 EEG showed…"). If no date is available, describe the finding without any time qualifier. CRITICAL: The events[] array must contain every single ER visit, seizure, hospitalization, and significant medical event from the MEDICAL EVENTS data — list them all with dates. Do not skip any. The snapshot must reflect the most recent events, not just the historical diagnosis.`,
-        messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,6000)}${goals?'\nPatient goals: '+goals:''}`}]})
-    });
-    const responseText=await r.text();
-    if(!r.ok||responseText.trimStart().startsWith('<')) throw new Error('Server error (HTTP '+r.status+'). This is usually a function timeout — the AI took too long. Please try again.');
-    let d;
-    try{d=JSON.parse(responseText);}catch(e){throw new Error('Invalid response from server. Please try again.');}
-    if(d.error) throw new Error('API error: '+(d.error.message||JSON.stringify(d.error)));
-    const rawText=(d.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+        messages:[{role:'user',content:`${purpose?`THIS APPOINTMENT IS WITH: ${purpose}\nGenerate questions specifically relevant to this specialist and what they can help with.\n\n`:''}Patient data:\n\n${dataStr.slice(0,6000)}${goals?'\nPatient goals: '+goals:''}`}],
+        onProgress:(stage)=>{if(stage==='working'){const sub=document.getElementById('sumProgressSub');if(sub)sub.textContent='Still synthesizing — pulling everything together. Hang tight.';}}});
+    const rawText=(d?.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     if(!rawText) throw new Error('Empty AI response — check that your Anthropic API key is set in Netlify environment variables.');
     let res;
     try{res=JSON.parse(rawText);}catch(e){throw new Error('AI response was incomplete. Try again — it sometimes needs a second attempt.');}
@@ -649,6 +626,7 @@ async function runDataAudit(pid,gen){
 }
 
 (async()=>{
+  await Auth.requireAuth();
   try{ _allPatients=await DB.getPatients(); }catch(e){}
 
   const pickerEl=document.getElementById('patientPickerCards');

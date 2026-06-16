@@ -833,7 +833,9 @@ document.querySelectorAll('.tc').forEach(tc => observer.observe(tc));
 
 // ── AUTH GUARD & NAV ────────────────────────────────────────
 async function initAuth() {
-  const user = await Auth.user();
+  // Guard: redirect anonymous visitors to login and enforce beta-trial status.
+  const user = await Auth.requireAuth();
+  if (!user) return;
   const area = document.getElementById('navAuthArea');
   if (!area) return;
 
@@ -1053,7 +1055,7 @@ async function sendHelpMessage() {
   try {
     const resp = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 600,

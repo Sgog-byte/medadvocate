@@ -1129,11 +1129,12 @@
       if (nameField && !nameField.value) nameField.value = profile.name;
     }
     const entries = (await DB.getSymptomEntries());
-    const state = JSON.parse(localStorage.getItem('advocate_symptoms') || '{"trackedSymptoms":[]}');
+    const symRows = await DB.getSymptomConfig().catch(()=>[]);
+    const trackedSymptoms = symRows.map(r=>({id:r.symptom_id,label:r.label,icon:r.icon}));
     const symptomsField = document.getElementById('symptoms');
-    if (entries.length && state.trackedSymptoms?.length && symptomsField && !symptomsField.value) {
+    if (entries.length && trackedSymptoms.length && symptomsField && !symptomsField.value) {
       const latest = entries[entries.length - 1];
-      const topSymptoms = state.trackedSymptoms
+      const topSymptoms = trackedSymptoms
         .filter(s => latest.symptoms?.[s.id] >= 4)
         .sort((a,b) => (latest.symptoms[b.id]||0) - (latest.symptoms[a.id]||0))
         .slice(0, 6);
@@ -1255,7 +1256,7 @@ Please create a focused visit script for this appointment.`;
     try {
       const response = await fetch('/.netlify/functions/claude-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await aiHeaders(),
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 1800,
@@ -1621,16 +1622,12 @@ Please create a focused visit script for this appointment.`;
   // ── END READ ALOUD ─────────────────────────────────────────────
 
   // ── LAB INSIGHTS ────────────────────────────────────────────────
-  let _appScriptLabsKey = 'advocate_script_labs';
+  let appLabInsights = [];  // [{id, text}]
   function loadLabInsights() {
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]'); } catch(e) {}
-    // Normalize: handle both plain strings (old format) and {id, text} objects (new format)
-    saved = saved.map(x => typeof x === 'string' ? { id: null, text: x } : x);
     const empty = document.getElementById('labInsightsEmpty');
     const list = document.getElementById('labInsightsList');
     const clearBtn = document.getElementById('clearLabsBtn');
-    if (!saved.length) {
+    if (!appLabInsights.length) {
       empty.style.display = 'block';
       list.style.display = 'none';
       clearBtn.style.display = 'none';
@@ -1639,65 +1636,41 @@ Please create a focused visit script for this appointment.`;
     empty.style.display = 'none';
     list.style.display = 'flex';
     clearBtn.style.display = 'inline';
-    list.innerHTML = saved.map((item, i) => {
-      const txt = item.text || '';
+    list.innerHTML = appLabInsights.map((item, i) => {
+      const txt = (item.text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `
       <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
         <span style="color:#2d6a4f;margin-top:1px">•</span>
-        <span style="flex:1">${txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+        <span style="flex:1">${txt}</span>
         <button onclick="removeLabInsight(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
       </div>`;
     }).join('');
   }
   async function removeLabInsight(i) {
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]'); } catch(e) {}
-    saved = saved.map(x => typeof x === 'string' ? { id: null, text: x } : x);
-    const item = saved[i];
-    saved.splice(i, 1);
-    localStorage.setItem(_appScriptLabsKey, JSON.stringify(saved));
+    const item = appLabInsights[i];
+    appLabInsights.splice(i, 1);
     loadLabInsights();
     if (item && item.id) {
       try { await DB.deleteInsight(item.id); } catch(e) { console.warn('Insight delete failed:', e.message); }
     }
   }
-  function clearLabInsights() {
-    localStorage.removeItem(_appScriptLabsKey);
+  async function clearLabInsights() {
+    appLabInsights = [];
     loadLabInsights();
+    try { await DB.deleteAllInsights(); } catch(e) { console.warn('Clear insights failed:', e.message); }
   }
   function getLabInsightsText() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]');
-      if (!saved.length) return '';
-      const texts = saved.map(x => typeof x === 'string' ? x : (x.text || ''));
-      return '\n\nRecent lab findings to reference:\n' + texts.join('\n');
-    } catch(e) { return ''; }
+    if (!appLabInsights.length) return '';
+    const texts = appLabInsights.map(x => x.text || '');
+    return '\n\nRecent lab findings to reference:\n' + texts.join('\n');
   }
   document.addEventListener('DOMContentLoaded', async () => {
+    await Auth.requireAuth();
     try {
       const pid = await DB.patientId();
       if (pid) {
-        _appScriptLabsKey = `advocate_script_labs_${pid}`;
-        // Merge Supabase insights with localStorage
         const dbInsights = await DB.loadInsights(pid);
-        if (dbInsights.length) {
-          let local = [];
-          try { local = JSON.parse(localStorage.getItem(_appScriptLabsKey) || '[]'); } catch(e) {}
-          // Normalize old string entries to objects
-          local = local.map(x => typeof x === 'string' ? { id: null, text: x } : x);
-          // Add DB rows not already present in local
-          const localTexts = new Set(local.map(x => x.text));
-          for (const row of dbInsights) {
-            if (!localTexts.has(row.insight_text)) {
-              local.push({ id: row.id, text: row.insight_text });
-            } else {
-              // Backfill id on matching entry that has no id yet
-              const entry = local.find(x => x.text === row.insight_text && !x.id);
-              if (entry) entry.id = row.id;
-            }
-          }
-          localStorage.setItem(_appScriptLabsKey, JSON.stringify(local));
-        }
+        appLabInsights = dbInsights.map(row => ({ id: row.id, text: row.insight_text }));
       }
     } catch(e) {}
     loadLabInsights();

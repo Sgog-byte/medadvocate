@@ -236,10 +236,22 @@ function fmtDate(d){if(!d)return '';try{const dt=new Date(d+'T12:00:00');return 
 let _medsCache=[];
 function getMeds(){return _medsCache;}
 
-// Logs stay in localStorage, namespaced by patient
-let LOG_KEY='advocate_med_logs';
-function getLogs(){return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}
-function saveLogs(logs){localStorage.setItem(LOG_KEY,JSON.stringify(logs))}
+// Logs — in-memory, loaded from Supabase
+let _logsCache=[];
+function getLogs(){return _logsCache;}
+
+function fromDBLog(row){
+  let extra={};
+  try{extra=JSON.parse(row.notes||'{}');}catch(e){extra={note:row.notes||''};}
+  return {
+    id: row.id,
+    medId: row.medication_id||'',
+    date: row.log_date||'',
+    note: extra.note||'',
+    effectiveness: extra.effectiveness||3,
+    type: extra.type||'note'
+  };
+}
 
 // ── NORMALIZE Supabase med → local field names ──
 // Supabase uses: frequency, start_date, notes (stores JSON {reason,notes})
@@ -350,20 +362,21 @@ async function populateLogSelect(){
   sel.innerHTML='<option value="">Select medication…</option>'+meds.map(m=>`<option value="${m.id}">${escH(m.name)}</option>`).join('');
 }
 
-function addLogEntry(){
+async function addLogEntry(){
   const medId=document.getElementById('log_med').value;
   const note=document.getElementById('log_note').value.trim();
   if(!medId||!note){showToast('Please select a medication and add a note');return;}
-  const logs=getLogs();
-  logs.unshift({
-    id:Date.now(),
+  const entry={
     medId,
     date:document.getElementById('log_date').value||new Date().toISOString().split('T')[0],
     note,
     effectiveness:parseInt(document.getElementById('log_effectiveness').value),
     type:document.getElementById('log_type').value
-  });
-  saveLogs(logs);
+  };
+  try{
+    const newRow=await DB.saveMedicationLog(entry);
+    _logsCache.unshift(fromDBLog(newRow));
+  }catch(e){showToast('⚠️ Could not save log entry');console.error(e);return;}
   document.getElementById('log_note').value='';
   document.getElementById('log_type').value='note';
   document.getElementById('log_effectiveness').value=3;
@@ -373,7 +386,7 @@ function addLogEntry(){
 }
 
 async function renderLogs(){
-  const logs=getLogs();
+  const logs=_logsCache;
   const el=document.getElementById('log_list');
   if(!logs.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No log entries yet</div><div class="empty-sub">Start logging side effects, improvements, and dosage changes here.</div></div>`;
@@ -405,14 +418,17 @@ async function renderLogs(){
               <span style="font-size:11px;color:var(--ink-muted);margin-left:6px">${l.effectiveness}/5</span>
             </div>
           </div>
-          <button class="btn-danger" onclick="deleteLog(${l.id})" style="padding:4px 8px;font-size:11px">✕</button>
+          <button class="btn-danger" onclick="deleteLog('${l.id}')" style="padding:4px 8px;font-size:11px">✕</button>
         </div>`).join('')}
     </div>`).join('');
 }
 
-function deleteLog(id){
-  saveLogs(getLogs().filter(l=>l.id!==id));
-  renderLogs();showToast('Removed');
+async function deleteLog(id){
+  try{
+    await DB.deleteMedicationLog(id);
+    _logsCache=_logsCache.filter(l=>l.id!==id);
+    renderLogs();showToast('Removed');
+  }catch(e){showToast('⚠️ Could not remove log entry');}
 }
 
 // ── REPORT ──
@@ -450,7 +466,7 @@ async function generateReport(){
 
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:await aiHeaders(),
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,
         system:'You are a medical advocate helping a patient present their medication history clearly to a doctor. Use ONLY the confirmed diagnoses provided — never speculate, suggest possible diagnoses, or use language like "could have" or "may indicate". Return ONLY valid JSON no markdown: {"summary":"2-3 sentence clinical summary referencing the confirmed diagnoses and current medication picture","concerns":["2-4 notable considerations or interactions based on confirmed conditions and medications"],"questionsToAsk":["3-4 questions the patient should ask about their medications"],"redFlags":["any potential drug interactions or concerning patterns given the confirmed diagnoses, or empty array if none"]}',
         messages:[{role:'user',content:`Patient: ${name}\nConfirmed diagnoses: ${diagnoses||'Not specified'}\nAppointment: ${doctor||'Doctor visit'} on ${fmtDate(date)}\n\nCurrent medications:\n${meds.filter(m=>m.status==='active').map(m=>`- ${m.name} ${m.dose} ${m.freq} (${m.type}) for: ${m.reason||'not specified'}`).join('\n')}\n\nStopped/Paused:\n${meds.filter(m=>m.status!=='active').map(m=>`- ${m.name} (${m.status})`).join('\n')||'None'}\n\nRecent log notes:\n${logs.slice(0,10).map(l=>{const med=meds.find(m=>m.id===l.medId);return`- ${med?.name||'Unknown'}: ${l.note} (${fmtDate(l.date)})`}).join('\n')||'No recent notes'}`}]})
@@ -512,10 +528,15 @@ document.getElementById('log_effectiveness').addEventListener('input',function()
 });
 document.getElementById('log_date').value=new Date().toISOString().split('T')[0];
 
-// Namespace log key by patient then load
+// Load meds and logs from Supabase
 (async()=>{
-  try{const pid=await DB.patientId();if(pid){LOG_KEY=`advocate_med_logs_${pid}`;_syncPid=pid;}}catch(e){}
+  await Auth.requireAuth();
+  try{const pid=await DB.patientId();if(pid){_syncPid=pid;}}catch(e){}
   renderMeds();
+  try{
+    const rows=await DB.getMedicationLogs();
+    _logsCache=rows.map(fromDBLog);
+  }catch(e){console.warn('Could not load medication logs',e);}
   renderLogs();
 })();
 </script>

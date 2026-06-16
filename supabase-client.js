@@ -54,6 +54,11 @@ const Auth = {
   /** Sign out */
   async signOut() {
     await _supa.auth.signOut();
+    // Clear per-session state so a stale patient ID never survives into the
+    // next account on this browser (see DB.patientId validation).
+    localStorage.removeItem('advocate_active_patient_id');
+    localStorage.removeItem('advocate_unlocked');
+    DB._patientId = null;
     window.location.href = 'advocate-login.html';
   },
 
@@ -141,22 +146,84 @@ const Auth = {
 };
 
 // ============================================================
+// AUTHENTICATED FETCH HEADERS
+// Returns headers for calls to our Netlify functions (claude-proxy,
+// claude-proxy-background). Attaches the current Supabase access token
+// as a Bearer credential so the server can verify the caller. Use this
+// for every proxy fetch — without it the server responds 401.
+// ============================================================
+async function aiHeaders(extra) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+  try {
+    const s = await Auth.session();
+    if (s && s.access_token) headers['Authorization'] = 'Bearer ' + s.access_token;
+  } catch (e) { /* no session — request will be rejected server-side */ }
+  return headers;
+}
+
+// ============================================================
 // PATIENT / PROFILE HELPERS
 // ============================================================
 
 const DB = {
   // ── internal cache ──
   _patientId: null,
+  _patientIdValidated: false,
+  _noPatientNotified: false,
+
+  /**
+   * Show a one-time, dismissible banner when we have no patient context.
+   * Without this, save/read calls silently no-op (e.g. after a session
+   * expires mid-use) and the user loses data without any feedback.
+   */
+  _notifyNoPatient() {
+    if (DB._noPatientNotified) return;
+    if (typeof document === 'undefined' || !document.body) return;
+    if (document.getElementById('noPatientBanner')) return;
+    DB._noPatientNotified = true;
+    const b = document.createElement('div');
+    b.id = 'noPatientBanner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#7a1f1f;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:14px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:400';
+    b.innerHTML = `
+      <span>⚠️ We couldn't find your patient profile — your session may have expired. Anything you enter now won't be saved. Please sign in again.</span>
+      <a href="advocate-login.html?next=${encodeURIComponent(window.location.pathname)}" style="padding:6px 16px;background:#fff;color:#7a1f1f;border-radius:100px;font-weight:600;font-size:12px;text-decoration:none;white-space:nowrap">Sign in</a>
+      <button onclick="document.getElementById('noPatientBanner').remove()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;margin-left:4px">×</button>
+    `;
+    document.body.prepend(b);
+  },
 
   /** Get or create the active patient ID for the current user */
   async patientId() {
     if (DB._patientId) return DB._patientId;
 
-    // 1. Check localStorage — fastest and most reliable (set by switchPatient)
+    // 1. Check localStorage — fastest and most reliable (set by switchPatient).
+    // But a cached ID can belong to a *different* account if someone signed out
+    // and back in on the same browser. Validate it against the current user's
+    // patients once per session before trusting it; if it doesn't belong to
+    // this user, drop it and fall through to re-select below.
     const lsPid = localStorage.getItem('advocate_active_patient_id');
     if (lsPid) {
-      DB._patientId = lsPid;
-      return DB._patientId;
+      if (!DB._patientIdValidated) {
+        try {
+          const patients = await DB.getPatients();
+          DB._patientIdValidated = true;
+          if (!patients.some(p => p.id === lsPid)) {
+            localStorage.removeItem('advocate_active_patient_id');
+            // fall through to user_settings / default lookup
+          } else {
+            DB._patientId = lsPid;
+            return DB._patientId;
+          }
+        } catch (e) {
+          // Couldn't verify (offline / transient) — trust the cache for now
+          // without marking validated, so we re-check on the next call.
+          DB._patientId = lsPid;
+          return DB._patientId;
+        }
+      } else {
+        DB._patientId = lsPid;
+        return DB._patientId;
+      }
     }
 
     // 2. Check user_settings in Supabase — filter by user_id and use limit(1)
@@ -192,6 +259,9 @@ const DB = {
       return DB._patientId;
     }
 
+    // No patient context at all — surface a visible error instead of letting
+    // callers silently no-op (see _notifyNoPatient).
+    DB._notifyNoPatient();
     return null;
   },
 
@@ -262,7 +332,7 @@ const DB = {
     return data || [];
   },
 
-  async setSymptomConfig(symptoms) {
+  async saveSymptomConfig(symptoms) {
     // symptoms = [{ symptom_id, label, icon, is_custom }]
     const pid = await DB.patientId();
     if (!pid) return;
@@ -290,9 +360,10 @@ const DB = {
       .from('symptom_entries')
       .select('*')
       .eq('patient_id', pid)
-      .order('entry_date', { ascending: true })
+      .order('entry_date', { ascending: false })
       .limit(limit);
-    return (data || []).map(row => ({
+    // Fetch newest `limit` rows (descending), then restore chronological order
+    return (data || []).reverse().map(row => ({
       date: row.entry_date,
       symptoms: row.symptoms || {},
       overall: row.overall,
@@ -365,6 +436,44 @@ const DB = {
 
   async deleteMedication(id) {
     await _supa.from('medications').delete().eq('id', id);
+  },
+
+  // ── MEDICATION LOGS ─────────────────────────────────────────
+
+  async getMedicationLogs(limit = 300) {
+    const pid = await DB.patientId();
+    if (!pid) return [];
+    const { data } = await _supa
+      .from('medication_logs')
+      .select('*')
+      .eq('patient_id', pid)
+      .order('log_date', { ascending: false })
+      .limit(limit);
+    return data || [];
+  },
+
+  async saveMedicationLog(entry) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    // Pack extra fields into notes JSON
+    const notesJson = JSON.stringify({
+      note: entry.note || entry.notes || '',
+      effectiveness: entry.effectiveness || 3,
+      type: entry.type || 'note'
+    });
+    const { data, error } = await _supa.from('medication_logs').insert({
+      patient_id: pid,
+      medication_id: entry.medId || entry.medication_id || null,
+      log_date: entry.date || entry.log_date || new Date().toISOString().split('T')[0],
+      taken: entry.taken !== undefined ? entry.taken : null,
+      notes: notesJson
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteMedicationLog(id) {
+    await _supa.from('medication_logs').delete().eq('id', id);
   },
 
   // ── LAB RESULTS ─────────────────────────────────────────────
@@ -484,39 +593,20 @@ const DB = {
   // ── DIAGNOSTIC TESTS ────────────────────────────────────────
 
   async getDiagnosticTests() {
-    const normalize = t => ({
-      id: t.id,
-      type: t.type || t.test_type,
-      date: t.date || t.test_date,
-      result: t.result || '',
-      status: t.result || t.status || 'pending',
-      doctor: t.doctor || t.ordering_doctor,
-      facility: t.facility,
-      notes: t.notes,
-      extracted: t.extracted || null,
-      fileName: t.fileName || null,
-      fileData: t.fileData || null,
-    });
     const pid = await DB.patientId();
-    if (pid) {
-      const { data } = await _supa
-        .from('diagnostic_tests')
-        .select('*')
-        .eq('patient_id', pid)
-        .order('test_date', { ascending: false });
-      if (data && data.length) return data.map(normalize);
-    }
-    // Fallback: use patient-namespaced key if pid is known (never read flat shared key)
-    try {
-      const lsKey = pid ? `advocate_testing_${pid}` : 'advocate_testing';
-      const local = JSON.parse(localStorage.getItem(lsKey) || '[]');
-      return local.map(normalize);
-    } catch { return []; }
+    if (!pid) return [];
+    const { data, error } = await _supa
+      .from('diagnostic_tests')
+      .select('*')
+      .eq('patient_id', pid)
+      .order('test_date', { ascending: false });
+    if (error) throw error;
+    return data || [];
   },
 
   async saveDiagnosticTest(test) {
     const pid = await DB.patientId();
-    if (!pid) return;
+    if (!pid) return null;
     const TYPE_LABELS = {
       eeg:'EEG', ekg:'EKG / ECG', echo:'Echocardiogram', mri:'MRI',
       ct:'CT Scan', xray:'X-Ray', tilt:'Tilt Table', holter:'Holter Monitor',
@@ -528,10 +618,9 @@ const DB = {
     const testName = test.name || test.test_name
       || TYPE_LABELS[test.type] || TYPE_LABELS[test.test_type]
       || test.type || 'Unknown Test';
-    // Numeric ids are localStorage timestamps (Date.now()), not Supabase uuids — always insert
     const hasSupabaseId = test.id && typeof test.id === 'string';
     if (hasSupabaseId) {
-      const { error: updateError } = await _supa.from('diagnostic_tests').update({
+      const { data, error } = await _supa.from('diagnostic_tests').update({
         test_name: testName,
         test_type: testType,
         test_date: test.date || test.test_date,
@@ -539,10 +628,11 @@ const DB = {
         ordering_doctor: test.doctor || test.ordering_doctor,
         facility: test.facility, notes: test.notes,
         extracted: test.extracted || null
-      }).eq('id', test.id);
-      if (updateError) throw updateError;
+      }).eq('id', test.id).select().single();
+      if (error) throw error;
+      return data;
     } else {
-      const { error: insertError } = await _supa.from('diagnostic_tests').insert({
+      const { data, error } = await _supa.from('diagnostic_tests').insert({
         patient_id: pid,
         test_name: testName,
         test_type: testType,
@@ -552,8 +642,9 @@ const DB = {
         facility: test.facility || null,
         notes: test.notes || null,
         extracted: test.extracted || null
-      });
-      if (insertError) throw insertError;
+      }).select().single();
+      if (error) throw error;
+      return data;
     }
   },
 
@@ -735,7 +826,29 @@ const DB = {
       .select('*')
       .eq('patient_id', pid)
       .order('created_at', { ascending: false });
-    return data || [];
+    return (data || []).map(row => ({
+      id: row.id,
+      type: row.type || 'visit',
+      title: row.title || row.specialist || 'Saved Script',
+      content: row.content || '',
+      savedAt: row.created_at,
+      specialist: row.specialist,
+      opener_line: row.opener_line,
+      priorities: row.priorities,
+      questions: row.questions,
+      timing_tip: row.timing_tip,
+      emotional_note: row.emotional_note
+    }));
+  },
+
+  async saveRawScript(type, title, content) {
+    const pid = await DB.patientId();
+    if (!pid) return null;
+    const { data, error } = await _supa.from('saved_scripts').insert({
+      patient_id: pid, type: type || 'custom', title: title || 'Script', content: content || ''
+    }).select().single();
+    if (error) throw error;
+    return data;
   },
 
   async saveScript(script) {
@@ -780,12 +893,14 @@ const DB = {
         category: item.category, notes: item.notes
       }).eq('id', item.id);
     } else {
-      await _supa.from('research_library').insert({
+      const { data, error } = await _supa.from('research_library').insert({
         patient_id: pid,
         title: item.title, content: item.content || null,
         source_url: item.url || item.source_url || null,
         category: item.category || null, notes: item.notes || null
-      });
+      }).select().single();
+      if (error) throw error;
+      return data;
     }
   },
 
@@ -813,6 +928,12 @@ const DB = {
   async deleteInsight(id) {
     const { error } = await _supa.from('script_insights').delete().eq('id', id);
     return !error;
+  },
+
+  async deleteAllInsights() {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    await _supa.from('script_insights').delete().eq('patient_id', pid);
   },
 
   // ── APPOINTMENT RECORDINGS ───────────────────────────────────
@@ -856,6 +977,72 @@ const DB = {
     await _supa.from('appointment_recordings').delete().eq('id', id);
   },
 
+  // ── CONCIERGE TASKS ──────────────────────────────────────────
+
+  async getConciergeTasksAndLogs() {
+    const pid = await DB.patientId();
+    if (!pid) return { tasks: [], logs: [] };
+    const [tasksRes, logsRes] = await Promise.all([
+      _supa.from('concierge_tasks').select('*').eq('patient_id', pid).order('created_at', { ascending: false }),
+      _supa.from('concierge_log').select('*').eq('patient_id', pid).order('log_datetime', { ascending: false })
+    ]);
+    return { tasks: tasksRes.data || [], logs: logsRes.data || [] };
+  },
+
+  async saveConciergeTask(task) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    if (task.id) {
+      const { error } = await _supa.from('concierge_tasks').update({
+        title: task.title, contact: task.contact || null,
+        category: task.cat || task.category || 'other',
+        priority: task.priority || 'normal',
+        due_date: task.due || null,
+        notes: task.notes || null,
+        done: !!task.done, done_at: task.doneAt || task.done_at || null
+      }).eq('id', task.id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await _supa.from('concierge_tasks').insert({
+        patient_id: pid,
+        title: task.title, contact: task.contact || null,
+        category: task.cat || task.category || 'other',
+        priority: task.priority || 'normal',
+        due_date: task.due || null,
+        notes: task.notes || null,
+        done: false
+      }).select().single();
+      if (error) throw error;
+      return data;
+    }
+  },
+
+  async deleteConciergeTask(id) {
+    await _supa.from('concierge_tasks').delete().eq('id', id);
+  },
+
+  async saveConciergeLog(entry) {
+    const pid = await DB.patientId();
+    if (!pid) return;
+    const { data, error } = await _supa.from('concierge_log').insert({
+      patient_id: pid,
+      log_datetime: entry.datetime || new Date().toISOString(),
+      log_type: entry.type || null,
+      contact: entry.contact || null,
+      person: entry.person || null,
+      notes: entry.notes || null,
+      outcome: entry.outcome || 'resolved',
+      ref_num: entry.ref || null,
+      followup_date: entry.followup || null
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteConciergeLog(id) {
+    await _supa.from('concierge_log').delete().eq('id', id);
+  },
+
   // ── MIGRATION ────────────────────────────────────────────────
   /**
    * One-time migration: pull everything from localStorage and
@@ -883,7 +1070,7 @@ const DB = {
     // Symptom config
     const symState = get('advocate_symptoms');
     if (symState?.trackedSymptoms?.length) {
-      await DB.setSymptomConfig(symState.trackedSymptoms);
+      await DB.saveSymptomConfig(symState.trackedSymptoms);
     }
 
     // Symptom entries
@@ -951,6 +1138,110 @@ const DB = {
     // Mark migration complete
     localStorage.setItem('advocate_migrated_to_supabase', '1');
     console.log('[MedAdvocate] localStorage → Supabase migration complete');
+  },
+
+  // ============================================================
+  // BACKGROUND AI  (shared by labs, testing, summary, …)
+  // ------------------------------------------------------------
+  // Heavy AI calls (large documents, long generations) can exceed the
+  // synchronous proxy's ~26s limit and 504 silently. This routes them through
+  // the same two-step background pattern the Document Interpreter uses:
+  //   1. insert an analysis_jobs row
+  //   2. fire claude-proxy-background (returns 202 immediately, runs up to ~15m)
+  //   3. poll the row until the result is written back, then delete it (PHI)
+  // Returns the raw Anthropic response object — callers read result.content[0].text
+  // exactly as they did from the sync proxy, so only the transport changes.
+  //
+  // `onProgress(label)` is optional — called with calm status strings as the
+  // job moves from "submitted" to "still working" so the page can reassure.
+  // Throws an Error with a friendly, non-alarming `.message` on failure.
+  async runBackgroundAI({ system, messages, model, max_tokens, onProgress } = {}) {
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const pid = await DB.patientId();
+    if (!pid) {
+      DB._notifyNoPatient();
+      throw new Error('We couldn’t find your patient profile — please sign in again and try once more.');
+    }
+
+    // Best-effort sweep of abandoned rows (>1h) so PHI doesn't accumulate.
+    try {
+      const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      await _supa.from('analysis_jobs').delete().eq('patient_id', pid).lt('created_at', cutoff);
+    } catch (e) { /* table may lack created_at / delete denied — never block the call */ }
+
+    // 1. Insert the job row the background function will write back to.
+    const { data: jobRow, error: insErr } = await _supa
+      .from('analysis_jobs')
+      .insert({ patient_id: pid, status: 'pending' })
+      .select('id')
+      .single();
+    if (insErr || !jobRow) {
+      throw new Error('We couldn’t start the analysis just now. Give it a moment and try again.');
+    }
+    const jobId = jobRow.id;
+
+    const cleanup = async () => {
+      try { await _supa.from('analysis_jobs').delete().eq('id', jobId); } catch (e) {}
+    };
+
+    if (onProgress) onProgress('submitted');
+
+    // 2. Fire the background function — 202 means "accepted and running".
+    const resp = await fetch('/.netlify/functions/claude-proxy-background', {
+      method: 'POST',
+      headers: await aiHeaders(),
+      body: JSON.stringify({ job_id: jobId, systemPrompt: system, messages, model, max_tokens })
+    });
+    if (resp.status === 401) {
+      await cleanup();
+      throw new Error('You’ve been signed out. Sign in again and we’ll pick right back up.');
+    }
+    if (!resp.ok && resp.status !== 202) {
+      await cleanup();
+      throw new Error('We couldn’t start the analysis just now. Give it a moment and try again.');
+    }
+
+    // 3. Poll the row: immediately, then every 2s, up to 180s.
+    const POLL_MS = 2000;
+    const TIMEOUT_MS = 180000;
+    const start = Date.now();
+    let warned = false;
+    while (true) {
+      let data;
+      try {
+        const res = await _supa.from('analysis_jobs').select('status, result, error').eq('id', jobId).single();
+        if (res.error) throw res.error;
+        data = res.data;
+      } catch (e) {
+        // Transient read hiccup — the job is still safe; keep polling.
+        if (Date.now() - start > TIMEOUT_MS) {
+          throw new Error('This is taking a little longer than usual — your analysis is still safe. Please try again in a moment.');
+        }
+        await sleep(POLL_MS);
+        continue;
+      }
+      if (data.status === 'complete') {
+        await cleanup();
+        return data.result;
+      }
+      if (data.status === 'error') {
+        await cleanup();
+        const code = (data.error || '').match(/error\s+(\d{3})/i);
+        if (code && (code[1] === '429' || code[1] === '529')) {
+          throw new Error('Things are a little busy right now. Give it a few seconds, then try again.');
+        }
+        throw new Error('The analysis didn’t finish. Please try again — your information is safe.');
+      }
+      if (!warned && Date.now() - start > 20000) {
+        warned = true;
+        if (onProgress) onProgress('working');
+      }
+      if (Date.now() - start > TIMEOUT_MS) {
+        // Don't delete — the job may still complete; the next attempt sweeps it.
+        throw new Error('This is taking a little longer than usual — your analysis is still safe. Please try again in a moment.');
+      }
+      await sleep(POLL_MS);
+    }
   }
 };
 

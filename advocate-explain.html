@@ -144,6 +144,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 <div class="toast" id="toast"></div>
 
 <script>
+// Guard: block anonymous use of AI features and enforce trial status.
+(async()=>{ await Auth.requireAuth(); })();
 // ── UTILS ──
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
@@ -192,10 +194,11 @@ function getTags(wrapId){
   }
   // Pre-fill symptoms from recent symptom tracker entries
   const entries = (await DB.getSymptomEntries());
-  const state = JSON.parse(localStorage.getItem('advocate_symptoms') || '{"trackedSymptoms":[]}');
-  if (entries.length && state.trackedSymptoms?.length) {
+  const symRows = await DB.getSymptomConfig().catch(() => []);
+  const trackedSymptoms = symRows.map(r => ({ id: r.symptom_id, label: r.label, icon: r.icon }));
+  if (entries.length && trackedSymptoms.length) {
     const latest = entries[entries.length - 1];
-    const symptoms = state.trackedSymptoms
+    const symptoms = trackedSymptoms
       .filter(s => latest.symptoms?.[s.id] > 0)
       .sort((a,b) => (latest.symptoms[b.id]||0) - (latest.symptoms[a.id]||0))
       .slice(0, 5)
@@ -222,7 +225,7 @@ setupTagInput('diag_sym_in','diag_sym_wrap','vtag-sage');
 // ── API ──
 async function callClaude(system,user){
   const r=await fetch('/.netlify/functions/claude-proxy',{
-    method:'POST',headers:{'Content-Type':'application/json'},
+    method:'POST',headers:await aiHeaders(),
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system,messages:[{role:'user',content:user}]})
   });
   const d=await r.json();

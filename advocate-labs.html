@@ -677,8 +677,8 @@
         <div class="processing-card" style="border:none; padding:0; box-shadow:none;">
           <div class="pulse-dot">🌿</div>
           <div>
-            <div style="font-family:'Fraunces',serif; font-size:17px; font-weight:400;">Reading your lab report…</div>
-            <div style="font-size:13px; color:var(--ink-muted); margin-top:4px;">Extracting values, checking ranges, looking for trends</div>
+            <div style="font-family:'Fraunces',serif; font-size:17px; font-weight:400;" id="procTitle">Reading your lab report…</div>
+            <div style="font-size:13px; color:var(--ink-muted); margin-top:4px;" id="procSub">Extracting values, checking ranges, looking for trends</div>
           </div>
         </div>
       </div>
@@ -1148,24 +1148,27 @@ Rules:
 - Today's date: ${new Date().toISOString().split('T')[0]}`;
 }
 
+// Heavy lab extraction/insight calls (4500–5000 max_tokens, large documents and
+// images) run through the background job pattern so they can't 504 on the
+// synchronous proxy's ~26s limit. onProgress softens the wait after ~20s.
 async function callProxy(payload) {
-  const resp = await fetch('/.netlify/functions/claude-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+  const data = await DB.runBackgroundAI({
+    system: payload.system,
+    messages: payload.messages,
+    model: payload.model,
+    max_tokens: payload.max_tokens,
+    onProgress: (stage) => {
+      if (stage !== 'working') return;
+      const sub = document.getElementById('procSub');
+      if (sub) sub.textContent = 'Still reading your labs — this can take a moment for longer reports. Hang tight.';
+    }
   });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error(`HTTP ${resp.status}: ${txt.substring(0, 120)}`);
-  }
-  const data = await resp.json();
-  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
-  return safeParseLabJSON(data.content?.[0]?.text || '');
+  return safeParseLabJSON(data?.content?.[0]?.text || '');
 }
 
 async function extractLabsFromFile(base64, mediaType) {
   return callProxy({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4500,
     system: buildSystemPrompt(),
     messages: [{
@@ -1214,7 +1217,7 @@ async function extractLabsFromImages(base64Array) {
     type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
   }));
   return callProxy({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4500,
     system: buildSystemPrompt(),
     messages: [{
@@ -1230,7 +1233,7 @@ async function extractLabsFromImages(base64Array) {
 async function extractLabsFromText(text) {
   const truncated = text.length > 12000 ? text.substring(0, 12000) + '\n[truncated]' : text;
   return callProxy({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4500,
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
@@ -1556,7 +1559,6 @@ async function refreshInsights() {
       if (data.trendInsights && data.trendInsights.length) {
         allLabDates[allLabDates.length - 1].trendInsights = data.trendInsights;
       }
-      saveLabs();
       DB.saveLabReport(latest).catch(() => {});
       if (allLabDates.length - 1 !== idx) {
         DB.saveLabReport(allLabDates[allLabDates.length - 1]).catch(() => {});
@@ -1907,10 +1909,6 @@ function printPage() {
 // ─────────────────────────────────
 // LAB → VISIT SCRIPT
 // ─────────────────────────────────
-// Returns the patient-namespaced key for script labs (mirrors advocate-scripts.html)
-function scriptLabsKey() {
-  return currentPatientId ? `advocate_script_labs_${currentPatientId}` : 'advocate_script_labs';
-}
 
 async function addInsightToScript(entryIdx, insightIdx) {
   const entry = allLabDates[entryIdx];
@@ -1921,16 +1919,10 @@ async function addInsightToScript(entryIdx, insightIdx) {
   const dateLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const text = `[Lab ${dateLabel}] ${ins.text}`;
 
-  // Store as an array so multiple insights can be added — namespaced by patient
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-  if (!saved.includes(text)) saved.push(text);
-  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
-
   try {
     const pid = await DB.patientId();
     if (pid) { await DB.saveInsight(pid, `Lab ${dateLabel}`, text); }
-  } catch(e) { console.warn('Insight Supabase save failed:', e.message); }
+  } catch(e) { console.warn('Insight save failed:', e.message); }
 
   // Visual feedback on the button
   const btn = document.getElementById(`script-btn-${entryIdx}-${insightIdx}`);
@@ -1943,15 +1935,11 @@ async function addTrendInsightToScript(i) {
   const rawText = texts[i];
   if (!rawText) return;
   const text = `[Lab trend] ${rawText}`;
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-  if (!saved.includes(text)) saved.push(text);
-  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
 
   try {
     const pid = await DB.patientId();
     if (pid) { await DB.saveInsight(pid, 'Lab trend', text); }
-  } catch(e) { console.warn('Insight Supabase save failed:', e.message); }
+  } catch(e) { console.warn('Insight save failed:', e.message); }
 
   const btn = document.getElementById(`trend-btn-${i}`);
   if (btn) { btn.textContent = '✓ Added'; btn.style.color = 'var(--sage)'; btn.style.borderColor = 'var(--sage)'; btn.disabled = true; }
@@ -2054,6 +2042,7 @@ async function diagnoseLabs() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await Auth.requireAuth();
   try {
     const pid = await DB.patientId();
     if (pid) currentPatientId = pid;

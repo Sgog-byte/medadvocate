@@ -346,21 +346,24 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.class
 function fmtD(d){if(!d)return'';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return d}}
 function fmtY(d){if(!d)return'';try{return new Date(d+'T12:00:00').getFullYear();}catch(e){return d}}
 
-const FLAT_KEY='advocate_testing';
-let _testingPid=null;
-function testingKey(){return _testingPid?`advocate_testing_${_testingPid}`:FLAT_KEY;}
-function getTests(){return JSON.parse(localStorage.getItem(testingKey())||'[]')}
-function saveTests(d) {
-  localStorage.setItem(testingKey(), JSON.stringify(d));
+let tests = [];
+
+function toDBTest(t) {
+  const notesJson = JSON.stringify({ notes: t.notes||'', fileName: t.fileName||null, fileData: t.fileData||null, fileType: t.fileType||null });
+  return { id: t.id, test_type: t.type||null, test_date: t.date||null,
+    result: t.status||'pending', ordering_doctor: t.doctor||null,
+    facility: t.facility||null, notes: notesJson, extracted: t.extracted||null };
 }
 
-async function saveNewTestToCloud(testObj) {
-  if (!_testingPid) return;
-  try {
-    await DB.saveDiagnosticTest(testObj);
-  } catch(e) {
-    console.warn('Cloud save failed:', e.message);
-  }
+function fromDBTest(row) {
+  let extra = {};
+  try { extra = JSON.parse(row.notes||'{}'); } catch(e) { extra = { notes: row.notes||'' }; }
+  return { id: row.id, type: row.test_type||'other', date: row.test_date||'',
+    status: row.result||'pending', doctor: row.ordering_doctor||'',
+    facility: row.facility||'', notes: extra.notes||'',
+    extracted: row.extracted||null, fileName: extra.fileName||null,
+    fileData: extra.fileData||null, fileType: extra.fileType||null,
+    savedAt: row.created_at||'' };
 }
 
 const TYPE_META={
@@ -454,7 +457,6 @@ function clearUpload(){
 function buildTestObj(extracted){
   const storeFile=curFileData&&curFileSize<=MAX_STORE_BYTES;
   return{
-    id:Date.now(),
     type:selectedType||'other',
     date:extracted?.date||document.getElementById('test_date').value||new Date().toISOString().split('T')[0],
     status:document.getElementById('test_status').value,
@@ -464,28 +466,27 @@ function buildTestObj(extracted){
     extracted:extracted||null,
     fileName:curFileName||null,
     fileType:curFileType||null,
-    fileData:storeFile?curFileData:null,
-    savedAt:new Date().toISOString()
+    fileData:storeFile?curFileData:null
   };
 }
 
 async function saveTest(extracted){
   if(!selectedType){toast('Please select a test type first');return;}
-  const tests=getTests();
   const newTest=buildTestObj(extracted);
-  tests.unshift(newTest);
-  saveTests(tests);
-  await saveNewTestToCloud(newTest);
+  try {
+    const row = await DB.saveDiagnosticTest(toDBTest(newTest));
+    if(row) tests.unshift(fromDBTest(row));
+  } catch(e) { toast('⚠️ Could not save test'); console.error(e); return; }
   toast('Test saved ✓');
   clearUpload();
 }
 
 // Override status on a saved test (e.g. when AI returns wrong status for complex PDF)
-function overrideTestStatus(idx,newStatus){
-  const tests=getTests();
-  if(!tests[idx]) return;
-  tests[idx].status=newStatus;
-  saveTests(tests);
+async function overrideTestStatus(id,newStatus){
+  const t=tests.find(x=>x.id===id);
+  if(!t) return;
+  t.status=newStatus;
+  try { await DB.saveDiagnosticTest(toDBTest(t)); } catch(e) { toast('⚠️ Could not save'); return; }
   document.getElementById('test_status').value=newStatus;
   // Update button to confirmation
   const btn=document.querySelector('[onclick^="overrideTestStatus"]');
@@ -514,7 +515,7 @@ async function extractAndSave(){
   const btn=document.getElementById('extract_btn');
   const out=document.getElementById('extract_out');
   btn.disabled=true;
-  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Analyzing report...</p></div>';
+  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)" id="extract_sub">Analyzing your report — this may take a moment.</p></div>';
 
   const meta=TYPE_META[selectedType]||TYPE_META.other;
 
@@ -542,16 +543,13 @@ async function extractAndSave(){
       msgs=[{role:'user',content:analyzeInstruction+'\n\n'+atob(curFileData).slice(0,4000)}];
     }
 
-    const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const d=await DB.runBackgroundAI({
         model:'claude-sonnet-4-6',max_tokens:2500,
         system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","impressionsText":"Copy the EXACT verbatim text from the Impressions, Assessment, or Conclusion section of this report — not WNL table rows, only the narrative conclusion paragraph(s). Empty string if none found.","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology; any loss of lordosis, anterior translation, listhesis, or ligament laxity is noted\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation, lordosis loss, ligament laxity, instability, or kyphosis findings = abnormal\n- For EKG reports: a QTc under 440ms in males or 460ms in females is normal. Do not flag borderline unless QTc exceeds these thresholds or the Impressions explicitly note an abnormality.\n- For any test on a patient with dysautonomia or POTS: note that heart rate variability findings, mild tachycardia, and positional changes may be expected and should be interpreted in that context.',
-        messages:msgs
-      })
+        messages:msgs,
+        onProgress:(stage)=>{if(stage==='working'){const sub=document.getElementById('extract_sub');if(sub)sub.textContent='Still analyzing — detailed reports take a little longer. Hang tight.';}}
     });
-    const d=await r.json();
-    const rawText=(d.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    const rawText=(d?.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     let res;
     try{
       res=JSON.parse(rawText);
@@ -571,7 +569,6 @@ async function extractAndSave(){
     }
 
     // Save with extracted data
-    const tests=getTests();
     const testObj=buildTestObj(res);
     // Apply AI-determined status
     if(res.status&&['normal','abnormal','borderline','pending'].includes(res.status)){
@@ -593,9 +590,8 @@ async function extractAndSave(){
     }
 
     document.getElementById('test_status').value=testObj.status;
-    tests.unshift(testObj);
-    saveTests(tests);
-    await saveNewTestToCloud(testObj);
+    const savedRow = await DB.saveDiagnosticTest(toDBTest(testObj));
+    if(savedRow) tests.unshift(fromDBTest(savedRow));
 
     const statusColor=testObj.status==='abnormal'?'var(--red)':testObj.status==='borderline'?'var(--amber)':'var(--green)';
     const statusLabel=testObj.status==='abnormal'?'🔴 Abnormal':testObj.status==='borderline'?'🟡 Borderline':testObj.status==='normal'?'🟢 Normal':'⬜ Pending';
@@ -608,14 +604,15 @@ async function extractAndSave(){
       +(res.redFlags&&res.redFlags.length?'<div style="background:var(--red-pale);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;color:var(--red)"><strong>⚠️ Red flags:</strong> '+res.redFlags.map(f=>esc(f)).join(' · ')+'</div>':'')
       +(res.whatItMeans?'<div style="margin-bottom:8px">'+esc(res.whatItMeans)+'</div>':'')
       +(impressionsText?'<details style="margin-top:6px"><summary style="font-size:11px;color:var(--ink-muted);cursor:pointer">Extracted Impressions section</summary><div style="font-size:11px;color:var(--ink-muted);margin-top:6px;padding:8px;background:var(--white);border-radius:6px;border:1px solid var(--border);white-space:pre-wrap">'+esc(impressionsText)+'</div></details>':'')
-      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(0,\'abnormal\')" style="font-size:13px;padding:8px 16px;background:var(--red-pale);border:1.5px solid var(--red);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;width:100%">⚠️ AI classified this wrong — click to mark as Abnormal</button></div>':'')
+      +(testObj.status==='normal'||testObj.status==='pending'?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><button onclick="overrideTestStatus(\''+(tests[0]?.id||'')+'\',\'abnormal\')" style="font-size:13px;padding:8px 16px;background:var(--red-pale);border:1.5px solid var(--red);color:var(--red);border-radius:8px;cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;width:100%">⚠️ AI classified this wrong — click to mark as Abnormal</button></div>':'')
       +'</div>';
 
     toast('Saved ✓');
 
   }catch(e){
-    out.innerHTML='<div style="color:var(--red);font-size:13px">Extraction failed. Saving without analysis.</div>';
-    saveTest();
+    const msg=esc(e.message||'We couldn’t finish reading this report.');
+    out.innerHTML='<div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-soft);line-height:1.6">'+msg+'<br><span style="color:var(--ink-muted)">We’ve saved the test so nothing is lost — you can re-run the analysis anytime.</span></div>';
+    await saveTest();
     console.error(e);
   }finally{btn.disabled=false;}
 }
@@ -634,7 +631,6 @@ function setView(view,btn){
 }
 
 function renderHistory(){
-  const tests=getTests();
   const empty=document.getElementById('history_empty');
   const content=document.getElementById('history_content');
   if(!tests.length){empty.style.display='block';content.style.display='none';return;}
@@ -704,9 +700,9 @@ function renderTestCard(t){
         </div>`:''}
       </div>`:''}
       <div class="test-card-actions" style="padding:0 16px 12px">
-        <button class="tc-btn" onclick="editTest(${t.id})">✏️ Edit</button>
-        ${t.fileData?`<button class="tc-btn" onclick="viewFile(${t.id})">🖨️ View & Print</button>`:''}
-        <button class="tc-btn danger" onclick="deleteTest(${t.id})">🗑 Remove</button>
+        <button class="tc-btn" onclick="editTest('${t.id}')">✏️ Edit</button>
+        ${t.fileData?`<button class="tc-btn" onclick="viewFile('${t.id}')">🖨️ View & Print</button>`:''}
+        <button class="tc-btn danger" onclick="deleteTest('${t.id}')">🗑 Remove</button>
       </div>
     </div>
   </div>`;
@@ -782,7 +778,6 @@ function showComparison(type){
 }
 
 function editTest(id){
-  const tests=getTests();
   const t=tests.find(t=>t.id===id);
   if(!t)return;
   const meta=TYPE_META[t.type]||TYPE_META.other;
@@ -815,29 +810,28 @@ function editTest(id){
       <input type="text" class="fi" id="edit_notes" value="${esc(t.notes||'')}">
     </div>
     <div style="display:flex;gap:9px;margin-top:6px">
-      <button class="btn-p" onclick="saveEdit(${id})">💾 Save changes</button>
+      <button class="btn-p" onclick="saveEdit('${id}')">💾 Save changes</button>
       <button class="btn-o" onclick="document.getElementById('mod_ov').classList.remove('open')">Cancel</button>
     </div>`;
   document.getElementById('mod_ov').classList.add('open');
 }
 
-function saveEdit(id){
-  const tests=getTests();
-  const idx=tests.findIndex(t=>t.id===id);
-  if(idx===-1)return;
-  tests[idx].date=document.getElementById('edit_date').value;
-  tests[idx].status=document.getElementById('edit_status').value;
-  tests[idx].doctor=document.getElementById('edit_doctor').value.trim();
-  tests[idx].facility=document.getElementById('edit_facility').value.trim();
-  tests[idx].notes=document.getElementById('edit_notes').value.trim();
-  saveTests(tests);
+async function saveEdit(id){
+  const t=tests.find(x=>x.id===id);
+  if(!t) return;
+  t.date=document.getElementById('edit_date').value;
+  t.status=document.getElementById('edit_status').value;
+  t.doctor=document.getElementById('edit_doctor').value.trim();
+  t.facility=document.getElementById('edit_facility').value.trim();
+  t.notes=document.getElementById('edit_notes').value.trim();
+  try { await DB.saveDiagnosticTest(toDBTest(t)); } catch(e) { toast('⚠️ Could not save'); return; }
   document.getElementById('mod_ov').classList.remove('open');
   renderHistory();
   toast('Updated ✓');
 }
 
 function viewFile(id){
-  const t=getTests().find(t=>t.id===id);
+  const t=tests.find(t=>t.id===id);
   if(!t||!t.fileData)return;
   const dataUrl='data:'+t.fileType+';base64,'+t.fileData;
   const w=window.open();
@@ -849,23 +843,23 @@ function viewFile(id){
   w.document.title=t.fileName||'Report';
 }
 
-function deleteTest(id){
+async function deleteTest(id){
   if(!confirm('Remove this test?'))return;
-  saveTests(getTests().filter(t=>t.id!==id));
+  try { await DB.deleteDiagnosticTest(id); } catch(e) { toast('⚠️ Could not delete'); return; }
+  tests=tests.filter(t=>t.id!==id);
   renderHistory();
   toast('Removed');
 }
 
 // ── GENERATE APPOINTMENT SUMMARY ──
 async function genSummary(){
-  const tests=getTests();
   if(!tests.length){toast('No tests logged yet');return;}
 
   const appt=document.getElementById('sum_appt').value.trim();
   const btn=document.getElementById('sum_btn');
   const out=document.getElementById('sum_out');
   btn.disabled=true;
-  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Building your testing summary...</p></div>';
+  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)" id="sum_sub">Building your testing summary — this may take a moment.</p></div>';
 
   // Build data string
   const groups={};
@@ -879,16 +873,13 @@ async function genSummary(){
   const prof=(await DB.getProfile());
 
   try{
-    const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const d=await DB.runBackgroundAI({
         model:'claude-sonnet-4-6',max_tokens:2000,
         system:'You create diagnostic testing summaries for medical advocates. Return ONLY valid JSON no markdown:\n{"overview":"2-3 sentence clinical overview of the full testing history","byType":[{"type":"Test type","testCount":0,"trend":"improving|worsening|stable|mixed","summary":"1-2 sentences on what the tests show over time","keyFindings":["Notable finding"]}],"redFlags":["Urgent findings needing attention — empty if none"],"questionsForDoctor":["3-4 specific questions based on this testing history"],"closingNote":"One sentence context for the receiving doctor"}',
-        messages:[{role:'user',content:'Create a diagnostic testing summary.\nPatient: '+(prof.name||'Patient')+(prof.diagnoses?'\nDiagnoses: '+prof.diagnoses:'')+'\n'+(appt?'Appointment: '+appt+'\n':'')+'\nTesting history:\n'+dataStr}]
-      })
+        messages:[{role:'user',content:'Create a diagnostic testing summary.\nPatient: '+(prof.name||'Patient')+(prof.diagnoses?'\nDiagnoses: '+prof.diagnoses:'')+'\n'+(appt?'Appointment: '+appt+'\n':'')+'\nTesting history:\n'+dataStr}],
+        onProgress:(stage)=>{if(stage==='working'){const sub=document.getElementById('sum_sub');if(sub)sub.textContent='Still building your summary — almost there. Hang tight.';}}
     });
-    const d=await r.json();
-    const res=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const res=JSON.parse((d?.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
     const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 
     out.innerHTML=`
@@ -922,7 +913,7 @@ async function genSummary(){
       </div>`;
 
   }catch(e){
-    out.innerHTML='<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>';
+    out.innerHTML='<div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:12px;padding:14px;color:var(--ink-soft);font-size:13px;line-height:1.6">'+esc(e.message||'We couldn’t finish your summary just now. Please try again.')+'</div>';
     console.error(e);
   }finally{btn.disabled=false;}
 }
@@ -934,64 +925,14 @@ function copyHistoryText(){
   navigator.clipboard.writeText(el.innerText).then(()=>toast('Copied ✓'));
 }
 
-async function backupTestsToCloud() {
-  const tests = getTests();
-  if (!tests.length) { toast('No tests found in local storage'); return; }
-  const btn = document.getElementById('backup-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '☁️ Backing up…'; }
-  let saved = 0, failed = 0;
-  for (const t of tests) {
-    try { await DB.saveDiagnosticTest(t); saved++; }
-    catch(e) { console.warn('[backup]', e.message); failed++; }
-  }
-  if (btn) { btn.disabled = false; btn.textContent = '☁️ Backup to Cloud'; }
-  if (failed === 0) {
-    toast(`✓ Backed up ${saved} test${saved !== 1 ? 's' : ''} to cloud`);
-  } else {
-    toast(`Backed up ${saved}, ${failed} failed — please try again`);
-  }
-}
-
 // Init
 document.addEventListener('DOMContentLoaded', async () => {
+  await Auth.requireAuth();
   document.getElementById('test_date').value = new Date().toISOString().split('T')[0];
-
-  // Get patient ID → namespace the storage key
   try {
-    const pid = await DB.patientId();
-    if (pid) {
-      _testingPid = pid;
-      // One-time migration: copy flat key data to namespaced key, then delete flat key
-      if (!localStorage.getItem(testingKey()) && localStorage.getItem(FLAT_KEY)) {
-        localStorage.setItem(testingKey(), localStorage.getItem(FLAT_KEY));
-        localStorage.removeItem(FLAT_KEY);
-      }
-    }
-  } catch(e) {}
-
-  // Try Supabase first, fall back to localStorage
-  try {
-    const dbTests = await DB.getDiagnosticTests();
-    if (dbTests.length) {
-      // Sync Supabase data into namespaced localStorage so the page can use getTests()
-      // Map DB field names back to local names
-      const mapped = dbTests.map(t => ({
-        id: t.id,
-        type: t.type || 'other',
-        date: t.date || '',
-        status: t.status || 'pending',
-        doctor: t.doctor || '',
-        facility: t.facility || '',
-        notes: t.notes || '',
-        extracted: t.extracted || null,
-        fileName: t.fileName || null,
-        savedAt: t.savedAt || ''
-      }));
-      // Only overwrite localStorage if DB has more records (DB is authoritative)
-      const local = getTests();
-      if (mapped.length >= local.length) saveTests(mapped, true);
-    }
-  } catch(e) {}
+    const rows = await DB.getDiagnosticTests();
+    tests = rows.map(fromDBTest);
+  } catch(e) { toast('⚠️ Could not load tests'); }
 });
 </script>
 </body>

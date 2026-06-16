@@ -1589,6 +1589,7 @@ function showToast(msg) {
 // ══ INIT ══
 // Load everything from Supabase — no localStorage involved for data.
 (async () => {
+  await Auth.requireAuth();
   const DEFAULT_SYMPTOMS = [
     { id:'fatigue',   label:'Fatigue',         icon:'😴' },
     { id:'pain',      label:'Pain / Achiness', icon:'💢' },
@@ -1803,7 +1804,7 @@ async function vlParseWithAI(text) {
   try {
     const r = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 500,

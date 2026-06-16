@@ -806,7 +806,7 @@ Please create a focused visit script for this appointment.`;
     try {
       const response = await fetch('/.netlify/functions/claude-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await aiHeaders(),
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 1000,

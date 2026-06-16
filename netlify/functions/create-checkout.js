@@ -1,5 +1,16 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://medadvocate.org';
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin'
+  };
+}
+
 const SUB_PRICES = [
   'price_1TS2I35jVY07VRUx6fjbi0CJ',
   'price_1TS2MC5jVY07VRUxGkfI4j5l',
@@ -7,9 +18,19 @@ const SUB_PRICES = [
   'price_1TS2Pz5jVY07VRUxfjvFhgu6',
 ];
 
+// ⚠️ SECURITY NOTE: This endpoint is intentionally left UNAUTHENTICATED for now.
+// Buyers may reach the checkout page before they have a Supabase account/session,
+// so requiring a JWT here would block purchases. Its blast radius is limited: it
+// only creates Stripe Checkout sessions (no Anthropic spend, no PHI access).
+// REVISIT once the Stripe webhook is built — at that point, tie checkout to an
+// authenticated user (or add rate limiting) so it can't be abused to spam
+// session/customer creation. See AUDIT.md HIGH-1.
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders(), body: '' };
+  }
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers: corsHeaders(), body: 'Method Not Allowed' };
   }
 
   try {
@@ -69,7 +90,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
       body: JSON.stringify({ id: session.id }),
     };
 
@@ -77,7 +98,7 @@ exports.handler = async (event) => {
     console.error('Stripe error:', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
       body: JSON.stringify({ error: error.message }),
     };
   }

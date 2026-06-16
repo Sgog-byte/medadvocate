@@ -162,9 +162,37 @@ function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").
 function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800)}
 function fmtD(d){if(!d)return"";try{return new Date(d+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}catch(e){return d}}
 
-var DOCS_KEY="advocate_documents";
-function getDocs(){return JSON.parse(localStorage.getItem(DOCS_KEY)||"[]")}
-function saveDocs(d){localStorage.setItem(DOCS_KEY,JSON.stringify(d))}
+var docs=[];
+
+function toDBDoc(d){
+  return {
+    title:d.name,
+    doc_type:d.cat||null,
+    content:d.extractedText||null,
+    file_name:d.fileName||null,
+    doc_date:d.date||null,
+    source:d.doctor||null,
+    notes:JSON.stringify({fileType:d.fileType||'',isImg:!!d.isImg,fileSize:d.fileSize||0})
+  };
+}
+
+function fromDBDoc(row){
+  var extra={};
+  try{extra=JSON.parse(row.notes||'{}');}catch(e){}
+  return {
+    id:row.id,
+    name:row.title||'',
+    cat:row.doc_type||'other',
+    date:row.doc_date||'',
+    doctor:row.source||'',
+    fileName:row.file_name||'',
+    fileType:extra.fileType||'',
+    isImg:extra.isImg||false,
+    fileSize:extra.fileSize||0,
+    extractedText:row.content||null,
+    savedAt:row.created_at
+  };
+}
 
 var curFile=null,curData=null,curType=null,curIsImg=false,activeFilter="all";
 
@@ -220,20 +248,26 @@ var CAT={
   other:{lbl:"Other",ico:"📄",bg:"#f5f5f5",bd:"#ddd",c:"#666"}
 };
 
-function saveDoc(extracted){
-  if(!curFile){toast("Please select a file first");return;}
-  var docs=getDocs();
-  docs.unshift({
-    id:Date.now(),
+async function saveDoc(extracted){
+  if(!curFile){toast("Please select a file first");return false;}
+  var appDoc={
     name:document.getElementById("doc_name").value.trim()||curFile.name,
     cat:document.getElementById("doc_cat").value,
     date:document.getElementById("doc_date").value,
     doctor:document.getElementById("doc_doc").value.trim(),
     fileName:curFile.name,fileType:curType,isImg:curIsImg,
-    fileSize:curFile.size,extractedText:extracted||null,
-    savedAt:new Date().toISOString()
-  });
-  saveDocs(docs);
+    fileSize:curFile.size,extractedText:extracted||null
+  };
+  try{
+    var newRow=await DB.saveDocument(toDBDoc(appDoc));
+    docs.unshift(fromDBDoc(newRow));
+    if(!extracted) toast("Saved ✓");
+    return true;
+  }catch(e){
+    toast("⚠️ Could not save document — check connection");
+    console.error(e);
+    return false;
+  }
 }
 
 async function extractDoc(){
@@ -252,47 +286,64 @@ async function extractDoc(){
     } else {
       msgs=[{role:"user",content:"Extract key medical info from:\n\n"+atob(curData)+ctx}];
     }
-    var r=await fetch("/.netlify/functions/claude-proxy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,system:"You extract and summarize medical documents for non-medical caregivers. Be clear, organized, and highlight what matters — findings, diagnoses, medications, follow-up, action items.",messages:msgs})});
+    var r=await fetch("/.netlify/functions/claude-proxy",{method:"POST",headers:await aiHeaders(),body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,system:"You extract and summarize medical documents for non-medical caregivers. Be clear, organized, and highlight what matters — findings, diagnoses, medications, follow-up, action items.",messages:msgs})});
     var d=await r.json();
     var extracted=d.content?.[0]?.text||"";
-    saveDoc(extracted);
-    out.innerHTML="<div style='background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:16px;font-size:13px;color:var(--ink-soft);line-height:1.75'><div style='font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px'>🧠 Key Information Extracted</div>"+extracted.replace(/\n/g,"<br>")+"</div>";
-    toast("Saved with extracted info ✓");
+    var saved=await saveDoc(extracted);
+    if(saved){
+      out.innerHTML="<div style='background:var(--sage-pale);border:1px solid var(--sage-light);border-radius:12px;padding:16px;font-size:13px;color:var(--ink-soft);line-height:1.75'><div style='font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:8px'>🧠 Key Information Extracted</div>"+extracted.replace(/\n/g,"<br>")+"</div>";
+      toast("Saved with extracted info ✓");
+    }
   }catch(e){
     out.innerHTML="<div style='color:var(--red);font-size:13px'>Extraction failed. Saving without extraction.</div>";
-    saveDoc();console.error(e);
+    await saveDoc();console.error(e);
   }finally{btn.disabled=false;}
 }
 
 function renderLib(){
-  var docs=getDocs();
   var empty=document.getElementById("lib_empty"),cont=document.getElementById("lib_cont");
   if(!docs.length){empty.style.display="block";cont.style.display="none";return;}
   empty.style.display="none";cont.style.display="block";
   var cats=["all",...new Set(docs.map(d=>d.cat))];
-  document.getElementById("cat_row").innerHTML=cats.map(c=>"<button class='cbtn "+(c===activeFilter?"active":"")+"' onclick='setFilter(""+c+"",this)'>"+( c==="all"?"All":(CAT[c]?.ico||"")+" "+(CAT[c]?.lbl||c))+"</button>").join("");
+  document.getElementById("cat_row").innerHTML=cats.map(c=>"<button class='cbtn "+(c===activeFilter?"active":"")+"' onclick='setFilter("+JSON.stringify(c)+",this)'>"+( c==="all"?"All":(CAT[c]?.ico||"")+" "+(CAT[c]?.lbl||c))+"</button>").join("");
   var filtered=activeFilter==="all"?docs:docs.filter(d=>d.cat===activeFilter);
   if(!filtered.length){document.getElementById("docs_grid").innerHTML="<div style='grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-muted)'>No documents in this category.</div>";return;}
   document.getElementById("docs_grid").innerHTML=filtered.map(d=>{
     var cfg=CAT[d.cat]||CAT.other;
-    return"<div class='doc-card'><div class='doc-top'>"+cfg.ico+"</div><div class='doc-body'><span class='doc-cat' style='background:"+cfg.bg+";border:1px solid "+cfg.bd+";color:"+cfg.c+"'>"+cfg.ico+" "+cfg.lbl+"</span><div class='doc-name'>"+esc(d.name)+"</div><div class='doc-meta'>"+(d.date?fmtD(d.date):"")+(d.doctor?" · "+esc(d.doctor):"")+"</div>"+(d.extractedText?"<div class='doc-extract'>"+esc(d.extractedText.substring(0,100))+"…</div>":"")+"<div class='doc-acts'>"+(d.extractedText?"<button class='db' onclick='viewExt("+d.id+")'>📄 Summary</button>":"")+"<button class='db rd' onclick='delDoc("+d.id+")'>🗑</button></div></div></div>";
+    return"<div class='doc-card'><div class='doc-top'>"+cfg.ico+"</div><div class='doc-body'><span class='doc-cat' style='background:"+cfg.bg+";border:1px solid "+cfg.bd+";color:"+cfg.c+"'>"+cfg.ico+" "+cfg.lbl+"</span><div class='doc-name'>"+esc(d.name)+"</div><div class='doc-meta'>"+(d.date?fmtD(d.date):"")+(d.doctor?" · "+esc(d.doctor):"")+"</div>"+(d.extractedText?"<div class='doc-extract'>"+esc(d.extractedText.substring(0,100))+"…</div>":"")+"<div class='doc-acts'>"+(d.extractedText?"<button class='db' onclick='viewExt("+JSON.stringify(d.id)+")'>📄 Summary</button>":"")+"<button class='db rd' onclick='delDoc("+JSON.stringify(d.id)+")'>🗑</button></div></div></div>";
   }).join("");
 }
 
 function setFilter(cat,btn){activeFilter=cat;renderLib();}
 
 function viewExt(id){
-  var doc=getDocs().find(d=>d.id===id);if(!doc)return;
+  var doc=docs.find(d=>d.id===id);if(!doc)return;
   document.getElementById("mod_title").textContent=doc.name;
   document.getElementById("mod_sub").textContent=(CAT[doc.cat]?.lbl||doc.cat)+(doc.date?" · "+fmtD(doc.date):"")+(doc.doctor?" · "+doc.doctor:"");
   document.getElementById("mod_body").innerHTML="<div class='extract-box'>"+esc(doc.extractedText||"No extracted content.")+"</div>";
   document.getElementById("mod_ov").classList.add("open");
 }
 
-function delDoc(id){if(!confirm("Remove this document?"))return;saveDocs(getDocs().filter(d=>d.id!==id));renderLib();toast("Removed");}
+async function delDoc(id){
+  if(!confirm("Remove this document?"))return;
+  try{
+    await DB.deleteDocument(id);
+    docs=docs.filter(d=>d.id!==id);
+    renderLib();toast("Removed");
+  }catch(e){toast("⚠️ Could not remove document");}
+}
 function closeMod(){document.getElementById("mod_ov").classList.remove("open")}
 
-document.getElementById("doc_date").value=new Date().toISOString().split("T")[0];
+document.addEventListener('DOMContentLoaded', async function(){
+  await Auth.requireAuth();
+  document.getElementById("doc_date").value=new Date().toISOString().split("T")[0];
+  try{
+    var rows=await DB.getDocuments();
+    docs=rows.map(fromDBDoc);
+  }catch(e){
+    toast("⚠️ Could not load documents — check your connection");
+  }
+});
 </script>
 </body>
 </html>

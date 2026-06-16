@@ -326,19 +326,14 @@ function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 
 // ─── LAB INSIGHTS FROM LAB TRACKER ───
-// Key is namespaced per patient so Sarah's labs don't appear in Kira's scripts
-let _scriptLabsKey = 'advocate_script_labs';
-function scriptLabsKey() { return _scriptLabsKey; }
+let labInsights = [];  // [{id, text}]
+let diagnosticTests = [];  // [{test_name, test_type, test_date, result, notes, …}] — auto-fetched
 
 function loadLabInsights() {
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-  // Normalize: handle both plain strings (old format) and {id, text} objects (new format)
-  saved = saved.map(x => typeof x === 'string' ? { id: null, text: x } : x);
   const empty = document.getElementById('labInsightsEmpty');
   const list = document.getElementById('labInsightsList');
   const clearBtn = document.getElementById('clearLabsBtn');
-  if (!saved.length) {
+  if (!labInsights.length) {
     empty.style.display = 'block';
     list.style.display = 'none';
     clearBtn.style.display = 'none';
@@ -347,7 +342,7 @@ function loadLabInsights() {
   empty.style.display = 'none';
   list.style.display = 'flex';
   clearBtn.style.display = 'inline';
-  list.innerHTML = saved.map((item, i) => `
+  list.innerHTML = labInsights.map((item, i) => `
     <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
       <span style="color:#2d6a4f;margin-top:1px">•</span>
       <span style="flex:1">${escH(item.text || '')}</span>
@@ -356,57 +351,59 @@ function loadLabInsights() {
 }
 
 async function removeLabInsight(i) {
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-  saved = saved.map(x => typeof x === 'string' ? { id: null, text: x } : x);
-  const item = saved[i];
-  saved.splice(i, 1);
-  localStorage.setItem(scriptLabsKey(), JSON.stringify(saved));
+  const item = labInsights[i];
+  labInsights.splice(i, 1);
   loadLabInsights();
   if (item && item.id) {
     try { await DB.deleteInsight(item.id); } catch(e) { console.warn('Insight delete failed:', e.message); }
   }
 }
 
-function clearLabInsights() {
-  localStorage.removeItem(scriptLabsKey());
+async function clearLabInsights() {
+  labInsights = [];
   loadLabInsights();
+  try { await DB.deleteAllInsights(); } catch(e) { console.warn('Clear insights failed:', e.message); }
 }
 
 function getLabInsightsText() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]');
-    if (!saved.length) return '';
-    const texts = saved.map(x => typeof x === 'string' ? x : (x.text || ''));
-    return '\n\nRecent lab findings to reference in scripts:\n' + texts.join('\n');
-  } catch(e) { return ''; }
+  if (!labInsights.length) return '';
+  const texts = labInsights.map(x => x.text || '');
+  return '\n\nRecent lab findings to reference in scripts:\n' + texts.join('\n');
+}
+
+function getDiagnosticTestsText() {
+  if (!diagnosticTests.length) return '';
+  // Keep only the most recent test per type — diagnosticTests is already test_date
+  // descending. Key by test_type so each type appears once; fall back to test_name
+  // when a row has no type, so distinct untyped tests don't collapse together.
+  const seen = new Set();
+  const recent = [];
+  for (const t of diagnosticTests) {
+    const key = t.test_type || t.test_name || '';
+    if (seen.has(key)) continue;
+    seen.add(key);
+    recent.push(t);
+  }
+  const lines = recent.map(t => {
+    // Prefer the more specific test_name in the output line; fall back to test_type.
+    const name = t.test_name || t.test_type || 'Test';
+    let line = '- ' + name;
+    if (t.test_date) line += ` (${t.test_date})`;
+    if (t.result)    line += ` — ${t.result}`;
+    if (t.notes)     line += `: ${t.notes}`;
+    return line;
+  });
+  return '\n\nRecent diagnostic test results to reference in scripts:\n' + lines.join('\n');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await Auth.requireAuth();
   try {
     const pid = await DB.patientId();
     if (pid) {
-      _scriptLabsKey = `advocate_script_labs_${pid}`;
-      // Merge Supabase insights with localStorage
       const dbInsights = await DB.loadInsights(pid);
-      if (dbInsights.length) {
-        let local = [];
-        try { local = JSON.parse(localStorage.getItem(scriptLabsKey()) || '[]'); } catch(e) {}
-        // Normalize old string entries to objects
-        local = local.map(x => typeof x === 'string' ? { id: null, text: x } : x);
-        // Add DB rows not already present in local
-        const localTexts = new Set(local.map(x => x.text));
-        for (const row of dbInsights) {
-          if (!localTexts.has(row.insight_text)) {
-            local.push({ id: row.id, text: row.insight_text });
-          } else {
-            // Backfill id on matching entry that has no id yet
-            const entry = local.find(x => x.text === row.insight_text && !x.id);
-            if (entry) entry.id = row.id;
-          }
-        }
-        localStorage.setItem(scriptLabsKey(), JSON.stringify(local));
-      }
+      labInsights = dbInsights.map(row => ({ id: row.id, text: row.insight_text }));
+      diagnosticTests = await DB.getDiagnosticTests();
     }
   } catch(e) {}
   loadLabInsights();
@@ -473,7 +470,7 @@ async function generateScripts(){
 
   try{
     const r = await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST', headers:await aiHeaders(),
       body: JSON.stringify({
         model:'claude-sonnet-4-6', max_tokens:2500,
         system:`You write powerful, real-world advocacy scripts for medical advocates. These are the exact words someone says out loud in a doctor's office, IEP meeting, or ER. 
@@ -507,7 +504,7 @@ Patient: ${name||'the patient'}
 Diagnoses/conditions: ${dx||'not specified'}
 Appointment/setting: ${appt||'medical appointment'}
 Tone preference: ${TONE_MAP[currentTone]}
-${context?'Context: '+context:''}${getLabInsightsText()}
+${context?'Context: '+context:''}${getLabInsightsText()}${getDiagnosticTestsText()}
 
 Situations to write scripts for:
 ${situations.length ? situations.slice(0,3).map((s,i)=>`${i+1}. ${s}`).join('\n') : 'General dismissal and advocacy scripts for these conditions'}
@@ -626,10 +623,14 @@ function editScripts() {
   ta.focus();
   ta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-function saveScriptsEdit() {
-  window._scriptText = document.getElementById('editScriptsTA').value;
+async function saveScriptsEdit() {
+  const text = document.getElementById('editScriptsTA').value;
+  window._scriptText = text;
   document.getElementById('editScriptsWrap').style.display = 'none';
-  showToast('Changes saved ✓');
+  const apptEl = document.getElementById('s_appt');
+  const title = (apptEl && apptEl.value.trim()) ? `Visit script — ${apptEl.value.trim()}` : 'Visit script';
+  try { await DB.saveRawScript('visit', title, text); showToast('Saved to My Advocate ✓'); }
+  catch(e) { console.warn('Script save failed:', e.message); showToast('Changes saved locally — sign in to sync'); }
 }
 
 // Pre-fill from profile + medications

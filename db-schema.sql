@@ -206,6 +206,24 @@ create table if not exists documents (
 create index if not exists documents_patient_idx on documents(patient_id, created_at desc);
 
 -- ============================================================
+-- APPOINTMENTS (upcoming / past appointments calendar)
+-- ============================================================
+create table if not exists appointments (
+  id           uuid primary key default uuid_generate_v4(),
+  patient_id   uuid not null references patients(id) on delete cascade,
+  appt_date    date not null,
+  appt_time    time,
+  doctor       text not null,
+  specialty    text,
+  location     text,
+  notes        text,
+  patient_name text,
+  created_at   timestamptz default now()
+);
+
+create index if not exists appointments_patient_date_idx on appointments(patient_id, appt_date asc);
+
+-- ============================================================
 -- APPOINTMENT RECORDINGS
 -- ============================================================
 create table if not exists appointment_recordings (
@@ -224,21 +242,43 @@ create table if not exists appointment_recordings (
 create index if not exists appt_recordings_patient_idx on appointment_recordings(patient_id, recorded_at desc);
 
 -- ============================================================
--- SAVED SCRIPTS (Visit prep scripts)
+-- SAVED SCRIPTS (Visit prep scripts + free-form saved content)
 -- ============================================================
 create table if not exists saved_scripts (
+  id             uuid primary key default uuid_generate_v4(),
+  patient_id     uuid not null references patients(id) on delete cascade,
+  title          text,              -- free-form script title
+  type           text,              -- visit, credibility, iep, lab, custom
+  content        text,              -- full free-form script text
+  specialist     text,              -- structured scripts: specialist name (was NOT NULL, now nullable)
+  opener_line    text,
+  priorities     jsonb default '[]',
+  questions      jsonb default '[]',
+  timing_tip     text,
+  emotional_note text,
+  created_at     timestamptz default now()
+);
+
+-- Migration for existing installations (run in Supabase SQL editor):
+-- alter table saved_scripts add column if not exists title text;
+-- alter table saved_scripts add column if not exists type text;
+-- alter table saved_scripts add column if not exists content text;
+-- alter table saved_scripts alter column specialist drop not null;
+
+create index if not exists saved_scripts_patient_idx on saved_scripts(patient_id, created_at desc);
+
+-- ============================================================
+-- SCRIPT INSIGHTS (lab / appointment notes pulled into visit scripts)
+-- ============================================================
+create table if not exists script_insights (
   id           uuid primary key default uuid_generate_v4(),
   patient_id   uuid not null references patients(id) on delete cascade,
-  specialist   text not null,
-  opener_line  text,
-  priorities   jsonb default '[]',
-  questions    jsonb default '[]',
-  timing_tip   text,
-  emotional_note text,
+  source       text,              -- e.g. 'Lab 2024-01-15', 'Lab trend'
+  insight_text text not null,
   created_at   timestamptz default now()
 );
 
-create index if not exists saved_scripts_patient_idx on saved_scripts(patient_id, created_at desc);
+create index if not exists script_insights_patient_idx on script_insights(patient_id, created_at desc);
 
 -- ============================================================
 -- RESEARCH LIBRARY
@@ -255,6 +295,44 @@ create table if not exists research_library (
 );
 
 create index if not exists research_library_patient_idx on research_library(patient_id, created_at desc);
+
+-- ============================================================
+-- CONCIERGE TASKS
+-- ============================================================
+create table if not exists concierge_tasks (
+  id           uuid primary key default uuid_generate_v4(),
+  patient_id   uuid not null references patients(id) on delete cascade,
+  title        text not null,
+  contact      text,
+  category     text default 'other',
+  priority     text default 'normal',
+  due_date     date,
+  notes        text,
+  done         boolean default false,
+  done_at      timestamptz,
+  created_at   timestamptz default now()
+);
+
+create index if not exists concierge_tasks_patient_idx on concierge_tasks(patient_id, created_at desc);
+
+-- ============================================================
+-- CONCIERGE COMMUNICATION LOG
+-- ============================================================
+create table if not exists concierge_log (
+  id            uuid primary key default uuid_generate_v4(),
+  patient_id    uuid not null references patients(id) on delete cascade,
+  log_datetime  timestamptz default now(),
+  log_type      text,
+  contact       text,
+  person        text,
+  notes         text,
+  outcome       text default 'resolved',
+  ref_num       text,
+  followup_date date,
+  created_at    timestamptz default now()
+);
+
+create index if not exists concierge_log_patient_idx on concierge_log(patient_id, created_at desc);
 
 -- ============================================================
 -- USER PREFERENCES / SUBSCRIPTION
@@ -284,8 +362,12 @@ alter table flare_log          enable row level security;
 alter table care_team          enable row level security;
 alter table documents          enable row level security;
 alter table saved_scripts           enable row level security;
+alter table appointments            enable row level security;
 alter table appointment_recordings  enable row level security;
+alter table script_insights        enable row level security;
 alter table research_library        enable row level security;
+alter table concierge_tasks    enable row level security;
+alter table concierge_log      enable row level security;
 alter table user_settings      enable row level security;
 
 -- Patients: owned by auth user
@@ -339,13 +421,29 @@ create policy "users own saved_scripts"
   on saved_scripts for all
   using (patient_id in (select id from patients where user_id = auth.uid()));
 
+create policy "users own appointments"
+  on appointments for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
 create policy "users own appointment_recordings"
   on appointment_recordings for all
   using (patient_id in (select id from patients where user_id = auth.uid()))
   with check (patient_id in (select id from patients where user_id = auth.uid()));
 
+create policy "users own script_insights"
+  on script_insights for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
 create policy "users own research_library"
   on research_library for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
+create policy "users own concierge_tasks"
+  on concierge_tasks for all
+  using (patient_id in (select id from patients where user_id = auth.uid()));
+
+create policy "users own concierge_log"
+  on concierge_log for all
   using (patient_id in (select id from patients where user_id = auth.uid()));
 
 create policy "users own their settings"
