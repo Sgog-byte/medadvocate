@@ -971,7 +971,7 @@ async function processFile(file) {
 
       // Try text extraction first (works for digital PDFs)
       let text = '';
-      for (let i = 1; i <= Math.min(pdfDoc.numPages, 4); i++) {
+      for (let i = 1; i <= Math.min(pdfDoc.numPages, 20); i++) {
         const page = await pdfDoc.getPage(i);
         const c = await page.getTextContent();
         text += c.items.map(item => item.str).join(' ') + '\n';
@@ -984,7 +984,7 @@ async function processFile(file) {
       } else {
         // Scanned PDF — render pages to images and send via vision
         const images = [];
-        for (let i = 1; i <= Math.min(pdfDoc.numPages, 3); i++) {
+        for (let i = 1; i <= Math.min(pdfDoc.numPages, 15); i++) {
           images.push(await pdfToBase64Image(pdfDoc, i));
         }
         content = await extractLabsFromImages(images);
@@ -1138,6 +1138,8 @@ Return ONLY valid JSON (no markdown, no backticks):
 }
 
 Rules:
+- Read the ENTIRE document from the first page to the last before producing any output — multi-page reports often place additional values and an out-of-range summary on the final pages. Do not begin writing results until you have reviewed every page.
+- In the "results" array, list abnormal/out-of-range results (high, low, critical) FIRST, before any normal results, so the most clinically important values are never lost if output is shortened.
 - Extract every numeric lab result (include all panels)
 - Mark values outside reference range as high/low; well outside = critical
 - notes: empty string "" for normal results — only write notes for abnormal
@@ -1169,7 +1171,7 @@ async function callProxy(payload) {
 async function extractLabsFromFile(base64, mediaType) {
   return callProxy({
     model: 'claude-sonnet-4-6',
-    max_tokens: 4500,
+    max_tokens: 5000,
     system: buildSystemPrompt(),
     messages: [{
       role: 'user',
@@ -1218,7 +1220,7 @@ async function extractLabsFromImages(base64Array) {
   }));
   return callProxy({
     model: 'claude-sonnet-4-6',
-    max_tokens: 4500,
+    max_tokens: 5000,
     system: buildSystemPrompt(),
     messages: [{
       role: 'user',
@@ -1231,10 +1233,10 @@ async function extractLabsFromImages(base64Array) {
 }
 
 async function extractLabsFromText(text) {
-  const truncated = text.length > 12000 ? text.substring(0, 12000) + '\n[truncated]' : text;
+  const truncated = text.length > 50000 ? text.substring(0, 50000) + '\n[truncated]' : text;
   return callProxy({
     model: 'claude-sonnet-4-6',
-    max_tokens: 4500,
+    max_tokens: 5000,
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: `Lab report text:\n\n${truncated}` }]
   });
