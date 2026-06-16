@@ -1256,7 +1256,7 @@ Please create a focused visit script for this appointment.`;
     try {
       const response = await fetch('/.netlify/functions/claude-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await aiHeaders(),
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 1800,
@@ -1665,6 +1665,7 @@ Please create a focused visit script for this appointment.`;
     return '\n\nRecent lab findings to reference:\n' + texts.join('\n');
   }
   document.addEventListener('DOMContentLoaded', async () => {
+    await Auth.requireAuth();
     try {
       const pid = await DB.patientId();
       if (pid) {

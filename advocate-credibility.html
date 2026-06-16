@@ -1278,7 +1278,7 @@ Visit goal: ${data.visitGoal || 'not specified'}`;
   try {
     const resp = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1000,

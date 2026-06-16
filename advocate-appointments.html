@@ -219,6 +219,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 // ── Init ──────────────────────────────────────────────────────
 async function init() {
+  await Auth.requireAuth();
   await loadAppts();
 }
 

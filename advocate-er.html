@@ -213,6 +213,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 <div class="toast" id="toast"></div>
 
 <script>
+// Guard: block anonymous use of AI features and enforce trial status.
+(async()=>{ await Auth.requireAuth(); })();
 // ── UTILS ──
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
@@ -289,7 +291,7 @@ function getECs(){
 // ── API ──
 async function callClaude(system,user){
   const r=await fetch('/.netlify/functions/claude-proxy',{
-    method:'POST',headers:{'Content-Type':'application/json'},
+    method:'POST',headers:await aiHeaders(),
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system,messages:[{role:'user',content:user}]})
   });
   const d=await r.json();

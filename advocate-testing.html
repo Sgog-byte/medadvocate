@@ -515,7 +515,7 @@ async function extractAndSave(){
   const btn=document.getElementById('extract_btn');
   const out=document.getElementById('extract_out');
   btn.disabled=true;
-  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Analyzing report...</p></div>';
+  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)" id="extract_sub">Analyzing your report — this may take a moment.</p></div>';
 
   const meta=TYPE_META[selectedType]||TYPE_META.other;
 
@@ -543,16 +543,13 @@ async function extractAndSave(){
       msgs=[{role:'user',content:analyzeInstruction+'\n\n'+atob(curFileData).slice(0,4000)}];
     }
 
-    const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const d=await DB.runBackgroundAI({
         model:'claude-sonnet-4-6',max_tokens:2500,
         system:'You are a medical expert analyzing diagnostic test reports for a patient advocate. If the image contains waveform graphs with little readable text, describe what you can see and focus on any text portions (Impression, Findings, Summary sections). Return ONLY valid JSON, no markdown:\n{"date":"YYYY-MM-DD date the test was performed as written in the document, or null if not found","summary":"2-3 sentence plain-English summary of key findings — if waveforms only, note that and describe general appearance","status":"normal|abnormal|borderline|pending","impressionsText":"Copy the EXACT verbatim text from the Impressions, Assessment, or Conclusion section of this report — not WNL table rows, only the narrative conclusion paragraph(s). Empty string if none found.","findings":[{"key":"Finding name","value":"Result","flagged":true/false}],"whatItMeans":"Plain English explanation of what these results mean for the patient","redFlags":["Any urgent findings — empty array if none"],"questionsToAsk":["3 specific questions to ask the ordering doctor"]}\n\nCRITICAL STATUS RULES — read the ENTIRE report before setting status:\n- status must be "abnormal" if ANY of these are true: the Impressions or Assessment section describes abnormal findings; any measurement is flagged as exceeding established normals; any finding is labeled as instability, possible instability, or damage; the report conclusion identifies a deficit, loss, or pathology; any loss of lordosis, anterior translation, listhesis, or ligament laxity is noted\n- status must be "borderline" if some values are within normal but others are borderline or mildly deviated\n- status must be "normal" ONLY if the Impressions/Assessment section explicitly states all findings are within normal limits AND no individual measurements exceed normal ranges\n- Do NOT set status based only on individual "WNL" labels — always read the global Impressions and Assessment section which is the authoritative conclusion\n- For spinal biomechanics/PostureRay reports: any anterior translation, lordosis loss, ligament laxity, instability, or kyphosis findings = abnormal\n- For EKG reports: a QTc under 440ms in males or 460ms in females is normal. Do not flag borderline unless QTc exceeds these thresholds or the Impressions explicitly note an abnormality.\n- For any test on a patient with dysautonomia or POTS: note that heart rate variability findings, mild tachycardia, and positional changes may be expected and should be interpreted in that context.',
-        messages:msgs
-      })
+        messages:msgs,
+        onProgress:(stage)=>{if(stage==='working'){const sub=document.getElementById('extract_sub');if(sub)sub.textContent='Still analyzing — detailed reports take a little longer. Hang tight.';}}
     });
-    const d=await r.json();
-    const rawText=(d.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    const rawText=(d?.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     let res;
     try{
       res=JSON.parse(rawText);
@@ -613,7 +610,8 @@ async function extractAndSave(){
     toast('Saved ✓');
 
   }catch(e){
-    out.innerHTML='<div style="color:var(--red);font-size:13px">Extraction failed. Saving without analysis.</div>';
+    const msg=esc(e.message||'We couldn’t finish reading this report.');
+    out.innerHTML='<div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-soft);line-height:1.6">'+msg+'<br><span style="color:var(--ink-muted)">We’ve saved the test so nothing is lost — you can re-run the analysis anytime.</span></div>';
     await saveTest();
     console.error(e);
   }finally{btn.disabled=false;}
@@ -861,7 +859,7 @@ async function genSummary(){
   const btn=document.getElementById('sum_btn');
   const out=document.getElementById('sum_out');
   btn.disabled=true;
-  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)">Building your testing summary...</p></div>';
+  out.innerHTML='<div class="load-wrap"><div class="load-ring"></div><p style="font-size:13px;color:var(--ink-muted)" id="sum_sub">Building your testing summary — this may take a moment.</p></div>';
 
   // Build data string
   const groups={};
@@ -875,16 +873,13 @@ async function genSummary(){
   const prof=(await DB.getProfile());
 
   try{
-    const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    const d=await DB.runBackgroundAI({
         model:'claude-sonnet-4-6',max_tokens:2000,
         system:'You create diagnostic testing summaries for medical advocates. Return ONLY valid JSON no markdown:\n{"overview":"2-3 sentence clinical overview of the full testing history","byType":[{"type":"Test type","testCount":0,"trend":"improving|worsening|stable|mixed","summary":"1-2 sentences on what the tests show over time","keyFindings":["Notable finding"]}],"redFlags":["Urgent findings needing attention — empty if none"],"questionsForDoctor":["3-4 specific questions based on this testing history"],"closingNote":"One sentence context for the receiving doctor"}',
-        messages:[{role:'user',content:'Create a diagnostic testing summary.\nPatient: '+(prof.name||'Patient')+(prof.diagnoses?'\nDiagnoses: '+prof.diagnoses:'')+'\n'+(appt?'Appointment: '+appt+'\n':'')+'\nTesting history:\n'+dataStr}]
-      })
+        messages:[{role:'user',content:'Create a diagnostic testing summary.\nPatient: '+(prof.name||'Patient')+(prof.diagnoses?'\nDiagnoses: '+prof.diagnoses:'')+'\n'+(appt?'Appointment: '+appt+'\n':'')+'\nTesting history:\n'+dataStr}],
+        onProgress:(stage)=>{if(stage==='working'){const sub=document.getElementById('sum_sub');if(sub)sub.textContent='Still building your summary — almost there. Hang tight.';}}
     });
-    const d=await r.json();
-    const res=JSON.parse((d.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
+    const res=JSON.parse((d?.content?.[0]?.text||'').replace(/```json|```/g,'').trim());
     const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 
     out.innerHTML=`
@@ -918,7 +913,7 @@ async function genSummary(){
       </div>`;
 
   }catch(e){
-    out.innerHTML='<div style="background:var(--red-pale);border:1px solid var(--red-border);border-radius:12px;padding:14px;color:var(--red)">Something went wrong. Please try again.</div>';
+    out.innerHTML='<div style="background:var(--amber-pale);border:1px solid var(--amber-light);border-radius:12px;padding:14px;color:var(--ink-soft);font-size:13px;line-height:1.6">'+esc(e.message||'We couldn’t finish your summary just now. Please try again.')+'</div>';
     console.error(e);
   }finally{btn.disabled=false;}
 }
@@ -932,6 +927,7 @@ function copyHistoryText(){
 
 // Init
 document.addEventListener('DOMContentLoaded', async () => {
+  await Auth.requireAuth();
   document.getElementById('test_date').value = new Date().toISOString().split('T')[0];
   try {
     const rows = await DB.getDiagnosticTests();

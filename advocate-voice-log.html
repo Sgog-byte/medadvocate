@@ -243,6 +243,7 @@ let patientName = '';
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
+  await Auth.requireAuth();
   // Load patient name
   try {
     const profile = await DB.getProfile();
@@ -393,7 +394,7 @@ async function parseWithAI(text) {
   try {
     const r = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 500,

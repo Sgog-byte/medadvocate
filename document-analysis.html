@@ -340,12 +340,21 @@ let currentTab = 'paste';
 let allExpanded = false;
 let currentResult = null;      // holds last rendered result for saveToRecords()
 let currentExtraction = null;  // holds Call 1 extraction (document_type, date, findings)
+let currentSystemPrompt = null; // interpretation prompt for the active doc (enables retry)
+let currentName = null;         // patient name for the active doc (enables retry)
+let pendingJobId = null;        // active analysis_jobs id (mirrored to localStorage)
+const JOB_LS_KEY = 'advocate_docinterp_job'; // stores { jobId, patientId, createdAt } — no PHI
 
 // ── INIT ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await Auth.requireAuth();
   renderAuthBar('nav_auth');
   await loadPatients();
+  // Resume an in-flight/finished job from a previous visit, and sweep stale rows.
+  const ptr = loadJobPointer();
+  pendingJobId = ptr?.jobId || null;
+  await cleanupStaleJobs();
+  await resumeJobIfAny(ptr);
 });
 
 // ── PATIENTS ───────────────────────────────────────────────────
@@ -657,7 +666,7 @@ Return valid JSON only, no markdown, no text before or after the JSON:
     // ── CALL 1: EXTRACTION ──────────────────────────────────────
     const r1 = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
@@ -676,9 +685,12 @@ Return valid JSON only, no markdown, no text before or after the JSON:
       })
     });
 
-    if (r1.status === 504 || !r1.ok) {
-      throw new Error('Could not extract findings — please try pasting just the Impressions section');
-    }
+    if (r1.status === 401)
+      throw aErr('You’ve been signed out. Sign in again and we’ll pick right back up.', 'signin');
+    if (r1.status === 504)
+      throw aErr('This is taking a little longer than usual. Give it a moment, then try again.', 'wait');
+    if (!r1.ok)
+      throw aErr('We couldn’t read this document. Try pasting just the Impressions or Findings section, then run it again.', 'retry_extract');
     const d1 = await r1.json();
     const rawExtract = (d1.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
     console.log('[DocInterpreter] Call 1 stop_reason:', d1.stop_reason, '| raw:', rawExtract.slice(0, 200));
@@ -688,104 +700,294 @@ Return valid JSON only, no markdown, no text before or after the JSON:
     catch(e) {
       const p = rawExtract.match(/\{[\s\S]*/)?.[0];
       if (p) try { extraction = JSON.parse(repairJson(p)); } catch(e2) {}
-      if (!extraction) throw new Error('Could not extract findings — please try pasting just the Impressions section');
     }
-    currentExtraction = extraction;  // store at module level for saveToRecords()
+    if (!extraction)
+      throw aErr('We couldn’t quite make sense of this document. Try pasting just the Impressions or Findings section, then run it again.', 'retry_extract');
+    currentExtraction   = extraction;  // kept so a Call 2 failure never forces a re-extract
+    currentSystemPrompt = systemPrompt;
+    currentName         = name;
 
     // ── CALL 2: BACKGROUND INTERPRETATION ───────────────────────
-    // Insert job row — background function writes result back when done
-    const { data: jobData, error: insertErr } = await _supa
-      .from('analysis_jobs')
-      .insert({ patient_id: selectedPatient.id, status: 'pending' })
-      .select('id')
-      .single();
-    if (insertErr || !jobData) throw new Error('Could not start analysis — please try again');
-    const jobId = jobData.id;
-
-    // Fire background function — returns 202 immediately, runs up to 15 min
-    const bgResp = await fetch('/.netlify/functions/claude-proxy-background', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        job_id: jobId,
-        systemPrompt,
-        messages: [{
-          role: 'user',
-          content: `These findings were extracted from ${name}'s ${extraction.document_type || 'medical document'}. Interpret each finding for this patient:\n\n${JSON.stringify(extraction.findings || [], null, 2)}`
-        }]
-      })
-    });
-    if (!bgResp.ok) throw new Error('Could not start interpretation — please try again');
-
-    out.innerHTML = `<div class="load-wrap">
-      <div class="load-ring"></div>
-      <div class="load-title">Interpreting findings for ${esc(selectedPatient.name)}…</div>
-      <div class="load-sub">This takes about 20 seconds — analyzing against diagnoses and medications</div>
-    </div>`;
-
-    // Poll Supabase every 2s, timeout at 90s
-    const POLL_MS = 2000;
-    const TIMEOUT_MS = 90000;
-    const pollStart = Date.now();
-
-    const jobResult = await new Promise((resolve, reject) => {
-      const poll = async () => {
-        if (Date.now() - pollStart > TIMEOUT_MS) {
-          reject(new Error('Analysis is taking longer than expected — please try again in a moment'));
-          return;
-        }
-        try {
-          const { data, error: pollErr } = await _supa
-            .from('analysis_jobs')
-            .select('status, result, error')
-            .eq('id', jobId)
-            .single();
-          if (pollErr) throw pollErr;
-          if (data.status === 'complete') { resolve(data.result); return; }
-          if (data.status === 'error')    { reject(new Error(data.error || 'Interpretation failed — please try again')); return; }
-        } catch(e) {
-          reject(new Error('Could not check analysis status — please try again'));
-          return;
-        }
-        setTimeout(poll, POLL_MS);
-      };
-      setTimeout(poll, POLL_MS);
-    });
-
-    // jobResult is the full Anthropic response stored in Supabase
-    const rawText = (jobResult.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
-    console.log('[DocInterpreter] Call 2 stop_reason:', jobResult.stop_reason, '| raw length:', rawText.length);
-    console.log('[DocInterpreter] Call 2 raw response (first 500):', rawText.slice(0, 500));
-
-    let res;
-    try {
-      res = JSON.parse(rawText);
-    } catch(parseErr) {
-      const partial = rawText.match(/\{[\s\S]*/)?.[0];
-      if (partial) {
-        try {
-          res = JSON.parse(repairJson(partial));
-          console.log('[DocInterpreter] JSON repaired successfully');
-        } catch(e2) {
-          console.warn('[DocInterpreter] JSON repair failed:', e2.message);
-          console.warn('[DocInterpreter] Full raw text:', rawText);
-        }
-      }
-      if (!res) throw new Error(`Could not complete interpretation (stop: ${jobResult.stop_reason || '?'}) — please try again`);
-    }
-
-    out.innerHTML = '';
-    renderResults(res);
+    // Insert job, fire the background function, poll, render. Split out so a
+    // failure here can be retried without repeating (and re-paying for) Call 1.
+    await runInterpretation(extraction, systemPrompt, name);
 
   } catch(e) {
-    out.innerHTML = `<div style="background:var(--red-pale);border:1.5px solid var(--red-border);border-radius:12px;padding:16px 18px;color:var(--red);font-size:13px">
-      <strong>Analysis failed.</strong> ${esc(e.message) || 'Please check your connection and try again.'}
-    </div>`;
-    console.error(e);
+    showAnalysisError(e);
   } finally {
     btn.disabled = false;
   }
 }
+
+// ── ERROR + JOB HELPERS ────────────────────────────────────────
+// Errors carry an `action` so the UI can tell the user whether to retry now,
+// wait, re-read the document, or sign in.
+function aErr(message, action) { const e = new Error(message); e.action = action; return e; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Job pointer — only opaque ids/timestamp live in localStorage, never PHI.
+function saveJobPointer(jobId, patientId) {
+  pendingJobId = jobId;
+  try { localStorage.setItem(JOB_LS_KEY, JSON.stringify({ jobId, patientId, createdAt: Date.now() })); } catch(e) {}
+}
+function loadJobPointer() {
+  try { return JSON.parse(localStorage.getItem(JOB_LS_KEY) || 'null'); } catch(e) { return null; }
+}
+function clearJobPointer() {
+  pendingJobId = null;
+  try { localStorage.removeItem(JOB_LS_KEY); } catch(e) {}
+}
+
+// Remove a job row once its result is in memory — don't leave PHI at rest.
+async function deleteJob(jobId) {
+  try { await _supa.from('analysis_jobs').delete().eq('id', jobId); }
+  catch(e) { console.warn('[DocInterpreter] job row cleanup failed:', e.message); }
+}
+
+// Best-effort sweep of abandoned rows on load. Depends on analysis_jobs having
+// a created_at column and a DELETE RLS policy scoped to the user's patients
+// (see audit CRIT-6). Wrapped so a missing column / denied delete can't break load.
+async function cleanupStaleJobs() {
+  try {
+    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    let q = _supa.from('analysis_jobs').delete().lt('created_at', cutoff);
+    if (pendingJobId) q = q.neq('id', pendingJobId);
+    await q;
+  } catch(e) { console.warn('[DocInterpreter] stale job sweep skipped:', e.message); }
+}
+
+// Map a background-function error string to a user-facing message + action.
+// The upstream HTTP status is already embedded (e.g. "Anthropic API error 529: …").
+function classifyBgError(errStr) {
+  const m = (errStr || '').match(/error\s+(\d{3})/i);
+  const code = m ? parseInt(m[1], 10) : null;
+  if (code === 429 || code === 529)
+    return aErr('Things are a little busy right now. Give it a few seconds, then tap Retry — no need to upload your document again.', 'retry_interpret');
+  if (code === 401 || code === 403)
+    return aErr('Something interrupted the interpretation. Tap Retry — no need to upload your document again.', 'retry_interpret');
+  return aErr('The interpretation didn’t finish. Tap Retry — no need to upload your document again.', 'retry_interpret');
+}
+
+function interpretingLoader(name, sub) {
+  return `<div class="load-wrap">
+    <div class="load-ring"></div>
+    <div class="load-title">Interpreting findings${name ? ' for ' + esc(name) : ''}…</div>
+    <div class="load-sub">${esc(sub || 'Analyzing against diagnoses and medications')}</div>
+  </div>`;
+}
+
+// ── INTERPRETATION (Call 2) ────────────────────────────────────
+async function runInterpretation(extraction, systemPrompt, name) {
+  const out = document.getElementById('analyze_out');
+
+  // Insert job row — background function writes the result back when done.
+  const { data: jobData, error: insertErr } = await _supa
+    .from('analysis_jobs')
+    .insert({ patient_id: selectedPatient.id, status: 'pending' })
+    .select('id')
+    .single();
+  if (insertErr || !jobData)
+    throw aErr('We’ve read your document — we just couldn’t start interpreting it yet. Tap Retry and we’ll pick up from here, no need to upload again.', 'retry_interpret');
+  const jobId = jobData.id;
+  saveJobPointer(jobId, selectedPatient.id);   // persist immediately so a slow/closed tab can resume
+
+  // Fire background function — returns 202 immediately, runs up to 15 min.
+  const bgResp = await fetch('/.netlify/functions/claude-proxy-background', {
+    method: 'POST',
+    headers: await aiHeaders(),
+    body: JSON.stringify({
+      job_id: jobId,
+      systemPrompt,
+      messages: [{
+        role: 'user',
+        content: `These findings were extracted from ${name}'s ${extraction.document_type || 'medical document'}. Interpret each finding for this patient:\n\n${JSON.stringify(extraction.findings || [], null, 2)}`
+      }]
+    })
+  });
+  if (bgResp.status === 401) {
+    await deleteJob(jobId); clearJobPointer();
+    throw aErr('You’ve been signed out. Sign in again and we’ll pick up where you left off.', 'signin');
+  }
+  if (!bgResp.ok) {
+    await deleteJob(jobId); clearJobPointer();
+    throw aErr('We’ve read your document — we just couldn’t start interpreting it yet. Tap Retry and we’ll pick up from here, no need to upload again.', 'retry_interpret');
+  }
+
+  out.innerHTML = interpretingLoader(selectedPatient.name, 'This usually takes about 20 seconds — analyzing against diagnoses and medications');
+
+  let result;
+  try {
+    result = await pollJob(jobId);
+  } catch(e) {
+    // 'wait' = still running / transient — keep the pointer so "Check now" or a
+    // reload can pick up the finished result. Anything else is terminal.
+    if (e.action === 'wait') throw e;
+    await deleteJob(jobId); clearJobPointer();
+    throw e;
+  }
+  await finishInterpretation(jobId, result);
+}
+
+// Poll the job row until terminal or timeout. Checks immediately, then every 2s.
+// Timeout raised to 180s (single Sonnet call); on timeout we don't discard — the
+// job keeps running and the pointer survives for resume.
+async function pollJob(jobId) {
+  const POLL_MS = 2000;
+  const TIMEOUT_MS = 180000;
+  const start = Date.now();
+  while (true) {
+    let data;
+    try {
+      const res = await _supa.from('analysis_jobs').select('status, result, error').eq('id', jobId).single();
+      if (res.error) throw res.error;
+      data = res.data;
+    } catch(e) {
+      throw aErr('We couldn’t check on your analysis just now, but it’s still safe. Try again in a moment.', 'wait');
+    }
+    if (data.status === 'complete') return data.result;
+    if (data.status === 'error')    throw classifyBgError(data.error);
+    if (Date.now() - start > TIMEOUT_MS)
+      throw aErr('Your analysis is still running — this one’s just taking a little longer than usual. It hasn’t been lost.', 'wait');
+    await sleep(POLL_MS);
+  }
+}
+
+// Parse the stored Anthropic response and render. Deletes the PHI row first
+// (result is already in memory) so nothing lingers in the database.
+async function finishInterpretation(jobId, jobResult) {
+  await deleteJob(jobId);
+  clearJobPointer();
+
+  const rawText = (jobResult?.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+  console.log('[DocInterpreter] Call 2 stop_reason:', jobResult?.stop_reason, '| raw length:', rawText.length);
+
+  let res;
+  try { res = JSON.parse(rawText); }
+  catch(parseErr) {
+    const partial = rawText.match(/\{[\s\S]*/)?.[0];
+    if (partial) {
+      try { res = JSON.parse(repairJson(partial)); console.log('[DocInterpreter] JSON repaired successfully'); }
+      catch(e2) { console.warn('[DocInterpreter] JSON repair failed:', e2.message); }
+    }
+  }
+  if (!res)
+    throw aErr('We couldn’t quite read the results that came back. Tap Retry to interpret again.', 'retry_interpret');
+
+  document.getElementById('analyze_out').innerHTML = '';
+  renderResults(res);
+}
+
+// Retry ONLY Call 2 using the cached extraction — never re-runs (re-charges) Call 1.
+async function retryInterpretation() {
+  if (!currentExtraction || !selectedPatient || !currentSystemPrompt) {
+    showAnalysisError(aErr('Add your document again and we’ll run a fresh analysis.', 'dismiss'));
+    return;
+  }
+  const btn = document.getElementById('analyze_btn');
+  const out = document.getElementById('analyze_out');
+  btn.disabled = true;
+  out.innerHTML = interpretingLoader(selectedPatient.name, 'Retrying interpretation — analyzing against diagnoses and medications');
+  try { await runInterpretation(currentExtraction, currentSystemPrompt, currentName || selectedPatient.name); }
+  catch(e) { showAnalysisError(e); }
+  finally { btn.disabled = false; }
+}
+
+// Re-poll a job whose client poll already timed out (or that we resumed).
+async function checkNow() {
+  const jobId = pendingJobId || loadJobPointer()?.jobId;
+  if (!jobId) { analyze(); return; }   // no job yet (e.g. Call 1 was busy) — start over
+  pendingJobId = jobId;
+  const btn = document.getElementById('analyze_btn');
+  const out = document.getElementById('analyze_out');
+  btn.disabled = true;
+  out.innerHTML = interpretingLoader(selectedPatient?.name, 'Checking your analysis…');
+  try {
+    const result = await pollJob(jobId);
+    await finishInterpretation(jobId, result);
+  } catch(e) {
+    if (e.action !== 'wait') { await deleteJob(jobId); clearJobPointer(); }
+    showAnalysisError(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// On load: pick up a job from a previous visit (finished, errored, or still running).
+async function resumeJobIfAny(ptr) {
+  if (!ptr || !ptr.jobId) return;
+  pendingJobId = ptr.jobId;
+
+  // Rehydrate the patient this job belongs to (selectedPatient + context).
+  if (ptr.patientId) {
+    const sel = document.getElementById('patient_select');
+    if (sel) sel.value = ptr.patientId;
+    try { await onPatientChange(ptr.patientId); } catch(e) {}
+  }
+
+  const btn = document.getElementById('analyze_btn');
+  const out = document.getElementById('analyze_out');
+  btn.disabled = true;
+  out.innerHTML = interpretingLoader(selectedPatient?.name, 'Resuming your previous analysis…');
+
+  try {
+    const res = await _supa.from('analysis_jobs').select('status, result, error').eq('id', ptr.jobId).single();
+    if (res.error || !res.data) { clearJobPointer(); out.innerHTML = ''; return; }
+    const data = res.data;
+    if (data.status === 'complete') {
+      await finishInterpretation(ptr.jobId, data.result);
+    } else if (data.status === 'error') {
+      await deleteJob(ptr.jobId); clearJobPointer();
+      throw classifyBgError(data.error);
+    } else {
+      const result = await pollJob(ptr.jobId);
+      await finishInterpretation(ptr.jobId, result);
+    }
+  } catch(e) {
+    // After a reload the in-memory extraction is gone, so "retry interpretation"
+    // can't truly resume — downgrade those to a dismissible re-run prompt.
+    // 'wait' stays as-is (Check now works: the jobId still resolves the job).
+    if (e.action === 'retry_interpret' || e.action === 'retry_extract') {
+      e.action = 'dismiss';
+      e.message = 'Your last analysis didn’t finish. Add your document again and we’ll run a fresh one.';
+    }
+    showAnalysisError(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Render a typed error with the right call-to-action button.
+function showAnalysisError(e) {
+  const out = document.getElementById('analyze_out');
+  const action = e.action || 'retry_extract';
+  const msg = esc(e.message || 'Let’s give that another try.');
+  const btn = "margin-top:12px;padding:9px 18px;color:#fff;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer";
+
+  // "Still working" is reassuring, never alarming — calm brand colors + a gentle spinner.
+  if (action === 'wait') {
+    out.innerHTML = `<div style="background:var(--sage-pale);border:1.5px solid var(--sage-light);border-radius:12px;padding:18px 20px;color:var(--ink-soft);font-size:13px;line-height:1.65;display:flex;gap:14px;align-items:flex-start">
+      <div class="load-ring" style="width:22px;height:22px;border-width:2px;margin:1px 0 0;flex-shrink:0"></div>
+      <div>
+        <strong style="color:var(--sage-deep)">Still working on it.</strong> ${msg}
+        <div><button style="${btn};background:var(--sage-deep)" onclick="checkNow()">Check now</button></div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Recoverable problems use a soft amber tone (not red) with one clear next step.
+  let lead, btnHtml;
+  if (action === 'retry_interpret') { lead = 'Almost there.';         btnHtml = `<button style="${btn};background:var(--sage-deep)" onclick="retryInterpretation()">Retry</button>`; }
+  else if (action === 'signin')     { lead = 'Please sign in again.';  btnHtml = `<button style="${btn};background:var(--blue)" onclick="window.location.href='advocate-login.html?next='+encodeURIComponent(location.pathname)">Sign in</button>`; }
+  else if (action === 'dismiss')    { lead = 'Let’s try that again.';  btnHtml = `<button style="${btn};background:var(--ink-muted)" onclick="dismissError()">OK</button>`; }
+  else                              { lead = 'Let’s try that again.';  btnHtml = `<button style="${btn};background:var(--sage-deep)" onclick="analyze()">Try again</button>`; }
+
+  out.innerHTML = `<div style="background:var(--amber-pale);border:1.5px solid var(--amber-light);border-radius:12px;padding:16px 18px;color:var(--ink-soft);font-size:13px;line-height:1.65">
+    <strong style="color:var(--amber)">${lead}</strong> ${msg}<br>${btnHtml}
+  </div>`;
+  console.error('[DocInterpreter]', action, e.message);
+}
+function dismissError() { document.getElementById('analyze_out').innerHTML = ''; }
 
 // ── RENDER RESULTS ─────────────────────────────────────────────
 function renderResults(res) {
@@ -947,6 +1149,9 @@ async function copyResults() {
 function resetAnalysis() {
   currentResult = null;
   currentExtraction = null;
+  currentSystemPrompt = null;
+  currentName = null;
+  clearJobPointer();
   const ss = document.getElementById('save_status');
   if (ss) { ss.style.display = 'none'; ss.textContent = ''; }
   document.getElementById('results_section').style.display = 'none';

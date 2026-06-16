@@ -537,7 +537,7 @@ function quickScript(title,contact){
 // ── API ──
 async function callClaude(system,user,maxTokens=1500){
   const r=await fetch('/.netlify/functions/claude-proxy',{
-    method:'POST',headers:{'Content-Type':'application/json'},
+    method:'POST',headers:await aiHeaders(),
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,system,messages:[{role:'user',content:user}]})
   });
   const d=await r.json();
@@ -774,6 +774,7 @@ async function generateEscalation(){
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async()=>{
+  await Auth.requireAuth();
   const now=new Date();
   document.getElementById('log_datetime').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
   document.getElementById('task_due').value=new Date(Date.now()+3*24*60*60*1000).toISOString().split('T')[0];

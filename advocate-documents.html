@@ -286,7 +286,7 @@ async function extractDoc(){
     } else {
       msgs=[{role:"user",content:"Extract key medical info from:\n\n"+atob(curData)+ctx}];
     }
-    var r=await fetch("/.netlify/functions/claude-proxy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,system:"You extract and summarize medical documents for non-medical caregivers. Be clear, organized, and highlight what matters — findings, diagnoses, medications, follow-up, action items.",messages:msgs})});
+    var r=await fetch("/.netlify/functions/claude-proxy",{method:"POST",headers:await aiHeaders(),body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,system:"You extract and summarize medical documents for non-medical caregivers. Be clear, organized, and highlight what matters — findings, diagnoses, medications, follow-up, action items.",messages:msgs})});
     var d=await r.json();
     var extracted=d.content?.[0]?.text||"";
     var saved=await saveDoc(extracted);
@@ -335,6 +335,7 @@ async function delDoc(id){
 function closeMod(){document.getElementById("mod_ov").classList.remove("open")}
 
 document.addEventListener('DOMContentLoaded', async function(){
+  await Auth.requireAuth();
   document.getElementById("doc_date").value=new Date().toISOString().split("T")[0];
   try{
     var rows=await DB.getDocuments();

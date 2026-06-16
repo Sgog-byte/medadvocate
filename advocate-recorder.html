@@ -552,7 +552,7 @@ async function genSummary() {
 
     var r = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1200,
@@ -770,6 +770,7 @@ async function deleteHistRec(id) {
 
 // ── Initialization ─────────────────────────────────────────────
 (async function() {
+  await Auth.requireAuth();
   // Scope draft key to patient so two patients on same device never mix
   try {
     var pid = await DB.patientId();

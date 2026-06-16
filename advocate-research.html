@@ -404,7 +404,7 @@ async function summarizePaper(idx){
 
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:await aiHeaders(),
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
         system:'You summarize medical research papers for non-medical caregivers. Be clear, warm, and direct. No jargon without explanation.',
         messages:[{role:'user',content:`Summarize this paper in 3-4 plain-English sentences for a caregiver who wants to understand what it means for their family member's condition and how to use this information with a doctor:\n\nTitle: ${paper.title}\nJournal: ${paper.journal} (${paper.year})\nAbstract: ${paper.abstract}`}]})
@@ -535,7 +535,7 @@ async function summarizeLibPaper(idx){
 
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:await aiHeaders(),
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
         system:'Summarize medical research for non-medical caregivers. Clear, warm, no jargon.',
         messages:[{role:'user',content:`Summarize in 3-4 plain-English sentences:\n\nTitle: ${paper.title}\nJournal: ${paper.journal} (${paper.year})\nAbstract: ${paper.abstract}`}]})
@@ -579,7 +579,7 @@ async function generateBrief(){
 
   try{
     const r=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:await aiHeaders(),
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,
         system:'You help patients present medical research to their doctors. Return ONLY valid JSON no markdown: {"headline":"One powerful sentence summarizing what the research shows","keyFindings":["3-4 key findings from across the papers that support the patient\'s case"],"clinicalImplication":"2-3 sentences on what this research means clinically and what the patient should ask for","questionsToAsk":["3 specific evidence-based questions to ask the doctor"]}',
         messages:[{role:'user',content:`Patient: ${name}\nAppointment: ${doctor||'Doctor visit'}\nGoal: ${goal||'Present research on my condition'}\n\nSaved papers:\n${lib.map(p=>`- ${p.title} (${p.year}, ${p.journal})${p.aiSummary?' — '+p.aiSummary:' — Abstract: '+p.abstract.substring(0,200)+'...'}`).join('\n')}`}]})
@@ -646,6 +646,7 @@ function emailBrief(){
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async()=>{
+  await Auth.requireAuth();
   try{
     const rows=await DB.getResearchLibrary();
     library=rows.map(fromDBResearch);

@@ -910,6 +910,7 @@
 
 <script>
 // ── STATE ──
+await Auth.requireAuth();
 let scripts = (await DB.getSavedScripts());
 let contacts = (await DB.getCareTeam());
 let currentEmailScript = null;
@@ -1393,7 +1394,7 @@ async function runSearch(lat = null, lng = null) {
 
     const resp = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await aiHeaders(),
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1000,
