@@ -1037,6 +1037,19 @@
       <div id="labInsightsList" style="display:none;flex-direction:column;gap:8px"></div>
     </div>
 
+    <div id="diagnosticTestsBanner" style="margin-top:14px;background:#f0f7f2;border:1.5px solid #95d5b2;border-radius:13px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:600;color:#2d6a4f;letter-spacing:.06em;text-transform:uppercase">🔬 Diagnostic Tests</div>
+        <button id="clearTestsBtn" onclick="clearSelectedTests()" style="display:none;font-size:11px;color:#4a7a5e;background:none;border:none;cursor:pointer;text-decoration:underline">Clear all</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <select id="testPicker" style="flex:1;padding:10px 13px;border:1.5px solid #b7d9c4;border-radius:10px;font-size:14px;background:#fff;color:#1b4332"><option value="">Select a saved test…</option></select>
+        <button onclick="addSelectedTest()" style="flex-shrink:0;padding:0 18px;background:#2d6a4f;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer">Add</button>
+      </div>
+      <div id="testsEmpty" style="font-size:13px;color:#4a5e50;line-height:1.6">No diagnostic tests added yet — select from your saved tests above.</div>
+      <div id="testsList" style="display:none;flex-direction:column;gap:8px"></div>
+    </div>
+
     <div id="errorBox" class="error-box">Please select a specialist and describe at least a few symptoms.</div>
 
     <button class="btn-primary" id="generateBtn" onclick="generateScript()">
@@ -1249,7 +1262,7 @@ Specialist: ${specialist}
 Confirmed diagnoses: ${_profileDiagnoses || 'not specified'}
 Current medications: ${_profileMeds || 'not specified'}
 Symptoms and concerns: ${symptoms}
-${goals ? `Goals for this visit: ${goals}` : ''}${getLabInsightsText()}
+${goals ? `Goals for this visit: ${goals}` : ''}${getLabInsightsText()}${getSelectedTestsText()}
 
 Please create a focused visit script for this appointment.`;
 
@@ -1623,6 +1636,8 @@ Please create a focused visit script for this appointment.`;
 
   // ── LAB INSIGHTS ────────────────────────────────────────────────
   let appLabInsights = [];  // [{id, text}]
+  let appDiagnosticTests = [];  // all saved tests for this patient — feeds the picker
+  let appSelectedTests = [];    // [{id, text}] — user-chosen tests (mirrors appLabInsights)
   function loadLabInsights() {
     const empty = document.getElementById('labInsightsEmpty');
     const list = document.getElementById('labInsightsList');
@@ -1655,14 +1670,100 @@ Please create a focused visit script for this appointment.`;
     }
   }
   async function clearLabInsights() {
+    // Delete only the lab rows (not patient-wide) so diagnostic-test rows in the
+    // shared script_insights table aren't wiped too.
+    const ids = appLabInsights.map(x => x.id).filter(Boolean);
     appLabInsights = [];
     loadLabInsights();
-    try { await DB.deleteAllInsights(); } catch(e) { console.warn('Clear insights failed:', e.message); }
+    for (const id of ids) { try { await DB.deleteInsight(id); } catch(e) { console.warn('Clear insight failed:', e.message); } }
   }
   function getLabInsightsText() {
     if (!appLabInsights.length) return '';
     const texts = appLabInsights.map(x => x.text || '');
     return '\n\nRecent lab findings to reference:\n' + texts.join('\n');
+  }
+
+  // ── DIAGNOSTIC TESTS (manual selection, mirrors lab insights) ───
+  function escTestText(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  // Format a saved test row as "Name — Date — Result" (date/result omitted if absent).
+  function formatTestLine(t) {
+    const name = t.test_name || t.test_type || 'Test';
+    let s = name;
+    if (t.test_date) s += ' — ' + t.test_date;
+    if (t.result)    s += ' — ' + t.result;
+    return s;
+  }
+  function renderDiagnosticTests() {
+    const empty = document.getElementById('testsEmpty');
+    const list = document.getElementById('testsList');
+    const clearBtn = document.getElementById('clearTestsBtn');
+    const picker = document.getElementById('testPicker');
+
+    const chosen = new Set(appSelectedTests.map(s => s.text));
+    const available = appDiagnosticTests.filter(t => !chosen.has(formatTestLine(t)));
+    if (!appDiagnosticTests.length) {
+      picker.innerHTML = '<option value="">No saved diagnostic tests found</option>';
+    } else {
+      picker.innerHTML = '<option value="">Select a saved test…</option>'
+        + available.map(t => `<option value="${escTestText(String(t.id))}">${escTestText(formatTestLine(t))}</option>`).join('');
+    }
+
+    if (!appSelectedTests.length) {
+      empty.style.display = 'block';
+      list.style.display = 'none';
+      clearBtn.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    list.style.display = 'flex';
+    clearBtn.style.display = 'inline';
+    list.innerHTML = appSelectedTests.map((item, i) => `
+      <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
+        <span style="color:#2d6a4f;margin-top:1px">•</span>
+        <span style="flex:1">${escTestText(item.text || '')}</span>
+        <button onclick="removeSelectedTest(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
+      </div>`).join('');
+  }
+  async function addSelectedTest() {
+    const picker = document.getElementById('testPicker');
+    const id = picker.value;
+    if (!id) return;
+    const t = appDiagnosticTests.find(x => String(x.id) === String(id));
+    if (!t) return;
+    const text = formatTestLine(t);
+    if (appSelectedTests.some(s => s.text === text)) { picker.value = ''; return; }
+    try {
+      const pid = await DB.patientId();
+      let rowId = null;
+      if (pid) { const row = await DB.saveInsight(pid, 'diagnostic', text); rowId = row ? row.id : null; }
+      appSelectedTests.push({ id: rowId, text });
+      renderDiagnosticTests();
+      showToastApp('Test added ✓');
+    } catch(e) {
+      showToastApp('Could not add test — please try again');
+      console.error('[VisitScript] add test failed:', e);
+    }
+  }
+  async function removeSelectedTest(i) {
+    const item = appSelectedTests[i];
+    appSelectedTests.splice(i, 1);
+    renderDiagnosticTests();
+    if (item && item.id) {
+      try { await DB.deleteInsight(item.id); } catch(e) { console.warn('Test remove failed:', e.message); }
+    }
+  }
+  async function clearSelectedTests() {
+    const ids = appSelectedTests.map(x => x.id).filter(Boolean);
+    appSelectedTests = [];
+    renderDiagnosticTests();
+    for (const id of ids) { try { await DB.deleteInsight(id); } catch(e) { console.warn('Clear test failed:', e.message); } }
+  }
+  function getSelectedTestsText() {
+    if (!appSelectedTests.length) return '';
+    const lines = appSelectedTests.map(s => '- ' + s.text);
+    return '\n\nRecent diagnostic test results to reference:\n' + lines.join('\n');
   }
   document.addEventListener('DOMContentLoaded', async () => {
     await Auth.requireAuth();
@@ -1670,10 +1771,13 @@ Please create a focused visit script for this appointment.`;
       const pid = await DB.patientId();
       if (pid) {
         const dbInsights = await DB.loadInsights(pid);
-        appLabInsights = dbInsights.map(row => ({ id: row.id, text: row.insight_text }));
+        appLabInsights    = dbInsights.filter(r => r.source !== 'diagnostic').map(r => ({ id: r.id, text: r.insight_text }));
+        appSelectedTests  = dbInsights.filter(r => r.source === 'diagnostic').map(r => ({ id: r.id, text: r.insight_text }));
+        appDiagnosticTests = await DB.getDiagnosticTests();
       }
     } catch(e) {}
     loadLabInsights();
+    renderDiagnosticTests();
   });
 
   // ── COPY / PRINT / EDIT ─────────────────────────────────────────
