@@ -306,6 +306,20 @@ nav{position:sticky;top:0;z-index:100;background:#fdfcf8;border-bottom:2px solid
       </div>
       <div id="labInsightsList" style="display:none;flex-direction:column;gap:8px"></div>
     </div>
+    <div id="diagnosticTestsBanner" style="margin-top:12px;background:#f0f7f2;border:1.5px solid #95d5b2;border-radius:13px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#2d6a4f;letter-spacing:.06em;text-transform:uppercase">🔬 Diagnostic Tests</div>
+        <button id="clearTestsBtn" onclick="clearSelectedTests()" style="display:none;font-size:11px;color:#4a7a5e;background:none;border:none;cursor:pointer;text-decoration:underline">Clear all</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <select class="fi" id="testPicker" style="flex:1"><option value="">Select a saved test…</option></select>
+        <button onclick="addSelectedTest()" style="flex-shrink:0;padding:0 18px;background:#2d6a4f;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer">Add</button>
+      </div>
+      <div id="testsEmpty" style="font-size:13px;color:#4a7a5e;line-height:1.6">
+        No diagnostic tests added yet — select from your saved tests above.
+      </div>
+      <div id="testsList" style="display:none;flex-direction:column;gap:8px"></div>
+    </div>
   </div>
 
   <div class="gen-wrap">
@@ -327,7 +341,8 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 
 // ─── LAB INSIGHTS FROM LAB TRACKER ───
 let labInsights = [];  // [{id, text}]
-let diagnosticTests = [];  // [{test_name, test_type, test_date, result, notes, …}] — auto-fetched
+let diagnosticTests = [];  // all saved tests for this patient — feeds the picker dropdown
+let selectedTests = [];    // [{id, text}] — user-chosen tests for the script (mirrors labInsights)
 
 function loadLabInsights() {
   const empty = document.getElementById('labInsightsEmpty');
@@ -360,9 +375,12 @@ async function removeLabInsight(i) {
 }
 
 async function clearLabInsights() {
+  // Delete only the lab rows (not patient-wide) so diagnostic-test rows in the
+  // shared script_insights table aren't wiped too.
+  const ids = labInsights.map(x => x.id).filter(Boolean);
   labInsights = [];
   loadLabInsights();
-  try { await DB.deleteAllInsights(); } catch(e) { console.warn('Clear insights failed:', e.message); }
+  for (const id of ids) { try { await DB.deleteInsight(id); } catch(e) { console.warn('Clear insight failed:', e.message); } }
 }
 
 function getLabInsightsText() {
@@ -371,28 +389,90 @@ function getLabInsightsText() {
   return '\n\nRecent lab findings to reference in scripts:\n' + texts.join('\n');
 }
 
-function getDiagnosticTestsText() {
-  if (!diagnosticTests.length) return '';
-  // Keep only the most recent test per type — diagnosticTests is already test_date
-  // descending. Key by test_type so each type appears once; fall back to test_name
-  // when a row has no type, so distinct untyped tests don't collapse together.
-  const seen = new Set();
-  const recent = [];
-  for (const t of diagnosticTests) {
-    const key = t.test_type || t.test_name || '';
-    if (seen.has(key)) continue;
-    seen.add(key);
-    recent.push(t);
+// ─── DIAGNOSTIC TESTS (manual selection, mirrors lab insights) ───
+// Format a saved test row as "Name — Date — Result" (date/result omitted if absent).
+function formatTestLine(t) {
+  const name = t.test_name || t.test_type || 'Test';
+  let s = name;
+  if (t.test_date) s += ' — ' + t.test_date;
+  if (t.result)    s += ' — ' + t.result;
+  return s;
+}
+
+function renderDiagnosticTests() {
+  const empty = document.getElementById('testsEmpty');
+  const list = document.getElementById('testsList');
+  const clearBtn = document.getElementById('clearTestsBtn');
+  const picker = document.getElementById('testPicker');
+
+  // Populate the picker with saved tests not already added.
+  const chosen = new Set(selectedTests.map(s => s.text));
+  const available = diagnosticTests.filter(t => !chosen.has(formatTestLine(t)));
+  if (!diagnosticTests.length) {
+    picker.innerHTML = '<option value="">No saved diagnostic tests found</option>';
+  } else {
+    picker.innerHTML = '<option value="">Select a saved test…</option>'
+      + available.map(t => `<option value="${escH(String(t.id))}">${escH(formatTestLine(t))}</option>`).join('');
   }
-  const lines = recent.map(t => {
-    // Prefer the more specific test_name in the output line; fall back to test_type.
-    const name = t.test_name || t.test_type || 'Test';
-    let line = '- ' + name;
-    if (t.test_date) line += ` (${t.test_date})`;
-    if (t.result)    line += ` — ${t.result}`;
-    if (t.notes)     line += `: ${t.notes}`;
-    return line;
-  });
+
+  if (!selectedTests.length) {
+    empty.style.display = 'block';
+    list.style.display = 'none';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  list.style.display = 'flex';
+  clearBtn.style.display = 'inline';
+  list.innerHTML = selectedTests.map((item, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1b4332;line-height:1.55">
+      <span style="color:#2d6a4f;margin-top:1px">•</span>
+      <span style="flex:1">${escH(item.text || '')}</span>
+      <button onclick="removeSelectedTest(${i})" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#4a7a5e;font-size:14px;line-height:1" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+async function addSelectedTest() {
+  const picker = document.getElementById('testPicker');
+  const id = picker.value;
+  if (!id) return;
+  const t = diagnosticTests.find(x => String(x.id) === String(id));
+  if (!t) return;
+  const text = formatTestLine(t);
+  if (selectedTests.some(s => s.text === text)) { picker.value = ''; return; }  // already added
+  try {
+    const pid = await DB.patientId();
+    let rowId = null;
+    if (pid) { const row = await DB.saveInsight(pid, 'diagnostic', text); rowId = row ? row.id : null; }
+    selectedTests.push({ id: rowId, text });
+    renderDiagnosticTests();
+    showToast('Test added ✓');
+  } catch(e) {
+    showToast('Could not add test — please try again');
+    console.error('[Scripts] add test failed:', e);
+  }
+}
+
+async function removeSelectedTest(i) {
+  const item = selectedTests[i];
+  selectedTests.splice(i, 1);
+  renderDiagnosticTests();
+  if (item && item.id) {
+    try { await DB.deleteInsight(item.id); } catch(e) { console.warn('Test remove failed:', e.message); }
+  }
+}
+
+async function clearSelectedTests() {
+  const ids = selectedTests.map(x => x.id).filter(Boolean);
+  selectedTests = [];
+  renderDiagnosticTests();
+  for (const id of ids) { try { await DB.deleteInsight(id); } catch(e) { console.warn('Clear test failed:', e.message); } }
+}
+
+// Manually selected tests only — replaces the former auto-injection of all tests.
+function getSelectedTestsText() {
+  if (!selectedTests.length) return '';
+  const lines = selectedTests.map(s => '- ' + s.text);
   return '\n\nRecent diagnostic test results to reference in scripts:\n' + lines.join('\n');
 }
 
@@ -402,11 +482,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pid = await DB.patientId();
     if (pid) {
       const dbInsights = await DB.loadInsights(pid);
-      labInsights = dbInsights.map(row => ({ id: row.id, text: row.insight_text }));
+      labInsights   = dbInsights.filter(r => r.source !== 'diagnostic').map(r => ({ id: r.id, text: r.insight_text }));
+      selectedTests = dbInsights.filter(r => r.source === 'diagnostic').map(r => ({ id: r.id, text: r.insight_text }));
       diagnosticTests = await DB.getDiagnosticTests();
     }
   } catch(e) {}
   loadLabInsights();
+  renderDiagnosticTests();
 });
 
 let currentTone = 'firm';
@@ -504,7 +586,7 @@ Patient: ${name||'the patient'}
 Diagnoses/conditions: ${dx||'not specified'}
 Appointment/setting: ${appt||'medical appointment'}
 Tone preference: ${TONE_MAP[currentTone]}
-${context?'Context: '+context:''}${getLabInsightsText()}${getDiagnosticTestsText()}
+${context?'Context: '+context:''}${getLabInsightsText()}${getSelectedTestsText()}
 
 Situations to write scripts for:
 ${situations.length ? situations.slice(0,3).map((s,i)=>`${i+1}. ${s}`).join('\n') : 'General dismissal and advocacy scripts for these conditions'}
