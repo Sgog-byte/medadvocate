@@ -63,7 +63,15 @@ nav{position:sticky;top:0;z-index:100;background:rgba(253,252,248,.93);backdrop-
 .tl-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:14px;border:2px solid white;box-shadow:0 0 0 2px var(--cat,var(--sage));background:var(--cat,var(--sage));z-index:1;position:relative;left:16px}
 .tl-card{flex:1;background:var(--white);border:1.5px solid var(--cat-border,var(--border));border-radius:13px;padding:14px 16px;box-shadow:var(--shadow-sm);margin-left:12px}
 .tl-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-.tl-date{font-size:11px;color:var(--ink-muted);font-weight:400;margin-bottom:3px}
+.tl-date{font-size:11px;color:var(--ink-muted);font-weight:400;margin-bottom:3px;cursor:pointer;border-radius:4px;transition:color .15s}
+.tl-date:hover{color:var(--sage-deep)}
+.tl-date.tl-date-empty{color:var(--sage);font-weight:600;text-decoration:underline dotted;text-underline-offset:2px}
+.tl-date.tl-date-empty:hover{color:var(--sage-deep)}
+.tl-date-edit{display:inline-flex;align-items:center;gap:6px}
+.tl-date-input{padding:3px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--ink);background:var(--white);outline:none}
+.tl-date-input:focus{border-color:var(--sage)}
+.tl-date-save{padding:5px 10px;background:transparent;border:1.5px solid var(--sage-light);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--sage-deep);cursor:pointer}
+.tl-date-save:hover{background:var(--sage-pale)}
 .tl-event{font-size:15px;font-weight:500;color:var(--ink);line-height:1.35}
 .tl-cat-tag{padding:2px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.05em;background:var(--cat-pale,var(--sage-pale));border:1px solid var(--cat-border,var(--sage-light));color:var(--cat,var(--sage));white-space:nowrap;flex-shrink:0;text-transform:capitalize}
 .tl-notes{font-size:13px;color:var(--ink-muted);font-weight:300;line-height:1.6;margin-top:6px}
@@ -579,8 +587,63 @@ async function addEvent(){
 
 // ── DELETE ──
 async function deleteEvent(id){
+  if(!confirm('Remove this event from your timeline?')) return;
   await removeEvent(id);
   await renderTimeline();showToast('Removed');
+}
+
+// ── EDIT DATE (inline) ──
+// Click the date on an entry to replace it with a date input + ✓ confirm.
+// Reuses DB.saveTimelineEvent (update branch) via toDBEvent + id, so only the
+// date changes while title/notes/doctor/category are preserved.
+let dateEditId=null;  // id of the entry currently being date-edited (one at a time)
+
+function startEditDate(id){
+  if(dateEditId)return;                       // already editing one — finish it first
+  const ev=events.find(e=>String(e.id)===String(id));
+  const el=document.getElementById('tldate_'+id);
+  if(!ev||!el)return;
+  dateEditId=id;
+  el.onclick=null;
+  el.classList.remove('tl-date-empty');
+  el.innerHTML='<span class="tl-date-edit">'
+    +'<input type="date" class="tl-date-input" id="tldedit_'+id+'" value="'+(ev.date||'')+'" '
+    +'onkeydown="if(event.key===\'Enter\')commitDate(\''+id+'\');else if(event.key===\'Escape\')cancelDateEdit()" '
+    +'onblur="commitDate(\''+id+'\')">'
+    +'<button type="button" class="tl-date-save" onmousedown="event.preventDefault()" onclick="commitDate(\''+id+'\')">✓</button>'
+    +'</span>';
+  const inp=document.getElementById('tldedit_'+id);
+  if(inp)inp.focus();
+}
+
+function cancelDateEdit(){
+  dateEditId=null;
+  renderTimeline();
+}
+
+async function commitDate(id){
+  if(dateEditId!==id)return;                   // guard: blur + ✓ click can both fire
+  const inp=document.getElementById('tldedit_'+id);
+  const newDate=inp?inp.value:'';
+  dateEditId=null;                             // lock before any await
+  const ev=events.find(e=>String(e.id)===String(id));
+  if(!ev){renderTimeline();return;}
+  if(!newDate||newDate===ev.date){renderTimeline();return;}  // unchanged / cleared → no write
+  const prev=ev.date;
+  ev.date=newDate;
+  try{
+    const dbEvt=toDBEvent(ev);
+    dbEvt.id=ev.id;                            // forces saveTimelineEvent into its UPDATE branch
+    await DB.saveTimelineEvent(dbEvt);
+    events.sort((a,b)=>new Date(a.date)-new Date(b.date));
+    renderTimeline();
+    showToast('Date updated ✓');
+  }catch(err){
+    ev.date=prev;                              // rollback so the UI never lies
+    renderTimeline();
+    showToast('Could not update the date — please try again');
+    console.error('[Timeline] date update failed:',err);
+  }
 }
 
 // ── FILTER ──
@@ -627,7 +690,7 @@ function renderTimeline(){
           <div class="tl-card">
             <div class="tl-card-header">
               <div>
-                <div class="tl-date">${fmtDate(e.date)}</div>
+                <div class="tl-date${e.date?'':' tl-date-empty'}" id="tldate_${sid}" onclick="startEditDate('${sid}')" title="Click to edit date">${e.date?fmtDate(e.date):'+ Add date'}</div>
                 <div class="tl-event">${escH(e.title)}</div>
               </div>
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
