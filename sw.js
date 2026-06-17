@@ -1,4 +1,4 @@
-const CACHE = 'medadvocate-v5';
+const CACHE = 'medadvocate-v6';
 
 const PRECACHE = [
   '/', '/index.html', '/manifest.json', '/supabase-client.js',
@@ -34,9 +34,29 @@ self.addEventListener('fetch', e => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/.netlify/')) return;
 
+  // HTML navigations are network-first so a new deploy is visible immediately.
+  // Fall back to the cached copy only when the network is unavailable (offline).
+  const isHTML = e.request.mode === 'navigate'
+    || e.request.destination === 'document'
+    || url.pathname.endsWith('.html');
+
+  if (isHTML) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => caches.match(e.request)) // offline: serve last-cached page
+    );
+    return;
+  }
+
+  // Static assets (JS/CSS/images/fonts) stay cache-first: serve cached copy
+  // immediately, refresh in the background for next time.
   e.respondWith(
     caches.match(e.request).then(cached => {
-      // Return cached copy immediately, then update in background
       const networkFetch = fetch(e.request).then(res => {
         if (res.ok) {
           const clone = res.clone();
