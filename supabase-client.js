@@ -1192,14 +1192,6 @@ const DB = {
       headers: await aiHeaders(),
       body: JSON.stringify({ job_id: jobId, systemPrompt: system, messages, model, max_tokens })
     });
-    // ── TEMP DIAGNOSTIC — remove after debugging ──────────────────────
-    console.log('[runBackgroundAI] bg fetch status:', resp.status, resp.statusText);
-    if (resp.status !== 202) {
-      let _diagBody = '';
-      try { _diagBody = await resp.clone().text(); } catch (e) { _diagBody = '(could not read body: ' + e.message + ')'; }
-      console.log('[runBackgroundAI] bg fetch body:', _diagBody);
-    }
-    // ── END TEMP DIAGNOSTIC ───────────────────────────────────────────
     if (resp.status === 401) {
       await cleanup();
       throw new Error('You’ve been signed out. Sign in again and we’ll pick right back up.');

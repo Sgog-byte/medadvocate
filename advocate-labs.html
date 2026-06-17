@@ -1168,6 +1168,26 @@ async function callProxy(payload) {
   return safeParseLabJSON(data?.content?.[0]?.text || '');
 }
 
+// Synchronous proxy path — used for the scanned-PDF image route only. Base64
+// page images blow past the background function's 256KB async-invocation limit,
+// so they go through claude-proxy (6MB limit) instead. Stopgap: this reintroduces
+// the ~26s timeout risk for scanned PDFs. Option A (per-page background calls)
+// to follow later.
+async function callProxySync(payload) {
+  const resp = await fetch('/.netlify/functions/claude-proxy', {
+    method: 'POST',
+    headers: await aiHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`HTTP ${resp.status}: ${txt.substring(0, 120)}`);
+  }
+  const data = await resp.json();
+  if (data.error) throw new Error('API: ' + (data.error.message || JSON.stringify(data.error)));
+  return safeParseLabJSON(data.content?.[0]?.text || '');
+}
+
 async function extractLabsFromFile(base64, mediaType) {
   return callProxy({
     model: 'claude-sonnet-4-6',
@@ -1218,7 +1238,7 @@ async function extractLabsFromImages(base64Array) {
   const imageBlocks = base64Array.map(b64 => ({
     type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
   }));
-  return callProxy({
+  return callProxySync({
     model: 'claude-sonnet-4-6',
     max_tokens: 5000,
     system: buildSystemPrompt(),
