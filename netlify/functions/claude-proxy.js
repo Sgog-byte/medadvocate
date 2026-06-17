@@ -79,7 +79,12 @@ exports.handler = async function(event) {
   // expensive model or request an unbounded number of tokens.
   let reqBody;
   try {
-    reqBody = JSON.parse(event.body || '{}');
+    // Decode a base64-encoded body (isBase64Encoded) before parsing — matches
+    // claude-proxy-background.js so a base64 '/' can't break JSON.parse.
+    const rawBody = event.isBase64Encoded
+      ? Buffer.from(event.body || '', 'base64').toString('utf8')
+      : (event.body || '{}');
+    reqBody = JSON.parse(rawBody);
   } catch {
     return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }

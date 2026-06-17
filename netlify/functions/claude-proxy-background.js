@@ -132,7 +132,13 @@ exports.handler = async function(event) {
 
   let body;
   try {
-    body = JSON.parse(event.body || '{}');
+    // Netlify invokes background functions asynchronously and base64-encodes the
+    // request body (isBase64Encoded), regardless of content-type — decode before
+    // parsing, or JSON.parse chokes on the '/' in the base64 alphabet.
+    const rawBody = event.isBase64Encoded
+      ? Buffer.from(event.body || '', 'base64').toString('utf8')
+      : (event.body || '{}');
+    body = JSON.parse(rawBody);
   } catch {
     return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
