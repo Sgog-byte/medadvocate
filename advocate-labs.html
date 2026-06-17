@@ -1189,7 +1189,7 @@ async function callProxySync(payload) {
 }
 
 async function extractLabsFromFile(base64, mediaType) {
-  return callProxy({
+  return callProxySync({
     model: 'claude-sonnet-4-6',
     max_tokens: 5000,
     system: buildSystemPrompt(),
